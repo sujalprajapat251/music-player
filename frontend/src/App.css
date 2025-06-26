@@ -1,0 +1,14 @@
+.j_checkBox {
+  -webkit-appearance: none !important;
+}
+
+.j_checkBox[type="checkbox"]:checked {
+  -webkit-appearance: checkbox !important;
+  border-radius: 4px !important;
+}
+
+.j_checkBox[type="checkbox"] {
+  accent-color: rgba(255, 255, 255, 0.6) !important;
+  background-color: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
