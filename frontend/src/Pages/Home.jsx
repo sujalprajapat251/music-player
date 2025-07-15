@@ -5,10 +5,47 @@ import rightBottom from '../Images/rightBottom.png'
 import Homepage from '../Images/Homepage.png'
 import pianoImg from '../Images/piyano.png'
 import playButtonSvg from '../Images/play.png'
-
+import f1 from "../Images/f1.svg"
+import f2 from "../Images/f2.svg"
+import f3 from "../Images/f3.svg"
+import f4 from "../Images/f4.svg"
+import f5 from "../Images/f5.svg"
+import f6 from "../Images/f6.svg"
 const Home = () => {
+    const features = [
+        {
+            icon: f1,
+            title: "Music Creation Tools",
+            desc: "Borem ipsum dolor sit amet consectetur. Turpis tristique nulla posuere et amet arcu dictum ultricies convallis."
+        },
+        {
+            icon: f2,
+            title: "Project Management",
+            desc: "Borem ipsum dolor sit amet consectetur. Turpis tristique nulla posuere et amet arcu dictum ultricies convallis."
+        },
+        {
+            icon: f3,
+            title: "Audio Upload & Import",
+            desc: "Borem ipsum dolor sit amet consectetur. Turpis tristique nulla posuere et amet arcu dictum ultricies convallis."
+        },
+        {
+            icon: f4,
+            title: "Sound Library",
+            desc: "Borem ipsum dolor sit amet consectetur. Turpis tristique nulla posuere et amet arcu dictum ultricies convallis."
+        },
+        {
+            icon: f5,
+            title: "Easy Sharing",
+            desc: "Borem ipsum dolor sit amet consectetur. Turpis tristique nulla posuere et amet arcu dictum ultricies convallis."
+        },
+        {
+            icon: f6,
+            title: "Mobile Experience",
+            desc: "Borem ipsum dolor sit amet consectetur. Turpis tristique nulla posuere et amet arcu dictum ultricies convallis."
+        }
+    ];
     return (
-        <div>
+        <>
             <div className="sticky top-0 z-10">
                 <Header />
             </div>
@@ -113,7 +150,31 @@ const Home = () => {
                     </div>
                 </div>
             </div>
-        </div>
+
+            {/* Powerful features section start */}
+
+            <section className='container mx-auto p-0 px-2 py-2'>
+                    <div className="text-center">
+                        <p className='text-[#FFFFFF] font-bold text-lg sm:text-xl md:text-2xl lg:text-4xl'>Powerful features to help you manage all your leads</p>
+                        <p className='text-[#FFFFFF99] 3xl:w-[40%] 2xl:w-[62%] lg:w-[90%] mx-auto text-xs md:text-base text-center mt-2'>Apsum dolor sit amet consectetur. Aliquam elementum elementum in ultrices. Dui maecenas ut eros turpis ultrices metus morbi aliquet vel.</p>
+                    </div>
+                    
+                    <div className="flex flex-col items-center md:flex-row flex-wrap justify-center mt-12">
+                        {features.map((feature, idx) => (
+                            <div key={idx} className='w-full sm:w-full md:w-1/2 lg:w-1/3 p-3'>
+                                <div className="bg-[#1F1F1F] rounded-md p-8 flex flex-col items-center text-center">
+                                    <span className="mb-4"><img src={feature.icon} alt="" /></span>
+                                    <h3 className="text-white text-lg md:text-xl font-semibold mb-2">{feature.title}</h3>
+                                    <p className="text-white/70 text-sm">{feature.desc}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+            </section>
+
+            {/* Powerful features section end */}
+
+        </>
     )
 }
 
