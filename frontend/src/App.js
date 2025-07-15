@@ -8,6 +8,7 @@ import Alert from './Pages/Alert';
 import Login from './Pages/Login';
 import Layout from './components/Layout/Layout';
 import Home2 from './components/Home2';
+import Sound from './Pages/Sound';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -21,6 +22,7 @@ function App() {
         <Routes>
           <Route path='/' element={<Home />} />
           <Route path='/login' element={<Login />} />
+          <Route path='/sound' element={<Sound />} />
           <Route path="/layout" element={<Layout />} >
             <Route path='home2' element={<Home2 />} />
           </Route>
