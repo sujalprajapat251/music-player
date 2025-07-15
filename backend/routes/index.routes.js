@@ -4,6 +4,7 @@ const upload = require("../helper/uplodes");
 const { removeUser, updateUser, getUserById, getAllUsers, createNewUser, resetPassword } = require('../controller/user.controller');
 const { userLogin, googleLogin, forgotPassword, verifyOtp, changePassword, userLogout } = require('../auth/auth');
 const { auth } = require('../middleware/auth');
+const { createSound, getAllSounds, getSoundById, updateSound, deleteSound } = require('../controller/soundController');
 
 // auth Routes
 
@@ -22,5 +23,13 @@ indexRoutes.get('/getUserById/:id', getUserById);
 indexRoutes.put('/userUpdate/:id', upload.single("photo"), updateUser);
 indexRoutes.delete('/deleteUser/:id', removeUser);
 indexRoutes.put('/resetPassword', resetPassword);
+
+// sound Routes
+
+indexRoutes.post('/createSound', upload.fields([{ name: 'image'},{ name: 'soundfile' }]), createSound);
+indexRoutes.get('/allSounds', getAllSounds);
+indexRoutes.get('/getSoundById/:id', getSoundById);
+indexRoutes.put('/updateSound/:id', upload.fields([{ name: 'image'},{ name: 'soundfile' }]), updateSound);
+indexRoutes.delete('/deleteSound/:id', deleteSound);
 
 module.exports = indexRoutes
