@@ -21,3 +21,62 @@ body {
   /* border-image-source: linear-gradient(0deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)), linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0) 100%);
   border-image-slice: 1; */
 }
+.d_btn{
+  width: 45%;
+  padding: 12px 0;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  border: 1px solid;
+}
+.d_cancelbtn{
+  background-color: transparent;
+  border-color:#FFFFFF4D;
+  color: #fff;
+  transition: all 0.3s ease;
+}
+.d_createbtn{
+  background-color: #fff;
+  color: #141414;
+  transition: all 0.3s ease;
+}
+.d_deletebtn{
+  background-color: #FF0000;
+  color: #fff;
+  transition: all 0.3s ease;
+  border: none;
+}
+.d_btn.d_cancelbtn:hover {
+  background-color: #fff;
+  color: #141414;
+}
+
+.d_btn.d_createbtn:hover {
+  background-color: transparent;
+  color: #fff;
+  border-color:#FFFFFF4D;
+}
+
+.d_btn.d_deletebtn:hover {
+  background-color: #fff;
+  color: #141414;
+  border-color:#FFFFFF4D;
+}
+
+@media(max-width:425px){
+  .d_btn{
+    padding: 8px 0;
+  }
+}
+
+@media(max-width:320px){
+  .d_btn{
+    width: 43%;
+  }
+  .d_permanently{
+    font-size: 13px;
+  }
+  .d_permanentlyall{
+    font-size: 12px;
+  }
+}
