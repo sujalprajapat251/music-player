@@ -12,3 +12,9 @@
   background-color: transparent !important;
   border: 1px solid rgba(255, 255, 255, 0.6);
 }
+
+.d_customborder{
+  border: 1px solid #333333;
+  /* border-image-source: linear-gradient(0deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)), linear-gradient(180deg, #FFFFFF 0%, rgba(255, 255, 255, 0) 100%);
+  border-image-slice: 1; */
+}
