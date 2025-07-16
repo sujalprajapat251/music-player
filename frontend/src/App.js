@@ -9,6 +9,7 @@ import Login from './Pages/Login';
 import Layout from './components/Layout/Layout';
 import Home2 from './components/Home2';
 import Demoproject from './Pages/Demoproject';
+import Drum from './components/Drum';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -22,6 +23,8 @@ function App() {
         <Routes>
           <Route path='/' element={<Home />} />
           <Route path='/login' element={<Login />} />
+          <Route path='/drum' element={<Drum />} />
+
           <Route path="/layout" element={<Layout />} >
             <Route path='home2' element={<Home2 />} />
             <Route path='demo-project' element={<Demoproject />} />

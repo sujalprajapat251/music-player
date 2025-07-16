@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import profileimg from "../../Images/ProfileImg.svg";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
@@ -7,20 +7,30 @@ import subscription from "../../Images/subscriptionIcon.svg";
 import Logout from "../../Images/Logout.svg";
 import project from "../../Images/projectsIcon.svg";
 import Demo from "../../Images/DemoIcon.svg";
+import { useDispatch, useSelector } from 'react-redux';
+import { getUserById } from '../../Redux/Slice/user.slice';
 
 const Sidebar = () => {
 
+  const dispatch = useDispatch();
+
   const [activeItem, setActiveItem] = useState("Projects"); // default selected
+
+  const curruser = useSelector((state) => state.user.currUser);
+
+  useEffect(() => {
+    dispatch(getUserById());
+  }, [dispatch])
 
   return (
     <>
-      <div className="flex justify-between bg-[#FFFFFF1A] md:py-2 md:px-3 lg:py-3 lg:px-4 2xl:py-4 2xl:px-5 3xl:py-5 3xl:px-10" >
-        <div className="flex">
+      <div className="flex items-center justify-between bg-[#FFFFFF1A] md:py-2 md:px-3 lg:py-3 lg:px-4 2xl:py-4 2xl:px-5 3xl:py-5 3xl:px-10" >
+        <div className="flex items-center">
           <div className="V_profile_img ">
             <img src={profileimg} alt="profile img" className='w-[30px] h-[30px] lg:w-full' />
           </div>
           <div className="V_profile_name text-white md:ps-2 lg:ps-3 2xl:ps-3 3xl:ps-4 my-auto text-[14px] xl:text-[16px]">
-            Johan Patel
+            {curruser?.firstName} {curruser?.lastName}
           </div>
         </div>
         <div className='my-auto'>

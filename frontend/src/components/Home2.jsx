@@ -50,7 +50,6 @@ const Home2 = () => {
     }, []);
 
     const handlePlayPause = (index) => {
-        debugger
         if (playingIndex === index) {
             audioRefs.current[index].pause();
             setPlayingIndex(null);
@@ -102,7 +101,7 @@ const Home2 = () => {
 
                 <div className="flex mt-5 gap-10">
                     <div>
-                        <p className="text-white text-[24px]">Start a new project</p>
+                        <p className="text-white text-[24px] font-[600]">Start a new project</p>
                         <p className="text-white text-[16px]">Create a music or podcast project.</p>
                         <div className='flex bg-black mt-4 h-[200px] w-[250px] d_customborder items-center justify-center'>
                             <button className='border border-dashed border-white flex flex-col items-center justify-center group p-2 rounded-xl hover:bg-gray-900' >
@@ -117,7 +116,7 @@ const Home2 = () => {
                     <div>
                         <div className='flex justify-between'>
                             <div>
-                                <p className="text-white text-[24px]">Explore demo projects</p>
+                                <p className="text-white text-[24px] font-[600]">Explore demo projects</p>
                                 <p className="text-white text-[16px]">Play around with professionally-made songs.</p>
                             </div>
                             <div className='my-auto'>
