@@ -8,8 +8,12 @@ import Logout from "../../Images/Logout.svg";
 import project from "../../Images/projectsIcon.svg";
 import Demo from "../../Images/DemoIcon.svg";
 import { IoClose } from "react-icons/io5";
+import { useNavigate } from 'react-router-dom';
 
 const OffcanvasSidebar = ({ isOpen, onClose, activeItem, setActiveItem }) => {
+
+    const navigate = useNavigate();
+
     return (
         <>
             {/* Backdrop */}
@@ -97,7 +101,7 @@ const OffcanvasSidebar = ({ isOpen, onClose, activeItem, setActiveItem }) => {
                 <div
                     className={`flex border-l-4 px-4 py-3 cursor-pointer ${activeItem === "Projects" ? "border-[#fff] bg-[#2b2b2b]" : "border-[#1f1f1f]"
                         }`}
-                    onClick={() => setActiveItem("Projects")}
+                    onClick={() => { setActiveItem("Projects"); navigate('project') }}
                 >
                     <img src={project} alt="" />
                     <p className="text-white ps-3 font-semibold text-[14px]">Projects</p>
@@ -106,7 +110,7 @@ const OffcanvasSidebar = ({ isOpen, onClose, activeItem, setActiveItem }) => {
                 <div
                     className={`flex border-l-4 px-4 py-3 cursor-pointer ${activeItem === "Demo Projects" ? "border-[#fff] bg-[#2b2b2b]" : "border-[#1f1f1f]"
                         }`}
-                    onClick={() => setActiveItem("Demo Projects")}
+                    onClick={() => { setActiveItem("Demo Projects"); navigate('demo-project') }}
                 >
                     <img src={Demo} alt="" />
                     <p className="text-white ps-3 text-[14px] font-semibold">Demo Projects</p>

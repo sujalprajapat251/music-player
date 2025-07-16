@@ -5,10 +5,17 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getAllSound } from '../Redux/Slice/sound.slice';
 import { IMAGE_URL } from '../Utils/baseUrl';
 import play from '../Images/play.svg';
+import DeleteIcon from "../Images/deleteIcon.svg";
 import pause from '../Images/pause.svg';
+import folder from "../Images/folderIcon.svg";
+import rename from "../Images/renameIcon.svg";
+import RedDelete from "../Images/deleteRedIcon.svg"
 import { IoIosArrowDown } from "react-icons/io";
 import { FiSearch } from "react-icons/fi";
 import { BsThreeDotsVertical } from 'react-icons/bs';
+import { IoClose } from 'react-icons/io5';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
+import { getFolderByUserId, updateFolderName, deleteFolderById } from '../Redux/Slice/folder.slice';
 
 const Home2 = () => {
     const { openOffcanvas } = useOffcanvas();
@@ -21,6 +28,10 @@ const Home2 = () => {
     const [sortBy, setSortBy] = useState('Last updated');
     const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
     const sortDropdownRef = useRef(null);
+
+    const [editingFolderId, setEditingFolderId] = useState(null);
+    const [editingFolderName, setEditingFolderName] = useState('');
+
 
     const [activeSearch, setActiveSearch] = useState(false);
 
@@ -50,7 +61,6 @@ const Home2 = () => {
     }, []);
 
     const handlePlayPause = (index) => {
-        debugger
         if (playingIndex === index) {
             audioRefs.current[index].pause();
             setPlayingIndex(null);
@@ -79,6 +89,58 @@ const Home2 = () => {
     const toggleSortDropdown = () => {
         setIsSortDropdownOpen(!isSortDropdownOpen);
     };
+
+
+    useEffect(() => {
+        const userId = sessionStorage.getItem("userId");
+        if (userId) {
+            dispatch(getFolderByUserId(userId));
+        }
+    }, [dispatch]);
+
+    const folders = useSelector(state => state.folder.folders);
+    console.log('folder', folders);
+
+
+
+
+    const handleRenameClick = (folderId, currentName) => {
+        setEditingFolderId(folderId);
+        setEditingFolderName(currentName);
+    };
+
+    const handleRenameSubmit = async (folderId) => {
+        if (editingFolderName.trim() === '') return;
+
+        try {
+            await dispatch(updateFolderName({
+                folderId,
+                folderName: editingFolderName.trim()
+            })).unwrap();
+            setEditingFolderId(null);
+            setEditingFolderName('');
+        } catch (error) {
+            console.error('Error updating folder:', error);
+        }
+    };
+
+    const handleKeyPress = (e, folderId) => {
+        if (e.key === 'Enter') {
+            handleRenameSubmit(folderId);
+        }
+        if (e.key === 'Escape') {
+            setEditingFolderId(null);
+            setEditingFolderName('');
+        }
+    };
+
+
+    const handleDeleteClick = async (folderId) => {
+        await dispatch(deleteFolderById(folderId))
+    }
+
+
+
 
     return (
         <>
@@ -168,16 +230,23 @@ const Home2 = () => {
                     </div>
                     <div className="flex">
                         {activeSearch === true ?
-                            <p onClick={() =>setActiveSearch(false)}>search</p> :
+                            <div className='bg-[#FFFFFF0F]'>
+                                <div className="flex gap-5 py-2 px-5 justify-center">
+                                    <FiSearch className="text-white text-[24px]" />
+                                    <input type="text" className='outline-none border-0 bg-transparent text-white' placeholder="Lorem Ipsum" />
+                                    <IoClose size={24} className="text-white ms-auto" onClick={() => setActiveSearch(false)} />
+                                </div>
+                            </div>
+                            :
                             <>
                                 <div className='flex relative pe-2' ref={sortDropdownRef}>
                                     <button
                                         onClick={toggleSortDropdown}
-                                        className='flex items-center gap-2 text-white cursor-pointer hover:text-gray-300 transition-colors'
+                                        className='flex items-center gap-3 text-white cursor-pointer hover:text-gray-300 transition-colors'
                                     >
                                         <span>Sort by : {sortBy}</span>
                                         <IoIosArrowDown
-                                            className={`text-white transition-transform duration-300 ${isSortDropdownOpen ? 'rotate-180' : 'rotate-0'
+                                            className={`text-white transition-transform  duration-300 ${isSortDropdownOpen ? 'rotate-180' : 'rotate-0'
                                                 }`}
                                         />
                                     </button>
@@ -213,10 +282,91 @@ const Home2 = () => {
                             </>
                         }
                         <div className='my-auto px-3' >
-                            <BsThreeDotsVertical className="text-white text-[24px]" />
+                            <Menu as="div" className="relative inline-block text-left ">
+                                <div>
+                                    <MenuButton className="outline-none" >
+                                        <BsThreeDotsVertical className='text-white ' />
+                                    </MenuButton>
+                                </div>
+                                <MenuItems
+                                    transition
+                                    className="absolute right-0 md:mt-3 2xl:mt-3  z-30 w-40 2xl:w-60 origin-top-right  bg-[#1f1f1f] shadow-lg outline-none rounded-md"
+                                >
+                                    <div className="">
+                                        <MenuItem >
+                                            <p className="block md:px-5 lg:px-6 md:py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" >
+                                                <div className="flex">
+                                                    <img src={DeleteIcon} alt="" />
+                                                    <p className="text-white md:ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[14px] xl:text-[16px]">Recently Deleted</p>
+                                                </div>
+                                            </p>
+                                        </MenuItem>
+                                    </div>
+                                </MenuItems>
+                            </Menu>
+
                         </div>
                     </div>
                 </div>
+
+                {folders?.map((ele, index) => (
+                    <div key={ele._id} className="flex pt-5 ps-5 pe-2">
+                        <img src={folder} alt="" className='w-[30px] h-[30px]' />
+
+                        {/* Conditional rendering for folder name or input field */}
+                        {editingFolderId === ele._id ? (
+                            <input
+                                type="text"
+                                value={editingFolderName}
+                                onChange={(e) => setEditingFolderName(e.target.value)}
+                                onKeyDown={(e) => handleKeyPress(e, ele._id)}
+                                onBlur={() => handleRenameSubmit(ele._id)}
+                                className="text-white ps-5 bg-transparent my-auto outline-none"
+                                autoFocus
+                            />
+                        ) : (
+                            <p className="text-white ps-5 my-auto">{ele?.folderName}</p>
+                        )}
+
+                        <div className='ms-auto'>
+                            <Menu as="div" className="relative inline-block text-left ">
+                                <div>
+                                    <MenuButton className="outline-none" >
+                                        <BsThreeDotsVertical className='text-white text-[20px]' />
+                                    </MenuButton>
+                                </div>
+                                <MenuItems
+                                    transition
+                                    className="absolute right-0 md:mt-3 2xl:mt-3  z-30 w-40 2xl:w-44 origin-top-right  bg-[#1f1f1f] shadow-lg outline-none rounded-md"
+                                >
+                                    <div className="">
+                                        <MenuItem >
+                                            <p className="block md:px-5 lg:px-6 md:py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer"
+                                                onClick={() => handleRenameClick(ele._id, ele.folderName)}
+                                            >
+                                                <div className="flex">
+                                                    <img src={rename} alt="" />
+                                                    <p className="text-white md:ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[14px] xl:text-[16px]">Rename</p>
+                                                </div>
+                                            </p>
+                                        </MenuItem>
+                                        <MenuItem >
+                                            <p className="block md:px-5 lg:px-6 md:py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer"
+                                                onClick={() => handleDeleteClick(ele._id)}
+                                            >
+                                                <div className="flex">
+                                                    <img src={RedDelete} alt="" />
+                                                    <p className="text-[#FF0000] md:ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[14px] xl:text-[16px]">Delete</p>
+                                                </div>
+                                            </p>
+                                        </MenuItem>
+                                    </div>
+                                </MenuItems>
+                            </Menu>
+                        </div>
+                    </div>
+                ))}
+
             </div >
         </>
     );

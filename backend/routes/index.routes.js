@@ -5,6 +5,7 @@ const { removeUser, updateUser, getUserById, getAllUsers, createNewUser, resetPa
 const { userLogin, googleLogin, forgotPassword, verifyOtp, changePassword, userLogout } = require('../auth/auth');
 const { auth } = require('../middleware/auth');
 const { createSound, getAllSounds, getSoundById, updateSound, deleteSound } = require('../controller/soundController');
+const { createNewFolder, getFolderByUserId, updateFolderName, deleteFolderById } = require('../controller/folderController');
 
 // auth Routes
 
@@ -31,5 +32,12 @@ indexRoutes.get('/allSounds', getAllSounds);
 indexRoutes.get('/getSoundById/:id', getSoundById);
 indexRoutes.put('/updateSound/:id', upload.fields([{ name: 'image'},{ name: 'soundfile' }]), updateSound);
 indexRoutes.delete('/deleteSound/:id', deleteSound);
+
+// add folder Routes
+
+indexRoutes.post('/createFolder', auth, createNewFolder);
+indexRoutes.get('/getAllFolderByUserid/:userId', auth, getFolderByUserId);
+indexRoutes.put('/updateFolderById/:id', auth, updateFolderName);
+indexRoutes.delete('/deletefolderbyid/:id', auth, deleteFolderById);
 
 module.exports = indexRoutes

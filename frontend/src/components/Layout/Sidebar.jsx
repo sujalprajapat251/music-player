@@ -7,10 +7,13 @@ import subscription from "../../Images/subscriptionIcon.svg";
 import Logout from "../../Images/Logout.svg";
 import project from "../../Images/projectsIcon.svg";
 import Demo from "../../Images/DemoIcon.svg";
+import { useNavigate } from 'react-router-dom';
 
 const Sidebar = () => {
 
   const [activeItem, setActiveItem] = useState("Projects"); // default selected
+
+  const navigate = useNavigate();
 
   return (
     <>
@@ -71,14 +74,14 @@ const Sidebar = () => {
       </div>
 
       <div className={`flex border-l-4 md:px-4 md:py-2 lg:px-5 xl:py-3 xl:px-6 2xl:py-4 2xl:px-7 3xl:py-5 3xl:px-9 ${activeItem === "Projects" ? "border-[#fff] bg-[#2b2b2b]" : "border-[#1f1f1f]"}`}
-        onClick={() => setActiveItem("Projects")}
+        onClick={() => { setActiveItem("Projects"); navigate('project') }}
       >
         <img src={project} alt="" />
         <p className="text-white md:ps-2 lg:ps-3 3xl:ps-4 font-semibold text-[14px] xl:text-[16px]">Projects</p>
       </div>
 
       <div className={`flex border-l-4 md:px-4 md:py-2 lg:px-5 xl:py-3 xl:px-6  2xl:py-4 2xl:px-7 3xl:py-5 3xl:px-9 ${activeItem === "Demo Projects" ? "border-[#fff] bg-[#2b2b2b]" : "border-[#1f1f1f]"}`}
-        onClick={() => setActiveItem("Demo Projects")}
+        onClick={() => { setActiveItem("Demo Projects"); navigate('demo-project') }}
       >
         <img src={Demo} alt="" />
         <p className="text-white md:ps-2 lg:ps-3 3xl:ps-4  text-[14px] xl:text-[16px] font-semibold">Demo Projects</p>
