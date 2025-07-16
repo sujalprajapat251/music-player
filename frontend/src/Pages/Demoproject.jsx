@@ -2,12 +2,17 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { getAllSound } from '../Redux/Slice/sound.slice';
 import { IMAGE_URL } from '../Utils/baseUrl';
+import { useOffcanvas } from '../components/Layout/Layout';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import play from '../Images/play.svg';
 import pause from '../Images/pause.svg';
 import close from '../Images/close.svg';
+import { HiMenu } from "react-icons/hi";
 
 const Demoproject = () => {
+
+    const { openOffcanvas } = useOffcanvas();
+
     const dispatch = useDispatch();
     const sounds = useSelector((state) => state.sound.allsounds)
     const audioRefs = useRef([]);
@@ -18,7 +23,7 @@ const Demoproject = () => {
     const [restorepromodal, setRestoreProModal] = useState(false);
     const [permanentlypromodal, setPermanentlyProModal] = useState(false);
     const [restoreallpromodal, setRestoreAllProModal] = useState(false);
-    const [permanentlyallpromodal, setPermanentlyAllProModal] = useState(false); 
+    const [permanentlyallpromodal, setPermanentlyAllProModal] = useState(false);
 
     useEffect(() => {
         dispatch(getAllSound());
@@ -47,12 +52,50 @@ const Demoproject = () => {
 
     return (
         <>
-            <div className="min-h-screen bg-[#141414] p-8">
-                <h2 className='text-[30px] font-[600] text-[#fff] md:mb-[30px] mb-[15px]'>Demo projects</h2>
-                <h4 className='text-[24px] font-[600] text-[#fff] mb-[10px]'>Explore demo projects</h4>
-                <p className='text-sm font-[400] text-[#fff] mb-[20px]'>Explore curated demo projects showcasing our latest soundpacks.</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 3xl:grid-cols-7 gap-6">
-                    {/* Fixed: Removed duplicate sounds.map - kept only one */}
+            <div className=" bg-[#141414] p-8">
+                <div className='sticky top-0 left-0 bg-[#141414]'>
+                    <div className="flex gap-3 text-white items-center">
+                        <div className="md:hidden mb-4">
+                            <button
+                                onClick={openOffcanvas}
+                                className="flex items-center justify-center w-10 h-10 bg-[#2b2b2b] rounded-lg border border-[#FFFFFF1A] hover:bg-[#3b3b3b] transition-colors"
+                            >
+                                <HiMenu className="text-white text-xl" />
+                            </button>
+                        </div>
+                        <h2 className='text-[30px] font-[600] text-[#fff] md:mb-[30px] mb-[15px]'>Demo projects</h2>
+                    </div>
+                    <h4 className='text-[24px] font-[600] text-[#fff] mb-[10px]'>Explore demo projects</h4>
+                    <p className='text-sm font-[400] text-[#fff] mb-[20px]'>Explore curated demo projects showcasing our latest soundpacks.</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 3xl:grid-cols-7 gap-6 max-h-[70vh] overflow-auto d_customscrollbar">
+                    {sounds.map((sound, index) => (
+                        <div key={sound._id || index} className="bg-[#14141480] rounded-[4px] overflow-hidden d_customborder">
+                            <div className='w-full h-[160px]'>
+                                <img src={`${IMAGE_URL}uploads/image/${sound?.image}`} alt="Album" className="w-full h-full object-cover" />
+                            </div>
+                            <div className="py-[8px] px-[12px]">
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <h3 className="text-[#fff] font-[500] text-[16px] mb-[2px]">{sound?.soundname}</h3>
+                                        <p className="text-[#FFFFFF99] font-[400] text-[14px]">{sound?.soundtype}</p>
+                                    </div>
+                                    <button
+                                        onClick={() => handlePlayPause(index)}
+                                        className="bg-[#141414] text-black rounded-full w-[28px] h-[28px] flex justify-center items-center border-[0.5px] border-[#FFFFFF1A]"
+                                    >
+                                        <img src={playingIndex === index ? pause : play} alt="" />
+                                    </button>
+                                    <audio
+                                        ref={el => audioRefs.current[index] = el}
+                                        src={`${IMAGE_URL}uploads/soundfile/${sound?.soundfile}`}
+                                        onEnded={() => handleEnded(index)}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                     {sounds.map((sound, index) => (
                         <div key={sound._id || index} className="bg-[#14141480] rounded-[4px] overflow-hidden d_customborder">
                             <div className='w-full h-[160px]'>
@@ -269,7 +312,7 @@ const Demoproject = () => {
                     </div>
                 </div>
             </Dialog>
-            
+
         </>
     )
 }

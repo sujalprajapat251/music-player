@@ -11,6 +11,7 @@ import Home2 from './components/Home2';
 import Demoproject from './Pages/Demoproject';
 import ContactUs from './Pages/ContactUs';
 import Faqs from './Pages/Faqs';
+import Drum from './components/Drum';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -26,6 +27,8 @@ function App() {
           <Route path='contact' element={<ContactUs />} />
           <Route path='faqs' element={<Faqs />} />
           <Route path='/login' element={<Login />} />
+          <Route path='/drum' element={<Drum />} />
+
           <Route path="/layout" element={<Layout />} >
             <Route path='home2' element={<Home2 />} />
             <Route path='demo-project' element={<Demoproject />} />

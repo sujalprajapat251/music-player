@@ -53,9 +53,9 @@ const Layout = () => {
             activeItem,
             setActiveItem
         }}>
-            <div className='flex bg-[#141414] w-full h-screen relative'>
+            <div className='flex bg-[#141414] w-full max-h-[100vh] relative'>
                 {/* Desktop Sidebar */}
-                <div className="w-[22%] lg:w-[20%] xl:w-[17%] 2xl:w-[15%] border-r border-[#FFFFFF1A] hidden md:block">
+                <div className="w-[22%] lg:w-[20%] xl:w-[17%] 2xl:w-[15%] border-r border-[#FFFFFF1A] hidden md:block sticky top-0 left-0">
                     <Sidebar />
                 </div>
 
