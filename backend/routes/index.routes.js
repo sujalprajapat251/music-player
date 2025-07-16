@@ -5,6 +5,8 @@ const { removeUser, updateUser, getUserById, getAllUsers, createNewUser, resetPa
 const { userLogin, googleLogin, forgotPassword, verifyOtp, changePassword, userLogout } = require('../auth/auth');
 const { auth } = require('../middleware/auth');
 const { createSound, getAllSounds, getSoundById, updateSound, deleteSound } = require('../controller/soundController');
+const { createContact } = require('../controller/contactcontroller');
+const { getAllFaqs, createFaq } = require('../controller/faqsController');
 
 // auth Routes
 
@@ -31,5 +33,12 @@ indexRoutes.get('/allSounds', getAllSounds);
 indexRoutes.get('/getSoundById/:id', getSoundById);
 indexRoutes.put('/updateSound/:id', upload.fields([{ name: 'image'},{ name: 'soundfile' }]), updateSound);
 indexRoutes.delete('/deleteSound/:id', deleteSound);
+
+// contact form route
+indexRoutes.post('/contact', createContact);
+
+// FAQs route
+indexRoutes.post('/faqs', createFaq);
+indexRoutes.get('/view/faqs', getAllFaqs);
 
 module.exports = indexRoutes
