@@ -11,6 +11,10 @@ import f3 from "../Images/f3.svg"
 import f4 from "../Images/f4.svg"
 import f5 from "../Images/f5.svg"
 import f6 from "../Images/f6.svg"
+import mm1 from "../Images/mm-1.png"
+import mm2 from "../Images/mm2.png"
+import mm3 from "../Images/mm3.png"
+
 const Home = () => {
     const features = [
         {
@@ -153,7 +157,7 @@ const Home = () => {
 
             {/* Powerful features section start */}
 
-            <section className='container mx-auto p-0 px-2 py-2'>
+            <section className='container mx-auto p-0 px-2 py-6'>
                     <div className="text-center">
                         <p className='text-[#FFFFFF] font-bold text-lg sm:text-xl md:text-2xl lg:text-4xl'>Powerful features to help you manage all your leads</p>
                         <p className='text-[#FFFFFF99] 3xl:w-[40%] 2xl:w-[62%] lg:w-[90%] mx-auto text-xs md:text-base text-center mt-2'>Apsum dolor sit amet consectetur. Aliquam elementum elementum in ultrices. Dui maecenas ut eros turpis ultrices metus morbi aliquet vel.</p>
@@ -174,8 +178,67 @@ const Home = () => {
 
             {/* Powerful features section end */}
 
+            {/* Music maker resources section start */}
+
+            <section className='container mt-0 md:mt-10'>
+                <div className="text-center">
+                    <p className='text-[#FFFFFF] font-bold text-lg sm:text-xl md:text-2xl lg:text-4xl'>Music maker resources</p>
+                    <p className='text-[#FFFFFF99] 3xl:w-[40%] 2xl:w-[62%] lg:w-[90%] mx-auto text-xs md:text-base text-center mt-2'>Apsum dolor sit amet consectetur. Aliquam elementum elementum in ultrices. Dui maecenas ut eros turpis ultrices metus morbi aliquet vel.</p>
+                </div>
+                <div className="mm-box flex flex-col lg:flex-row gap-5 mt-5">
+                    <div className='w-full xl:w-1/3'>
+                        <div className="bg-[#1F1F1F] mm-box-1 p-5 md:p-7 text-center flex justify-center items-center flex-col rounded-lg h-full">
+                             <div className="mm-box-img w-full max-w-[300px] mx-auto">
+                                <img src={mm1} alt="" width="100%" />
+                            </div>
+                            <div className="mm-box-1-texts">
+                                <p className='text-[#F6F6F7] text-xl md:text-2xl lg:text-[30px] font-[500] mt-2 w-full md:w-[60%] mx-auto'>Perfect your mix with stellar effects</p>
+                                <p className='text-[#FFFFFF99] w-full md:w-[80%] mx-auto mt-2 text-xs md:text-base'>Prem ipsum dolor sit amet consectetur. Viverra sed dignissim risus aliquet condimentum. Vulputate varius feugiat egestas congue </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className='w-full xl:w-2/3 mt-5 lg:mt-0'>
+                        <div className="bg-[#1F1F1F] mm-box-1 px-5 md:px-7 pt-5 md:pt-7 text-center flex justify-center items-center flex-col rounded-lg h-full">
+                             <div className="mm-box-1-texts">
+                               <p className='text-[#F6F6F7] text-xl md:text-2xl lg:text-[30px] font-[500] mt-2'>Automation</p>
+                                <p className='text-[#FFFFFF99] mt-2 text-xs md:text-base'>Tellus et adipiscing sit sit mauris pharetra bibendum. Ligula massa netus nulla ultricies purus.</p>
+                             </div>
+                             <div className="mm-box-img w-full mx-auto mt-4 md:mt-8">
+                                <img src={mm2} alt="" width="100%" className='h-[250px] md:h-[400px] lg:h-[580px]' />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="mm-box-3 bg-[#1F1F1F] p-5 md:p-10 mt-5 rounded-lg">
+                    <div className="flex flex-col lg:flex-row items-center">
+                        <div className="mm-box-3-text flex flex-col justify-center ps-0 lg:ps-5 w-full lg:w-1/2 text-center lg:text-start mb-4 lg:mb-0">
+                            <p className='text-[#F6F6F7] text-xl md:text-2xl lg:text-[30px] w-full xl:w-[60%]'>Industry quality sounds, every 2 weeks</p>
+                            <p className='text-[#FFFFFF99] w-full xl:w-[60%] mx-auto lg:mx-0 mt-2 text-xs md:text-base'>Rorem ipsum dolor sit amet consectetur. Proin dignissim tortor mauris viverra sed volutpat mauris. Amet nisi amet commodo adipiscing ut imperdiet nunc.</p>
+                        </div>
+                        <div className='mm-box-3-img w-full lg:w-1/2 flex justify-center'>
+                            <img src={mm3} alt="" className="w-full" />
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Music maker resources section end */}
+
+            {/* Get started with SoundWave today! start */}
+
+            <section className='container mt-0 md:mt-10'>
+                <div className="gs-heading">
+                    <div className="text-center">
+                        <p className='text-[#FFFFFF] font-bold text-lg sm:text-xl md:text-2xl lg:text-4xl'>Get started with SoundWave today!</p>
+                        <p className='text-[#FFFFFF99] 3xl:w-[42%] 2xl:w-[62%] lg:w-[90%] mx-auto text-xs md:text-base text-center mt-2'>Discover endless creativity with PromptVerse. Generate diverse content effortlessly using prompts. Stay updated with real-time trends, automate tasks, and extract insights from any document or URL. All within a sleek, futuristic design. Create more, effortlessly.</p>
+                     </div>
+                </div>
+            </section>
+
+            {/* Get started with SoundWave today! end */}
+
         </>
     )
 }
 
-export default Home
+export default Home;
