@@ -6,6 +6,8 @@ const { userLogin, googleLogin, forgotPassword, verifyOtp, changePassword, userL
 const { auth } = require('../middleware/auth');
 const { createSound, getAllSounds, getSoundById, updateSound, deleteSound } = require('../controller/soundController');
 const { createNewFolder, getFolderByUserId, updateFolderName, deleteFolderById } = require('../controller/folderController');
+const { createContact } = require('../controller/contactcontroller');
+const { getAllFaqs, createFaq } = require('../controller/faqsController');
 
 // auth Routes
 
@@ -39,5 +41,11 @@ indexRoutes.post('/createFolder', auth, createNewFolder);
 indexRoutes.get('/getAllFolderByUserid/:userId', auth, getFolderByUserId);
 indexRoutes.put('/updateFolderById/:id', auth, updateFolderName);
 indexRoutes.delete('/deletefolderbyid/:id', auth, deleteFolderById);
+// contact form route
+indexRoutes.post('/contact', createContact);
+
+// FAQs route
+indexRoutes.post('/faqs', createFaq);
+indexRoutes.get('/view/faqs', getAllFaqs);
 
 module.exports = indexRoutes

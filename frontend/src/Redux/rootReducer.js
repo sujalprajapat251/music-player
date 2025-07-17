@@ -5,10 +5,14 @@ import userSlice from "./Slice/user.slice";
 import soundSlice from "./Slice/sound.slice";
 import folderSlice from "./Slice/folder.slice";
 
+import contactSlice from "./Slice/contact.slice";
+import faqsSlice from './Slice/faqs.slice'
 export const rootReducer = combineReducers({
     alert: alertSlice,
     auth: authSlice,
     user: userSlice,
     sound:soundSlice,
     folder:folderSlice
+    contact: contactSlice,
+    faqs: faqsSlice
 });

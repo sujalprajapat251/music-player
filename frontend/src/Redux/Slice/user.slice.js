@@ -127,9 +127,10 @@ export const removeUserProfilePic = createAsyncThunk(
 
 export const getUserById = createAsyncThunk(
     'users/getUserById',
-    async (id, { dispatch, rejectWithValue }) => {
+    async (_, { dispatch, rejectWithValue }) => {
         try {
             const token = await sessionStorage.getItem("token");
+            const id = await sessionStorage.getItem("userId");
             const response = await axios.get(`${BASE_URL}/getUserById/${id}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
