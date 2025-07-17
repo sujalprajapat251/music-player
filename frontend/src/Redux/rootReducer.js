@@ -12,7 +12,7 @@ export const rootReducer = combineReducers({
     auth: authSlice,
     user: userSlice,
     sound:soundSlice,
-    folder:folderSlice
+    folder:folderSlice,
     contact: contactSlice,
     faqs: faqsSlice
 });
