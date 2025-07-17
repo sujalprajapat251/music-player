@@ -12,6 +12,10 @@ import Demoproject from './Pages/Demoproject';
 import ContactUs from './Pages/ContactUs';
 import Faqs from './Pages/Faqs';
 import Drum from './components/Drum';
+import Pricing from './Pages/Pricing';
+import TearmsOfUse from './Pages/TearmsOfUse';
+import PrivacyPolicy from './Pages/PrivacyPolicy';
+import Animation from './components/Animation';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -26,6 +30,11 @@ function App() {
           <Route path='/' element={<Home />} />
           <Route path='contact' element={<ContactUs />} />
           <Route path='faqs' element={<Faqs />} />
+          <Route path='pricing' element={<Pricing />} />
+          <Route path='tearms' element={<TearmsOfUse />} />
+          <Route path='privacy' element={<PrivacyPolicy />} />
+          <Route path='ani' element={<Animation />} />
+
           <Route path='/login' element={<Login />} />
           <Route path='/drum' element={<Drum />} />
 

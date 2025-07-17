@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import Header from '../components/Header'
 import Accordion from '../components/Accordion';
 import { fetchFaqs } from '../Redux/Slice/faqs.slice';
+import Footer from '../components/Footer';
 
 const Faqs = () => {
   const dispatch = useDispatch();
@@ -28,6 +29,10 @@ const Faqs = () => {
         {!loading && !error && <Accordion items={faqItems} />}
       </section>
       {/* FAQs section end */}
+
+    {/* Footer section */}
+      <Footer />
+
     </>
   )
 }

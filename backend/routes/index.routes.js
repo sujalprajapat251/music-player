@@ -8,6 +8,7 @@ const { createSound, getAllSounds, getSoundById, updateSound, deleteSound } = re
 const { createNewFolder, getFolderByUserId, updateFolderName, deleteFolderById } = require('../controller/folderController');
 const { createContact } = require('../controller/contactcontroller');
 const { getAllFaqs, createFaq } = require('../controller/faqsController');
+const { addTerms, getTerms } = require('../controller/termsController');
 
 // auth Routes
 
@@ -47,5 +48,9 @@ indexRoutes.post('/contact', createContact);
 // FAQs route
 indexRoutes.post('/faqs', createFaq);
 indexRoutes.get('/view/faqs', getAllFaqs);
+
+// Terms routes
+indexRoutes.post('/terms', addTerms);
+indexRoutes.get('/view/terms', getTerms);
 
 module.exports = indexRoutes
