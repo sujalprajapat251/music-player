@@ -16,6 +16,7 @@ import Pricing from './Pages/Pricing';
 import TearmsOfUse from './Pages/TearmsOfUse';
 import PrivacyPolicy from './Pages/PrivacyPolicy';
 import Animation from './components/Animation';
+import Demo from './Pages/Demo';
 
 function App() {
   const { store, persistor } = configureStore();

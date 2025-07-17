@@ -16,6 +16,27 @@ const handleErrors = (error, dispatch, rejectWithValue) => {
   return rejectWithValue(error.response?.data || { message: errorMessage });
 };
 
+export const createFolder = createAsyncThunk(
+  "folder/createFolder",
+  async ({ userId, folderName }, { dispatch, rejectWithValue }) => {
+    try {
+      const token = await sessionStorage.getItem("token");
+      const response = await axios.post(`${BASE_URL}/createFolder`,
+        { userId, folderName },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      dispatch(setAlert({ text: response.data.message, color: 'success' }));
+      return response.data.newfolder;
+    } catch (error) {
+      return handleErrors(error, dispatch, rejectWithValue);
+    }
+  }
+);
+
 export const getFolderByUserId = createAsyncThunk(
   "folder/getFolderByUserId",
   async (userId, { dispatch, rejectWithValue }) => {
@@ -27,7 +48,6 @@ export const getFolderByUserId = createAsyncThunk(
         },
       });
 
-      console.log("Slice__________", response.data)
       return response.data.newAddFolder;
     } catch (error) {
       return handleErrors(error, dispatch, rejectWithValue);
@@ -86,6 +106,21 @@ const folderSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+      .addCase(createFolder.pending, (state) => {
+        state.loading = true;
+        state.message = 'Adding Folder...';
+      })
+      .addCase(createFolder.fulfilled, (state, action) => {
+        state.loading = false;
+        state.success = true;
+        state.folders.push(action.payload);
+        state.message = action.payload?.message || 'Folder added successfully';
+      })
+      .addCase(createFolder.rejected, (state, action) => {
+        state.loading = false;
+        state.success = false;
+        state.message = action.payload?.message || 'Failed to add Folder';
+      })
       .addCase(getFolderByUserId.pending, (state) => {
         state.loading = true;
         state.message = 'Fetching Sounds...';
