@@ -12,6 +12,7 @@ import Demoproject from './Pages/Demoproject';
 import ContactUs from './Pages/ContactUs';
 import Faqs from './Pages/Faqs';
 import Drum from './components/Drum';
+import Demo from './Pages/Demo';
 
 function App() {
   const { store, persistor } = configureStore();
