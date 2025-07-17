@@ -12,6 +12,8 @@ import Demoproject from './Pages/Demoproject';
 import ContactUs from './Pages/ContactUs';
 import Faqs from './Pages/Faqs';
 import Drum from './components/Drum';
+import TopHeader from './components/Layout/TopHeader';
+import Sidebar2 from './components/Sidebar2';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -33,6 +35,18 @@ function App() {
             <Route path='project' element={<Home2 />} />
             <Route path='demo-project' element={<Demoproject />} />
           </Route>
+
+
+
+
+
+
+          {/* <Route path='/top' element={<TopHeader />} /> */}
+          <Route path='/sidebar' element={<Sidebar2 />} >
+            
+          </Route >
+
+
         </Routes>
       </SnackbarProvider>
     </Provider>
