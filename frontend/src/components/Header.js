@@ -21,13 +21,13 @@ const Header = () => {
                             <Link to={'/'} onClick={() => setActive('Music')} className={`${active === 'Music' ? 'text-white' : 'text-white/40'} hover:text-white transition-colors duration-200 cursor-pointer`}>
                                 Music
                             </Link>
-                            <Link to={'/'} onClick={() => setActive('FAQs')} className={`${active === 'FAQs' ? 'text-white' : 'text-white/40'} hover:text-white transition-colors duration-200 cursor-pointer`}>
+                            <Link to={'/faqs'} onClick={() => setActive('FAQs')} className={`${active === 'FAQs' ? 'text-white' : 'text-white/40'} hover:text-white transition-colors duration-200 cursor-pointer`}>
                                 FAQs
                             </Link>
-                            <Link to={'/'} onClick={() => setActive('Pricing')} className={`${active === 'Pricing' ? 'text-white' : 'text-white/40'} hover:text-white transition-colors duration-200 cursor-pointer`}>
+                            <Link to={'/pricing'} onClick={() => setActive('Pricing')} className={`${active === 'Pricing' ? 'text-white' : 'text-white/40'} hover:text-white transition-colors duration-200 cursor-pointer`}>
                                 Pricing
                             </Link>
-                            <Link to={'/'} onClick={() => setActive('Contact')} className={`${active === 'Contact' ? 'text-white' : 'text-white/40'} hover:text-white transition-colors duration-200 cursor-pointer`}>
+                            <Link to={'/contact'} onClick={() => setActive('Contact')} className={`${active === 'Contact' ? 'text-white' : 'text-white/40'} hover:text-white transition-colors duration-200 cursor-pointer`}>
                                 Contact us
                             </Link>
                             <span className="text-white">|</span>
