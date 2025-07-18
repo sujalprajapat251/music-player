@@ -19,6 +19,7 @@ import TearmsOfUse from './Pages/TearmsOfUse';
 import PrivacyPolicy from './Pages/PrivacyPolicy';
 import Animation from './components/Animation';
 import Demo from './Pages/Demo';
+import Piano from './components/Piano';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -37,6 +38,7 @@ function App() {
           <Route path='tearms' element={<TearmsOfUse />} />
           <Route path='privacy' element={<PrivacyPolicy />} />
           <Route path='ani' element={<Animation />} />
+          <Route path='piano' element={<Piano />} />
 
           <Route path='/login' element={<Login />} />
           <Route path='/drum' element={<Drum />} />
