@@ -24,6 +24,15 @@ body {
   border-image-slice: 1; */
 }
 
+.main-price-month ul li {
+  list-style: none;
+}
+.main-price-month ul li::before {
+  content: '✓';
+  margin-right: 12px;
+  color: #FFFFFF;
+  font-size: 20px;
+}
 .d_btn {
   width: 45%;
   padding: 12px 0;

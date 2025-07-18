@@ -8,6 +8,7 @@ import play from '../Images/play.svg';
 import pause from '../Images/pause.svg';
 import close from '../Images/close.svg';
 import { HiMenu } from "react-icons/hi";
+import ThemeToggle from '../components/ThemeToggle';
 
 const Demoproject = () => {
 
@@ -124,7 +125,6 @@ const Demoproject = () => {
                     ))}
                 </div>
             </div>
-
             {/* New Folder Modal */}
             <Dialog open={addfoldermodal} onClose={setAddFolderModal} className="relative z-10">
                 <DialogBackdrop transition className="fixed backdrop-blur-sm inset-0 bg-black/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in" />

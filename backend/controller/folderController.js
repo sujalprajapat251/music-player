@@ -5,7 +5,7 @@ const mongoose = require("mongoose");
 
 const createNewFolder = async (req, res) => {
     try {
-      console.log("req", req.body);
+      // console.log("req", req.body);
       const { folderName } = req.body;
     //   const photo = req.file ? req.file.path : "";
   
@@ -21,7 +21,7 @@ const createNewFolder = async (req, res) => {
        folderName
       };
   
-      console.log("newFolderData: ", newFolderData);
+      // console.log("newFolderData: ", newFolderData);
      
   
       const newAddFolder = await newfolder.create(newFolderData);
