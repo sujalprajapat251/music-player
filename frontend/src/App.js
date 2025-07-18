@@ -19,6 +19,7 @@ import TearmsOfUse from './Pages/TearmsOfUse';
 import PrivacyPolicy from './Pages/PrivacyPolicy';
 import Animation from './components/Animation';
 import Demo from './Pages/Demo';
+import Pianodemo from './components/Pianodemo';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -40,6 +41,7 @@ function App() {
 
           <Route path='/login' element={<Login />} />
           <Route path='/drum' element={<Drum />} />
+          <Route path='/piano' element={<Pianodemo />} />
 
           <Route path="/layout" element={<Layout />} >
             <Route path='project' element={<Home2 />} />
