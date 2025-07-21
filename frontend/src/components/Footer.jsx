@@ -1,5 +1,5 @@
 import React from "react";
-
+import { Link } from 'react-router-dom';
 const Footer = () => {
   return (
     <>
@@ -10,10 +10,10 @@ const Footer = () => {
               <p className="text-[#FFFFFF] text-[32px] sm:text-[40px]">LOGO</p>
             </div>
             <div className="footer-manu text-[#FFFFFF66] mt-4 flex flex-wrap sm:gap-x-4 gap-y-2">
-              <span>Music</span>
-              <span>FAQs</span>
-              <span>Pricing</span>
-              <span>Contact us</span>
+              <Link to={"/"}>Music</Link>
+              <Link to={"/faqs"}>FAQs</Link>
+              <Link to={"/pricing"}>Pricing</Link>
+              <Link to={"/contact"}>Contact us</Link>
             </div>
           </div>
           <div className="w-full max-w-md mt-8 md:mt-0">
@@ -41,8 +41,8 @@ const Footer = () => {
             <p className="text-[#FFFFFF99]">©2025  All rights reserved.</p>
           </div>
           <div className="k-terms text-[#FFFFFF99] flex flex-wrap gap-x-8 gap-y-2 justify-center md:justify-end">
-            <span>Terms of use</span>
-            <span>Privacy Policy</span>
+            <Link to={"/tearms"}>Terms of use</Link>
+            <Link to={"/privacy"}>Privacy Policy</Link>
           </div>
         </div>
       </section>

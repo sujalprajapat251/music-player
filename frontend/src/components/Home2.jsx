@@ -20,6 +20,7 @@ import close from '../Images/close.svg';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Link } from 'react-router-dom';
+import NewProjectModel from './NewProjectModel';
 
 const Home2 = () => {
     const { openOffcanvas } = useOffcanvas();
@@ -36,6 +37,7 @@ const Home2 = () => {
     const [addfoldermodal, setAddFolderModal] = useState(false)
     const [editingFolderId, setEditingFolderId] = useState(null);
     const [editingFolderName, setEditingFolderName] = useState('');
+    const [newProjectModalOpen, setNewProjectModalOpen] = useState(false);
 
 
     const [activeSearch, setActiveSearch] = useState(false);
@@ -167,11 +169,11 @@ const Home2 = () => {
 
                 <div className='max-h-[80vh] overflow-auto d_customscrollbar'>
                     <div className="flex lg:mt-3 xl:mt-4 3xl:mt-5 xl:gap-8 2xl:gap-10 ">
-                        <div >
+                        <div>
                             <p className="text-white  lg:text-[18px] 2xl:text-[20px] 3xl:text-[24px] font-[600]">Start a new project</p>
                             <p className="text-white lg:text-[14px] 3xl:text-[15px] xl:text-nowrap">Create a music or podcast project.</p>
                             <div className='flex bg-black lg:mt-3 3xl:mt-4  xl:h-[180px] xl:w-[220px] 2xl:h-[180px] 2xl:w-[200px] 3xl:h-[200px] 3xl:w-[250px] d_customborder items-center justify-center'>
-                                <button className='border border-dashed border-white flex flex-col items-center justify-center group  lg:p-2 rounded-xl hover:bg-gray-900' >
+                                <button className='border border-dashed border-white flex flex-col items-center justify-center group  lg:p-2 rounded-xl hover:bg-gray-900' onClick={() => setNewProjectModalOpen(true)} >
                                     <p className="text-white xl:text-[24px]">+</p>
                                     <p className="text-white xl:text-[14px]">
                                         New Project
@@ -404,6 +406,7 @@ const Home2 = () => {
                 </div>
             </Dialog>
 
+            <NewProjectModel open={newProjectModalOpen} setOpen={setNewProjectModalOpen} />
 
         </>
     );

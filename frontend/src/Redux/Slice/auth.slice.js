@@ -135,15 +135,15 @@ const authSlice = createSlice({
     name: 'auth',
     initialState,
     reducers: {
-        // logout: (state, action) => {
-        //     state.user = null;
-        //     state.isAuthenticated = false;
-        //     state.loggedIn = false;
-        //     state.isLoggedOut = true;
-        //     state.message = action.payload?.message || "Logged out successfully";
-        //     window.localStorage.clear();
-        //     window.sessionStorage.clear();
-        // },
+        logout: (state, action) => {
+            state.user = null;
+            state.isAuthenticated = false;
+            state.loggedIn = false;
+            state.isLoggedOut = true;
+            state.message = action.payload?.message || "Logged out successfully";
+            window.localStorage.clear();
+            window.sessionStorage.clear();
+        },
         setauth: (state, action) => {
             state.isAuthenticated = action.payload;
         }

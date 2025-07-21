@@ -23,6 +23,12 @@ const userSchema = mongoose.Schema({
     },
     photo: {
         type: String,
+    },
+    mobile: {
+        type: String,
+    },
+    gender: {
+        type: String,
     }
 }, {
     timestamps: true,

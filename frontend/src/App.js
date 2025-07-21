@@ -21,6 +21,8 @@ import Animation from './components/Animation';
 import Demo from './Pages/Demo';
 import Pianodemo from './components/Pianodemo';
 import Piano from './components/Piano';
+import Profile from './Pages/Profile';
+import Timeline from './components/Timeline';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -45,8 +47,10 @@ function App() {
           <Route path='/drum' element={<Drum />} />
           <Route path='/pianox' element={<Pianodemo />} />
 
-          <Route path="/layout" element={<Layout />} >
-            <Route path='project' element={<Home2 />} />
+          <Route path="/" element={<Layout />} >
+          <Route path='project' element={<Home2 />} />
+          <Route path='profile' element={<Profile />} />
+          <Route path='timeline' element={<Timeline />} />
             <Route path='demo-project' element={<Demoproject />} />
           </Route>
 
