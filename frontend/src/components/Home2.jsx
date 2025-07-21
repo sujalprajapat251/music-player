@@ -147,8 +147,8 @@ const Home2 = () => {
 
     return (
         <>
-            <div className=" lg:p-5 xl:p-6 2xl:p-8 3xl:p-10 bg-[#141414]">
-                <div className="flex gap-3 text-white top-0 left-0 bg-[#141414] xl:pt-2 xl:py-2 2xl:pt-3 2xl:py-4">
+            <div className="p-3 lg:p-5 xl:p-6 2xl:p-8 3xl:p-10 bg-[#141414]">
+                <div className="flex gap-3 text-white top-0 left-0 bg-[#141414] xl:pt-2 xl:py-2 2xl:pt-3 2xl:py-4 ">
                     {/* Mobile Menu Button - Only visible on mobile */}
                     <div className="md:hidden mb-4">
                         <button
@@ -161,19 +161,19 @@ const Home2 = () => {
 
                     {/* Main Content */}
                     <div className="">
-                        <h1 className="lg:text-[20px] 2xl:text-[24px] 3xl:text-[30px] font-bold ">My Projects</h1>
+                        <h1 className="text-[16px] md:text-[18px] lg:text-[20px] 2xl:text-[24px] 3xl:text-[30px] font-bold pt-2 md:pt-0">My Projects</h1>
                     </div>
                 </div>
 
                 <div className='max-h-[80vh] overflow-auto d_customscrollbar'>
-                    <div className="flex lg:mt-3 xl:mt-4 3xl:mt-5 xl:gap-8 2xl:gap-10 ">
+                    <div className="flex flex-col md:flex-row mt-2 md:mt-2 lg:mt-3 xl:mt-4 3xl:mt-5 gap-3 md600:gap-5 md:gap-4 lg:gap-6  xl:gap-8 2xl:gap-10 ">
                         <div >
-                            <p className="text-white  lg:text-[18px] 2xl:text-[20px] 3xl:text-[24px] font-[600]">Start a new project</p>
-                            <p className="text-white lg:text-[14px] 3xl:text-[15px] xl:text-nowrap">Create a music or podcast project.</p>
-                            <div className='flex bg-black lg:mt-3 3xl:mt-4  xl:h-[180px] xl:w-[220px] 2xl:h-[180px] 2xl:w-[200px] 3xl:h-[200px] 3xl:w-[250px] d_customborder items-center justify-center'>
-                                <button className='border border-dashed border-white flex flex-col items-center justify-center group  lg:p-2 rounded-xl hover:bg-gray-900' >
-                                    <p className="text-white xl:text-[24px]">+</p>
-                                    <p className="text-white xl:text-[14px]">
+                            <p className="text-white text-[14px] md:text-[16px]  lg:text-[18px] 2xl:text-[20px] 3xl:text-[24px] font-[600]">Start a new project</p>
+                            <p className="text-white text-[12px] lg:text-[14px] 2xl:text-[14px] 3xl:text-[15px] lg:text-nowrap">Create a music or podcast project.</p>
+                            <div className='flex bg-black mt-3 md:mt-2 lg:mt-3 3xl:mt-4 h-[150px] md:w-[150px]  lg:h-[180px] lg:w-[220px] 2xl:h-[180px] 2xl:w-[200px] 3xl:h-[200px] 3xl:w-[250px] d_customborder items-center justify-center'>
+                                <button className='border border-dashed border-white flex flex-col items-center justify-center group p-2 md:p-1 xl:p-2 rounded-xl hover:bg-gray-900' >
+                                    <p className="text-white text-[16px] lg:text-[20px] xl:text-[24px]">+</p>
+                                    <p className="text-white text-[12px] xl:text-[14px] md:w-[60px] lg:w-full text-wrap lg:text-nowrap">
                                         New Project
                                     </p>
                                 </button>
@@ -182,35 +182,35 @@ const Home2 = () => {
                         <div>
                             <div className='flex justify-between'>
                                 <div>
-                                    <p className="text-white xl:text-[18px] 2xl:text-[20px] 3xl:text-[24px] font-[600]">Explore demo projects</p>
-                                    <p className="text-white 2xl:text-[14px] 3xl:text-[15px]">Play around with professionally-made songs.</p>
+                                    <p className="text-white text-[16px]  lg:text-[18px] 2xl:text-[20px] 3xl:text-[24px] font-[600]">Explore demo projects</p>
+                                    <p className="text-white text-[12px] lg:text-[14px] 2xl:text-[14px] 3xl:text-[15px] text-wrap w-[200px] sm:text-nowrap md:text-wrap md:w-[200px] lg:w-full  lg:text-nowrap">Play around with professionally-made songs.</p>
                                 </div>
                                 <div className='my-auto'>
                                     <Link to='/layout/demo-project'>
-                                        <button className='xl:py-2 xl:px-6 border rounded-3xl border-[#FFFFFF1A] hover:bg-gray-600'>
+                                        <button className='py-1 px-3 sm:px-4 xl:py-2 xl:px-6 border rounded-3xl border-[#FFFFFF1A] hover:bg-gray-600'>
                                             <p className='text-white'>Show all</p>
                                         </button>
                                     </Link>
                                 </div>
                             </div>
                             <div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 xl:gap-4 3xl:gap-6 xl:mt-3 3xl:mt-5">
+                                <div className="grid grid-cols-2 md600:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 md600:gap-4 md:gap-3 lg:gap-4 3xl:gap-6 mt-3 md:mt-2 lg:mt-3 3xl:mt-5">
                                     {sounds.map((sound, index) => (
                                         <div key={sound._id || index} className="bg-[#14141480] rounded-[4px] overflow-hidden d_customborder">
-                                            <div className='w-full xl:h-[125px] 2xl:h-[124px] 3xl:h-[135px]'>
+                                            <div className='w-full h-[105px] sm:h-[135px] md600:h-[105px] lg:h-[131px] xl:h-[125px] 2xl:h-[124px] 3xl:h-[135px]'>
                                                 <img src={`${IMAGE_URL}uploads/image/${sound?.image}`} alt="Album" className="w-full h-full object-cover" />
                                             </div>
-                                            <div className="xl:py-[6px] xl:px-[8px] 2xl:px-[10px] 3xl:py-[8px] 3xl:px-[12px]">
+                                            <div className="py-[4px] px-[4px] lg:py-[6px] lg:px-[8px] 2xl:px-[10px] 3xl:py-[8px] 3xl:px-[12px]">
                                                 <div className="flex justify-between items-center">
                                                     <div>
-                                                        <h3 className="text-[#fff] font-[500] 2xl:text-[14px] 3xl:text-[16px] mb-[2px]">{sound?.soundname}</h3>
-                                                        <p className="text-[#FFFFFF99] font-[400] text-[14px]">{sound?.soundtype}</p>
+                                                        <h3 className="text-[#fff] font-[500] text-[12px] sm:text-[14px] md:text-[12px] 2xl:text-[14px] 3xl:text-[16px] mb-[2px]">{sound?.soundname}</h3>
+                                                        <p className="text-[#FFFFFF99] font-[400] text-[10px] sm:text-[12px] md:text-[10px] xl:text-[14px]">{sound?.soundtype}</p>
                                                     </div>
                                                     <button
                                                         onClick={() => handlePlayPause(index)}
-                                                        className="bg-[#141414] text-black rounded-full w-[28px] h-[28px] flex justify-center items-center border-[0.5px] border-[#FFFFFF1A]"
+                                                        className="bg-[#141414] text-black rounded-full w-[20px] h-[20px] sm:w-[28px] sm:h-[28px] md:w-[24px] md:h-[24px] lg:w-[28px] lg:h-[28px] flex justify-center items-center border-[0.5px] border-[#FFFFFF1A]"
                                                     >
-                                                        <img src={playingIndex === index ? pause : play} alt="" />
+                                                        <img src={playingIndex === index ? pause : play} alt="" className='w-2 h-2 sm:w-3 sm:h-3' />
                                                     </button>
                                                     <audio
                                                         ref={el => audioRefs.current[index] = el}
@@ -228,29 +228,29 @@ const Home2 = () => {
                     </div>
 
 
-                    <div className='xl:mt-10 2xl:mt-12 3xl:mt-14 flex justify-between xl:pb-3  2xl:pb-4 3xl:pb-5 border-b border-[#FFFFFF1A]'>
+                    <div className='mt-4 md:mt-5 lg:mt-8 xl:mt-10 2xl:mt-12 3xl:mt-14 flex justify-between pb-2  md:pb-2 lg:pb-3  2xl:pb-4 3xl:pb-5 border-b border-[#FFFFFF1A]'>
                         <div className='my-auto'>
-                            <button className='xl:py-2 xl:px-6 border rounded-3xl border-[#FFFFFF1A] hover:bg-gray-600 cursor-pointer' onClick={() => setAddFolderModal(true)}>
-                                <p className='text-white'>+ Add Folder</p>
+                            <button className='py-1 px-2 md600:py-2 md600:px-5 md:py-1 md:px-4 lg:py-2 lg:px-6 border rounded-3xl border-[#FFFFFF1A] hover:bg-gray-600 cursor-pointer' onClick={() => setAddFolderModal(true)}>
+                                <p className='text-white text-[10px] sm:text-[12px] md600:text-[16px]'>+ Add Folder</p>
                             </button>
                         </div>
                         <div className="flex">
                             {activeSearch === true ?
                                 <div className='bg-[#FFFFFF0F]'>
-                                    <div className="flex xl:gap-4 2xl:gap-5 xl:py-2 xl:px-5 justify-center">
-                                        <FiSearch className="text-white xl:text-[24px]" />
-                                        <input type="text" className='outline-none border-0 bg-transparent text-white' placeholder="Search..." />
-                                        <IoClose size={24} className="text-white ms-auto cursor-pointer" onClick={() => setActiveSearch(false)} />
+                                    <div className="flex gap-1 sm:gap-2 md600:gap-4 md:gap-3 lg:gap-4 2xl:gap-5 py-1 px-2  sm:px-3 md600:py-2 md600:px-5 md:py-1 md:px-4 lg:py-2 lg:px-5 items-center justify-center">
+                                        <FiSearch className="text-white text-[14px] sm:text-[18px] md:text-[20px] lg:text-[24px]" />
+                                        <input type="text" className='outline-none w-32 sm:w-40 md:w-full text-[10px] sm:text-[12px] md600:text-[16px] md:text-[20px] border-0 bg-transparent text-white' placeholder="Search..." />
+                                        <IoClose  className="text-white ms-auto cursor-pointer sm:text-[18px] md:text-[20px] lg:text-[24px]" onClick={() => setActiveSearch(false)} />
                                     </div>
                                 </div>
                                 :
                                 <>
-                                    <div className='flex relative xl:pe-2' ref={sortDropdownRef}>
+                                    <div className='flex relative pe-2' ref={sortDropdownRef}>
                                         <button
                                             onClick={toggleSortDropdown}
-                                            className='flex items-center xl:gap-3 text-white cursor-pointer hover:text-gray-300 transition-colors'
+                                            className='flex items-center gap-2 md600:gap-3 text-white cursor-pointer hover:text-gray-300 transition-colors'
                                         >
-                                            <span>Sort by : {sortBy}</span>
+                                            <span className='text-[10px] sm:text-[12px] md600:text-[16px]'>Sort by : {sortBy}</span>
                                             <IoIosArrowDown
                                                 className={`text-white transition-transform  duration-300 ${isSortDropdownOpen ? 'rotate-180' : 'rotate-0'
                                                     }`}
@@ -259,20 +259,20 @@ const Home2 = () => {
 
                                         {/* Dropdown Menu */}
                                         {isSortDropdownOpen && (
-                                            <div className="absolute top-full right-0 xl:mt-2 bg-[#1F1F1F] rounded-lg shadow-lg z-10 min-w-[200px]">
+                                            <div className="absolute top-full right-0 md600:mt-2 bg-[#1F1F1F] rounded-lg shadow-lg z-10 min-w-[150px] md600:min-w-[200px]">
                                                 {sortOptions.map((option) => (
                                                     <div
                                                         key={option.value}
                                                         onClick={() => handleSortSelect(option)}
-                                                        className="flex items-center xl:px-3 xl:py-2 2xl:px-4 2xl:py-3 hover:bg-[#3b3b3b] cursor-pointer transition-colors"
+                                                        className="flex items-center py-1 px-2 sm:py-2 sm:px-3 md600:px-4 md600:py-3 md:px-3 md:py-2 2xl:px-4 2xl:py-3 hover:bg-[#3b3b3b] cursor-pointer transition-colors"
                                                     >
                                                         <div className="flex items-center">
-                                                            <div className={`xl:w-3 xl:h-3 2xl:w-4 2xl:h-4 border-2 rounded-full xl:mr-2 2xl:mr-3 flex items-center justify-center ${sortBy === option.value
+                                                            <div className={`w-3 h-3 md600:w-4 md600:h-4 md:w-3 md:h-3 2xl:w-4 2xl:h-4 border-2 rounded-full mr-2 md600:mr-3 md:mr-2 2xl:mr-3 flex items-center justify-center ${sortBy === option.value
                                                                 ? 'border-white'
                                                                 : 'border-[#FFFFFF40]'
                                                                 }`}>
                                                                 {sortBy === option.value && (
-                                                                    <div className="xl:w-1 xl:h-1 2xl:w-2 2xl:h-2 bg-white rounded-full"></div>
+                                                                    <div className="w-2 h-2 md:w-1 md:h-1 2xl:w-2 2xl:h-2 bg-white rounded-full"></div>
                                                                 )}
                                                             </div>
                                                             <span className="text-white text-sm">{option.label}</span>
@@ -282,28 +282,28 @@ const Home2 = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <div className='my-auto xl:px-2 2xl:px-3 cursor-pointer' onClick={() => setActiveSearch(true)}>
-                                        <FiSearch className="text-white xl:text-[20px] 2xl:text-[24px]" />
+                                    <div className='my-auto sm:px-2 md600:px-3 md:px-2 2xl:px-3 cursor-pointer' onClick={() => setActiveSearch(true)}>
+                                        <FiSearch className="text-white text-[14px] md600:text-[22px] md:text-[20px] 2xl:text-[24px]" />
                                     </div>
                                 </>
                             }
-                            <div className='my-auto xl:px-2 2xl:px-3' >
+                            <div className='my-auto px-2 md600:px-3 md:px-2 2xl:px-3' >
                                 <Menu as="div" className="relative inline-block text-left ">
                                     <div>
                                         <MenuButton className="outline-none" >
-                                            <BsThreeDotsVertical className='text-white  xl:text-[18px] 3xl:text-[20px]' />
+                                            <BsThreeDotsVertical className='text-white text-[12px] sm:text-[14px]  xl:text-[18px] 3xl:text-[20px]' />
                                         </MenuButton>
                                     </div>
                                     <MenuItems
                                         transition
-                                        className="absolute right-0 md:mt-3 2xl:mt-3  z-30 xl:w-52 2xl:w-60 origin-top-right  bg-[#1f1f1f] shadow-lg outline-none rounded-md"
+                                        className="absolute right-0 mt-2 md600:mt-3 2xl:mt-3  z-30 w-36 sm:w-48 xl:w-52 2xl:w-64 origin-top-right  bg-[#1f1f1f] shadow-lg outline-none rounded-md"
                                     >
                                         <div className="">
                                             <MenuItem >
-                                                <p className="block md:px-5 lg:px-6 md:py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" >
-                                                    <div className="flex">
-                                                        <img src={DeleteIcon} alt="" className='xl:w-4 xl:h-4 2xl:w-6 2xl:h-6' />
-                                                        <p className="text-white md:ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold xl:text-[14px] 2xl:text-[16px] ">Recently Deleted</p>
+                                                <p className="block  px-3 sm:px-4 md600:px-5  lg:px-6 py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" >
+                                                    <div className="flex items-center" >
+                                                        <img src={DeleteIcon} alt="" className='w-3 h-3 sm:w-3 sm:h-3 lg:w-4 lg:h-4 2xl:w-6 2xl:h-6' />
+                                                        <p className="text-white ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] sm:text-[14px] 2xl:text-[16px] ">Recently Deleted</p>
                                                     </div>
                                                 </p>
                                             </MenuItem>
@@ -316,38 +316,38 @@ const Home2 = () => {
                     </div>
 
                     {folders?.map((ele, index) => (
-                        <div key={ele._id} className="flex xl:pt-3 xl:ps-3 2xl:pt-4 2xl:ps-4 3xl:pt-5 3xl:ps-5 xl:pe-2">
-                            <img src={folder} alt="" className='xl:w-[30px] xl:h-[30px]' />
-                            <p className="text-white xl:ps-4 xl:ps-5 my-auto">{ele?.folderName}</p>
+                        <div key={ele._id} className="flex pt-2  md600:pt-3  lg:pt-3 ps-2 md600:ps-3 2xl:pt-4 2xl:ps-4 3xl:pt-5 3xl:ps-5 pe-2 md600:pe-3 md:pe-2 border-b border-[#FFFFFF1A] pb-2">
+                            <img src={folder} alt="" className='w-[16px] h-[16px] sm:w-[24px] sm:h-[24px] lg:w-[30px] lg:h-[30px] my-auto' />
+                            <p className="text-white ps-2 md600:ps-3 lg:ps-4  my-auto text-[12px] sm:text-[14px] md:text-[16px] ">{ele?.folderName}</p>
                             <div className='ms-auto'>
                                 <Menu as="div" className="relative inline-block text-left ">
                                     <div>
                                         <MenuButton className="outline-none" >
-                                            <BsThreeDotsVertical className='text-white xl:text-[18px] 3xl:text-[20px]' />
+                                            <BsThreeDotsVertical className='text-white text-[12px] sm:text-[14px] md600:text-[16px] lg:text-[18px] 3xl:text-[20px]' />
                                         </MenuButton>
                                     </div>
                                     <MenuItems
                                         transition
-                                        className="absolute right-0 md:mt-3 2xl:mt-3  z-30 w-40 2xl:w-44 origin-top-right  bg-[#1f1f1f] shadow-lg outline-none rounded-md"
+                                        className="absolute right-0 mt-2 md600:mt-3 2xl:mt-3  z-30 w-40 2xl:w-44 origin-top-right  bg-[#1f1f1f] shadow-lg outline-none rounded-md"
                                     >
                                         <div className="">
                                             <MenuItem >
-                                                <p className="block md:px-5 lg:px-6 md:py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer"
+                                                <p className="block px-4 py-1 md600:px-5 lg:px-6 md600:py-1  2xl:px-7 lg:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer"
                                                     onClick={() => handleRenameClick(ele._id, ele.folderName)}
                                                 >
-                                                    <div className="flex">
-                                                        <img src={rename} alt="" className='xl:w-4 xl:h-4 2xl:w-6 2xl:h-6' />
-                                                        <p className="text-white md:ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold xl:text-[14px] 2xl:text-[16px]">Rename</p>
+                                                    <div className="flex items-center" >
+                                                        <img src={rename} alt="" className=' w-3 h-3 md600:w-4 md600:h-4 2xl:w-6 2xl:h-6' />
+                                                        <p className="text-white ps-2  md600:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] md600:text-[14px] 2xl:text-[16px]">Rename</p>
                                                     </div>
                                                 </p>
                                             </MenuItem>
                                             <MenuItem >
-                                                <p className="block md:px-5 lg:px-6 md:py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer"
+                                                <p className="block px-4 py-1 md600:px-5 lg:px-6 md600:py-1  2xl:px-7 lg:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer"
                                                     onClick={() => handleDeleteClick(ele._id)}
                                                 >
-                                                    <div className="flex">
-                                                        <img src={RedDelete} alt="" className='xl:w-4 xl:h-4 2xl:w-6 2xl:h-6' />
-                                                        <p className="text-[#FF0000] md:ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold xl:text-[14px] 2xl:text-[16px]">Delete</p>
+                                                    <div className="flex items-center">
+                                                        <img src={RedDelete} alt="" className='w-3 h-3 md600:w-4 md600:h-4 2xl:w-6 2xl:h-6' />
+                                                        <p className="text-[#FF0000] ps-2 md600:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] md600:text-[14px] 2xl:text-[16px]">Delete</p>
                                                     </div>
                                                 </p>
                                             </MenuItem>
@@ -357,6 +357,7 @@ const Home2 = () => {
                             </div>
                         </div>
                     ))}
+                    
                 </div>
             </div>
 
