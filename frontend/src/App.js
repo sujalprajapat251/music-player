@@ -43,14 +43,12 @@ function App() {
 
           <Route path='/login' element={<Login />} />
           <Route path='/drum' element={<Drum />} />
-          <Route path='/piano' element={<Pianodemo />} />
+          <Route path='/pianox' element={<Pianodemo />} />
 
           <Route path="/layout" element={<Layout />} >
             <Route path='project' element={<Home2 />} />
             <Route path='demo-project' element={<Demoproject />} />
           </Route>
-
-
 
 
 
