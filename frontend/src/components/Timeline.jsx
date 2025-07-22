@@ -1,9 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
-import WaveSurfer from 'wavesurfer.js';
-import { Player, start } from 'tone';
-import * as d3 from 'd3';
-
-const TimelineTrack = ({ url, onReady, zoom }) => {
+import React, { useEffect, useRef, useState } from "react";
+import WaveSurfer from "wavesurfer.js";
+import { Player, start } from "tone";
+import * as d3 from "d3";
+const TimelineTrack = ({ url, onReady, color }) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
 
@@ -12,133 +11,292 @@ const TimelineTrack = ({ url, onReady, zoom }) => {
 
     wavesurfer.current = WaveSurfer.create({
       container: waveformRef.current,
-      waveColor: '#999',
-      progressColor: '#555',
+      waveColor: "#ffffff",
+      progressColor: "#ffffff",
       height: 80,
       barWidth: 2,
       responsive: true,
-      minPxPerSec: zoom
+      minPxPerSec: 50, // fixed value
     });
 
     wavesurfer.current.load(url);
-    wavesurfer.current.on('ready', () => {
+    wavesurfer.current.on("ready", () => {
       onReady(wavesurfer.current);
     });
 
     return () => wavesurfer.current.destroy();
-  }, [url, zoom]);
+  }, [url]);
 
-  return <div ref={waveformRef} />;
+  return (
+    <div ref={waveformRef} style={{ background: color, borderRadius: 8, marginBottom: 8 }} />
+  );
 };
 
 const Timeline = () => {
   const [players, setPlayers] = useState([]);
   const [waveSurfers, setWaveSurfers] = useState([]);
-  const [zoom, setZoom] = useState(50); // default zoom level
   const [audioDuration, setAudioDuration] = useState(10); // default, will update after load
+  const [currentTime, setCurrentTime] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const svgRef = useRef(null);
+  const timelineContainerRef = useRef(null);
+  const playbackStartRef = useRef({ systemTime: 0, audioTime: 0 });
 
   const tracks = [
-    // { id: 1, url: require('../Audio/simple1.mp3') },
-    { id: 2, url: require('../Audio/simple2.mp3') },
+    { id: 2, url: require('../Audio/simple2.mp3'), color: "#FFB6C1" },
+    { id: 3, url: require('../Audio/simple1.mp3'), color: "#B6FFB1" },
+    // Add more tracks with different colors
   ];
 
   const handleReady = (wavesurfer, url) => {
     fetch(url)
-      .then(res => res.arrayBuffer())
-      .then(arrayBuffer => {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      .then((res) => res.arrayBuffer())
+      .then((arrayBuffer) => {
+        const audioContext = new (window.AudioContext ||
+          window.webkitAudioContext)();
         return audioContext.decodeAudioData(arrayBuffer);
       })
-      .then(audioBuffer => {
+      .then((audioBuffer) => {
         const player = new Player(audioBuffer).toDestination();
-        setPlayers(prev => [...prev, player]);
+        setPlayers((prev) => [...prev, player]);
       });
   };
 
-  const handlePlay = async () => {
+  const handlePlayPause = async () => {
     await start();
-    players.forEach((player) => {
-      player.start();
-    });
+
+    if (isPlaying) {
+      // Pause
+      players.forEach((player) => player.stop());
+      setIsPlaying(false);
+    } else {
+      // Play
+      setIsPlaying(true);
+      players.forEach((player) => {
+        player.start(undefined, currentTime);
+      });
+      playbackStartRef.current = {
+        systemTime: Date.now(),
+        audioTime: currentTime,
+      };
+    }
   };
 
-  const handleRulerClick = (event) => {
-    const svgRect = svgRef.current.getBoundingClientRect();
-    const x = event.clientX - svgRect.left;
+  const renderRuler = () => {
+    const svg = d3.select(svgRef.current);
+    const svgNode = svgRef.current;
+    const width = svgNode ? svgNode.clientWidth : 600;
+    const axisY = 60; // Move baseline lower
+    const duration = audioDuration;
+
+    svg.selectAll("*").remove();
+
+    // Draw ticks and labels
+    const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
+    const labelInterval = 2; // Show label every 2 seconds (adjust as needed)
+    for (let sec = 0; sec <= duration; sec++) {
+      const x = xScale(sec);
+      const isLabeled = sec % labelInterval === 0;
+
+      // Ticks go upward from the baseline
+      svg
+        .append("line")
+        .attr("x1", x)
+        .attr("y1", axisY)
+        .attr("x2", x)
+        .attr("y2", axisY - (isLabeled ? 20 : 10))
+        .attr("stroke", "white")
+        .attr("stroke-width", 1);
+
+      // Labels above the baseline, centered
+      if (isLabeled) {
+        const minutes = Math.floor(sec / 60);
+        const seconds = Math.floor(sec % 60);
+        const label = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+        svg
+          .append("text")
+          .attr("x", x + 4) // 4px right of the tick for spacing
+          .attr("y", axisY - 5) // just above the baseline, inside the box
+          .attr("fill", "white")
+          .attr("font-size", 14)
+          .attr("text-anchor", "start") // left-aligned
+          .text(label);
+      }
+    }
+
+    // Draw horizontal baseline at the bottom
+    svg
+      .append("line")
+      .attr("x1", 0)
+      .attr("y1", axisY)
+      .attr("x2", width)
+      .attr("y2", axisY)
+      .attr("stroke", "white")
+      .attr("stroke-width", 1);
+  };
+
+  useEffect(() => {
+    let animationFrameId;
+
+    if (isPlaying) {
+      const updateLoop = () => {
+        const elapsedTime =
+          (Date.now() - playbackStartRef.current.systemTime) / 1000;
+        const newTime = playbackStartRef.current.audioTime + elapsedTime;
+
+        if (newTime >= audioDuration) {
+          setIsPlaying(false);
+          setCurrentTime(audioDuration);
+          players.forEach((player) => {
+            player.stop();
+          });
+        } else {
+          setCurrentTime(newTime);
+          animationFrameId = requestAnimationFrame(updateLoop);
+        }
+      };
+
+      animationFrameId = requestAnimationFrame(updateLoop);
+    }
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [isPlaying, audioDuration, players]);
+
+  useEffect(() => {
+    renderRuler();
+  }, [audioDuration, currentTime]);
+
+  const isDragging = useRef(false);
+
+  const handleMouseDown = (e) => {
+    isDragging.current = true;
+    movePlayhead(e);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging.current) return;
+    movePlayhead(e);
+  };
+
+  const handleMouseUp = () => {
+    isDragging.current = false;
+  };
+
+  const movePlayhead = (e) => {
+    const svgRect = timelineContainerRef.current.getBoundingClientRect();
+    const x = e.clientX - svgRect.left;
     const width = svgRect.width;
     const duration = audioDuration;
-    const time = (x / width) * duration;
+    let time = (x / width) * duration;
+    time = Math.max(0, Math.min(duration, time)); // Clamp to [0, duration]
+    setCurrentTime(time);
 
+    // Seek all wavesurfer instances
     waveSurfers.forEach(ws => {
       if (ws && ws.seekTo) {
         ws.seekTo(time / ws.getDuration());
       }
     });
+
+    // If audio is playing, start playback from new position
+    if (isPlaying) {
+      players.forEach((player) => {
+        if (player && player.stop && player.start) {
+          player.stop();
+          player.start(undefined, time);
+        }
+      });
+      playbackStartRef.current = {
+        systemTime: Date.now(),
+        audioTime: time,
+      };
+    }
   };
-
-  const renderRuler = (zoomLevel) => {
-    const svg = d3.select(svgRef.current);
-    const svgNode = svgRef.current;
-    const width = svgNode ? svgNode.clientWidth : 600;
-    const axisY = 35;
-    const duration = audioDuration;
-
-    let tickInterval;
-    if (zoomLevel > 100) tickInterval = 0.1; // Show milliseconds
-    else if (zoomLevel > 50) tickInterval = 0.5;
-    else tickInterval = 1; // Show seconds
-
-    const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
-    const axis = d3.axisBottom(xScale)
-      .ticks(duration / tickInterval)
-      .tickFormat((d) => tickInterval < 1 ? `${(d * 1000).toFixed(0)}ms` : `${d}s`);
-
-    svg.selectAll('*').remove();
-    svg.append('g')
-      .attr('transform', `translate(0, ${axisY})`)
-      .call(axis)
-      .selectAll('text')
-      .attr('fill', 'white');
-
-    svg.selectAll('path, line')
-      .attr('stroke', 'white');
-  };
-
-  useEffect(() => {
-    renderRuler(zoom);
-  }, [zoom, audioDuration]);
 
   return (
-    <div style={{ padding: '20px', color: 'white', background: 'transparent' }}>
-      <h2 style={{ color: 'white' }}>🎵 Music Timeline Demo</h2>
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-        <button onClick={() => setZoom(zoom + 20)} style={{ background: '#444', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px' }}>🔍 Zoom In</button>
-        <button onClick={() => setZoom(zoom > 20 ? zoom - 20 : zoom)} style={{ background: '#444', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px' }}>🔎 Zoom Out</button>
-      </div>
-      <svg
-        ref={svgRef}
-        width="100%"
-        height={100}
-        style={{ color: 'white', cursor: 'pointer', width: '100%' }}
-        onClick={handleRulerClick}
-      ></svg>
-      {tracks.map((track) => (
-        <TimelineTrack
-          key={track.id}
-          url={track.url}
-          zoom={zoom}
-          onReady={(ws) => {
-            handleReady(ws, track.url);
-            setWaveSurfers(prev => [...prev, ws]);
-            // Update duration if this track is longer
-            const dur = ws.getDuration();
-            setAudioDuration(prev => Math.max(prev, dur));
+    <div style={{ padding: "20px", color: "white", background: "transparent" }}>
+      <h2 style={{ color: "white" }}>🎵 Music Timeline Demo</h2>
+      <div
+        ref={timelineContainerRef}
+        style={{ position: "relative", cursor: "pointer" }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        <svg
+          ref={svgRef}
+          width="100%"
+          height={100}
+          style={{ color: "white", width: "100%" }}
+        ></svg>
+
+        {tracks.map((track) => (
+          <TimelineTrack
+            key={track.id}
+            url={track.url}
+            color={track.color}
+            onReady={(ws) => {
+              handleReady(ws, track.url);
+              setWaveSurfers((prev) => [...prev, ws]);
+              const dur = ws.getDuration();
+              setAudioDuration((prev) => Math.max(prev, dur));
+            }}
+          />
+        ))}
+
+        {/* Playhead Element */}
+        <div
+          style={{
+            position: "absolute",
+            left: `${(currentTime / audioDuration) * 100}%`,
+            top: 40,
+            bottom: 0,
+            width: "2px",
+            pointerEvents: "none",
+            zIndex: 10,
           }}
-        />
-      ))}
-      <button onClick={handlePlay} style={{ marginTop: '20px', color: 'white', background: '#333', border: 'none', padding: '10px 20px', borderRadius: '6px' }}>
-        ▶️ Play All
+        >
+          {/* Handle */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: "-8px",
+              width: "18px",
+              height: "18px",
+              background: "#AD00FF",
+              borderRadius: "3px",
+              border: "1px solid #fff",
+            }}
+          ></div>
+          {/* Line */}
+          <div
+            style={{
+              position: "absolute",
+              top: "18px",
+              left: 0,
+              bottom: 0,
+              width: "2px",
+              background: "#AD00FF",
+            }}
+          ></div>
+        </div>
+      </div>
+      <button
+        onClick={handlePlayPause}
+        style={{
+          marginTop: "20px",
+          color: "white",
+          background: "#333",
+          border: "none",
+          padding: "10px 20px",
+          borderRadius: "6px",
+        }}
+      >
+        {isPlaying ? "⏸️ Pause" : "▶️ Play All"}
       </button>
     </div>
   );
