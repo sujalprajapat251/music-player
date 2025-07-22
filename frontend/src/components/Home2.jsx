@@ -172,7 +172,7 @@ const Home2 = () => {
                         <div >
                             <p className="text-white text-[14px] md:text-[16px]  lg:text-[18px] 2xl:text-[20px] 3xl:text-[24px] font-[600]">Start a new project</p>
                             <p className="text-white text-[12px] lg:text-[14px] 2xl:text-[14px] 3xl:text-[15px] lg:text-nowrap">Create a music or podcast project.</p>
-                            <div className='flex bg-black mt-3 md:mt-2 lg:mt-3 3xl:mt-4 h-[150px] md:w-[150px]  lg:h-[180px] lg:w-[220px] 2xl:h-[180px] 2xl:w-[200px] 3xl:h-[200px] 3xl:w-[250px] d_customborder items-center justify-center'>
+                            <div className='flex bg-black mt-3 md:mt-2 lg:mt-3 3xl:mt-4 h-[150px] md:w-[150px]  lg:h-[180px] lg:w-[220px] 2xl:h-[180px] 2xl:w-[200px] 3xl:h-[200px] 3xl:w-[250px] d_customborder items-center justify-center' onClick={() => setNewProjectModalOpen(true)} >
                                 <button className='border border-dashed border-white flex flex-col items-center justify-center group p-2 md:p-1 xl:p-2 rounded-xl hover:bg-gray-900' >
                                     <p className="text-white text-[16px] lg:text-[20px] xl:text-[24px]">+</p>
                                     <p className="text-white text-[12px] xl:text-[14px] md:w-[60px] lg:w-full text-wrap lg:text-nowrap">
@@ -188,7 +188,7 @@ const Home2 = () => {
                                     <p className="text-white text-[12px] lg:text-[14px] 2xl:text-[14px] 3xl:text-[15px] text-wrap w-[200px] sm:text-nowrap md:text-wrap md:w-[200px] lg:w-full  lg:text-nowrap">Play around with professionally-made songs.</p>
                                 </div>
                                 <div className='my-auto'>
-                                    <Link to='/layout/demo-project'>
+                                    <Link to='/demo-project'>
                                         <button className='py-1 px-3 sm:px-4 xl:py-2 xl:px-6 border rounded-3xl border-[#FFFFFF1A] hover:bg-gray-600'>
                                             <p className='text-white'>Show all</p>
                                         </button>
