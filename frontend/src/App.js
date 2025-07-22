@@ -23,6 +23,7 @@ import Pianodemo from './components/Pianodemo';
 import Piano from './components/Piano';
 import Profile from './Pages/Profile';
 import Timeline from './components/Timeline';
+import { ThemeProvider } from './Utils/ThemeContext';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -48,9 +49,9 @@ function App() {
           <Route path='/pianox' element={<Pianodemo />} />
 
           <Route path="/" element={<Layout />} >
-          <Route path='project' element={<Home2 />} />
-          <Route path='profile' element={<Profile />} />
-          <Route path='timeline' element={<Timeline />} />
+            <Route path='project' element={<Home2 />} />
+            <Route path='profile' element={<Profile />} />
+            <Route path='timeline' element={<Timeline />} />
             <Route path='demo-project' element={<Demoproject />} />
           </Route>
 
@@ -58,9 +59,11 @@ function App() {
 
 
           {/* <Route path='/top' element={<TopHeader />} /> */}
-          <Route path='/sidebar' element={<Sidebar2 />} >
-              
-          </Route >
+          
+            <Route path='/sidebar' element={<ThemeProvider><Sidebar2 /></ThemeProvider>} >
+
+            </Route >
+          
 
 
         </Routes>

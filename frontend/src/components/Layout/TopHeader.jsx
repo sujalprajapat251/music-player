@@ -15,40 +15,27 @@ import previous from "../../Images/previousVersion.svg";
 import exports from "../../Images/export.svg";
 import imports from "../../Images/import.svg";
 import shareproject from "../../Images/shareproject.svg";
+import { useTheme } from '../../Utils/ThemeContext';
 
 const TopHeader = () => {
 
-    const [isDark, setIsDark] = useState(true);
     const [isActiveMenu, setIsActiveMenu] = useState("");
     const [showSubmenu, setShowSubmenu] = useState(false);
 
+    const { isDark, setIsDark } = useTheme();
 
-    useEffect(() => {
-      document.documentElement.classList.add('dark');
-    }, []);
-    
-    const toggleTheme = () => {
-      setIsDark((prev) => {
-        const newIsDark = !prev;
-        if (newIsDark) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-        return newIsDark;
-      });
-    };
+    const toggleTheme = () => setIsDark((prev) => !prev);
 
 
     return (
         <>
             <div className="flex justify-between bg-primary-light dark:bg-primary-dark border-b border-[#1414141A] dark:border-[#FFFFFF1A] px-2 py-2 sm:px-3 sm:py-1 md:px-5 md:py-2 xl:px-7">
                 <div className="flex gap-1 sm:gap-2 md:gap-3 lg:gap-5 xl:gap-7 items-center">
-                    <p className="text-white text-[12px] md:text-[14px] lg:text-[16px] xl:text-[18px]">LOGO</p>
+                    <p className="text-secondary-light dark:text-secondary-dark text-[12px] md:text-[14px] lg:text-[16px] xl:text-[18px]">LOGO</p>
                     <Menu as="div" className="relative inline-block text-left ">
                         <div onClick={() => setIsActiveMenu("button")}>
                             <MenuButton className="outline-none" >
-                                <p className='text-white text-[10px] md:text-[12px] lg:text-[14px]'> File </p>
+                                <p className='text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] lg:text-[14px]'> File </p>
                             </MenuButton>
                         </div>
 
@@ -170,8 +157,8 @@ const TopHeader = () => {
                     </Menu >
 
                     {/* <p className="text-white text-[10px] md:text-[12px] lg:text-[14px]">File</p> */}
-                    < p className="text-white text-[10px] md:text-[12px] lg:text-[14px]" > Edit</p >
-                    <p className="text-white text-[10px] md:text-[12px] lg:text-[14px]">Setting</p>
+                    < p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] lg:text-[14px]" > Edit</p >
+                    <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] lg:text-[14px]">Setting</p>
                     <PiArrowBendUpLeftBold className="text-[#5a5a5a] md:text-[16px] lg:text-[20px] xl:text-[26px] hidden md600:block" />
                     <PiArrowBendUpRightBold className="text-[#5a5a5a] md:text-[16px] lg:text-[20px] xl:text-[26px] hidden md600:block" />
                 </div >

@@ -188,7 +188,7 @@ const Home2 = () => {
                                     <p className="text-white text-[12px] lg:text-[14px] 2xl:text-[14px] 3xl:text-[15px] text-wrap w-[200px] sm:text-nowrap md:text-wrap md:w-[200px] lg:w-full  lg:text-nowrap">Play around with professionally-made songs.</p>
                                 </div>
                                 <div className='my-auto'>
-                                    <Link to='/layout/demo-project'>
+                                    <Link to='/demo-project'>
                                         <button className='py-1 px-3 sm:px-4 xl:py-2 xl:px-6 border rounded-3xl border-[#FFFFFF1A] hover:bg-gray-600'>
                                             <p className='text-white'>Show all</p>
                                         </button>
