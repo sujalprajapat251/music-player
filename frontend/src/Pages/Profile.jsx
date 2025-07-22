@@ -330,7 +330,7 @@ const Profile = () => {
           </div>
 
           {/* Display current status */}
-          {message && (
+          {/* {message && (
             <div
               className={`mt-4 p-3 rounded ${
                 success
@@ -340,7 +340,7 @@ const Profile = () => {
             >
               {message}
             </div>
-          )}
+          )} */}
         </form>
       </div>
     </section>

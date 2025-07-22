@@ -8,26 +8,14 @@ import media4 from "../../Images/media4Icon.svg";
 import Strange from "../../Images/StrangeIcon.svg";
 import darkStrange from "../../Images/darkStrangeIcon.svg";
 import { IoIosArrowDown } from 'react-icons/io';
+import { useTheme } from '../../Utils/ThemeContext';
 
 const BottomToolbar = () => {
     const [volume, setVolume] = useState(50);
     const [isIconDropdownOpen, setIsIconDropdownOpen] = useState(false);
 
-    const useIsDark = () => {
-        const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
-        useEffect(() => {
-            const observer = new MutationObserver(() => {
-                setIsDark(document.documentElement.classList.contains('dark'));
-            });
-            observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-            return () => observer.disconnect();
-        }, []);
-        return isDark;
-    }
 
-    const isDark = useIsDark();
-
-
+    const { isDark } = useTheme();
 
     return (
         <>
