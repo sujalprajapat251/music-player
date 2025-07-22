@@ -7,15 +7,20 @@ import subscription from "../../Images/subscriptionIcon.svg";
 import Logout from "../../Images/Logout.svg";
 import project from "../../Images/projectsIcon.svg";
 import Demo from "../../Images/DemoIcon.svg";
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getUserById } from '../../Redux/Slice/user.slice';
+import { IMAGE_URL } from '../../Utils/baseUrl';
+import LogOut from '../LogOut';
+import PricingModel from '../PricingModel';
 
 const Sidebar = () => {
 
   const dispatch = useDispatch();
 
   const [activeItem, setActiveItem] = useState("Projects"); // default selected
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [pricingModalOpen, setPricingModalOpen] = useState(false);
 
   const navigate = useNavigate();
   const curruser = useSelector((state) => state.user.currUser);
@@ -24,12 +29,18 @@ const Sidebar = () => {
     dispatch(getUserById());
   }, [dispatch])
 
+  // Determine which image to show
+  let userProfileImg = profileimg;
+  if (curruser && curruser.photo) {
+    userProfileImg = IMAGE_URL + curruser.photo;
+  }
+
   return (
     <>
       <div className="flex items-center justify-between bg-[#FFFFFF1A] md:py-2 md:px-3 lg:py-3 lg:px-4 2xl:py-4 2xl:px-5 3xl:py-5 3xl:px-10" >
         <div className="flex items-center">
           <div className="V_profile_img ">
-            <img src={profileimg} alt="profile img" className='w-[30px] h-[30px] lg:w-full' />
+            <img src={userProfileImg} alt="profile img" className='w-[30px] h-[30px] lg:w-full rounded-full object-cover' onError={e => { e.target.src = profileimg; }} />
           </div>
           <div className="V_profile_name text-white md:ps-2 lg:ps-3 2xl:ps-3 3xl:ps-4 my-auto text-[14px] xl:text-[16px]">
             {curruser?.firstName} {curruser?.lastName}
@@ -48,15 +59,18 @@ const Sidebar = () => {
             >
               <div className="">
                 <MenuItem >
-                  <p className="block md:px-5 lg:px-6 md:py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" >
+                  <Link to={"/profile"} className="block md:px-5 lg:px-6 md:py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" >
                     <div className="flex">
                       <img src={profile} alt="" />
                       <p className="text-white md:ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[14px] xl:text-[16px]">Profile</p>
                     </div>
-                  </p>
+                  </Link>
                 </MenuItem>
                 <MenuItem >
-                  <p className="block md:px-5 lg:px-6 md:py-1 2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3  hover:bg-gray-800 cursor-pointer" >
+                  <p
+                    className="block md:px-5 lg:px-6 md:py-1 2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3  hover:bg-gray-800 cursor-pointer"
+                    onClick={() => setPricingModalOpen(true)}
+                  >
                     <div className="flex">
                       <img src={subscription} alt="" />
                       <p className="text-white md:ps-2 lg:ps-3 xl:ps-3 3xl:ps-4 font-semibold text-[14px] xl:text-[16px]">Subscription</p>
@@ -64,10 +78,13 @@ const Sidebar = () => {
                   </p>
                 </MenuItem>
                 <MenuItem >
-                  <p className="block md:px-5 lg:px-6 md:py-1 2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" >
+                  <p
+                    className="block md:px-5 lg:px-6 md:py-1 2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer"
+                    onClick={() => setLogoutModalOpen(true)}
+                  >
                     <div className="flex">
                       <img src={Logout} alt="" />
-                      <p className=" text-[#FF0000] md:ps-2 lg:ps-3 xl:ps-3 3xl:ps-4 font-semibold text-[14px] xl:text-[16px]">Logout</p>
+                      <p className=" text-[#FF0000] md:ps-2 lg:ps-3 xl:ps-3 3xl:ps-4 font-semibold text-[14px] xl:text-[16px]">logout</p>
                     </div>
                   </p>
                 </MenuItem>
@@ -95,6 +112,9 @@ const Sidebar = () => {
         <img src={Demo} alt="" />
         <p className="text-white md:ps-2 lg:ps-3 3xl:ps-4  text-[14px] xl:text-[16px] font-semibold">Demo Projects</p>
       </div>
+
+      <LogOut logoutModalOpen={logoutModalOpen} setLogoutModalOpen={setLogoutModalOpen} />
+      <PricingModel pricingModalOpen={pricingModalOpen} setPricingModalOpen={setPricingModalOpen} />
 
     </>
   )

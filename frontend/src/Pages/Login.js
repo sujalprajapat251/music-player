@@ -363,7 +363,7 @@ const Login = () => {
                         googleLogin({ uid, firstName, lastName, email })
                       ).then((response) => {
                         console.log(response);
-                        if (response.payload.success) navigate("/home");
+                        if (response.payload.success) navigate("/project");
                       });
                     }}
                     onFailure={console.error}

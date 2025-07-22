@@ -20,6 +20,7 @@ import close from '../Images/close.svg';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Link } from 'react-router-dom';
+import NewProjectModel from './NewProjectModel';
 
 const Home2 = () => {
     const { openOffcanvas } = useOffcanvas();
@@ -36,6 +37,7 @@ const Home2 = () => {
     const [addfoldermodal, setAddFolderModal] = useState(false)
     const [editingFolderId, setEditingFolderId] = useState(null);
     const [editingFolderName, setEditingFolderName] = useState('');
+    const [newProjectModalOpen, setNewProjectModalOpen] = useState(false);
 
 
     const [activeSearch, setActiveSearch] = useState(false);
@@ -405,6 +407,7 @@ const Home2 = () => {
                 </div>
             </Dialog>
 
+            <NewProjectModel open={newProjectModalOpen} setOpen={setNewProjectModalOpen} />
 
         </>
     );
