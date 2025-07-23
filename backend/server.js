@@ -4,13 +4,15 @@ const connectDb = require('./db/db');
 const cors = require('cors')
 const path = require('path')
 const indexRoutes = require('./routes/index.routes');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const port = process.env.PORT || 4000
 
 app.use(express.json())
+app.use(cookieParser());
 app.use(cors({
-    origin: '*',
+    origin: 'http://localhost:3000',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true

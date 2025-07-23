@@ -235,6 +235,7 @@ const Login = () => {
                     email: "",
                     password: "",
                     showPassword: false,
+                    rememberMe: false,
                   }}
                   validationSchema={signInSchema}
                   onSubmit={(values) => {
@@ -306,6 +307,9 @@ const Login = () => {
                         <label className="flex items-center cursor-pointer">
                           <input
                             type="checkbox"
+                            name="rememberMe"
+                            checked={values.rememberMe}
+                            onChange={handleChange}
                             className="w-4 h-4 text-red-500 bg-transparent border-white/20 rounded-[2px] j_checkBox"
                           />
                           <span className="ml-2 text-xs md:text-sm text-gray-300">
