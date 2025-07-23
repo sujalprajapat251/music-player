@@ -29,6 +29,9 @@ const userSchema = mongoose.Schema({
     },
     gender: {
         type: String,
+    },
+    refreshToken:{
+        type:String
     }
 }, {
     timestamps: true,
