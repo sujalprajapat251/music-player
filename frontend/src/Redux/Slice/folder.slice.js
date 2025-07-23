@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import { BASE_URL } from "../../Utils/baseUrl";
 import { setAlert } from "./alert.slice";
+import axiosInstance from "../../Utils/axiosInstance";
 
 const initialStateUsers = {
   folders: [],
@@ -21,7 +22,7 @@ export const createFolder = createAsyncThunk(
   async ({ userId, folderName }, { dispatch, rejectWithValue }) => {
     try {
       const token = await sessionStorage.getItem("token");
-      const response = await axios.post(`${BASE_URL}/createFolder`,
+      const response = await axiosInstance.post(`${BASE_URL}/createFolder`,
         { userId, folderName },
         {
           headers: {
@@ -42,7 +43,7 @@ export const getFolderByUserId = createAsyncThunk(
   async (userId, { dispatch, rejectWithValue }) => {
     try {
       const token = await sessionStorage.getItem("token");
-      const response = await axios.get(`${BASE_URL}/getAllFolderByUserid/${userId}`, {
+      const response = await axiosInstance.get(`${BASE_URL}/getAllFolderByUserid/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -62,7 +63,7 @@ export const updateFolderName = createAsyncThunk(
   async ({ folderId, folderName }, { dispatch, rejectWithValue }) => {
     try {
       const token = await sessionStorage.getItem("token");
-      const response = await axios.put(`${BASE_URL}/updateFolderById/${folderId}`,
+      const response = await axiosInstance.put(`${BASE_URL}/updateFolderById/${folderId}`,
         { folderName },
         {
           headers: {
@@ -86,7 +87,7 @@ export const deleteFolderById = createAsyncThunk(
   async (folderId, { dispatch, rejectWithValue }) => {
     try {
       const token = await sessionStorage.getItem("token");
-      const response = await axios.delete(`${BASE_URL}/deletefolderbyid/${folderId}`, {
+      const response = await axiosInstance.delete(`${BASE_URL}/deletefolderbyid/${folderId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

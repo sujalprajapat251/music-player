@@ -6,7 +6,7 @@ const nodemailer = require("nodemailer");
 
 exports.userLogin = async (req, res) => {
   try {
-    let { email, password } = req.body;
+    let { email, password, rememberMe } = req.body;
 
     let checkEmailIsExist = await user.findOne({ email });
 
@@ -36,21 +36,80 @@ exports.userLogin = async (req, res) => {
       await checkEmailIsExist.save(); // Save the updated user
     }
 
-    let token = await jwt.sign(
+    let accessToken = await jwt.sign(
       { _id: checkEmailIsExist._id },
       process.env.SECRET_KEY,
-      { expiresIn: "1D" }
+      { expiresIn: "2m" }
     );
 
-    return res.status(200).json({
-      success: true,
-      message: "User Login SuccessFully...",
-      user: checkEmailIsExist,
-      token: token,
-    });
+    let refreshToken
+    if (rememberMe) {
+      refreshToken = jwt.sign(
+        { _id: checkEmailIsExist._id },
+        process.env.REFRESH_SECRET_KEY,
+        { expiresIn: '5m' }
+      );
+
+      checkEmailIsExist.refreshToken = refreshToken;
+      await checkEmailIsExist.save();
+
+    }
+    console.log("access",accessToken)
+    console.log("refreshtoekn",refreshToken)
+
+    return res.status(200)
+      .cookie("accessToken", accessToken, { httpOnly: true, secure: false, sameSite: "Lax", maxAge: 120 })
+      .cookie("refreshToken", refreshToken, { httpOnly: true, secure: false, sameSite: "Lax", maxAge: 5 * 60 * 1000 })
+      .json({
+        success: true,
+        message: "User Login SuccessFully...",
+        user: checkEmailIsExist,
+        token: accessToken,
+      });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ status: 500, message: error.message });
+  }
+};
+
+exports.refreshAccessToken = async (req, res) => {
+  try {
+      const { refreshToken } = req.cookies;
+
+      if (!refreshToken) return res.status(404).json({ message: 'No Refresh Token' });
+      
+      // Verify token
+      const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET_KEY);
+      const existingUser = await user.findById(decoded._id);
+
+      console.log("---------------",existingUser,decoded)  
+
+      const accessToken = await jwt.sign(
+          {_id: existingUser._id},
+          process.env.SECRET_KEY,
+          { expiresIn: '2m' }
+      );
+
+      const refreshToken1 = await jwt.sign(
+          {_id: existingUser._id},
+          process.env.REFRESH_SECRET_KEY,
+          { expiresIn: '5m' }
+      );
+
+      existingUser.refreshToken = refreshToken1;
+      await existingUser.save({ validateBeforeSave: false });
+
+      return res.status(200)
+          .cookie("accessToken", accessToken, { httpOnly: true, secure: false, sameSite: "Lax", maxAge: 120 })
+          .cookie("refreshToken", refreshToken1, { httpOnly: true, secure: false, sameSite: "Lax", maxAge: 5 * 60 * 1000 })
+          .json({
+              status: 200,
+              message: "User Login SuccessFully...",
+              user: existingUser,
+              token: accessToken
+          });
+  } catch (err) {
+      return res.status(403).json({ message: 'Refresh Failed', error: err.message });
   }
 };
 
