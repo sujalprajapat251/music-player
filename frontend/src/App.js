@@ -51,21 +51,12 @@ function App() {
           <Route path="/" element={<Layout />} >
             <Route path='project' element={<Home2 />} />
             <Route path='profile' element={<Profile />} />
-            <Route path='timeline' element={<Timeline />} />
             <Route path='demo-project' element={<Demoproject />} />
           </Route>
 
-
-
-
-          {/* <Route path='/top' element={<TopHeader />} /> */}
-          
-            <Route path='/sidebar' element={<ThemeProvider><Sidebar2 /></ThemeProvider>} >
-
-            </Route >
-          
-
-
+            <Route path='/' element={<ThemeProvider><Sidebar2 /></ThemeProvider>} >
+                <Route path='timeline' element={<Timeline />} />
+            </Route>
         </Routes>
       </SnackbarProvider>
     </Provider>

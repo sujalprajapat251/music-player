@@ -8,6 +8,7 @@ import folderSlice from "./Slice/folder.slice";
 import contactSlice from "./Slice/contact.slice";
 import faqsSlice from './Slice/faqs.slice'
 import termsSlice from './Slice/terms.slice';
+import studioReducer from './Slice/studio.slice';
 export const rootReducer = combineReducers({
     alert: alertSlice,
     auth: authSlice,
@@ -16,5 +17,6 @@ export const rootReducer = combineReducers({
     folder:folderSlice,
     contact: contactSlice,
     faqs: faqsSlice,
-    terms: termsSlice
+    terms: termsSlice,
+    studio: studioReducer,
 });

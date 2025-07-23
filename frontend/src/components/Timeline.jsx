@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import WaveSurfer from "wavesurfer.js";
 import { Player, start } from "tone";
 import * as d3 from "d3";
+import { useSelector } from 'react-redux';
+import { setTracks, addTrack } from '../Redux/Slice/studio.slice';
+
 const TimelineTrack = ({ url, onReady, color }) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
@@ -42,11 +45,7 @@ const Timeline = () => {
   const timelineContainerRef = useRef(null);
   const playbackStartRef = useRef({ systemTime: 0, audioTime: 0 });
 
-  const tracks = [
-    { id: 2, url: require('../Audio/simple2.mp3'), color: "#FFB6C1" },
-    { id: 3, url: require('../Audio/simple1.mp3'), color: "#B6FFB1" },
-    // Add more tracks with different colors
-  ];
+  const tracks = useSelector((state) => state.studio.tracks);
 
   const handleReady = (wavesurfer, url) => {
     fetch(url)
