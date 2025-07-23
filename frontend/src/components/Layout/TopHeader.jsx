@@ -34,10 +34,14 @@ import tick from "../../Images/Tick.svg";
 import songsections from "../../Images/sondsections.svg";
 import language from "../../Images/language.svg";
 import { useTheme } from '../../Utils/ThemeContext';
+import theme from "../../Images/themes.svg";
 
 const TopHeader = () => {
 
     const [isActiveMenu, setIsActiveMenu] = useState("");
+    const [isLowLatency, setIsLowLatency] = useState(false);
+    const [isLowLatency1, setIsLowLatency1] = useState(false);
+    const [isLowLatency2, setIsLowLatency2] = useState(false);
 
     // Add state for selected sound quality
     const [selectedSoundQuality, setSelectedSoundQuality] = useState('High');
@@ -86,16 +90,48 @@ const TopHeader = () => {
         { id: 'Nederlands', label: 'Nederlands' },
         { id: 'Norsk', label: 'Norsk' },
         { id: 'Polski', label: 'Polski' },
+        { id: 'Português', label: 'Português' },
+        { id: 'Português(Brasil)', label: 'Português(Brasil)' },
+        { id: 'Русский язык', label: 'Русский язык' },
+        { id: 'Svenska', label: 'Svenska' },
         { id: 'low', label: 'Low' },
-        { id: 'extralow', label: 'Extra Low' },
-        { id: 'high', label: 'High' },
-        { id: 'medium', label: 'Medium' },
-        { id: 'low', label: 'Low' },
-        { id: 'extralow', label: 'Extra Low' }
+        { id: 'Türkçe', label: 'Türkçe' }
     ];
 
     const handleLanguage = (languageId, LanguageName) => {
         setSelectedLanguage(LanguageName);
+        // Close all submenus
+        setShowSubmenu(prev => ({
+            ...prev,
+            soundquality: false
+        }));
+        // Reset active menu to close the main menu
+        setIsActiveMenu("");
+        // Use setTimeout to ensure the click event is processed first
+        setTimeout(() => {
+            // Programmatically trigger ESC key to close Headless UI menu
+            document.dispatchEvent(new KeyboardEvent('keydown', {
+                key: 'Escape',
+                code: 'Escape',
+                keyCode: 27,
+                which: 27,
+                bubbles: true
+            }));
+        }, 10);
+    };
+
+
+    const [selectedtheme, setSelectedtheme] = useState('Dark Theme');
+
+
+    // Define sound quality options
+    const themesOptions = [
+        { id: 'Dark Theme', label: 'Dark Theme' },
+        { id: 'Light Theme', label: 'Light Theme' }
+    ]
+
+    const handlethemesSelect = (qualityId, qualityLabel) => {
+        setSelectedtheme(qualityLabel);
         // Close all submenus
         setShowSubmenu(prev => ({
             ...prev,
@@ -173,6 +209,7 @@ const TopHeader = () => {
     const toggleTheme = () => setIsDark((prev) => !prev);
 
 
+
     return (
         <>
             <div className="flex justify-between bg-primary-light dark:bg-primary-dark border-b border-[#1414141A] dark:border-[#FFFFFF1A] px-2 py-2 sm:px-3 sm:py-1 md:px-5 md:py-2 xl:px-7">
@@ -186,7 +223,7 @@ const TopHeader = () => {
                         </div>
 
                         <Menu.Items
-                            className="absolute left-0 z-10 mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60   origin-top-right bg-[#1F1F1F] shadow-lg outline-none"
+                            className="absolute left-[-20px] sm:left-0 z-10 mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60   origin-top-right bg-[#1F1F1F] shadow-lg outline-none"
                         >
                             <div className="">
                                 {/* First item: Print */}
@@ -215,7 +252,7 @@ const TopHeader = () => {
                                     </div>
 
                                     {showSubmenu.openrecentfolder && (
-                                        <div className="absolute left-full top-0 z-50 w-40 lg:mt-0 bg-[#3f3d3d] shadow-lg outline-none text-nowrap">
+                                        <div className="absolute left-full top-0 z-50 w-36 md600:w-40 lg:mt-0 bg-[#3f3d3d] shadow-lg outline-none text-nowrap">
                                             <p className="block px-2 py-1   md600:px-3 lg:px-4 md:py-2 text-white cursor-pointer hover:bg-[#585858] text-[10px] md600:text-[12px] lg:text-[14px]" onClick={handleNestedOptionClick}>
                                                 Page navigator
                                             </p>
@@ -291,8 +328,6 @@ const TopHeader = () => {
                         </Menu.Items>
                     </Menu >
 
-                    {/* <p className="text-white text-[10px] md:text-[12px] lg:text-[14px]">File</p> */}
-                    {/* < p className="text-white text-[10px] md:text-[12px] lg:text-[14px]" > Edit</p > */}
                     <Menu as="div" className="relative inline-block text-left ">
                         <div>
                             <MenuButton className="outline-none" >
@@ -374,8 +409,6 @@ const TopHeader = () => {
                         </Menu.Items>
                     </Menu >
 
-
-                    {/* <p className="text-white text-[10px] md:text-[12px] lg:text-[14px]">Setting</p> */}
                     <Menu as="div" className="relative inline-block text-left ">
                         <div >
                             <MenuButton className="outline-none" >
@@ -384,10 +417,9 @@ const TopHeader = () => {
                         </div>
 
                         <Menu.Items
-                            className="absolute left-0 z-10 mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60   origin-top-right bg-[#1F1F1F] shadow-lg outline-none"
+                            className="absolute left-[-60px] sm:left-0 z-10 mt-2 lg:mt-3 w-40 sm:w-44 md600:w-48 lg:w-60   origin-top-right bg-[#1F1F1F] shadow-lg outline-none"
                         >
                             <div className="">
-                                {/* First item: Print */}
                                 <Menu.Item>
                                     {({ active }) => (
                                         <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md600:py-2 flex md600:gap-3  outline-none hover:bg-[#585858]`}>
@@ -407,45 +439,56 @@ const TopHeader = () => {
                                     onMouseEnter={() => handleSubmenuToggle('keyboard', true)}
                                     onMouseLeave={() => handleSubmenuToggle('keyboard', false)}
                                 >
-                                    <div className="px-3 pt-1 pb-2 gap-2 md600:px-4 lg:px-6 md600:pt-2 md600:pb-3 lg:pb-4 flex md600:gap-3 outline-none border-b border-[#FFFFFF1A] hover:bg-[#585858]">
+                                    <div className="px-3 pt-2 pb-2 gap-2 md600:px-4 lg:px-6 md600:pt-2 md600:pb-3 lg:pb-4 items-center flex md600:gap-3 outline-none border-b border-[#FFFFFF1A] hover:bg-[#585858]">
                                         <img src={keyboard} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /><span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Keyboard</span>
                                         <MdOutlineKeyboardArrowRight className="text-white text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
                                     </div>
 
                                     {showSubmenu.keyboard && (
-                                        <div className="absolute left-full flex justify-between top-0 z-50 w-40 lg:mt-0 bg-[#3f3d3d] shadow-lg outline-none text-nowrap">
-                                            <p className="block px-2 py-1   md600:px-3 lg:px-4 md:py-2 text-white cursor-pointer hover:bg-[#585858] text-[10px] md600:text-[12px] lg:text-[14px]" onClick={handleNestedOptionClick}>
+                                        <div className="absolute flex left-full px-2 py-2 gap-2  md600:px-3 lg:px-4 md:py-2 top-0 z-50 w-32 md600:w-48 lg:w-56 lg:mt-0 bg-[#3f3d3d] shadow-lg outline-none text-nowrap">
+                                            <p className="block  text-white cursor-pointer hover:bg-[#585858] text-[10px] md600:text-[12px] lg:text-[14px]" onClick={handleNestedOptionClick}>
                                                 Musical Typing
                                             </p>
-
+                                            <div className='ms-auto '>
+                                                <label
+                                                    className="inline-flex cursor-pointer"
+                                                    onClick={e => e.stopPropagation()}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        className="sr-only peer"
+                                                        checked={isLowLatency2}
+                                                        onChange={() => setIsLowLatency2(prev => !prev)}
+                                                    />
+                                                    <div className="relative w-8 md600:w-9 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-[#353535] peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-[#357935] peer-checked:bg-[#357935] dark:peer-checked:bg-[#357935]"></div>
+                                                </label>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
-                                {/* <Menu.Item>
-                                    {({ active }) => (
-                                        <p className={`px-3 pt-1 pb-2 gap-2 md600:px-4 lg:px-6 md600:pt-2 md600:pb-3 lg:pb-4 flex md600:gap-3 outline-none border-b border-[#FFFFFF1A] hover:bg-[#585858]`}>
-                                            <img src={previous} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />  <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Previous versions</span>
-                                        </p>
-                                    )}
-                                </Menu.Item> */}
+
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 pb-2 pt-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 outline-none hover:bg-[#585858]`}>
-                                            <img src={lowlatancy} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /><span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Low latency mode</span>
-                                            <div className='ms-auto'>
-                                                dfg
+                                        <p className={`px-3 pb-2 pt-2 gap-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 outline-none hover:bg-[#585858] `}>
+                                            <img src={lowlatancy} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /><span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Low latency... </span>
+                                            <div className='ms-auto '>
+                                                <label
+                                                    className="inline-flex cursor-pointer"
+                                                    onClick={e => e.stopPropagation()}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        className="sr-only peer"
+                                                        checked={isLowLatency}
+                                                        onChange={() => setIsLowLatency(prev => !prev)}
+                                                    />
+                                                    <div className="relative w-9 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-[#353535] peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-[#357935] peer-checked:bg-[#357935] dark:peer-checked:bg-[#357935]"></div>
+                                                </label>
                                             </div>
                                         </p>
                                     )}
                                 </Menu.Item>
-                                {/* <Menu.Item>
-                                    {({ active }) => (
-                                        <p className={`px-3 py-1 md600:px-4 lg:px-6 md600:py-2 flex gap-2 md600:gap-3 outline-none hover:bg-[#585858]`}>
-                                            <img src={exports} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /> <span className=' text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Export</span>
-                                        </p>
-                                    )}
-                                </Menu.Item> */}
-                                {/* Changed: Import submenu with individual tracking */}
+
                                 <div
                                     className="relative"
                                     onMouseEnter={() => handleSubmenuToggle('soundquality', true)}
@@ -458,7 +501,7 @@ const TopHeader = () => {
                                     </div>
 
                                     {showSubmenu.soundquality && (
-                                        <div className="absolute left-full top-0 z-50 w-36 md600:w-48 lg:w-56 lg:mt-0 bg-[#3f3d3d] shadow-lg outline-none">
+                                        <div className="absolute left-full top-0 z-50 w-28 md600:w-48 lg:w-56 lg:mt-0 bg-[#3f3d3d] shadow-lg outline-none">
                                             {soundQualityOptions.map((option) => (
                                                 <div
                                                     key={option.id}
@@ -487,8 +530,19 @@ const TopHeader = () => {
                                     {({ active }) => (
                                         <p className={`px-3 py-1 mt-2 md600:px-4 lg:px-6 md:py-3 lg:py-4 flex gap-2 md600:gap-3 border-t border-b border-[#FFFFFF1A]  outline-none hover:bg-[#585858]`}>
                                             <img src={songsections} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /><span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Song Sections</span>
-                                            <div className='ms-auto'>
-                                                dfg
+                                            <div className='ms-auto '>
+                                                <label
+                                                    className="inline-flex cursor-pointer"
+                                                    onClick={e => e.stopPropagation()}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        className="sr-only peer"
+                                                        checked={isLowLatency1}
+                                                        onChange={() => setIsLowLatency1(prev => !prev)}
+                                                    />
+                                                    <div className="relative w-9 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-[#353535] peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-[#357935] peer-checked:bg-[#357935] dark:peer-checked:bg-[#357935]"></div>
+                                                </label>
                                             </div>
                                         </p>
                                     )}
@@ -506,7 +560,7 @@ const TopHeader = () => {
                                     </div>
 
                                     {showSubmenu.language && (
-                                        <div className="absolute left-full top-0 z-50 w-36 md600:w-48 lg:w-56 lg:mt-0 bg-[#3f3d3d] shadow-lg outline-none">
+                                        <div className="absolute left-full top-0 z-50 w-32 md600:w-48 lg:w-56 lg:mt-0 bg-[#3f3d3d]  shadow-lg outline-none ">
                                             {languageOptions.map((lang) => (
                                                 <div
                                                     key={lang.id}
@@ -531,16 +585,43 @@ const TopHeader = () => {
                                         </div>
                                     )}
                                 </div>
-                                <Menu.Item>
-                                    {({ active }) => (
-                                        <p className={`px-3 py-1 mt-2 md600:px-4 lg:px-6 md:py-3 lg:py-4 flex gap-2 md600:gap-3 border-t border-[#FFFFFF1A]  outline-none hover:bg-[#585858]`}>
-                                            <img src={songsections} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /><span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Song Sections</span>
-                                            <div className='ms-auto'>
-                                                dfg
-                                            </div>
-                                        </p>
+                                <div
+                                    className="relative"
+                                    onMouseEnter={() => handleSubmenuToggle('theme', true)}
+                                    onMouseLeave={() => handleSubmenuToggle('theme', false)}
+                                >
+                                    <div className="flex gap-2 md600:gap-3 mt-2 w-full items-center px-3 py-2 md600:px-4 lg:px-6 md600:py-3 cursor-pointer border-t  border-[#FFFFFF1A] hover:bg-[#585858]">
+                                        <img src={theme} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />
+                                        <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Themes</span>
+                                        <MdOutlineKeyboardArrowRight className="text-white text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
+                                    </div>
+
+                                    {showSubmenu.theme && (
+                                        <div className="absolute left-full top-0 z-50 w-28 md600:w-48 lg:w-56 lg:mt-0 bg-[#3f3d3d] shadow-lg outline-none " >
+                                            {themesOptions.map((option) => (
+                                                <div
+                                                    key={option.id}
+                                                    className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-2 text-white cursor-pointer hover:bg-[#585858] "
+                                                    onClick={() => handlethemesSelect(option.id, option.label)}
+                                                >
+                                                    <div className="flex items-center gap-2 md600:gap-3 ">
+                                                        {/* Show tick only for selected option */}
+                                                        <div className="w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 flex items-center justify-center">
+                                                            {selectedtheme === option.label && (
+                                                                <img src={tick} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />
+                                                            )}
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>
+                                                                {option.label}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     )}
-                                </Menu.Item>
+                                </div>
                             </div>
                         </Menu.Items>
                     </Menu >

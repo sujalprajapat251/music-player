@@ -9,7 +9,7 @@ const Sidebar2 = () => {
         <>
             <TopHeader />
 
-            <div className="flex h-[calc(100vh-70px)] sm:h-[calc(100vh-54px)] md:h-[calc(100vh-96px)]">
+            <div className="flex h-[calc(100vh-82px)] sm:h-[calc(100vh-66px)] md:h-[calc(100vh-96px)]">
                 <div className="border-r border-[#1414141A] dark:border-[#FFFFFF1A] w-[20%] sm:w-[23%] md:w-[22%] lg:w-[20%] xl:w-[17%] 2xl:w-[15%] bg-primary-light dark:bg-primary-dark">
                     <div className=" mt-12 sm:mt-16 md:mt-20">
                         <p className="flex gap-2 py-4 text-secondary-light dark:text-secondary-dark bg-[#1414141A] dark:bg-[#FFFFFF1A] justify-center text-center items-center">
