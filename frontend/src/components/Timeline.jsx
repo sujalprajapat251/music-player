@@ -3,9 +3,8 @@ import WaveSurfer from "wavesurfer.js";
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector } from 'react-redux';
-import { setTracks, addTrack } from '../Redux/Slice/studio.slice';
 
-const TimelineTrack = ({ url, onReady, color }) => {
+const TimelineTrack = ({ url, onReady, color, height }) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
 
@@ -16,10 +15,11 @@ const TimelineTrack = ({ url, onReady, color }) => {
       container: waveformRef.current,
       waveColor: "#ffffff",
       progressColor: "#ffffff",
-      height: 80,
+      height: height - 8, // Subtract padding to match sidebar
       barWidth: 2,
       responsive: true,
-      minPxPerSec: 50, // fixed value
+      minPxPerSec: 50,
+      normalize: true,
     });
 
     wavesurfer.current.load(url);
@@ -28,17 +28,38 @@ const TimelineTrack = ({ url, onReady, color }) => {
     });
 
     return () => wavesurfer.current.destroy();
-  }, [url]);
+  }, [url, height]);
 
   return (
-    <div ref={waveformRef} style={{ background: color, borderRadius: 8, marginBottom: 8 }} />
+    <div style={{
+      background: color,
+      borderRadius: 8,
+      marginBottom: 1,
+      height: `${height}px`,
+      display: 'flex',
+      alignItems: 'center',
+      position: 'relative', // Add this
+      overflow: 'hidden',   // Add this
+    }}>
+      <div
+        ref={waveformRef}
+        style={{
+          width: '100%',
+          height: '100%',
+          position: 'absolute', // Add this
+          top: 0,
+          left: 0,
+          zIndex: 1, // Make sure waveform is above background
+        }}
+      />
+    </div>
   );
 };
 
 const Timeline = () => {
   const [players, setPlayers] = useState([]);
   const [waveSurfers, setWaveSurfers] = useState([]);
-  const [audioDuration, setAudioDuration] = useState(10); // default, will update after load
+  const [audioDuration, setAudioDuration] = useState(10);
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const svgRef = useRef(null);
@@ -46,6 +67,8 @@ const Timeline = () => {
   const playbackStartRef = useRef({ systemTime: 0, audioTime: 0 });
 
   const tracks = useSelector((state) => state.studio.tracks);
+  const trackHeight = useSelector((state) => state.studio.trackHeight);
+  const timelineSettings = useSelector((state) => state.studio.timelineSettings);
 
   const handleReady = (wavesurfer, url) => {
     fetch(url)
@@ -65,11 +88,9 @@ const Timeline = () => {
     await start();
 
     if (isPlaying) {
-      // Pause
       players.forEach((player) => player.stop());
       setIsPlaying(false);
     } else {
-      // Play
       setIsPlaying(true);
       players.forEach((player) => {
         player.start(undefined, currentTime);
@@ -85,19 +106,19 @@ const Timeline = () => {
     const svg = d3.select(svgRef.current);
     const svgNode = svgRef.current;
     const width = svgNode ? svgNode.clientWidth : 600;
-    const axisY = 60; // Move baseline lower
+    const axisY = 80; // Ruler baseline
     const duration = audioDuration;
 
     svg.selectAll("*").remove();
 
-    // Draw ticks and labels
     const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
-    const labelInterval = 2; // Show label every 2 seconds (adjust as needed)
+    const labelInterval = 2;
+    
     for (let sec = 0; sec <= duration; sec++) {
       const x = xScale(sec);
       const isLabeled = sec % labelInterval === 0;
 
-      // Ticks go upward from the baseline
+      // Ticks
       svg
         .append("line")
         .attr("x1", x)
@@ -107,23 +128,23 @@ const Timeline = () => {
         .attr("stroke", "white")
         .attr("stroke-width", 1);
 
-      // Labels above the baseline, centered
+      // Labels
       if (isLabeled) {
         const minutes = Math.floor(sec / 60);
         const seconds = Math.floor(sec % 60);
         const label = `${minutes}:${seconds.toString().padStart(2, "0")}`;
         svg
           .append("text")
-          .attr("x", x + 4) // 4px right of the tick for spacing
-          .attr("y", axisY - 5) // just above the baseline, inside the box
+          .attr("x", x + 4)
+          .attr("y", axisY - 5)
           .attr("fill", "white")
-          .attr("font-size", 14)
-          .attr("text-anchor", "start") // left-aligned
+          .attr("font-size", 12)
+          .attr("text-anchor", "start")
           .text(label);
       }
     }
 
-    // Draw horizontal baseline at the bottom
+    // Baseline
     svg
       .append("line")
       .attr("x1", 0)
@@ -171,6 +192,7 @@ const Timeline = () => {
 
   const handleMouseDown = (e) => {
     isDragging.current = true;
+    document.body.classList.add('no-select');
     movePlayhead(e);
   };
 
@@ -181,6 +203,7 @@ const Timeline = () => {
 
   const handleMouseUp = () => {
     isDragging.current = false;
+    document.body.classList.remove('no-select');
   };
 
   const movePlayhead = (e) => {
@@ -189,17 +212,15 @@ const Timeline = () => {
     const width = svgRect.width;
     const duration = audioDuration;
     let time = (x / width) * duration;
-    time = Math.max(0, Math.min(duration, time)); // Clamp to [0, duration]
+    time = Math.max(0, Math.min(duration, time));
     setCurrentTime(time);
 
-    // Seek all wavesurfer instances
     waveSurfers.forEach(ws => {
       if (ws && ws.seekTo) {
         ws.seekTo(time / ws.getDuration());
       }
     });
 
-    // If audio is playing, start playback from new position
     if (isPlaying) {
       players.forEach((player) => {
         if (player && player.stop && player.start) {
@@ -214,55 +235,118 @@ const Timeline = () => {
     }
   };
 
+  const renderGridLines = () => {
+    const gridLines = [];
+    const width = timelineContainerRef.current?.clientWidth || 600;
+    const duration = audioDuration;
+    const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
+    for (let sec = 0; sec <= duration; sec += 1) {
+      const x = xScale(sec);
+      gridLines.push(
+        <div
+          key={sec}
+          style={{
+            position: "absolute",
+            left: `${x}px`,
+            top: "100px", // below the header
+            width: "1px",
+            height: `calc(100% - 100px)`, // fill tracks area
+            background: "#FFFFFF1A",
+            zIndex: 10,
+            pointerEvents: "none",
+          }}
+        />
+      );
+    }
+    return gridLines;
+  };
+
   return (
-    <div style={{ padding: "20px", color: "white", background: "transparent" }}>
-      <h2 style={{ color: "white" }}>🎵 Music Timeline Demo</h2>
+    <div style={{ padding: "0", color: "white", background: "transparent", height: "100%" }}>
       <div
         ref={timelineContainerRef}
-        style={{ position: "relative", cursor: "pointer" }}
+        style={{ position: "relative", height: "100%" }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
       >
-        <svg
-          ref={svgRef}
-          width="100%"
-          height={100}
-          style={{ color: "white", width: "100%" }}
-        ></svg>
-
-        {tracks.map((track) => (
-          <TimelineTrack
-            key={track.id}
-            url={track.url}
-            color={track.color}
-            onReady={(ws) => {
-              handleReady(ws, track.url);
-              setWaveSurfers((prev) => [...prev, ws]);
-              const dur = ws.getDuration();
-              setAudioDuration((prev) => Math.max(prev, dur));
-            }}
+        {/* Timeline Header */}
+        <div style={{ height: "100px", borderBottom: "1px solid #1414141A" }}>
+          <svg
+            ref={svgRef}
+            width="100%"
+            height="100%"
+            style={{ color: "white", width: "100%" }}
           />
-        ))}
+        </div>
 
-        {/* Playhead Element */}
+        {/* Tracks */}
+        <div style={{ overflow: "auto", maxHeight: "calc(100vh - 300px)" }}>
+          {tracks.map((track, idx) => (
+            <div
+              key={track.id}
+              style={{
+                position: "relative",
+                marginBottom: "1px",
+                height: `${trackHeight}px`,
+              }}
+            >
+              {/* Top horizontal line */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "1px",
+                  background: "#FFFFFF1A",
+                  zIndex: 20,
+                }}
+              />
+              {/* Bottom horizontal line */}
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "1px",
+                  background: "#FFFFFF1A",
+                  zIndex: 20,
+                }}
+              />
+              <TimelineTrack
+                url={track.url}
+                color={track.color}
+                height={trackHeight}
+                onReady={(ws) => {
+                  handleReady(ws, track.url);
+                  setWaveSurfers((prev) => [...prev, ws]);
+                  const dur = ws.getDuration();
+                  setAudioDuration((prev) => Math.max(prev, dur));
+                }}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Playhead - absolutely positioned over both header and tracks */}
         <div
           style={{
             position: "absolute",
             left: `${(currentTime / audioDuration) * 100}%`,
-            top: 40,
-            bottom: 0,
+            top: 0,
+            height: "100%",
             width: "2px",
             pointerEvents: "none",
-            zIndex: 10,
+            zIndex: 100, // Make sure it's above everything
           }}
         >
-          {/* Handle */}
           <div
             style={{
               position: "absolute",
-              top: 0,
+              top: "60px",
               left: "-8px",
               width: "18px",
               height: "18px",
@@ -270,33 +354,39 @@ const Timeline = () => {
               borderRadius: "3px",
               border: "1px solid #fff",
             }}
-          ></div>
-          {/* Line */}
+          />
           <div
             style={{
               position: "absolute",
-              top: "18px",
+              top: "78px",
               left: 0,
               bottom: 0,
               width: "2px",
               background: "#AD00FF",
             }}
-          ></div>
+          />
+        </div>
+        <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
+          {renderGridLines()}
         </div>
       </div>
-      <button
-        onClick={handlePlayPause}
-        style={{
-          marginTop: "20px",
-          color: "white",
-          background: "#333",
-          border: "none",
-          padding: "10px 20px",
-          borderRadius: "6px",
-        }}
-      >
-        {isPlaying ? "⏸️ Pause" : "▶️ Play All"}
-      </button>
+
+      {/* Controls */}
+      <div style={{ position: "fixed", bottom: "80px", left: "50%", transform: "translateX(-50%)" }}>
+        <button
+          onClick={handlePlayPause}
+          style={{
+            color: "white",
+            background: "#333",
+            border: "none",
+            padding: "10px 20px",
+            borderRadius: "6px",
+            cursor: "pointer"
+          }}
+        >
+          {isPlaying ? "⏸️ Pause" : "▶️ Play All"}
+        </button>
+      </div>
     </div>
   );
 };
