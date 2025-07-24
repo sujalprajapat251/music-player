@@ -54,7 +54,7 @@ function App() {
             <Route path='demo-project' element={<Demoproject />} />
           </Route>
 
-            <Route path='/' element={<ThemeProvider><Sidebar2 /></ThemeProvider>} >
+            <Route path='/sidebar' element={<ThemeProvider><Sidebar2 /></ThemeProvider>} >
                 <Route path='timeline' element={<Timeline />} />
             </Route>
         </Routes>
