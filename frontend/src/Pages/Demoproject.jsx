@@ -51,6 +51,8 @@ const Demoproject = () => {
         }
     };
 
+    console.log("=============",sounds);
+
     return (
         <>
             <div className=" bg-[#141414] p-8">
@@ -80,33 +82,7 @@ const Demoproject = () => {
                                 <div className="flex justify-between items-center">
                                     <div>
                                         <h3 className="text-[#fff] font-[500] text-[16px] mb-[2px]">{sound?.soundname}</h3>
-                                        <p className="text-[#FFFFFF99] font-[400] text-[14px]">{sound?.soundtype}</p>
-                                    </div>
-                                    <button
-                                        onClick={() => handlePlayPause(index)}
-                                        className="bg-[#141414] text-black rounded-full w-[28px] h-[28px] flex justify-center items-center border-[0.5px] border-[#FFFFFF1A]"
-                                    >
-                                        <img src={playingIndex === index ? pause : play} alt="" />
-                                    </button>
-                                    <audio
-                                        ref={el => audioRefs.current[index] = el}
-                                        src={`${IMAGE_URL}uploads/soundfile/${sound?.soundfile}`}
-                                        onEnded={() => handleEnded(index)}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                    {sounds.map((sound, index) => (
-                        <div key={sound._id || index} className="bg-[#14141480] rounded-[4px] overflow-hidden d_customborder">
-                            <div className='w-full h-[160px]'>
-                                <img src={`${IMAGE_URL}uploads/image/${sound?.image}`} alt="Album" className="w-full h-full object-cover" />
-                            </div>
-                            <div className="py-[8px] px-[12px]">
-                                <div className="flex justify-between items-center">
-                                    <div>
-                                        <h3 className="text-[#fff] font-[500] text-[16px] mb-[2px]">{sound?.soundname}</h3>
-                                        <p className="text-[#FFFFFF99] font-[400] text-[14px]">{sound?.soundtype}</p>
+                                        <p className="text-[#FFFFFF99] font-[400] text-[14px]">{sound?.category[0]?.name}</p>
                                     </div>
                                     <button
                                         onClick={() => handlePlayPause(index)}

@@ -1,3 +1,4 @@
+const mongoose = require('mongoose')
 const Sound = require('../models/soundModel');
 
 exports.createSound = async (req, res) => {
@@ -31,7 +32,16 @@ exports.createSound = async (req, res) => {
 
 exports.getAllSounds = async (req, res) => {
     try {
-        const sounds = await Sound.find();
+        const sounds = await Sound.aggregate([
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'soundtype',
+                    foreignField: '_id',
+                    as: 'category'
+                }
+            }
+        ]);
         if (!sounds || sounds.length === 0) {
             return res.status(404).json({ status: 404, message: "No sounds found." });
         }
@@ -48,8 +58,22 @@ exports.getAllSounds = async (req, res) => {
 
 exports.getSoundById = async (req, res) => {
     try {
-        const sound = await Sound.findById(req.params.id);
-        if (!sound) {
+        const sound = await Sound.aggregate([
+            {
+                $match: {
+                _id: new mongoose.Types.ObjectId(req.params.id)
+                }
+            },
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'soundtype',
+                    foreignField: '_id',
+                    as: 'category'
+                }
+            }
+        ]);;
+        if (!sound  || sound.length === 0) {
             return res.status(404).json({ status: 404, message: "Sound not found." });
         }
         return res.status(200).json({

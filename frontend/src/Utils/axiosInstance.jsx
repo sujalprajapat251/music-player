@@ -30,7 +30,7 @@ axiosInstance.interceptors.response.use(
 
       try {
         
-        const res = await axios.get(`${BASE_URL}/refresh-token`, { withCredentials: true });
+        const res = await axiosInstance.get(`${BASE_URL}/refresh-token`, { withCredentials: true });
         const newToken = res.data.token;
         sessionStorage.setItem('token', newToken);
 

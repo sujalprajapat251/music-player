@@ -39,7 +39,7 @@ exports.userLogin = async (req, res) => {
     let accessToken = await jwt.sign(
       { _id: checkEmailIsExist._id },
       process.env.SECRET_KEY,
-      { expiresIn: "2m" }
+      { expiresIn: "1d" }
     );
 
     let refreshToken
@@ -47,19 +47,19 @@ exports.userLogin = async (req, res) => {
       refreshToken = jwt.sign(
         { _id: checkEmailIsExist._id },
         process.env.REFRESH_SECRET_KEY,
-        { expiresIn: '5m' }
+        { expiresIn: '15d' }
       );
 
       checkEmailIsExist.refreshToken = refreshToken;
       await checkEmailIsExist.save();
 
     }
-    console.log("access",accessToken)
-    console.log("refreshtoekn",refreshToken)
+    console.log("access", accessToken)
+    console.log("refreshtoekn", refreshToken)
 
     return res.status(200)
-      .cookie("accessToken", accessToken, { httpOnly: true, secure: false, sameSite: "Lax", maxAge: 120 })
-      .cookie("refreshToken", refreshToken, { httpOnly: true, secure: false, sameSite: "Lax", maxAge: 5 * 60 * 1000 })
+      .cookie("accessToken", accessToken, { httpOnly: true, secure: false, sameSite: "Lax", maxAge: 1 * 24 * 60 * 60 * 1000 })
+      .cookie("refreshToken", refreshToken, { httpOnly: true, secure: false, sameSite: "Lax", maxAge: 15 * 24 * 60 * 60 * 1000 })
       .json({
         success: true,
         message: "User Login SuccessFully...",
@@ -74,42 +74,42 @@ exports.userLogin = async (req, res) => {
 
 exports.refreshAccessToken = async (req, res) => {
   try {
-      const { refreshToken } = req.cookies;
+    const { refreshToken } = req.cookies;
 
-      if (!refreshToken) return res.status(404).json({ message: 'No Refresh Token' });
-      
-      // Verify token
-      const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET_KEY);
-      const existingUser = await user.findById(decoded._id);
+    if (!refreshToken) return res.status(404).json({ message: 'No Refresh Token' });
 
-      console.log("---------------",existingUser,decoded)  
+    // Verify token
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET_KEY);
+    const existingUser = await user.findById(decoded._id);
 
-      const accessToken = await jwt.sign(
-          {_id: existingUser._id},
-          process.env.SECRET_KEY,
-          { expiresIn: '2m' }
-      );
+    console.log("---------------", existingUser, decoded)
 
-      const refreshToken1 = await jwt.sign(
-          {_id: existingUser._id},
-          process.env.REFRESH_SECRET_KEY,
-          { expiresIn: '5m' }
-      );
+    const accessToken = await jwt.sign(
+      { _id: existingUser._id },
+      process.env.SECRET_KEY,
+      { expiresIn: '1d' }
+    );
 
-      existingUser.refreshToken = refreshToken1;
-      await existingUser.save({ validateBeforeSave: false });
+    const refreshToken1 = await jwt.sign(
+      { _id: existingUser._id },
+      process.env.REFRESH_SECRET_KEY,
+      { expiresIn: '15d' }
+    );
 
-      return res.status(200)
-          .cookie("accessToken", accessToken, { httpOnly: true, secure: false, sameSite: "Lax", maxAge: 120 })
-          .cookie("refreshToken", refreshToken1, { httpOnly: true, secure: false, sameSite: "Lax", maxAge: 5 * 60 * 1000 })
-          .json({
-              status: 200,
-              message: "User Login SuccessFully...",
-              user: existingUser,
-              token: accessToken
-          });
+    existingUser.refreshToken = refreshToken1;
+    await existingUser.save({ validateBeforeSave: false });
+
+    return res.status(200)
+      .cookie("accessToken", accessToken, { httpOnly: true, secure: false, sameSite: "Lax", maxAge: 1 * 24 * 60 * 60 * 1000 })
+      .cookie("refreshToken", refreshToken, { httpOnly: true, secure: false, sameSite: "Lax", maxAge: 15 * 24 * 60 * 60 * 1000 })
+      .json({
+        status: 200,
+        message: "User Login SuccessFully...",
+        user: existingUser,
+        token: accessToken
+      });
   } catch (err) {
-      return res.status(403).json({ message: 'Refresh Failed', error: err.message });
+    return res.status(403).json({ message: 'Refresh Failed', error: err.message });
   }
 };
 

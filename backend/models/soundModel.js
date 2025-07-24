@@ -6,15 +6,15 @@ const soundSchema = mongoose.Schema({
         require: true
     },
     soundtype: {
-        type: String,
-        require: true
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'category',
     },
     soundfile: {
         type: String,
     },
     image: {
         type: String,
-    }
+    },
 }, {
     timestamps: true,
     versionKey: false

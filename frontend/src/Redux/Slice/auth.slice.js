@@ -25,7 +25,7 @@ export const login = createAsyncThunk(
     'auth/login',
     async (credentials, { dispatch, rejectWithValue }) => {
         try {
-            const response = await axios.post(`${BASE_URL}/userLogin`, credentials);
+            const response = await axios.post(`${BASE_URL}/userLogin`, credentials,{ withCredentials: true });
             sessionStorage.setItem('token', response.data.token);
             sessionStorage.setItem('userId', response.data.user._id);
             dispatch(setAlert({ text: response.data.message, color: 'success' }));

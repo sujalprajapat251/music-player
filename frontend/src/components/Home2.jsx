@@ -167,7 +167,7 @@ const Home2 = () => {
                     </div>
                 </div>
 
-                <div className='max-h-[80vh] overflow-auto d_customscrollbar'>
+                <div className='max-h-[80vh] min-h-[760px] overflow-auto d_customscrollbar'>
                     <div className="flex flex-col md:flex-row mt-2 md:mt-2 lg:mt-3 xl:mt-4 3xl:mt-5 gap-3 md600:gap-5 md:gap-4 lg:gap-6  xl:gap-8 2xl:gap-10 ">
                         <div >
                             <p className="text-white text-[14px] md:text-[16px]  lg:text-[18px] 2xl:text-[20px] 3xl:text-[24px] font-[600]">Start a new project</p>
@@ -206,7 +206,7 @@ const Home2 = () => {
                                                 <div className="flex justify-between items-center">
                                                     <div>
                                                         <h3 className="text-[#fff] font-[500] text-[12px] sm:text-[14px] md:text-[12px] 2xl:text-[14px] 3xl:text-[16px] mb-[2px]">{sound?.soundname}</h3>
-                                                        <p className="text-[#FFFFFF99] font-[400] text-[10px] sm:text-[12px] md:text-[10px] xl:text-[14px]">{sound?.soundtype}</p>
+                                                        <p className="text-[#FFFFFF99] font-[400] text-[10px] sm:text-[12px] md:text-[10px] xl:text-[14px]">{sound?.category[0]?.name}</p>
                                                     </div>
                                                     <button
                                                         onClick={() => handlePlayPause(index)}

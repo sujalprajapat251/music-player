@@ -24,6 +24,7 @@ import Piano from './components/Piano';
 import Profile from './Pages/Profile';
 import Timeline from './components/Timeline';
 import { ThemeProvider } from './Utils/ThemeContext';
+import Loops from './components/Loops';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -56,6 +57,7 @@ function App() {
 
             <Route path='/' element={<ThemeProvider><Sidebar2 /></ThemeProvider>} >
                 <Route path='timeline' element={<Timeline />} />
+                <Route path='loop' element={<Loops />} />
             </Route>
         </Routes>
       </SnackbarProvider>

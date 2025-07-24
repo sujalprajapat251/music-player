@@ -8,33 +8,33 @@ import subscription from "../../Images/subscriptionIcon.svg";
 import { IoIosShareAlt } from "react-icons/io";
 import { RxExit } from "react-icons/rx";
 import { Menu, MenuButton } from '@headlessui/react';
-import newfolder from '../../Images/New Folder.svg';
-import openfolder from "../../Images/OpenFolder.svg";
+import { ReactComponent as NewFolderIcon } from '../../Images/New Folder.svg';
+import { ReactComponent as OpenFolderIcon } from "../../Images/OpenFolder.svg";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
-import previous from "../../Images/previousVersion.svg";
-import exports from "../../Images/export.svg";
-import imports from "../../Images/import.svg";
-import shareproject from "../../Images/shareproject.svg";
-import gotoprofile from "../../Images/gotoprofile.svg";
-import audiotrack from "../../Images/audiotrack.svg";
-import mic from "../../Images/micsvg.svg";
-import undo from "../../Images/undoIcon.svg";
-import Redo from "../../Images/redoicon.svg";
-import copy from "../../Images/copyIcon.svg";
-import paste from "../../Images/pasteIcon.svg";
-import Delete from "../../Images/deleteIcon.svg";
-import region from "../../Images/createRegionIcon.svg";
-import effect from "../../Images/EfectIcon.svg";
-import midisetting from "../../Images/MidiSettings.svg";
-import Tuner from "../../Images/tuner.svg";
-import keyboard from "../../Images/keyboard.svg";
-import lowlatancy from "../../Images/lae latency.svg";
-import soundquality from "../../Images/soundquality.svg";
-import tick from "../../Images/Tick.svg";
-import songsections from "../../Images/sondsections.svg";
-import language from "../../Images/language.svg";
+import { ReactComponent as Previous } from "../../Images/previousVersion.svg";
+import { ReactComponent as Exports } from "../../Images/export.svg";
+import { ReactComponent as Imports } from "../../Images/import.svg";
+import { ReactComponent as Shareproject } from "../../Images/shareproject.svg";
+import { ReactComponent as Gotoprofile } from "../../Images/gotoprofile.svg";
+import { ReactComponent as Audiotrack } from "../../Images/audiotrack.svg";
+import { ReactComponent as Mic } from "../../Images/micsvg.svg";
+import { ReactComponent as Undo} from "../../Images/undoIcon.svg";
+import { ReactComponent as Redo} from "../../Images/redoicon.svg";
+import { ReactComponent as Copy} from "../../Images/copyIcon.svg";
+import { ReactComponent as Paste} from "../../Images/pasteIcon.svg";
+import { ReactComponent as Delete} from "../../Images/deleteIcon.svg";
+import { ReactComponent as Region} from "../../Images/createRegionIcon.svg";
+import { ReactComponent as Effect} from "../../Images/EfectIcon.svg";
+import { ReactComponent as Midisetting} from "../../Images/MidiSettings.svg";
+import { ReactComponent as Tuner} from "../../Images/tuner.svg";
+import { ReactComponent as Keyboard} from "../../Images/keyboard.svg";
+import { ReactComponent as Lowlatancy} from "../../Images/lae latency.svg";
+import { ReactComponent as Soundquality} from "../../Images/soundquality.svg";
+import { ReactComponent as Tick} from "../../Images/Tick.svg";
+import { ReactComponent as Songsections} from "../../Images/sondsections.svg";
+import { ReactComponent as Language} from "../../Images/language.svg";
+import { ReactComponent as Theme} from "../../Images/themes.svg";
 import { useTheme } from '../../Utils/ThemeContext';
-import theme from "../../Images/themes.svg";
 
 const TopHeader = () => {
 
@@ -215,7 +215,7 @@ const TopHeader = () => {
             <div className="flex justify-between bg-primary-light dark:bg-primary-dark border-b border-[#1414141A] dark:border-[#FFFFFF1A] px-2 py-2 sm:px-3 sm:py-1 md:px-5 md:py-2 xl:px-7">
                 <div className="flex gap-1 sm:gap-2 md:gap-3 lg:gap-5 xl:gap-7 items-center">
                     <p className="text-secondary-light dark:text-secondary-dark text-[12px] md:text-[14px] lg:text-[16px] xl:text-[18px]">LOGO</p>
-                    <Menu as="div" className="relative inline-block text-left ">
+                    <Menu as="div" className="relative inline-block text-left">
                         <div >
                             <MenuButton className="outline-none" >
                                 <p className='text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] lg:text-[14px]'> File </p>
@@ -223,21 +223,21 @@ const TopHeader = () => {
                         </div>
 
                         <Menu.Items
-                            className="absolute left-[-20px] sm:left-0 z-10 mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60   origin-top-right bg-[#1F1F1F] shadow-lg outline-none"
+                            className="absolute left-[-20px] sm:left-0 z-10 mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60   origin-top-right bg-primary-light dark:bg-primary-dark shadow-lg outline-none"
                         >
                             <div className="">
                                 {/* First item: Print */}
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md600:py-2 flex md600:gap-3  outline-none hover:bg-[#585858]`}>
-                                            <img src={newfolder} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />  <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>New...</span>
+                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md600:py-2 flex md600:gap-3  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
+                                            <NewFolderIcon className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>New...</span>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3  outline-none hover:bg-[#585858]`}>
-                                            <img src={openfolder} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />  <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Open...</span>
+                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
+                                            <OpenFolderIcon className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Open...</span>
                                         </p>
                                     )}
                                 </Menu.Item>
@@ -246,17 +246,17 @@ const TopHeader = () => {
                                     onMouseEnter={() => handleSubmenuToggle('openrecentfolder', true)}
                                     onMouseLeave={() => handleSubmenuToggle('openrecentfolder', false)}
                                 >
-                                    <div className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#585858]">
-                                        <img src={openfolder} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /><span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Open Recent</span>
-                                        <MdOutlineKeyboardArrowRight className="text-white text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
+                                    <div className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
+                                        <OpenFolderIcon className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Open Recent</span>
+                                        <MdOutlineKeyboardArrowRight className="text-secondary-light dark:text-secondary-dark text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
                                     </div>
 
                                     {showSubmenu.openrecentfolder && (
-                                        <div className="absolute left-full top-0 z-50 w-36 md600:w-40 lg:mt-0 bg-[#3f3d3d] shadow-lg outline-none text-nowrap">
-                                            <p className="block px-2 py-1   md600:px-3 lg:px-4 md:py-2 text-white cursor-pointer hover:bg-[#585858] text-[10px] md600:text-[12px] lg:text-[14px]" onClick={handleNestedOptionClick}>
+                                        <div className="absolute left-full top-0 z-50 w-36 md600:w-40 lg:mt-0 bg-primary-light dark:bg-primary-dark shadow-lg outline-none text-nowrap">
+                                            <p className="block px-2 py-1   md600:px-3 lg:px-4 md:py-2 text-secondary-light dark:text-secondary-dark cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529] text-[10px] md600:text-[12px] lg:text-[14px]" onClick={handleNestedOptionClick}>
                                                 Page navigator
                                             </p>
-                                            <p className="block px-2 py-1 md600:px-3  lg:px-4 md:py-2 text-white cursor-pointer hover:bg-[#585858] text-[10px] md600:text-[12px] lg:text-[14px]" onClick={handleNestedOptionClick}>
+                                            <p className="block px-2 py-1 md600:px-3  lg:px-4 md:py-2 text-secondary-light dark:text-secondary-dark cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529] text-[10px] md600:text-[12px] lg:text-[14px]" onClick={handleNestedOptionClick}>
                                                 Bookmark
                                             </p>
                                         </div>
@@ -264,22 +264,22 @@ const TopHeader = () => {
                                 </div>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 pt-1 pb-2 gap-2 md600:px-4 lg:px-6 md600:pt-2 md600:pb-3 lg:pb-4 flex md600:gap-3 outline-none border-b border-[#FFFFFF1A] hover:bg-[#585858]`}>
-                                            <img src={previous} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />  <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Previous versions</span>
+                                        <p className={`px-3 pt-1 pb-2 gap-2 md600:px-4 lg:px-6 md600:pt-2 md600:pb-3 lg:pb-4 flex md600:gap-3 outline-none border-b border-[#1414141A] dark:border-[#FFFFFF1A] hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
+                                            <Previous className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Previous versions</span>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 pb-2 pt-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 outline-none hover:bg-[#585858]`}>
-                                            <span className='ps-5 md600:ps-7 lg:ps-8 text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Save as...</span>
+                                        <p className={`px-3 pb-2 pt-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
+                                            <span className='ps-5 md600:ps-7 lg:ps-8 text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Save as...</span>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 md600:px-4 lg:px-6 md600:py-2 flex gap-2 md600:gap-3 outline-none hover:bg-[#585858]`}>
-                                            <img src={exports} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /> <span className=' text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Export</span>
+                                        <p className={`px-3 py-1 md600:px-4 lg:px-6 md600:py-2 flex gap-2 md600:gap-3 outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
+                                            <Exports className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /> <span className=' text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Export</span>
                                         </p>
                                     )}
                                 </Menu.Item>
@@ -289,37 +289,37 @@ const TopHeader = () => {
                                     onMouseEnter={() => handleSubmenuToggle('import', true)}
                                     onMouseLeave={() => handleSubmenuToggle('import', false)}
                                 >
-                                    <div className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md600:py-2 cursor-pointer hover:bg-[#585858]">
-                                        <img src={imports} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /><span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Import</span>
-                                        <MdOutlineKeyboardArrowRight className="text-white text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
+                                    <div className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md600:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
+                                        <Imports className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Import</span>
+                                        <MdOutlineKeyboardArrowRight className="text-secondary-light dark:text-secondary-dark text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
                                     </div>
 
                                     {showSubmenu.import && (
-                                        <div className="absolute left-full top-0 z-50 w-36  md600:w-48 lg:w-56 lg:mt-0 bg-[#3f3d3d] shadow-lg outline-none">
-                                            <p className=" flex gap-2 md600:gap-3 px-3 py-1 lg:px-4 md600:py-2 text-white cursor-pointer hover:bg-[#585858]" onClick={handleNestedOptionClick}>
-                                                <img src={audiotrack} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />  <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Import to Audio track</span>
+                                        <div className="absolute left-full top-0 z-50 w-36  md600:w-48 lg:w-56 lg:mt-0 bg-primary-light dark:bg-primary-dark shadow-lg outline-none">
+                                            <p className=" flex gap-2 md600:gap-3 px-3 py-1 lg:px-4 md600:py-2 text-secondary-light dark:text-secondary-dark cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]" onClick={handleNestedOptionClick}>
+                                                <Audiotrack className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Import to Audio track</span>
                                             </p>
-                                            <p className="flex gap-2 md600:gap-3 px-3 py-1 lg:px-4 md600:py-2 text-white cursor-pointer hover:bg-[#585858]" onClick={handleNestedOptionClick}>
-                                                <img src={mic} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />  <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Import to Audio track</span>
+                                            <p className="flex gap-2 md600:gap-3 px-3 py-1 lg:px-4 md600:py-2 text-secondary-light dark:text-secondary-dark cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]" onClick={handleNestedOptionClick}>
+                                                <Mic className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Import to Audio track</span>
                                             </p>
-                                            <p className="flex gap-2 md600:gap-3 px-3 py-1 lg:px-4 md600:py-2 text-white cursor-pointer hover:bg-[#585858]" onClick={handleNestedOptionClick}>
-                                                <img src={audiotrack} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />  <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Open in sampler</span>
+                                            <p className="flex gap-2 md600:gap-3 px-3 py-1 lg:px-4 md600:py-2 text-secondary-light dark:text-secondary-dark cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]" onClick={handleNestedOptionClick}>
+                                                <Audiotrack className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Open in sampler</span>
                                             </p>
                                         </div>
                                     )}
                                 </div>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 md600:px-4 lg:px-6 md:py-2 flex gap-2 md600:gap-3 border-b border-[#FFFFFF1A]  outline-none hover:bg-[#585858]`}>
-                                            <img src={shareproject} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />  <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Share Project</span>
+                                        <p className={`px-3 py-1 md600:px-4 lg:px-6 md:py-2 flex gap-2 md600:gap-3 border-b border-[#1414141A] dark:border-[#FFFFFF1A]  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
+                                            <Shareproject className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Share Project</span>
                                         </p>
                                     )}
                                 </Menu.Item>
 
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 pt-2 pb-2 md600:px-4 lg:px-6 md600:pt-3 lg:pt-4 md600:pb-2 flex gap-2 md600:gap-3 border-[#FFFFFF1A]  outline-none hover:bg-[#585858]`}>
-                                            <img src={gotoprofile} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />  <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Go to profile</span>
+                                        <p className={`px-3 pt-2 pb-2 md600:px-4 lg:px-6 md600:pt-3 lg:pt-4 md600:pb-2 flex gap-2 md600:gap-3 border-[#FFFFFF1A]  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
+                                            <Gotoprofile className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Go to profile</span>
                                         </p>
                                     )}
                                 </Menu.Item>
@@ -328,79 +328,79 @@ const TopHeader = () => {
                         </Menu.Items>
                     </Menu >
 
-                    <Menu as="div" className="relative inline-block text-left ">
+                    <Menu as="div" className="relative inline-block text-left">
                         <div>
                             <MenuButton className="outline-none" >
-                                <p className='text-white text-[10px] md:text-[12px] lg:text-[14px]'> Edit </p>
+                                <p className='text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] lg:text-[14px]'> Edit </p>
                             </MenuButton>
                         </div>
 
                         <Menu.Items
-                            className="absolute left-0 z-10 mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60   origin-top-right bg-[#1F1F1F] shadow-lg outline-none"
+                            className="absolute left-0 z-10 mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60   origin-top-right bg-primary-light dark:bg-primary-dark shadow-lg outline-none"
                         >
                             <div className="">
                                 {/* First item: Print */}
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#585858]">
-                                            <img src={undo} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /><span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Undo</span>
-                                            <p className="text-white text-[10px] md:text-[12px] text-[#cfcfcf99] ms-auto">Ctrl+Z</p>
+                                        <p className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
+                                            <Undo className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Undo</span>
+                                            <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] ms-auto">Ctrl+Z</p>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className="flex gap-2 pb-3 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer  hover:bg-[#585858]">
-                                            <img src={Redo} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /><span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Redo</span>
-                                            <p className="text-white text-[10px] md:text-[12px] text-[#cfcfcf99] ms-auto">Shift+Ctrl+Z</p>
+                                        <p className="flex gap-2 pb-3 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer  hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
+                                            <Redo className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Redo</span>
+                                            <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] ms-auto">Shift+Ctrl+Z</p>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`mt-1 px-3 pb-2 pt-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 border-t border-[#FFFFFF1A] outline-none hover:bg-[#585858]`}>
-                                            <span className='ps-5 md600:ps-7 lg:ps-8 text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Cut</span>
-                                            <p className=" text-white text-[10px] md:text-[12px] text-[#cfcfcf99] ms-auto">Ctrl+X</p>
+                                        <p className={`mt-1 px-3 pb-2 pt-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 border-t border-[#1414141A] dark:border-[#FFFFFF1A] outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
+                                            <span className='ps-5 md600:ps-7 lg:ps-8 text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Cut</span>
+                                            <p className=" text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] ms-auto">Ctrl+X</p>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#585858]">
-                                            <img src={copy} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /><span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Copy</span>
-                                            <p className="text-white text-[10px] md:text-[12px] text-[#cfcfcf99] ms-auto">Ctrl+C</p>
-                                        </p>
-                                    )}
-                                </Menu.Item>
-
-                                <Menu.Item>
-                                    {({ active }) => (
-                                        <p className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#585858]">
-                                            <img src={paste} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /><span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Paste</span>
-                                            <p className="text-white text-[10px] md:text-[12px] text-[#cfcfcf99] ms-auto">Ctrl+V</p>
+                                        <p className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
+                                            <Copy className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Copy</span>
+                                            <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] ms-auto">Ctrl+C</p>
                                         </p>
                                     )}
                                 </Menu.Item>
 
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className="flex gap-2 mb-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#585858]">
-                                            <img src={Delete} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /><span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Delete</span>
-                                            <p className="text-white text-[10px] md:text-[12px] text-[#cfcfcf99] ms-auto">Backspace</p>
+                                        <p className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
+                                            <Paste className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Paste</span>
+                                            <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] ms-auto">Ctrl+V</p>
+                                        </p>
+                                    )}
+                                </Menu.Item>
+
+                                <Menu.Item>
+                                    {({ active }) => (
+                                        <p className="flex gap-2 mb-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
+                                            <Delete className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Delete</span>
+                                            <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] ms-auto">Backspace</p>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 border-t border-[#FFFFFF1A] cursor-pointer hover:bg-[#585858]">
-                                            <img src={effect} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /><span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Effects</span>
+                                        <p className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 border-t border-[#1414141A] dark:border-[#FFFFFF1A] cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
+                                            <Effect className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Effects</span>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#585858]">
-                                            <img src={region} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /><span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Create region</span>
+                                        <p className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
+                                            <Region className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Create region</span>
                                         </p>
                                     )}
                                 </Menu.Item>
@@ -409,28 +409,28 @@ const TopHeader = () => {
                         </Menu.Items>
                     </Menu >
 
-                    <Menu as="div" className="relative inline-block text-left ">
+                    <Menu as="div" className="relative inline-block text-left">
                         <div >
                             <MenuButton className="outline-none" >
-                                <p className='text-white text-[10px] md:text-[12px] lg:text-[14px]'> Setting </p>
+                                <p className='text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] lg:text-[14px]'> Setting </p>
                             </MenuButton>
                         </div>
 
                         <Menu.Items
-                            className="absolute left-[-60px] sm:left-0 z-10 mt-2 lg:mt-3 w-40 sm:w-44 md600:w-48 lg:w-60   origin-top-right bg-[#1F1F1F] shadow-lg outline-none"
+                            className="absolute left-[-60px] sm:left-0 z-10 mt-2 lg:mt-3 w-40 sm:w-44 md600:w-48 lg:w-60   origin-top-right bg-primary-light dark:bg-primary-dark shadow-lg outline-none"
                         >
                             <div className="">
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md600:py-2 flex md600:gap-3  outline-none hover:bg-[#585858]`}>
-                                            <img src={midisetting} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />  <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>MIDI Settings...</span>
+                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md600:py-2 flex md600:gap-3  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
+                                            <Midisetting className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>MIDI Settings...</span>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3  outline-none hover:bg-[#585858]`}>
-                                            <img src={Tuner} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />  <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Tuner</span>
+                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
+                                            <Tuner className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Tuner</span>
                                         </p>
                                     )}
                                 </Menu.Item>
@@ -439,14 +439,14 @@ const TopHeader = () => {
                                     onMouseEnter={() => handleSubmenuToggle('keyboard', true)}
                                     onMouseLeave={() => handleSubmenuToggle('keyboard', false)}
                                 >
-                                    <div className="px-3 pt-2 pb-2 gap-2 md600:px-4 lg:px-6 md600:pt-2 md600:pb-3 lg:pb-4 items-center flex md600:gap-3 outline-none border-b border-[#FFFFFF1A] hover:bg-[#585858]">
-                                        <img src={keyboard} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /><span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Keyboard</span>
-                                        <MdOutlineKeyboardArrowRight className="text-white text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
+                                    <div className="px-3 pt-2 pb-2 gap-2 md600:px-4 lg:px-6 md600:pt-2 md600:pb-3 lg:pb-4 items-center flex md600:gap-3 outline-none border-b border-[#FFFFFF1A] hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
+                                        <Keyboard className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Keyboard</span>
+                                        <MdOutlineKeyboardArrowRight className="text-secondary-light dark:text-secondary-dark text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
                                     </div>
 
                                     {showSubmenu.keyboard && (
-                                        <div className="absolute flex left-full px-2 py-2 gap-2  md600:px-3 lg:px-4 md:py-2 top-0 z-50 w-32 md600:w-48 lg:w-56 lg:mt-0 bg-[#3f3d3d] shadow-lg outline-none text-nowrap">
-                                            <p className="block  text-white cursor-pointer hover:bg-[#585858] text-[10px] md600:text-[12px] lg:text-[14px]" onClick={handleNestedOptionClick}>
+                                        <div className="absolute flex left-full px-2 py-2 gap-2  md600:px-3 lg:px-4 md:py-2 top-0 z-50 w-32 md600:w-48 lg:w-56 lg:mt-0 bg-primary-light dark:bg-primary-dark hover:bg-[#E5E5E5] dark:hover:bg-[#262529] shadow-lg outline-none text-nowrap">
+                                            <p className="block  text-secondary-light dark:text-secondary-dark cursor-pointer  text-[10px] md600:text-[12px] lg:text-[14px]" onClick={handleNestedOptionClick}>
                                                 Musical Typing
                                             </p>
                                             <div className='ms-auto '>
@@ -460,7 +460,7 @@ const TopHeader = () => {
                                                         checked={isLowLatency2}
                                                         onChange={() => setIsLowLatency2(prev => !prev)}
                                                     />
-                                                    <div className="relative w-8 md600:w-9 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-[#353535] peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-[#357935] peer-checked:bg-[#357935] dark:peer-checked:bg-[#357935]"></div>
+                                                    <div className="relative w-8 md600:w-9 h-4 bg-gray-400 peer-focus:outline-none rounded-full peer dark:bg-[#353535] peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-[#357935] peer-checked:bg-[#357935] dark:peer-checked:bg-[#357935]"></div>
                                                 </label>
                                             </div>
                                         </div>
@@ -469,8 +469,8 @@ const TopHeader = () => {
 
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 pb-2 pt-2 gap-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 outline-none hover:bg-[#585858] `}>
-                                            <img src={lowlatancy} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /><span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Low latency... </span>
+                                        <p className={`px-3 pb-2 pt-2 gap-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
+                                            <Lowlatancy className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Low latency... </span>
                                             <div className='ms-auto '>
                                                 <label
                                                     className="inline-flex cursor-pointer"
@@ -482,7 +482,7 @@ const TopHeader = () => {
                                                         checked={isLowLatency}
                                                         onChange={() => setIsLowLatency(prev => !prev)}
                                                     />
-                                                    <div className="relative w-9 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-[#353535] peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-[#357935] peer-checked:bg-[#357935] dark:peer-checked:bg-[#357935]"></div>
+                                                    <div className="relative w-9 h-4 bg-gray-400 peer-focus:outline-none rounded-full peer dark:bg-[#353535] peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-[#357935] peer-checked:bg-[#357935] dark:peer-checked:bg-[#357935]"></div>
                                                 </label>
                                             </div>
                                         </p>
@@ -494,29 +494,29 @@ const TopHeader = () => {
                                     onMouseEnter={() => handleSubmenuToggle('soundquality', true)}
                                     onMouseLeave={() => handleSubmenuToggle('soundquality', false)}
                                 >
-                                    <div className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md600:py-2 cursor-pointer hover:bg-[#585858]">
-                                        <img src={soundquality} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />
-                                        <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Sound quality</span>
-                                        <MdOutlineKeyboardArrowRight className="text-white text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
+                                    <div className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md600:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
+                                        <Soundquality className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
+                                        <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Sound quality</span>
+                                        <MdOutlineKeyboardArrowRight className="text-secondary-light dark:text-secondary-dark text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
                                     </div>
 
                                     {showSubmenu.soundquality && (
-                                        <div className="absolute left-full top-0 z-50 w-28 md600:w-48 lg:w-56 lg:mt-0 bg-[#3f3d3d] shadow-lg outline-none">
+                                        <div className="absolute left-full top-0 z-50 w-28 md600:w-48 lg:w-56 lg:mt-0 bg-primary-light dark:bg-primary-dark shadow-lg outline-none">
                                             {soundQualityOptions.map((option) => (
                                                 <div
                                                     key={option.id}
-                                                    className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-2 text-white cursor-pointer hover:bg-[#585858]"
+                                                    className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-2 text-white cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"
                                                     onClick={() => handleSoundQualitySelect(option.id, option.label)}
                                                 >
                                                     <div className="flex items-center gap-2 md600:gap-3">
                                                         {/* Show tick only for selected option */}
                                                         <div className="w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 flex items-center justify-center">
                                                             {selectedSoundQuality === option.label && (
-                                                                <img src={tick} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />
+                                                                <Tick className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
                                                             )}
                                                         </div>
                                                         <div className="flex flex-col">
-                                                            <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>
+                                                            <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>
                                                                 {option.label}
                                                             </span>
                                                         </div>
@@ -528,8 +528,8 @@ const TopHeader = () => {
                                 </div>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 mt-2 md600:px-4 lg:px-6 md:py-3 lg:py-4 flex gap-2 md600:gap-3 border-t border-b border-[#FFFFFF1A]  outline-none hover:bg-[#585858]`}>
-                                            <img src={songsections} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' /><span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Song Sections</span>
+                                        <p className={`px-3 py-1 mt-2 md600:px-4 lg:px-6 md:py-3 lg:py-4 flex gap-2 md600:gap-3 border-t border-b border-[#FFFFFF1A]  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
+                                            <Songsections className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Song Sections</span>
                                             <div className='ms-auto '>
                                                 <label
                                                     className="inline-flex cursor-pointer"
@@ -541,7 +541,7 @@ const TopHeader = () => {
                                                         checked={isLowLatency1}
                                                         onChange={() => setIsLowLatency1(prev => !prev)}
                                                     />
-                                                    <div className="relative w-9 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-[#353535] peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-[#357935] peer-checked:bg-[#357935] dark:peer-checked:bg-[#357935]"></div>
+                                                    <div className="relative w-9 h-4 bg-gray-400 peer-focus:outline-none rounded-full peer dark:bg-[#353535] peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-[#357935] peer-checked:bg-[#357935] dark:peer-checked:bg-[#357935]"></div>
                                                 </label>
                                             </div>
                                         </p>
@@ -553,29 +553,29 @@ const TopHeader = () => {
                                     onMouseEnter={() => handleSubmenuToggle('language', true)}
                                     onMouseLeave={() => handleSubmenuToggle('language', false)}
                                 >
-                                    <div className="flex gap-2 mt-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md600:py-2 cursor-pointer hover:bg-[#585858]">
-                                        <img src={language} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />
-                                        <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Language</span>
-                                        <MdOutlineKeyboardArrowRight className="text-white text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
+                                    <div className="flex gap-2 mt-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md600:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
+                                        <Language className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
+                                        <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Language</span>
+                                        <MdOutlineKeyboardArrowRight className="text-secondary-light dark:text-secondary-dark text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
                                     </div>
 
                                     {showSubmenu.language && (
-                                        <div className="absolute left-full top-0 z-50 w-32 md600:w-48 lg:w-56 lg:mt-0 bg-[#3f3d3d]  shadow-lg outline-none ">
+                                        <div className="absolute left-full top-0 z-50 w-32 md600:w-48 lg:w-56 lg:mt-0 bg-primary-light dark:bg-primary-dark  shadow-lg outline-none ">
                                             {languageOptions.map((lang) => (
                                                 <div
                                                     key={lang.id}
-                                                    className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-1 text-white cursor-pointer hover:bg-[#585858]"
+                                                    className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-1 text-white cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"
                                                     onClick={() => handleLanguage(lang.id, lang.label)}
                                                 >
                                                     <div className="flex items-center gap-2 md600:gap-3">
                                                         {/* Show tick only for selected lang */}
                                                         <div className="w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 flex items-center justify-center">
                                                             {selectedLanguage === lang.label && (
-                                                                <img src={tick} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />
+                                                                <Tick className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />
                                                             )}
                                                         </div>
                                                         <div className="flex flex-col">
-                                                            <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>
+                                                            <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>
                                                                 {lang.label}
                                                             </span>
                                                         </div>
@@ -590,29 +590,29 @@ const TopHeader = () => {
                                     onMouseEnter={() => handleSubmenuToggle('theme', true)}
                                     onMouseLeave={() => handleSubmenuToggle('theme', false)}
                                 >
-                                    <div className="flex gap-2 md600:gap-3 mt-2 w-full items-center px-3 py-2 md600:px-4 lg:px-6 md600:py-3 cursor-pointer border-t  border-[#FFFFFF1A] hover:bg-[#585858]">
-                                        <img src={theme} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />
-                                        <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>Themes</span>
-                                        <MdOutlineKeyboardArrowRight className="text-white text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
+                                    <div className="flex gap-2 md600:gap-3 mt-2 w-full items-center px-3 py-2 md600:px-4 lg:px-6 md600:py-3 cursor-pointer border-t  border-[#FFFFFF1A] hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
+                                        <Theme className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
+                                        <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Themes</span>
+                                        <MdOutlineKeyboardArrowRight className="text-secondary-light dark:text-secondary-dark text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
                                     </div>
 
                                     {showSubmenu.theme && (
-                                        <div className="absolute left-full top-0 z-50 w-28 md600:w-48 lg:w-56 lg:mt-0 bg-[#3f3d3d] shadow-lg outline-none " >
+                                        <div className="absolute left-full top-0 z-50 w-28 md600:w-48 lg:w-56 lg:mt-0 bg-primary-light dark:bg-primary-dark shadow-lg outline-none " >
                                             {themesOptions.map((option) => (
                                                 <div
                                                     key={option.id}
-                                                    className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-2 text-white cursor-pointer hover:bg-[#585858] "
+                                                    className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-2 text-secondary-light dark:text-secondary-dark cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"
                                                     onClick={() => handlethemesSelect(option.id, option.label)}
                                                 >
                                                     <div className="flex items-center gap-2 md600:gap-3 ">
                                                         {/* Show tick only for selected option */}
                                                         <div className="w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 flex items-center justify-center">
                                                             {selectedtheme === option.label && (
-                                                                <img src={tick} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />
+                                                                <Tick className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
                                                             )}
                                                         </div>
                                                         <div className="flex flex-col">
-                                                            <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>
+                                                            <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>
                                                                 {option.label}
                                                             </span>
                                                         </div>

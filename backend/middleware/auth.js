@@ -9,7 +9,7 @@ exports.auth = async (req, res, next) => {
             let token = await authorization.split(' ')[1]
 
             if (!token) {
-                return res.status(404).json({ status: 404, message: "Token Is Required" })
+                return res.status(401).json({ status: 404, message: "Token Is Required" })
             }
 
             let checkToken = jwt.verify(token, process.env.SECRET_KEY)
@@ -17,7 +17,7 @@ exports.auth = async (req, res, next) => {
             let checkUser = await user.findById(checkToken)
 
             if (!checkUser) {
-                return res.status(404).json({ status: 404, message: "User Not Found" })
+                return res.status(401).json({ status: 404, message: "User Not Found" })
             }
 
             req.user = checkUser
@@ -25,10 +25,10 @@ exports.auth = async (req, res, next) => {
             next()
         }
         else {
-            return res.status(404).json({ status: 404, message: "Token Is Required" });
+            return res.status(401).json({ status: 404, message: "Token Is Required" });
         }
     } catch (error) {
         console.log(error);
-        return res.status(500).json({ status: 500, message: error.message })
+        return res.status(401).json({ status: 500, message: error.message })
     }
 }

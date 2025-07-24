@@ -9,6 +9,7 @@ const { createNewFolder, getFolderByUserId, updateFolderName, deleteFolderById }
 const { createContact } = require('../controller/contactcontroller');
 const { getAllFaqs, createFaq } = require('../controller/faqsController');
 const { addTerms, getTerms } = require('../controller/termsController');
+const { createCategory, getAllCategory, getCategoryById, deleteCategory, updateCategory } = require('../controller/categoryController');
 
 // auth Routes
 
@@ -28,6 +29,14 @@ indexRoutes.get('/getUserById/:id', getUserById);
 indexRoutes.put('/userUpdate/:id', upload.single("photo"), updateUser);
 indexRoutes.delete('/deleteUser/:id', removeUser);
 indexRoutes.put('/resetPassword', resetPassword);
+
+// category Routes
+
+indexRoutes.post('/createcategory', createCategory);
+indexRoutes.get('/allcategory', getAllCategory);
+indexRoutes.get('/getcategoryById/:id', getCategoryById);
+indexRoutes.put('/updatecategory/:id', updateCategory);
+indexRoutes.delete('/deletecategory/:id', deleteCategory);
 
 // sound Routes
 

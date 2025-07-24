@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 import { BASE_URL } from "../../Utils/baseUrl";
 import { setAlert } from "./alert.slice";
+import axiosInstance from "../../Utils/axiosInstance";
 
 const initialStateUsers = {
     allusers: [],
@@ -111,7 +112,7 @@ export const updateUser = createAsyncThunk(
                 formData.append('photo', file);
             }
 
-            const response = await axios.put(`${BASE_URL}/userUpdate/${id}`, formData, {
+            const response = await axiosInstance.put(`${BASE_URL}/userUpdate/${id}`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "multipart/form-data",
@@ -135,7 +136,7 @@ export const removeUserProfilePic = createAsyncThunk(
                 throw new Error('No authentication token found');
             }
             
-            const response = await axios.put(`${BASE_URL}/removeProfilePic/${id}`, {}, {
+            const response = await axiosInstance.put(`${BASE_URL}/removeProfilePic/${id}`, {}, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
@@ -160,7 +161,7 @@ export const getUserById = createAsyncThunk(
                 throw new Error('No authentication token or user ID found');
             }
             
-            const response = await axios.get(`${BASE_URL}/getUserById/${userId}`, {
+            const response = await axiosInstance.get(`${BASE_URL}/getUserById/${userId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
@@ -182,7 +183,7 @@ export const resetPassword = createAsyncThunk(
                 throw new Error('No authentication token found');
             }
             
-            const response = await axios.put(`${BASE_URL}/resetPassword`, 
+            const response = await axiosInstance.put(`${BASE_URL}/resetPassword`, 
                 { email, oldPassword, newPassword }, 
                 {
                     headers: {
@@ -208,7 +209,7 @@ export const getUserWishList = createAsyncThunk(
                 throw new Error('No authentication token found');
             }
             
-            const response = await axios.get(`${BASE_URL}/getwishlist`, {
+            const response = await axiosInstance.get(`${BASE_URL}/getwishlist`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
@@ -229,7 +230,7 @@ export const addToWishList = createAsyncThunk(
                 throw new Error('No authentication token found');
             }
             
-            const response = await axios.put(`${BASE_URL}/wishlist`, 
+            const response = await axiosInstance.put(`${BASE_URL}/wishlist`, 
                 { designId }, 
                 {
                     headers: {
