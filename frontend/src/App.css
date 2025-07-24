@@ -83,6 +83,13 @@ body {
   display: none;
 }
 
+.no-select {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -ms-user-select: none !important;
+  -moz-user-select: none !important;
+}
+
 
 @media(max-width:425px) {
   .d_btn {
