@@ -2,8 +2,13 @@ import React, { useEffect, useRef, useState } from "react";
 import WaveSurfer from "wavesurfer.js";
 import { Player, start } from "tone";
 import * as d3 from "d3";
-import { useSelector } from 'react-redux';
-
+import { useSelector } from "react-redux";
+import magnetIcon from "../Images/magnet.svg";
+import settingIcon from "../Images/setting.svg";
+import reverceIcon from "../Images/reverce.svg";
+import fxIcon from "../Images/fx.svg";
+import offce from "../Images/offce.svg";
+import GridSetting from "./GridSetting";
 const TimelineTrack = ({ url, onReady, color, height }) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
@@ -31,25 +36,27 @@ const TimelineTrack = ({ url, onReady, color, height }) => {
   }, [url, height]);
 
   return (
-    <div style={{
-      background: color,
-      borderRadius: 8,
-      marginBottom: 1,
-      height: `${height}px`,
-      display: 'flex',
-      alignItems: 'center',
-      position: 'relative', // Add this
-      overflow: 'hidden',   // Add this
-    }}>
+    <div
+      style={{
+        background: color,
+        borderRadius: 8,
+        marginBottom: 1,
+        height: `${height}px`,
+        display: "flex",
+        alignItems: "center",
+        position: "relative", // Add this
+        overflow: "hidden", // Add this
+      }}
+    >
       <div
         ref={waveformRef}
         style={{
-          width: '100%',
-          height: '100%',
-          position: 'absolute', // Add this
+          width: "100%",
+          height: "100%",
+          position: "absolute", // Add this
           top: 0,
           left: 0,
-          zIndex: 1, // Make sure waveform is above background
+          zIndex: 0, // Make sure waveform is above background
         }}
       />
     </div>
@@ -65,10 +72,10 @@ const Timeline = () => {
   const svgRef = useRef(null);
   const timelineContainerRef = useRef(null);
   const playbackStartRef = useRef({ systemTime: 0, audioTime: 0 });
+  const [showGridSetting, setShowGridSetting] = useState(false);
 
   const tracks = useSelector((state) => state.studio.tracks);
   const trackHeight = useSelector((state) => state.studio.trackHeight);
-  const timelineSettings = useSelector((state) => state.studio.timelineSettings);
 
   const handleReady = (wavesurfer, url) => {
     fetch(url)
@@ -113,7 +120,7 @@ const Timeline = () => {
 
     const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
     const labelInterval = 2;
-    
+
     for (let sec = 0; sec <= duration; sec++) {
       const x = xScale(sec);
       const isLabeled = sec % labelInterval === 0;
@@ -192,7 +199,6 @@ const Timeline = () => {
 
   const handleMouseDown = (e) => {
     isDragging.current = true;
-    document.body.classList.add('no-select');
     movePlayhead(e);
   };
 
@@ -203,7 +209,6 @@ const Timeline = () => {
 
   const handleMouseUp = () => {
     isDragging.current = false;
-    document.body.classList.remove('no-select');
   };
 
   const movePlayhead = (e) => {
@@ -215,7 +220,7 @@ const Timeline = () => {
     time = Math.max(0, Math.min(duration, time));
     setCurrentTime(time);
 
-    waveSurfers.forEach(ws => {
+    waveSurfers.forEach((ws) => {
       if (ws && ws.seekTo) {
         ws.seekTo(time / ws.getDuration());
       }
@@ -252,7 +257,7 @@ const Timeline = () => {
             width: "1px",
             height: `calc(100% - 100px)`, // fill tracks area
             background: "#FFFFFF1A",
-            zIndex: 10,
+            zIndex: 0,
             pointerEvents: "none",
           }}
         />
@@ -262,7 +267,15 @@ const Timeline = () => {
   };
 
   return (
-    <div style={{ padding: "0", color: "white", background: "transparent", height: "100%" }}>
+    <div
+      style={{
+        padding: "0",
+        color: "white",
+        background: "transparent",
+        height: "100%",
+      }}
+      className="relative"
+    >
       <div
         ref={timelineContainerRef}
         style={{ position: "relative", height: "100%" }}
@@ -301,7 +314,7 @@ const Timeline = () => {
                   width: "100%",
                   height: "1px",
                   background: "#FFFFFF1A",
-                  zIndex: 20,
+                  zIndex: 0,
                 }}
               />
               {/* Bottom horizontal line */}
@@ -313,7 +326,7 @@ const Timeline = () => {
                   width: "100%",
                   height: "1px",
                   background: "#FFFFFF1A",
-                  zIndex: 20,
+                  zIndex: 0,
                 }}
               />
               <TimelineTrack
@@ -366,13 +379,29 @@ const Timeline = () => {
             }}
           />
         </div>
-        <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            pointerEvents: "none",
+          }}
+        >
           {renderGridLines()}
         </div>
       </div>
 
       {/* Controls */}
-      <div style={{ position: "fixed", bottom: "80px", left: "50%", transform: "translateX(-50%)" }}>
+      <div
+        style={{
+          position: "fixed",
+          bottom: "80px",
+          left: "50%",
+          transform: "translateX(-50%)",
+        }}
+      >
         <button
           onClick={handlePlayPause}
           style={{
@@ -381,11 +410,38 @@ const Timeline = () => {
             border: "none",
             padding: "10px 20px",
             borderRadius: "6px",
-            cursor: "pointer"
+            cursor: "pointer",
           }}
         >
           {isPlaying ? "⏸️ Pause" : "▶️ Play All"}
         </button>
+      </div>
+      <div className="flex gap-2 absolute top-[60px] right-[10px] -translate-x-1/2 bg-[#141414]">
+        <div className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full">
+          <img src={magnetIcon} alt="" />
+        </div>
+        <div
+          className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full relative"
+          onClick={() => setShowGridSetting((prev) => !prev)}
+        >
+          <img src={settingIcon} alt="" />
+          {showGridSetting && (
+            <div className="absolute top-full right-0 z-[50]">
+              <GridSetting />
+            </div>
+          )}
+        </div>
+        <div className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full">
+          <img src={reverceIcon} alt="" />
+        </div>
+      </div>
+      <div className=" absolute top-[60px] right-[0] -translate-x-1/2 z-10">
+        <div className="bg-[#FFFFFF] w-[40px] h-[40px] flex items-center justify-center rounded-full">
+          <img src={offce} alt="" />
+        </div>
+        <div className="bg-[#1F1F1F] w-[40px] h-[40px] flex items-center justify-center rounded-full mt-2">
+          <img src={fxIcon} alt="" />
+        </div>
       </div>
     </div>
   );
