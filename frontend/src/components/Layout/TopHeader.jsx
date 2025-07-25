@@ -119,8 +119,9 @@ const TopHeader = () => {
             }));
         }, 10);
     };
-
-
+    
+    
+    const { isDark, setIsDark } = useTheme();
     const [selectedtheme, setSelectedtheme] = useState('Dark Theme');
 
 
@@ -132,6 +133,7 @@ const TopHeader = () => {
 
     const handlethemesSelect = (qualityId, qualityLabel) => {
         setSelectedtheme(qualityLabel);
+        setIsDark(qualityLabel === 'Dark Theme'); 
         // Close all submenus
         setShowSubmenu(prev => ({
             ...prev,
@@ -152,29 +154,26 @@ const TopHeader = () => {
         }, 10);
     };
 
-
-    const [showSubmenu, setShowSubmenu] = useState({
-        import: false,
-        navigator: false
-    });
-
-    const { isDark, setIsDark } = useTheme();
-
     useEffect(() => {
         document.documentElement.classList.add('dark');
     }, []);
 
-    // const toggleTheme = () => {
-    //     setIsDark((prev) => {
-    //         const newIsDark = !prev;
-    //         if (newIsDark) {
-    //             document.documentElement.classList.add('dark');
-    //         } else {
-    //             document.documentElement.classList.remove('dark');
-    //         }
-    //         return newIsDark;
-    //     });
-    // };
+    useEffect(() => {
+        setSelectedtheme(isDark ? 'Dark Theme' : 'Light Theme');
+    }, [isDark]);
+
+    const toggleTheme = () => {
+        setIsDark((prev) => {
+            const newIsDark = !prev;
+            setSelectedtheme(newIsDark ? 'Dark Theme' : 'Light Theme'); 
+            return newIsDark;
+        });
+    };
+    
+    const [showSubmenu, setShowSubmenu] = useState({
+        import: false,
+        navigator: false
+    });
 
     // New function to handle submenu visibility
     const handleSubmenuToggle = (submenuName, isVisible) => {
@@ -206,7 +205,8 @@ const TopHeader = () => {
             }));
         }, 10);
     };
-    const toggleTheme = () => setIsDark((prev) => !prev);
+
+   
 
 
 
@@ -571,7 +571,7 @@ const TopHeader = () => {
                                                         {/* Show tick only for selected lang */}
                                                         <div className="w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 flex items-center justify-center">
                                                             {selectedLanguage === lang.label && (
-                                                                <Tick className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />
+                                                                <Tick className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
                                                             )}
                                                         </div>
                                                         <div className="flex flex-col">

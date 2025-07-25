@@ -9,6 +9,7 @@ import contactSlice from "./Slice/contact.slice";
 import faqsSlice from './Slice/faqs.slice'
 import termsSlice from './Slice/terms.slice';
 import studioReducer from './Slice/studio.slice';
+
 export const rootReducer = combineReducers({
     alert: alertSlice,
     auth: authSlice,
