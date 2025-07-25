@@ -9,6 +9,8 @@ import track7 from '../Images/track7.svg'
 import track8 from '../Images/track8.svg'
 import impIcon from '../Images/import.svg'
 import loop from '../Images/loop.svg'
+import { useDispatch } from "react-redux";
+import { addTrack } from "../Redux/Slice/studio.slice";
 const instrumentOptions = [
   { label: 'Voice & Mic', icon: (
     <img src={track1} alt="Voice & Mic" />
@@ -37,6 +39,39 @@ const instrumentOptions = [
 ];
 
 const AddNewTrackModel = ({ onClose }) => {
+  const dispatch = useDispatch();
+  const trackHeight = 80; // or get from redux
+
+  // For file input
+  const fileInputRef = React.useRef();
+
+  // Add empty/instrument track
+  const handleBoxSelect = (trackType) => {
+    const newTrack = {
+      id: Date.now(),
+      name: trackType,
+      height: trackHeight,
+      // No url property!
+    };
+    dispatch(addTrack(newTrack));
+    onClose();
+  };
+
+  // Add audio track
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const newTrack = {
+      id: Date.now(),
+      name: file.name,
+      url: URL.createObjectURL(file),
+      color: '#FFB6C1',
+      height: trackHeight,
+    };
+    dispatch(addTrack(newTrack));
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
       <div className="bg-[#232323] rounded-sm shadow-lg w-full max-w-xl mx-4 p-6 relative">
@@ -49,19 +84,23 @@ const AddNewTrackModel = ({ onClose }) => {
         </div>
         {/* Instrument Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 my-8">
-          {instrumentOptions.map((opt, idx) => (
-            <button
-              key={opt.label}
-              className="flex flex-col items-center justify-center bg-[#141414] hover:bg-[#333] rounded-sm p-4 transition-colors border border-transparent hover:border-gray-600"
-            >
+          {instrumentOptions.map((opt) => (
+            <button key={opt.label} className="flex flex-col items-center justify-center bg-[#141414] hover:bg-[#333] rounded-sm p-4 transition-colors border border-transparent hover:border-gray-600" onClick={() => handleBoxSelect(opt.label)}>
               {opt.icon}
               <span className="mt-2 text-white text-sm text-center font-medium leading-tight">{opt.label}</span>
             </button>
           ))}
         </div>
+        <input
+          type="file"
+          accept="audio/*"
+          ref={fileInputRef}
+          style={{ display: "none" }}
+          onChange={handleFileChange}
+        />
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3">
-          <button className="flex-1 bg-[#181818] hover:bg-[#333] text-white py-2 rounded-lg border border-gray-700 flex items-center justify-center gap-2 transition-colors">
+          <button onClick={() => fileInputRef.current.click()} className="flex-1 bg-[#181818] hover:bg-[#333] text-white py-2 rounded-lg border border-gray-700 flex items-center justify-center gap-2 transition-colors">
             <img src={impIcon} alt="Import File" className="rotate-90" />
             Import File
           </button>
