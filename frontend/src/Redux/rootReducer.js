@@ -9,6 +9,7 @@ import contactSlice from "./Slice/contact.slice";
 import faqsSlice from './Slice/faqs.slice'
 import termsSlice from './Slice/terms.slice';
 import studioReducer from './Slice/studio.slice';
+import subscribeReducer from './Slice/subscribe.slice';
 
 export const rootReducer = combineReducers({
     alert: alertSlice,
@@ -20,4 +21,5 @@ export const rootReducer = combineReducers({
     faqs: faqsSlice,
     terms: termsSlice,
     studio: studioReducer,
+    subscribe: subscribeReducer,
 });

@@ -128,6 +128,7 @@ const BottomToolbar = () => {
         setSelectedMenuitems(qualityLabel);
         setIsOpen2(false)
     };
+    
     const handleCountInSelect = (qualityId, qualityLabel) => {
         setSelectedCountIn(qualityLabel);
         setIsOpen2(false)
@@ -221,7 +222,7 @@ const BottomToolbar = () => {
                                                 <button
                                                     key={key}
                                                     onClick={() => handleKeySelect(key)}
-                                                    className={`w-6 h-6 text-[10px] md600:w-8 md600:h-8 md600:text-[12px] lg:w-10 lg:h-10 rounded lg:text-[14px] border border-[#FFFFFF1A] transition-colors ${selectedKey === key
+                                                    className={`w-6 h-6 text-[10px] md600:w-8 md600:h-8 md600:text-[12px] lg:w-10 lg:h-10 rounded lg:text-[14px] border border-[#1414141A] dark:border-[#FFFFFF1A] transition-colors ${selectedKey === key
                                                         ? "bg-primary-dark dark:bg-primary-light text-secondary-dark dark:text-secondary-light"
                                                         : "bg-[#F6F6F6] dark:bg-[#1F1F1F] text-secondary-light dark:text-secondary-dark hover:bg-[#E5E5E5] dark:hover:bg-gray-600"
                                                         }`}
@@ -235,7 +236,7 @@ const BottomToolbar = () => {
                                                 <button
                                                     key={key}
                                                     onClick={() => handleKeySelect(key)}
-                                                    className={`w-6 h-6 text-[10px] md600:w-8 md600:h-8 md600:text-[12px] lg:w-10 lg:h-10 rounded lg:text-[14px] border border-[#FFFFFF1A] transition-colors ${selectedKey === key
+                                                    className={`w-6 h-6 text-[10px] md600:w-8 md600:h-8 md600:text-[12px] lg:w-10 lg:h-10 rounded lg:text-[14px] border border-[#1414141A] dark:border-[#FFFFFF1A] transition-colors ${selectedKey === key
                                                         ? "bg-primary-dark dark:bg-primary-light text-secondary-dark dark:text-secondary-light"
                                                         : "bg-[#F6F6F6] dark:bg-[#1F1F1F] text-secondary-light dark:text-secondary-dark hover:bg-[#E5E5E5] dark:hover:bg-gray-600"
                                                         }`}
@@ -252,7 +253,7 @@ const BottomToolbar = () => {
                                             <button
                                                 key={key}
                                                 onClick={() => handleKeySelect(key)}
-                                                className={`w-6 h-6 text-[10px] md600:w-8 md600:h-8 md600:text-[12px] lg:w-10 lg:h-10 rounded lg:text-[14px] border border-[#FFFFFF1A] transition-colors ${selectedKey === key
+                                                className={`w-6 h-6 text-[10px] md600:w-8 md600:h-8 md600:text-[12px] lg:w-10 lg:h-10 rounded lg:text-[14px] border border-[#1414141A] dark:border-[#FFFFFF1A] transition-colors ${selectedKey === key
                                                     ? "bg-primary-dark dark:bg-primary-light text-secondary-dark dark:text-secondary-light"
                                                     : "bg-[#F6F6F6] dark:bg-[#1F1F1F] text-secondary-light dark:text-secondary-dark hover:bg-[#E5E5E5] dark:hover:bg-gray-600"
                                                     }`}

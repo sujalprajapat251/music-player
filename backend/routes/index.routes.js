@@ -10,6 +10,7 @@ const { createContact } = require('../controller/contactcontroller');
 const { getAllFaqs, createFaq } = require('../controller/faqsController');
 const { addTerms, getTerms } = require('../controller/termsController');
 const { createCategory, getAllCategory, getCategoryById, deleteCategory, updateCategory } = require('../controller/categoryController');
+const { createSubscribe, getAllSubscribe } = require('../controller/subscribeController');
 
 // auth Routes
 
@@ -40,10 +41,10 @@ indexRoutes.delete('/deletecategory/:id', deleteCategory);
 
 // sound Routes
 
-indexRoutes.post('/createSound', upload.fields([{ name: 'image'},{ name: 'soundfile' }]), createSound);
+indexRoutes.post('/createSound', upload.fields([{ name: 'image' }, { name: 'soundfile' }]), createSound);
 indexRoutes.get('/allSounds', getAllSounds);
 indexRoutes.get('/getSoundById/:id', getSoundById);
-indexRoutes.put('/updateSound/:id', upload.fields([{ name: 'image'},{ name: 'soundfile' }]), updateSound);
+indexRoutes.put('/updateSound/:id', upload.fields([{ name: 'image' }, { name: 'soundfile' }]), updateSound);
 indexRoutes.delete('/deleteSound/:id', deleteSound);
 
 // add folder Routes
@@ -62,5 +63,10 @@ indexRoutes.get('/view/faqs', getAllFaqs);
 // Terms routes
 indexRoutes.post('/terms', addTerms);
 indexRoutes.get('/view/terms', getTerms);
+
+// subscribe Route
+
+indexRoutes.post('/createsubscribe', createSubscribe);
+indexRoutes.get('/allsubscribe', getAllSubscribe);
 
 module.exports = indexRoutes
