@@ -57,11 +57,8 @@ function App() {
 
           <Route path='/sidebar' element={<ThemeProvider><Sidebar2 /></ThemeProvider>} >
             <Route path='timeline' element={<Timeline />} />
-
             <Route path='loop' element={<Loops />} />
           </Route>
-
-
         </Routes>
       </SnackbarProvider>
     </Provider>
