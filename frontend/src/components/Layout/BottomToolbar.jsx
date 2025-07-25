@@ -9,9 +9,9 @@ import Strange from "../../Images/StrangeIcon.svg";
 import darkStrange from "../../Images/darkStrangeIcon.svg";
 import { IoIosArrowDown } from 'react-icons/io';
 import { useTheme } from '../../Utils/ThemeContext';
-import clears from "../../Images/clearIcons.svg";
-import tempobutton from "../../Images/Tempobutton.svg";
-import tick from "../../Images/Tick.svg";
+import { ReactComponent as Clears} from "../../Images/clearIcons.svg";
+import { ReactComponent as Tempobutton } from "../../Images/Tempobutton.svg";
+import { ReactComponent as Tick} from "../../Images/Tick.svg";
 
 const BottomToolbar = () => {
     const [volume, setVolume] = useState(50);
@@ -191,23 +191,23 @@ const BottomToolbar = () => {
 
                             {/* Dropdown */}
                             {isOpen && (
-                                <div className="absolute -top-[150px] left-[-180px] w-76 p-3 md600:-top-[200px] md600:left-[-140px] md600:w-76 md600:p-4 lg:-top-[250px] lg:left-[-170px] lg:w-120 bg-[#1F1F1F] rounded-lg shadow-lg  lg:p-5 z-50">
+                                <div className="absolute -top-[150px] left-[-180px] w-76 p-3 md600:-top-[200px] md600:left-[-140px] md600:w-76 md600:p-4 lg:-top-[250px] lg:left-[-170px] lg:w-120 bg-primary-light dark:bg-primary-dark rounded-lg shadow-lg  lg:p-5 z-50">
                                     {/* Mode Selection */}
                                     <div className="flex gap-1 mb-2  md600:gap-2 md600:mb-3 lg:gap-3 lg:mb-4">
                                         <button
                                             onClick={() => setSelectedMode("Major")}
-                                            className={`px-3 text-[8px] md600:px-4 py-1 md600:text-[10px] lg:px-5 rounded-full lg:text-[12px] border border-[#FFFFFF1A] transition-colors ${selectedMode === "Major"
-                                                ? "bg-white text-black"
-                                                : "bg-[#1F1F1F] text-gray-300 hover:bg-gray-600"
+                                            className={`px-3 text-[8px] md600:px-4 py-1 md600:text-[10px] lg:px-5 rounded-full lg:text-[12px] border border-[#1414141A] dark:border-[#FFFFFF1A] transition-colors ${selectedMode === "Major"
+                                                ? "bg-primary-dark dark:bg-primary-light text-secondary-dark dark:text-secondary-light"
+                                                : "bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-secondary-dark hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"
                                                 }`}
                                         >
                                             Major
                                         </button>
                                         <button
                                             onClick={() => setSelectedMode("Minor")}
-                                            className={`px-3 text-[8px] md600:px-4 py-1 md600:text-[10px] lg:px-5 rounded-full lg:text-[12px] border border-[#FFFFFF1A] transition-colors ${selectedMode === "Minor"
-                                                ? "bg-white text-black"
-                                                : "bg-[#1F1F1F] text-gray-300 hover:bg-gray-600"
+                                            className={`px-3 text-[8px] md600:px-4 py-1 md600:text-[10px] lg:px-5 rounded-full lg:text-[12px] border border-[#1414141A] dark:border-[#FFFFFF1A] transition-colors ${selectedMode === "Minor"
+                                                ? "bg-primary-dark dark:bg-primary-light text-secondary-dark dark:text-secondary-light"
+                                                : "bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-secondary-dark hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"
                                                 }`}
                                         >
                                             Minor
@@ -222,8 +222,8 @@ const BottomToolbar = () => {
                                                     key={key}
                                                     onClick={() => handleKeySelect(key)}
                                                     className={`w-6 h-6 text-[10px] md600:w-8 md600:h-8 md600:text-[12px] lg:w-10 lg:h-10 rounded lg:text-[14px] border border-[#FFFFFF1A] transition-colors ${selectedKey === key
-                                                        ? "bg-white text-black "
-                                                        : "bg-[#1F1F1F] text-white hover:bg-gray-600"
+                                                        ? "bg-primary-dark dark:bg-primary-light text-secondary-dark dark:text-secondary-light"
+                                                        : "bg-[#F6F6F6] dark:bg-[#1F1F1F] text-secondary-light dark:text-secondary-dark hover:bg-[#E5E5E5] dark:hover:bg-gray-600"
                                                         }`}
                                                 >
                                                     {key}
@@ -236,8 +236,8 @@ const BottomToolbar = () => {
                                                     key={key}
                                                     onClick={() => handleKeySelect(key)}
                                                     className={`w-6 h-6 text-[10px] md600:w-8 md600:h-8 md600:text-[12px] lg:w-10 lg:h-10 rounded lg:text-[14px] border border-[#FFFFFF1A] transition-colors ${selectedKey === key
-                                                        ? "bg-white text-black"
-                                                        : "bg-[#1F1F1F] text-white hover:bg-gray-600"
+                                                        ? "bg-primary-dark dark:bg-primary-light text-secondary-dark dark:text-secondary-light"
+                                                        : "bg-[#F6F6F6] dark:bg-[#1F1F1F] text-secondary-light dark:text-secondary-dark hover:bg-[#E5E5E5] dark:hover:bg-gray-600"
                                                         }`}
                                                 >
                                                     {key}
@@ -253,8 +253,8 @@ const BottomToolbar = () => {
                                                 key={key}
                                                 onClick={() => handleKeySelect(key)}
                                                 className={`w-6 h-6 text-[10px] md600:w-8 md600:h-8 md600:text-[12px] lg:w-10 lg:h-10 rounded lg:text-[14px] border border-[#FFFFFF1A] transition-colors ${selectedKey === key
-                                                    ? "bg-white text-black"
-                                                    : "bg-[#1F1F1F] text-white hover:bg-gray-600"
+                                                    ? "bg-primary-dark dark:bg-primary-light text-secondary-dark dark:text-secondary-light"
+                                                    : "bg-[#F6F6F6] dark:bg-[#1F1F1F] text-secondary-light dark:text-secondary-dark hover:bg-[#E5E5E5] dark:hover:bg-gray-600"
                                                     }`}
                                             >
                                                 {key}
@@ -266,15 +266,15 @@ const BottomToolbar = () => {
                                     <div className="flex justify-between items-center">
                                         <button
                                             onClick={handleClear}
-                                            className="flex items-center gap-1 md600:gap-2 lg:gap-3 text-gray-400 hover:text-white transition-colors"
+                                            className="flex items-center gap-1 md600:gap-2 lg:gap-3 text-gray-400  transition-colors"
                                         >
-                                            <img src={clears} alt="" className='w-3 h-3 md600:w-4 md600:h-4' />
-                                            <p className="text-[10px] md600:text-[10px] lg:text-[12px]">Clear</p>
+                                            <Clears className='w-3 h-3 md600:w-4 md600:h-4 text-secondary-light dark:text-secondary-dark' />
+                                            <p className="text-[10px] md600:text-[10px] lg:text-[12px] text-secondary-light dark:text-gray-400">Clear</p>
                                         </button>
 
                                         <button
                                             onClick={handleApply}
-                                            className=" text-[10px] px-4 py-1 md600:text-[10px] lg:px-6  bg-white text-black lg:text-[12px] rounded-full hover:bg-gray-200 transition-colors"
+                                            className=" text-[10px] px-4 py-1 md600:text-[10px] lg:px-6  bg-primary-dark dark:bg-primary-light text-secondary-dark dark:text-secondary-light lg:text-[12px] rounded-full hover:bg-gray-200 transition-colors"
                                         >
                                             Apply
                                         </button>
@@ -298,7 +298,7 @@ const BottomToolbar = () => {
 
                             {/* Dropdown */}
                             {isOpen1 && (
-                                <div className="absolute -top-[210px] left-[0px] md600:-top-[270px] md600:left-[25px] lg:-top-[320px] lg:left-[35px] transform -translate-x-1/2 w-40 md600:w-52 lg:w-64 bg-[#1F1F1F] rounded-2xl shadow-2xl p-3 md600:p-4 lg:p-6 z-50">
+                                <div className="absolute -top-[210px] left-[0px] md600:-top-[270px] md600:left-[25px] lg:-top-[320px] lg:left-[35px] transform -translate-x-1/2 w-40 md600:w-52 lg:w-64 bg-primary-light dark:bg-primary-dark rounded-2xl shadow-2xl p-3 md600:p-4 lg:p-6 z-50">
                                     {/* Title */}
                                     <h3 className="text-white text-center text-[10px] md600:text-[12px] lg:text-[14px] font-medium mb-2 md600:mb-3">
                                         Tempo (BPM)
@@ -310,12 +310,12 @@ const BottomToolbar = () => {
                                             onClick={handleIncrement}
                                         >
                                             {/* Metronome Icon */}
-                                            <img src={tempobutton} alt="" className=' w-10 h-10 md600:w-14 md600:h-14 lg:w-16 lg:h-16' />
+                                            <Tempobutton className=' w-10 h-10 md600:w-14 md600:h-14 lg:w-16 lg:h-16 text-secondary-light dark:text-secondary-dark' />
                                         </button>
                                     </div>
 
                                     {/* Instructions */}
-                                    <p className="text-white text-center text-[10px] md600:text-[12px] mb-2 md600:mb-3 leading-relaxed">
+                                    <p className="text-secondary-light dark:text-secondary-dark text-center text-[10px] md600:text-[12px] mb-2 md600:mb-3 leading-relaxed">
                                         Click above or tap T <br />
                                         repeatedly to set tempo
                                     </p>
@@ -325,7 +325,7 @@ const BottomToolbar = () => {
                                         {/* Decrement Button */}
                                         <button
                                             onClick={handleDecrement}
-                                            className="w-4 h-4 md600:w-6 md600:h-6 lg:w-8 lg:h-8 text-[10px] md600:text-[12px] bg-[#1F1F1F]  flex items-center justify-center border border-[#FFFFFF1A] rounded-full text-white hover:bg-gray-500 transition-colors font-bold"
+                                            className="w-4 h-4 md600:w-6 md600:h-6 lg:w-8 lg:h-8 text-[10px] md600:text-[12px] bg-primary-light dark:bg-primary-dark  flex items-center justify-center border border-[#1414141A] dark:border-[#FFFFFF1A] rounded-full text-secondary-light dark:text-secondary-dark hover:bg-gray-500 transition-colors font-bold"
                                         >
                                             −
                                         </button>
@@ -338,14 +338,14 @@ const BottomToolbar = () => {
                                                 onChange={handleTempoInputChange}
                                                 min="60"
                                                 max="200"
-                                                className="bg-[#FFFFFF0F] text-white text-[10px] md600:text-[12px] lg:text-[14px] font-light text-center rounded-lg w-12 md600:w-16 py-1 md600:py-2 outline-none border-none"
+                                                className="bg-[#E5E5E5] dark:bg-[#262529] text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px] font-light text-center rounded-lg w-12 md600:w-16 py-1 md600:py-2 outline-none border-none"
                                             />
                                         </div>
 
                                         {/* Increment Button */}
                                         <button
                                             onClick={handleIncrement}
-                                            className="w-4 h-4 md600:w-6 md600:h-6 lg:w-8 lg:h-8 text-[10px] md600:text-[12px] bg-[#1F1F1F] border border-[#FFFFFF1A] rounded-full flex items-center justify-center text-white hover:bg-gray-500 transition-colors font-bold"
+                                            className="w-4 h-4 md600:w-6 md600:h-6 lg:w-8 lg:h-8 text-[10px] md600:text-[12px] bg-primary-light dark:bg-primary-dark border border-[#1414141A] dark:border-[#FFFFFF1A] rounded-full flex items-center justify-center text-secondary-light dark:text-secondary-dark hover:bg-gray-500 transition-colors font-bold"
                                         >
                                             +
                                         </button>
@@ -355,7 +355,7 @@ const BottomToolbar = () => {
                                     <div className="flex justify-center">
                                         <button
                                             onClick={handleApply2}
-                                            className="px-4 py-1 md600:px-6 md600:py-2 lg:px-8 bg-white text-black text-[10px] md600:text-[12px] rounded-full hover:bg-gray-200 transition-colors font-medium"
+                                            className="px-4 py-1 md600:px-6 md600:py-2 lg:px-8 bg-primary-dark dark:bg-primary-light text-secondary-dark dark:text-secondary-light text-[10px] md600:text-[12px] rounded-full transition-colors font-medium"
                                         >
                                             Apply
                                         </button>
@@ -374,23 +374,23 @@ const BottomToolbar = () => {
                             />
 
                             {isOpen2 && (
-                                <div className="absolute -top-[310px] left-[-40px] md600:-top-[380px] md600:left-[25px] lg:-top-[410px] lg:left-[35px] transform -translate-x-1/2 w-40 md600:w-44 lg:w-56 bg-[#1F1F1F] rounded-lg shadow-2xl p-1 z-50">
+                                <div className="absolute -top-[310px] left-[-40px] md600:-top-[380px] md600:left-[25px] lg:-top-[410px] lg:left-[35px] transform -translate-x-1/2 w-40 md600:w-44 lg:w-56 bg-primary-light dark:bg-primary-dark rounded-lg shadow-2xl p-1 z-50">
                                     <div>
                                         {menu.map((option) => (
                                             <div
                                                 key={option.id}
-                                                className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-2 text-white cursor-pointer hover:bg-[#585858]"
+                                                className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-2 text-secondary-light dark:text-secondary-dark cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"
                                                 onClick={() => handleMenuItemSelect(option.id, option.label)}
                                             >
                                                 <div className="flex items-center gap-2 md600:gap-3">
                                                     {/* Show tick only for selected option */}
                                                     <div className="w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 flex items-center justify-center">
                                                         {selectedMenuitems === option.label && (
-                                                            <img src={tick} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />
+                                                            <Tick className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
                                                         )}
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>
+                                                        <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>
                                                             {option.label}
                                                         </span>
                                                     </div>
@@ -399,8 +399,8 @@ const BottomToolbar = () => {
                                         ))}
                                     </div>
 
-                                    <div className="py-3 px-4 border-t border-b border-[#FFFFFF1A] my-2">
-                                        <p className='text-[10px] text-[#FFFFFF99]'>Volume</p>
+                                    <div className="py-3 px-4 border-t border-b border-[#1414141A] dark:border-[#FFFFFF1A] my-2">
+                                        <p className='text-[10px] text-secondary-light dark:text-[#FFFFFF99]'>Volume</p>
                                         <div className=" md:w-32 lg:w-40 2xl:w-48  py-1 ">
                                             <input
                                                 type="range"
@@ -418,23 +418,23 @@ const BottomToolbar = () => {
                                         </div>
                                     </div>
                                     <div className=''>
-                                        <p className='text-[10px] text-[#FFFFFF99] py-3 px-4'>Count in</p>
+                                        <p className='text-[10px] text-secondary-light dark:text-[#FFFFFF99] py-3 px-4'>Count in</p>
                                         <div>
                                             {menu1.map((option) => (
                                                 <div
                                                     key={option.id}
-                                                    className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-2 text-white cursor-pointer hover:bg-[#585858]"
+                                                    className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-2 text-secondary-light dark:text-secondary-dark cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"
                                                     onClick={() => handleCountInSelect(option.id, option.label)}
                                                 >
                                                     <div className="flex items-center gap-2 md600:gap-3">
                                                         {/* Show tick only for selected option */}
                                                         <div className="w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 flex items-center justify-center">
                                                             {selectedCountIn === option.label && (
-                                                                <img src={tick} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />
+                                                                <Tick className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
                                                             )}
                                                         </div>
                                                         <div className="flex flex-col">
-                                                            <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>
+                                                            <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>
                                                                 {option.label}
                                                             </span>
                                                         </div>
