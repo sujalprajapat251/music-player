@@ -11,28 +11,36 @@ import { IoIosArrowDown } from 'react-icons/io';
 import { useTheme } from '../../Utils/ThemeContext';
 import clears from "../../Images/clearIcons.svg";
 import tempobutton from "../../Images/Tempobutton.svg";
+import tick from "../../Images/Tick.svg";
 
 const BottomToolbar = () => {
     const [volume, setVolume] = useState(50);
+    const [volume1, setVolume1] = useState(50);
     const [isIconDropdownOpen, setIsIconDropdownOpen] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [isOpen1, setIsOpen1] = useState(false);
+    const [isOpen2, setIsOpen2] = useState(false);
     const [selectedMode, setSelectedMode] = useState("");
     const [selectedKey, setSelectedKey] = useState("");
-    const dropdownRef = useRef(null);
+    const keyDropdownRef = useRef(null);
+    const tempoDropdownRef = useRef(null);
+    const menuDropdownRef = useRef(null);
     const [appliedSelection, setAppliedSelection] = useState(null);
     const [tempo, setTempo] = useState(120);
-    const [appliedTempo, setAppliedTempo] = useState(120);
+    const [appliedTempo, setAppliedTempo] = useState(0);
+    const [selectedMenuitems, setSelectedMenuitems] = useState('Click');
+    const [selectedCountIn, setSelectedCountIn] = useState('2 bars');
+
 
     useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsOpen(false);
+        const handleClickOutside1 = (event) => {
+            if (tempoDropdownRef.current && !tempoDropdownRef.current.contains(event.target)) {
+                setIsOpen1(false);
             }
         };
 
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        document.addEventListener('mousedown', handleClickOutside1);
+        return () => document.removeEventListener('mousedown', handleClickOutside1);
     }, []);
 
     const handleIncrement = () => {
@@ -62,7 +70,7 @@ const BottomToolbar = () => {
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+            if (keyDropdownRef.current && !keyDropdownRef.current.contains(event.target)) {
                 setIsOpen(false);
             }
         };
@@ -91,6 +99,39 @@ const BottomToolbar = () => {
         setAppliedSelection(null); // Clear the applied selection too
     };
 
+
+    const menu = [
+        { id: 'Click', label: 'Click' },
+        { id: 'Tick', label: 'Tick' },
+        { id: 'Hihat', label: 'Hihat' },
+        { id: 'Clave', label: 'Clave' }
+    ];
+
+    
+    const menu1 = [
+        { id: '2 bars', label: '2 bars' },
+        { id: '1 bar', label: '1 bar' },
+        { id: 'Off', label: 'Off' }
+    ];
+
+    useEffect(() => {
+        const handleClickOutside2 = (event) => {
+            if (menuDropdownRef.current && !menuDropdownRef.current.contains(event.target)) {
+                setIsOpen2(false); // or whatever state controls your menu dropdown
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside2);
+        return () => document.removeEventListener('mousedown', handleClickOutside2);
+    }, []);
+
+    const handleMenuItemSelect = (qualityId, qualityLabel) => {
+        setSelectedMenuitems(qualityLabel);
+        setIsOpen2(false)
+    };
+    const handleCountInSelect = (qualityId, qualityLabel) => {
+        setSelectedCountIn(qualityLabel);
+        setIsOpen2(false)
+    };
 
     const { isDark } = useTheme();
 
@@ -135,7 +176,7 @@ const BottomToolbar = () => {
                     </div>
                     {/* <p className="sm:text-[8px] lg:text-[12px] text-[#14141499] dark:text-[#FFFFFF99] hidden sm:block">Key <span className='text-secondary-light dark:text-secondary-dark'>-</span></p> */}
                     <div className="flex items-center justify-center ">
-                        <div className="relative" ref={dropdownRef}>
+                        <div className="relative" ref={keyDropdownRef}>
                             {/* Trigger Button */}
                             <button
                                 onClick={() => setIsOpen(!isOpen)}
@@ -244,10 +285,10 @@ const BottomToolbar = () => {
                     </div>
                     {/* <p className="sm:text-[8px] lg:text-[12px] text-[#14141499] dark:text-[#FFFFFF99] hidden sm:block">Tempo <span className='text-secondary-light dark:text-secondary-dark'>120</span></p> */}
                     <div className="flex items-center justify-center">
-                        <div className="relative" ref={dropdownRef}>
+                        <div className="relative" ref={tempoDropdownRef}>
                             {/* Trigger Button */}
                             <button
-                                onClick={() => setIsOpen1(!isOpen)}
+                                onClick={() => setIsOpen1(!isOpen1)}
                                 className="cursor-pointer outline-none focus:outline-none"
                             >
                                 <p className="sm:text-[8px] lg:text-[12px] text-[#14141499] dark:text-[#FFFFFF99] hidden sm:block">
@@ -324,12 +365,88 @@ const BottomToolbar = () => {
                         </div>
                     </div>
 
-                    <div className="flex gap-2 md:gap-3 ">
-                        <div className="items-center rounded-full bg-primary-dark dark:bg-primary-light p-[2px] sm:p-1 md:p-2">
-                            <img src={isDark ? darkStrange : Strange} className="w-[9px] h-[9px] sm:w-[10px] sm:h-[10px] md:w-[12px] md:h-[14px] lg:w-[14px] lg:h-[16px]" />
+                    <div className="" onClick={() => { setIsIconDropdownOpen(!isIconDropdownOpen); setIsOpen2(!isOpen2) }}>
+                        <div className="relative flex gap-2 md:gap-3" ref={menuDropdownRef}>
+                            <div className="items-center rounded-full bg-primary-dark dark:bg-primary-light p-[2px] sm:p-1 md:p-2" >
+                                <img src={isDark ? darkStrange : Strange} className="w-[9px] h-[9px] sm:w-[10px] sm:h-[10px] md:w-[12px] md:h-[14px] lg:w-[14px] lg:h-[16px]" />
+                            </div>
+                            <IoIosArrowDown className={`text-[#14141499] dark:text-[#FFFFFF99] transition-transform my-auto  duration-300 ${isIconDropdownOpen ? 'rotate-180' : 'rotate-0'}`}
+                            />
+
+                            {isOpen2 && (
+                                <div className="absolute -top-[310px] left-[-40px] md600:-top-[380px] md600:left-[25px] lg:-top-[410px] lg:left-[35px] transform -translate-x-1/2 w-40 md600:w-44 lg:w-56 bg-[#1F1F1F] rounded-lg shadow-2xl p-1 z-50">
+                                    <div>
+                                        {menu.map((option) => (
+                                            <div
+                                                key={option.id}
+                                                className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-2 text-white cursor-pointer hover:bg-[#585858]"
+                                                onClick={() => handleMenuItemSelect(option.id, option.label)}
+                                            >
+                                                <div className="flex items-center gap-2 md600:gap-3">
+                                                    {/* Show tick only for selected option */}
+                                                    <div className="w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 flex items-center justify-center">
+                                                        {selectedMenuitems === option.label && (
+                                                            <img src={tick} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>
+                                                            {option.label}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="py-3 px-4 border-t border-b border-[#FFFFFF1A] my-2">
+                                        <p className='text-[10px] text-[#FFFFFF99]'>Volume</p>
+                                        <div className=" md:w-32 lg:w-40 2xl:w-48  py-1 ">
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="100"
+                                                value={volume1}
+                                                onChange={(e) => setVolume1(e.target.value)}
+                                                className="w-full h-1 lg:h-2 bg-[#2B2B2B]  rounded-lg appearance-none cursor-pointer slider outline-none focus:outline-none"
+                                                style={{
+                                                    background: isDark
+                                                        ? `linear-gradient(to right, #ffffff 0%, #ffffff ${volume1}%, #2B2B2B ${volume1}%, #2B2B2B 100%)`
+                                                        : `linear-gradient(to right, #141414 0%, #141414 ${volume1}%, #1414141A ${volume1}%, #1414141A 100%)`
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className=''>
+                                        <p className='text-[10px] text-[#FFFFFF99] py-3 px-4'>Count in</p>
+                                        <div>
+                                            {menu1.map((option) => (
+                                                <div
+                                                    key={option.id}
+                                                    className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-2 text-white cursor-pointer hover:bg-[#585858]"
+                                                    onClick={() => handleCountInSelect(option.id, option.label)}
+                                                >
+                                                    <div className="flex items-center gap-2 md600:gap-3">
+                                                        {/* Show tick only for selected option */}
+                                                        <div className="w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 flex items-center justify-center">
+                                                            {selectedCountIn === option.label && (
+                                                                <img src={tick} alt="" className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' />
+                                                            )}
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <span className='text-white text-[10px] md600:text-[12px] lg:text-[14px]'>
+                                                                {option.label}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                </div>
+                            )}
                         </div>
-                        <IoIosArrowDown className={`text-[#14141499] dark:text-[#FFFFFF99] transition-transform my-auto  duration-300 ${isIconDropdownOpen ? 'rotate-180' : 'rotate-0'}`} onClick={() => setIsIconDropdownOpen(!isIconDropdownOpen)}
-                        />
                     </div>
                 </div>
 
