@@ -10,6 +10,7 @@ import faqsSlice from './Slice/faqs.slice'
 import termsSlice from './Slice/terms.slice';
 import studioReducer from './Slice/studio.slice';
 import subscribeReducer from './Slice/subscribe.slice';
+import categoryReducer from './Slice/category.slice';
 
 export const rootReducer = combineReducers({
     alert: alertSlice,
@@ -22,4 +23,5 @@ export const rootReducer = combineReducers({
     terms: termsSlice,
     studio: studioReducer,
     subscribe: subscribeReducer,
+    category: categoryReducer,
 });

@@ -4,9 +4,9 @@ import { HiMenu } from "react-icons/hi";
 import { useDispatch, useSelector } from 'react-redux';
 import { getAllSound } from '../Redux/Slice/sound.slice';
 import { IMAGE_URL } from '../Utils/baseUrl';
-import play from '../Images/play.svg';
+import play from '../Images/playwhite.svg';
 import DeleteIcon from "../Images/deleteIcon.svg";
-import pause from '../Images/pause.svg';
+import pause from '../Images/pausewhite.svg';
 import folder from "../Images/folderIcon.svg";
 import rename from "../Images/renameIcon.svg";
 import RedDelete from "../Images/deleteRedIcon.svg"
