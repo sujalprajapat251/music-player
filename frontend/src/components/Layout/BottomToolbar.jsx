@@ -326,7 +326,7 @@ const BottomToolbar = () => {
                                         {/* Decrement Button */}
                                         <button
                                             onClick={handleDecrement}
-                                            className="w-4 h-4 md600:w-6 md600:h-6 lg:w-8 lg:h-8 text-[10px] md600:text-[12px] bg-primary-light dark:bg-primary-dark  flex items-center justify-center border border-[#1414141A] dark:border-[#FFFFFF1A] rounded-full text-secondary-light dark:text-secondary-dark hover:bg-gray-500 transition-colors font-bold"
+                                            className="w-4 h-4 md600:w-6 md600:h-6 lg:w-8 lg:h-8 text-[10px] md600:text-[12px] bg-primary-light dark:bg-primary-dark  flex items-center justify-center border border-[#1414141A] dark:border-[#FFFFFF1A] rounded-full text-secondary-light dark:text-secondary-dark hover:bg-[#E5E5E5] dark:hover:bg-[#262529] transition-colors font-bold"
                                         >
                                             −
                                         </button>
@@ -346,7 +346,7 @@ const BottomToolbar = () => {
                                         {/* Increment Button */}
                                         <button
                                             onClick={handleIncrement}
-                                            className="w-4 h-4 md600:w-6 md600:h-6 lg:w-8 lg:h-8 text-[10px] md600:text-[12px] bg-primary-light dark:bg-primary-dark border border-[#1414141A] dark:border-[#FFFFFF1A] rounded-full flex items-center justify-center text-secondary-light dark:text-secondary-dark hover:bg-gray-500 transition-colors font-bold"
+                                            className="w-4 h-4 md600:w-6 md600:h-6 lg:w-8 lg:h-8 text-[10px] md600:text-[12px] bg-primary-light dark:bg-primary-dark border border-[#1414141A] dark:border-[#FFFFFF1A] rounded-full flex items-center justify-center text-secondary-light dark:text-secondary-dark hover:bg-[#E5E5E5] dark:hover:bg-[#262529] transition-colors font-bold"
                                         >
                                             +
                                         </button>

@@ -1,7 +1,7 @@
 const express = require('express');
 const indexRoutes = express.Router()
 const upload = require("../helper/uplodes");
-const { removeUser, updateUser, getUserById, getAllUsers, createNewUser, resetPassword } = require('../controller/user.controller');
+const { removeUser, updateUser, getUserById, getAllUsers, createNewUser, resetPassword, addToWishlist, getUserWishlist, removeFromWishlist } = require('../controller/user.controller');
 const { userLogin, googleLogin, forgotPassword, verifyOtp, changePassword, userLogout, refreshAccessToken } = require('../auth/auth');
 const { auth } = require('../middleware/auth');
 const { createSound, getAllSounds, getSoundById, updateSound, deleteSound } = require('../controller/soundController');
@@ -30,6 +30,11 @@ indexRoutes.get('/getUserById/:id', getUserById);
 indexRoutes.put('/userUpdate/:id', upload.single("photo"), updateUser);
 indexRoutes.delete('/deleteUser/:id', removeUser);
 indexRoutes.put('/resetPassword', resetPassword);
+
+// Wishlist Routes
+indexRoutes.put('/wishlist', auth, addToWishlist);
+indexRoutes.get('/getwishlist', auth, getUserWishlist);
+indexRoutes.delete('/wishlist/:soundId', auth, removeFromWishlist);
 
 // category Routes
 

@@ -1,6 +1,7 @@
 const user = require('../models/user.model');
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 
 exports.createNewUser = async (req, res) => {
     try {
@@ -179,5 +180,159 @@ exports.resetPassword = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: error.message });
         console.log(error);
+    }
+};
+
+// Wishlist functionality
+exports.addToWishlist = async (req, res) => {
+    try {
+        const { soundId } = req.body;
+        const userId = req.user._id;
+
+        if (!soundId) {
+            return res.status(400).json({
+                status: 400,
+                message: "Sound is required"
+            });
+        }
+
+        const currentUser = await user.findById(userId);
+        if (!currentUser) {
+            return res.status(404).json({
+                status: 404,
+                message: "User not found"
+            });
+        }
+
+        if (!currentUser.wishlist) {
+            currentUser.wishlist = [];
+        }
+
+        if (currentUser.wishlist.includes(soundId)) {
+            return res.status(409).json({
+                status: 409,
+                message: "Sound already exists in wishlist"
+            });
+        }
+
+        currentUser.wishlist.push(soundId);
+        await currentUser.save();
+
+        return res.status(200).json({
+            status: 200,
+            message: "Sound added to wishlist successfully..!",
+            wishlist: currentUser.wishlist
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: 500,
+            message: error.message
+        });
+    }
+};
+
+exports.getUserWishlist = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const currentUser = await user.findById(userId);
+        if (!currentUser) {
+            return res.status(404).json({
+                status: 404,
+                message: "User not found"
+            });
+        }
+
+        const userWithWishlist = await user.aggregate([
+            {
+                $match: { _id: new mongoose.Types.ObjectId(userId) }
+            },
+            {
+                $lookup: {
+                    from: 'sounds',
+                    localField: 'wishlist',
+                    foreignField: '_id',
+                    as: 'wishlistdata'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'wishlistDetails.soundtype',
+                    foreignField: '_id',
+                    as: 'categoryDetails'
+                }
+            },
+            
+        ]);
+
+        if (userWithWishlist.length === 0) {
+            return res.status(404).json({
+                status: 404,
+                message: "User not found"
+            });
+        }
+
+        return res.status(200).json({
+            status: 200,
+            message: "Wishlist retrieved successfully..!",
+            wishlist: userWithWishlist[0].wishlistdata || []
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: 500,
+            message: error.message
+        });
+    }
+};
+
+exports.removeFromWishlist = async (req, res) => {
+    try {
+        const { soundId } = req.params;
+        const userId = req.user._id;
+
+        if (!soundId) {
+            return res.status(400).json({
+                status: 400,
+                message: "Sound is required"
+            });
+        }
+
+        const currentUser = await user.findById(userId);
+        if (!currentUser) {
+            return res.status(404).json({
+                status: 404,
+                message: "User not found"
+            });
+        }
+
+        if (!currentUser.wishlist) {
+            currentUser.wishlist = [];
+        }
+
+        const soundIndex = currentUser.wishlist.indexOf(soundId);
+        if (soundIndex === -1) {
+            return res.status(404).json({
+                status: 404,
+                message: "Sound not found in wishlist..!"
+            });
+        }
+
+        currentUser.wishlist.splice(soundIndex, 1);
+        await currentUser.save();
+
+        return res.status(200).json({
+            status: 200,
+            message: "Sound removed from wishlist successfully..!",
+            wishlist: currentUser.wishlist
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            status: 500,
+            message: error.message
+        });
     }
 };

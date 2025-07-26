@@ -223,7 +223,7 @@ export const getUserWishList = createAsyncThunk(
 
 export const addToWishList = createAsyncThunk(
     'user/addtowishlist',
-    async (designId, { dispatch, rejectWithValue }) => {
+    async (soundId, { dispatch, rejectWithValue }) => {
         try {
             const token = sessionStorage.getItem("token");
             if (!token) {
@@ -231,13 +231,37 @@ export const addToWishList = createAsyncThunk(
             }
             
             const response = await axiosInstance.put(`${BASE_URL}/wishlist`, 
-                { designId }, 
+                { soundId }, 
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     }
                 }
             );
+            
+            dispatch(setAlert({ text: response.data.message, color: 'success' }));
+            dispatch(getUserWishList());
+            return response.data;
+        } catch (error) {
+            return handleErrors(error, dispatch, rejectWithValue);
+        }
+    }
+);
+
+export const removeFromWishList = createAsyncThunk(
+    'user/removefromwishlist',
+    async (soundId, { dispatch, rejectWithValue }) => {
+        try {
+            const token = sessionStorage.getItem("token");
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+            
+            const response = await axiosInstance.delete(`${BASE_URL}/wishlist/${soundId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
             
             dispatch(setAlert({ text: response.data.message, color: 'success' }));
             dispatch(getUserWishList());
@@ -436,6 +460,24 @@ const usersSlice = createSlice({
                 state.isError = true;
                 state.success = false;
                 state.message = action.payload?.message || 'Failed to add to wishlist';
+            })
+            
+            // Remove from wishlist
+            .addCase(removeFromWishList.pending, (state) => {
+                state.loading = true;
+                state.isError = false;
+            })
+            .addCase(removeFromWishList.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = true;
+                state.isError = false;
+                state.message = "Product removed from wishlist";
+            })
+            .addCase(removeFromWishList.rejected, (state, action) => {
+                state.loading = false;
+                state.isError = true;
+                state.success = false;
+                state.message = action.payload?.message || 'Failed to remove from wishlist';
             })
             
             // Get user wishlist
