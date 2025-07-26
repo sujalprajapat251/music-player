@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import WaveSurfer from "wavesurfer.js";
 import { Player, start } from "tone";
 import * as d3 from "d3";
@@ -9,31 +9,81 @@ import reverceIcon from "../Images/reverce.svg";
 import fxIcon from "../Images/fx.svg";
 import offce from "../Images/offce.svg";
 import GridSetting from "./GridSetting";
-const TimelineTrack = ({ url, onReady, color, height }) => {
+import MusicOff from "./MusicOff";
+
+const TimelineTrack = ({ url, onReady, color, height, trackId }) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
+  const isInitialized = useRef(false);
 
   useEffect(() => {
-    if (!waveformRef.current) return;
+    if (!waveformRef.current || !url || isInitialized.current) return;
 
-    wavesurfer.current = WaveSurfer.create({
-      container: waveformRef.current,
-      waveColor: "#ffffff",
-      progressColor: "#ffffff",
-      height: height - 8, // Subtract padding to match sidebar
-      barWidth: 2,
-      responsive: true,
-      minPxPerSec: 50,
-      normalize: true,
-    });
+    let isMounted = true;
 
-    wavesurfer.current.load(url);
-    wavesurfer.current.on("ready", () => {
-      onReady(wavesurfer.current);
-    });
+    const initWaveSurfer = async () => {
+      try {
+        // Clean up existing instance
+        if (wavesurfer.current) {
+          wavesurfer.current.destroy();
+          wavesurfer.current = null;
+        }
 
-    return () => wavesurfer.current.destroy();
-  }, [url, height]);
+        if (!isMounted) return;
+
+        wavesurfer.current = WaveSurfer.create({
+          container: waveformRef.current,
+          waveColor: "#ffffff",
+          progressColor: "#ffffff",
+          height: height - 8,
+          barWidth: 2,
+          responsive: true,
+          minPxPerSec: 50,
+          normalize: true,
+        });
+
+        if (!isMounted) return;
+
+        const readyHandler = () => {
+          if (isMounted && onReady && wavesurfer.current) {
+            onReady(wavesurfer.current);
+          }
+        };
+
+        const errorHandler = (error) => {
+          if (isMounted) {
+            console.error("WaveSurfer error:", error);
+          }
+        };
+
+        wavesurfer.current.on("ready", readyHandler);
+        wavesurfer.current.on("error", errorHandler);
+
+        wavesurfer.current.load(url);
+        isInitialized.current = true;
+
+      } catch (error) {
+        if (isMounted) {
+          console.error("Failed to create WaveSurfer instance:", error);
+        }
+      }
+    };
+
+    initWaveSurfer();
+
+    return () => {
+      isMounted = false;
+      isInitialized.current = false;
+      if (wavesurfer.current) {
+        try {
+          wavesurfer.current.destroy();
+        } catch (error) {
+          // Silently ignore cleanup errors
+        }
+        wavesurfer.current = null;
+      }
+    };
+  }, [trackId]); // Only depend on trackId, not on url, height, or onReady
 
   return (
     <div
@@ -44,8 +94,8 @@ const TimelineTrack = ({ url, onReady, color, height }) => {
         height: `${height}px`,
         display: "flex",
         alignItems: "center",
-        position: "relative", // Add this
-        overflow: "hidden", // Add this
+        position: "relative",
+        overflow: "hidden",
       }}
     >
       <div
@@ -53,10 +103,10 @@ const TimelineTrack = ({ url, onReady, color, height }) => {
         style={{
           width: "100%",
           height: "100%",
-          position: "absolute", // Add this
+          position: "absolute",
           top: 0,
           left: 0,
-          zIndex: 0, // Make sure waveform is above background
+          zIndex: 0,
         }}
       />
     </div>
@@ -73,50 +123,112 @@ const Timeline = () => {
   const timelineContainerRef = useRef(null);
   const playbackStartRef = useRef({ systemTime: 0, audioTime: 0 });
   const [showGridSetting, setShowGridSetting] = useState(false);
+  const [showOffcanvas, setShowOffcanvas] = useState(false);
+  const isDragging = useRef(false);
+  const animationFrameId = useRef(null);
 
-  const tracks = useSelector((state) => state.studio.tracks);
-  const trackHeight = useSelector((state) => state.studio.trackHeight);
+  const tracks = useSelector((state) => state.studio?.tracks || []);
+  const trackHeight = useSelector((state) => state.studio?.trackHeight || 100);
 
-  const handleReady = (wavesurfer, url) => {
-    fetch(url)
-      .then((res) => res.arrayBuffer())
-      .then((arrayBuffer) => {
-        const audioContext = new (window.AudioContext ||
-          window.webkitAudioContext)();
-        return audioContext.decodeAudioData(arrayBuffer);
-      })
-      .then((audioBuffer) => {
-        const player = new Player(audioBuffer).toDestination();
-        setPlayers((prev) => [...prev, player]);
+  const handleReady = useCallback(async (wavesurfer, url) => {
+    if (!url) return;
+    
+    let isCancelled = false;
+    
+    try {
+      const controller = new AbortController();
+      
+      // Set up cleanup function
+      const cleanup = () => {
+        isCancelled = true;
+        controller.abort();
+      };
+      
+      const response = await fetch(url, { 
+        signal: controller.signal 
       });
-  };
+      
+      if (isCancelled) return;
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch audio: ${response.statusText}`);
+      }
+      
+      const arrayBuffer = await response.arrayBuffer();
+      
+      if (isCancelled) return;
+      
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      
+      if (isCancelled) return;
+      
+      const player = new Player(audioBuffer).toDestination();
+      
+      setPlayers((prev) => {
+        // Check if player already exists to prevent duplicates
+        if (prev.find(p => p === player)) return prev;
+        return [...prev, player];
+      });
+      
+      setWaveSurfers((prev) => {
+        // Check if wavesurfer already exists to prevent duplicates
+        if (prev.find(ws => ws === wavesurfer)) return prev;
+        return [...prev, wavesurfer];
+      });
+      
+      const duration = wavesurfer.getDuration();
+      if (duration > 0 && !isCancelled) {
+        setAudioDuration((prev) => Math.max(prev, duration));
+      }
+    } catch (error) {
+      if (error.name === 'AbortError' || isCancelled) {
+        return; // Silently ignore abort errors
+      }
+      console.error("Error loading audio:", error);
+    }
+  }, []);
 
   const handlePlayPause = async () => {
-    await start();
+    try {
+      await start();
 
-    if (isPlaying) {
-      players.forEach((player) => player.stop());
-      setIsPlaying(false);
-    } else {
-      setIsPlaying(true);
-      players.forEach((player) => {
-        player.start(undefined, currentTime);
-      });
-      playbackStartRef.current = {
-        systemTime: Date.now(),
-        audioTime: currentTime,
-      };
+      if (isPlaying) {
+        players.forEach((player) => {
+          if (player && typeof player.stop === 'function') {
+            player.stop();
+          }
+        });
+        setIsPlaying(false);
+      } else {
+        setIsPlaying(true);
+        players.forEach((player) => {
+          if (player && typeof player.start === 'function') {
+            player.start(undefined, currentTime);
+          }
+        });
+        playbackStartRef.current = {
+          systemTime: Date.now(),
+          audioTime: currentTime,
+        };
+      }
+    } catch (error) {
+      console.error("Error during play/pause:", error);
     }
   };
 
-  const renderRuler = () => {
+  const renderRuler = useCallback(() => {
+    if (!svgRef.current) return;
+
     const svg = d3.select(svgRef.current);
     const svgNode = svgRef.current;
-    const width = svgNode ? svgNode.clientWidth : 600;
-    const axisY = 80; // Ruler baseline
+    const width = svgNode.clientWidth || 600;
+    const axisY = 80;
     const duration = audioDuration;
 
     svg.selectAll("*").remove();
+
+    if (width <= 0 || duration <= 0) return;
 
     const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
     const labelInterval = 2;
@@ -160,13 +272,16 @@ const Timeline = () => {
       .attr("y2", axisY)
       .attr("stroke", "white")
       .attr("stroke-width", 1);
-  };
+  }, [audioDuration]);
 
+  // Animation loop for playback with proper cleanup
   useEffect(() => {
-    let animationFrameId;
+    let localAnimationId = null;
 
     if (isPlaying) {
       const updateLoop = () => {
+        if (!isPlaying) return; // Double check if still playing
+        
         const elapsedTime =
           (Date.now() - playbackStartRef.current.systemTime) / 1000;
         const newTime = playbackStartRef.current.audioTime + elapsedTime;
@@ -175,60 +290,94 @@ const Timeline = () => {
           setIsPlaying(false);
           setCurrentTime(audioDuration);
           players.forEach((player) => {
-            player.stop();
+            if (player && typeof player.stop === 'function') {
+              try {
+                player.stop();
+              } catch (error) {
+                // Silently ignore stop errors
+              }
+            }
           });
         } else {
           setCurrentTime(newTime);
-          animationFrameId = requestAnimationFrame(updateLoop);
+          localAnimationId = requestAnimationFrame(updateLoop);
         }
       };
 
-      animationFrameId = requestAnimationFrame(updateLoop);
+      localAnimationId = requestAnimationFrame(updateLoop);
     }
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      if (localAnimationId) {
+        cancelAnimationFrame(localAnimationId);
+      }
     };
-  }, [isPlaying, audioDuration, players]);
+  }, [isPlaying, audioDuration]); // Removed players dependency to prevent infinite loops
 
+  // Render ruler when dependencies change
   useEffect(() => {
     renderRuler();
-  }, [audioDuration, currentTime]);
+  }, [renderRuler]);
 
-  const isDragging = useRef(false);
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      players.forEach((player) => {
+        if (player && typeof player.dispose === 'function') {
+          player.dispose();
+        }
+      });
+      waveSurfers.forEach((ws) => {
+        if (ws && typeof ws.destroy === 'function') {
+          ws.destroy();
+        }
+      });
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+      }
+    };
+  }, []);
 
   const handleMouseDown = (e) => {
     isDragging.current = true;
     movePlayhead(e);
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = useCallback((e) => {
     if (!isDragging.current) return;
     movePlayhead(e);
-  };
+  }, []);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     isDragging.current = false;
-  };
+  }, []);
 
   const movePlayhead = (e) => {
+    if (!timelineContainerRef.current) return;
+
     const svgRect = timelineContainerRef.current.getBoundingClientRect();
     const x = e.clientX - svgRect.left;
     const width = svgRect.width;
     const duration = audioDuration;
+    
+    if (width <= 0 || duration <= 0) return;
+    
     let time = (x / width) * duration;
     time = Math.max(0, Math.min(duration, time));
     setCurrentTime(time);
 
     waveSurfers.forEach((ws) => {
-      if (ws && ws.seekTo) {
-        ws.seekTo(time / ws.getDuration());
+      if (ws && typeof ws.seekTo === 'function' && typeof ws.getDuration === 'function') {
+        const wsDuration = ws.getDuration();
+        if (wsDuration > 0) {
+          ws.seekTo(time / wsDuration);
+        }
       }
     });
 
     if (isPlaying) {
       players.forEach((player) => {
-        if (player && player.stop && player.start) {
+        if (player && typeof player.stop === 'function' && typeof player.start === 'function') {
           player.stop();
           player.start(undefined, time);
         }
@@ -244,7 +393,11 @@ const Timeline = () => {
     const gridLines = [];
     const width = timelineContainerRef.current?.clientWidth || 600;
     const duration = audioDuration;
+    
+    if (width <= 0 || duration <= 0) return gridLines;
+    
     const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
+    
     for (let sec = 0; sec <= duration; sec += 1) {
       const x = xScale(sec);
       gridLines.push(
@@ -253,9 +406,9 @@ const Timeline = () => {
           style={{
             position: "absolute",
             left: `${x}px`,
-            top: "100px", // below the header
+            top: "100px",
             width: "1px",
-            height: `calc(100% - 100px)`, // fill tracks area
+            height: `calc(100% - 100px)`,
             background: "#FFFFFF1A",
             zIndex: 0,
             pointerEvents: "none",
@@ -266,184 +419,195 @@ const Timeline = () => {
     return gridLines;
   };
 
+  const playheadPosition = audioDuration > 0 ? (currentTime / audioDuration) * 100 : 0;
+
   return (
-    <div
-      style={{
-        padding: "0",
-        color: "white",
-        background: "transparent",
-        height: "100%",
-      }}
-      className="relative"
-    >
-      <div
-        ref={timelineContainerRef}
-        style={{ position: "relative", height: "100%" }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-      >
-        {/* Timeline Header */}
-        <div style={{ height: "100px", borderBottom: "1px solid #1414141A" }}>
-          <svg
-            ref={svgRef}
-            width="100%"
-            height="100%"
-            style={{ color: "white", width: "100%" }}
-          />
-        </div>
-
-        {/* Tracks */}
-        <div style={{ overflow: "auto", maxHeight: "calc(100vh - 300px)" }}>
-          {tracks.map((track, idx) => (
-            <div
-              key={track.id}
-              style={{
-                position: "relative",
-                marginBottom: "1px",
-                height: `${trackHeight}px`,
-              }}
-            >
-              {/* Top horizontal line */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "1px",
-                  background: "#FFFFFF1A",
-                  zIndex: 0,
-                }}
-              />
-              {/* Bottom horizontal line */}
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "1px",
-                  background: "#FFFFFF1A",
-                  zIndex: 0,
-                }}
-              />
-              <TimelineTrack
-                url={track.url}
-                color={track.color}
-                height={trackHeight}
-                onReady={(ws) => {
-                  handleReady(ws, track.url);
-                  setWaveSurfers((prev) => [...prev, ws]);
-                  const dur = ws.getDuration();
-                  setAudioDuration((prev) => Math.max(prev, dur));
-                }}
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Playhead - absolutely positioned over both header and tracks */}
-        <div
-          style={{
-            position: "absolute",
-            left: `${(currentTime / audioDuration) * 100}%`,
-            top: 0,
-            height: "100%",
-            width: "2px",
-            pointerEvents: "none",
-            zIndex: 100, // Make sure it's above everything
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              top: "60px",
-              left: "-8px",
-              width: "18px",
-              height: "18px",
-              background: "#AD00FF",
-              borderRadius: "3px",
-              border: "1px solid #fff",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              top: "78px",
-              left: 0,
-              bottom: 0,
-              width: "2px",
-              background: "#AD00FF",
-            }}
-          />
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            pointerEvents: "none",
-          }}
-        >
-          {renderGridLines()}
-        </div>
-      </div>
-
-      {/* Controls */}
+    <>
       <div
         style={{
-          position: "fixed",
-          bottom: "80px",
-          left: "50%",
-          transform: "translateX(-50%)",
+          padding: "0",
+          color: "white",
+          background: "transparent",
+          height: "100%",
+          marginRight: showOffcanvas ? "23vw" : 0,
         }}
+        className="relative"
       >
-        <button
-          onClick={handlePlayPause}
+        <div
+          ref={timelineContainerRef}
+          style={{ position: "relative", height: "100%" }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
+          {/* Timeline Header */}
+          <div style={{ height: "100px", borderBottom: "1px solid #1414141A" }}>
+            <svg
+              ref={svgRef}
+              width="100%"
+              height="100%"
+              style={{ color: "white", width: "100%" }}
+            />
+          </div>
+
+          {/* Tracks */}
+          <div style={{ overflow: "auto", maxHeight: "calc(100vh - 300px)" }}>
+            {tracks.map((track) => (
+              <div
+                key={track.id}
+                style={{
+                  position: "relative",
+                  marginBottom: "1px",
+                  height: `${trackHeight}px`,
+                }}
+              >
+                {/* Top horizontal line */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "1px",
+                    background: "#FFFFFF1A",
+                    zIndex: 0,
+                  }}
+                />
+                {/* Bottom horizontal line */}
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "1px",
+                    background: "#FFFFFF1A",
+                    zIndex: 0,
+                  }}
+                />
+                <TimelineTrack
+                  url={track.url}
+                  color={track.color}
+                  height={trackHeight}
+                  onReady={(ws) => handleReady(ws, track.url)}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Playhead */}
+          <div
+            style={{
+              position: "absolute",
+              left: `${playheadPosition}%`,
+              top: 0,
+              height: "100%",
+              width: "2px",
+              pointerEvents: "none",
+              zIndex: 100,
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                top: "60px",
+                left: "-8px",
+                width: "18px",
+                height: "18px",
+                background: "#AD00FF",
+                borderRadius: "3px",
+                border: "1px solid #fff",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                top: "78px",
+                left: 0,
+                bottom: 0,
+                width: "2px",
+                background: "#AD00FF",
+              }}
+            />
+          </div>
+
+          {/* Grid lines */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              pointerEvents: "none",
+            }}
+          >
+            {renderGridLines()}
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div
           style={{
-            color: "white",
-            background: "#333",
-            border: "none",
-            padding: "10px 20px",
-            borderRadius: "6px",
-            cursor: "pointer",
+            position: "fixed",
+            bottom: "80px",
+            left: "50%",
+            transform: "translateX(-50%)",
           }}
         >
-          {isPlaying ? "⏸️ Pause" : "▶️ Play All"}
-        </button>
+          <button
+            onClick={handlePlayPause}
+            style={{
+              color: "white",
+              background: "#333",
+              border: "none",
+              padding: "10px 20px",
+              borderRadius: "6px",
+              cursor: "pointer",
+            }}
+          >
+            {isPlaying ? "⏸️ Pause" : "▶️ Play All"}
+          </button>
+        </div>
+
+        {/* Top right controls */}
+        <div className="flex gap-2 absolute top-[60px] right-[10px] -translate-x-1/2 bg-[#141414]">
+          <div className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full">
+            <img src={magnetIcon} alt="Magnet" />
+          </div>
+          <div
+            className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full relative"
+            onClick={() => setShowGridSetting((prev) => !prev)}
+          >
+            <img src={settingIcon} alt="Settings" />
+            {showGridSetting && (
+              <div className="absolute top-full right-0 z-[50]">
+                <GridSetting />
+              </div>
+            )}
+          </div>
+          <div className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full">
+            <img src={reverceIcon} alt="Reverse" />
+          </div>
+        </div>
+
+        {/* Right side controls */}
+        <div className="absolute top-[60px] right-[0] -translate-x-1/2 z-10">
+          <div
+            className="bg-[#FFFFFF] w-[40px] h-[40px] flex items-center justify-center rounded-full cursor-pointer"
+            onClick={() => setShowOffcanvas((prev) => !prev)}
+          >
+            <img src={offce} alt="Off canvas" />
+          </div>
+          <div className="bg-[#1F1F1F] w-[40px] h-[40px] flex items-center justify-center rounded-full mt-2">
+            <img src={fxIcon} alt="Effects" />
+          </div>
+        </div>
       </div>
-      <div className="flex gap-2 absolute top-[60px] right-[10px] -translate-x-1/2 bg-[#141414]">
-        <div className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full">
-          <img src={magnetIcon} alt="" />
-        </div>
-        <div
-          className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full relative"
-          onClick={() => setShowGridSetting((prev) => !prev)}
-        >
-          <img src={settingIcon} alt="" />
-          {showGridSetting && (
-            <div className="absolute top-full right-0 z-[50]">
-              <GridSetting />
-            </div>
-          )}
-        </div>
-        <div className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full">
-          <img src={reverceIcon} alt="" />
-        </div>
-      </div>
-      <div className=" absolute top-[60px] right-[0] -translate-x-1/2 z-10">
-        <div className="bg-[#FFFFFF] w-[40px] h-[40px] flex items-center justify-center rounded-full">
-          <img src={offce} alt="" />
-        </div>
-        <div className="bg-[#1F1F1F] w-[40px] h-[40px] flex items-center justify-center rounded-full mt-2">
-          <img src={fxIcon} alt="" />
-        </div>
-      </div>
-    </div>
+
+      <MusicOff showOffcanvas={showOffcanvas} setShowOffcanvas={setShowOffcanvas} />
+    </>
   );
 };
 
