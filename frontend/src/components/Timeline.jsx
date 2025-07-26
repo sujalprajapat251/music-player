@@ -127,6 +127,11 @@ const Timeline = () => {
   const isDragging = useRef(false);
   const animationFrameId = useRef(null);
 
+  // Grid settings state
+  const [selectedGrid, setSelectedGrid] = useState("1/1");
+  const [selectedTime, setSelectedTime] = useState("4/4");
+  const [selectedRuler, setSelectedRuler] = useState("Beats");
+
   const tracks = useSelector((state) => state.studio?.tracks || []);
   const trackHeight = useSelector((state) => state.studio?.trackHeight || 100);
 
@@ -217,6 +222,34 @@ const Timeline = () => {
     }
   };
 
+  // Function to get grid divisions based on selected grid
+  const getGridDivisions = (gridSize) => {
+    switch (gridSize) {
+      case "1/1":
+        return 1; // 1 grid line per second
+      case "1/2":
+        return 2; // 2 grid lines per second
+      case "1/2 dotted":
+        return 2; // 2 grid lines per second (dotted)
+      case "1/4":
+        return 4; // 4 grid lines per second
+      case "1/8":
+        return 8; // 8 grid lines per second
+      case "1/16":
+        return 16; // 16 grid lines per second
+      case "1/32":
+        return 32; // 32 grid lines per second
+      case "1/8 triplet":
+        return 12; // 12 grid lines per second (triplet)
+      case "1/16 triplet":
+        return 24; // 24 grid lines per second (triplet)
+      case "Automatic grid size":
+        return 4; // Default to 1/4
+      default:
+        return 4;
+    }
+  };
+
   const renderRuler = useCallback(() => {
     if (!svgRef.current) return;
 
@@ -233,29 +266,59 @@ const Timeline = () => {
     const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
     const labelInterval = 2;
 
-    for (let sec = 0; sec <= duration; sec++) {
-      const x = xScale(sec);
-      const isLabeled = sec % labelInterval === 0;
+    // Get grid settings
+    const gridDivisions = getGridDivisions(selectedGrid);
+    const gridSpacing = 1 / gridDivisions;
+    const gridColor = "#FFFFFF";
 
-      // Ticks
+    // Unified ruler: draw all ticks (main, half, quarter, grid) in one area
+    for (let time = 0; time <= duration; time += gridSpacing) {
+      const x = xScale(time);
+      const isMainBeat = Math.abs(time - Math.round(time)) < 0.01;
+      const isHalfBeat = Math.abs(time - Math.round(time * 2) / 2) < 0.01;
+      const isQuarterBeat = Math.abs(time - Math.round(time * 4) / 4) < 0.01;
+      const sec = Math.round(time);
+      const isLabeled = sec % labelInterval === 0 && isMainBeat;
+
+      // Determine tick height and style
+      let tickHeight = 4; // Default small tick
+      let strokeWidth = 0.5;
+      let opacity = 0.6;
+
+      if (isMainBeat) {
+        tickHeight = 20; // Tallest for main beats (whole notes)
+        strokeWidth = 1.5;
+        opacity = 1;
+      } else if (isHalfBeat) {
+        tickHeight = 14; // Medium for half beats
+        strokeWidth = 1;
+        opacity = 0.8;
+      } else if (isQuarterBeat) {
+        tickHeight = 10; // Slightly larger for quarter beats
+        strokeWidth = 0.8;
+        opacity = 0.7;
+      }
+
+      // Draw tick from axisY downwards
       svg
         .append("line")
         .attr("x1", x)
         .attr("y1", axisY)
         .attr("x2", x)
-        .attr("y2", axisY - (isLabeled ? 20 : 10))
-        .attr("stroke", "white")
-        .attr("stroke-width", 1);
+        .attr("y2", axisY - tickHeight)
+        .attr("stroke", gridColor)
+        .attr("stroke-width", strokeWidth)
+        .attr("opacity", opacity);
 
-      // Labels
+      // Draw label if main beat and label interval
       if (isLabeled) {
-        const minutes = Math.floor(sec / 60);
-        const seconds = Math.floor(sec % 60);
+        const minutes = Math.floor(time / 60);
+        const seconds = Math.floor(time % 60);
         const label = `${minutes}:${seconds.toString().padStart(2, "0")}`;
         svg
           .append("text")
           .attr("x", x + 4)
-          .attr("y", axisY - 5)
+          .attr("y", axisY - tickHeight - 5)
           .attr("fill", "white")
           .attr("font-size", 12)
           .attr("text-anchor", "start")
@@ -263,7 +326,7 @@ const Timeline = () => {
       }
     }
 
-    // Baseline
+    // Main baseline
     svg
       .append("line")
       .attr("x1", 0)
@@ -272,7 +335,7 @@ const Timeline = () => {
       .attr("y2", axisY)
       .attr("stroke", "white")
       .attr("stroke-width", 1);
-  }, [audioDuration]);
+  }, [audioDuration, selectedGrid]);
 
   // Animation loop for playback with proper cleanup
   useEffect(() => {
@@ -397,19 +460,46 @@ const Timeline = () => {
     if (width <= 0 || duration <= 0) return gridLines;
     
     const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
+    const gridDivisions = getGridDivisions(selectedGrid);
+    const gridSpacing = 1 / gridDivisions;
     
-    for (let sec = 0; sec <= duration; sec += 1) {
-      const x = xScale(sec);
+    // Generate grid lines for the entire timeline area
+    for (let time = 0; time <= duration; time += gridSpacing) {
+      const x = xScale(time);
+      const isMainBeat = Math.abs(time - Math.round(time)) < 0.01;
+      const isHalfBeat = Math.abs(time - Math.round(time * 2) / 2) < 0.01;
+      const isQuarterBeat = Math.abs(time - Math.round(time * 4) / 4) < 0.01;
+      
+      // Determine line style based on musical importance
+      let lineColor = "#FFFFFF1A"; // Default light grid
+      let lineWidth = 1;
+      let lineOpacity = 0.3;
+      
+      if (isMainBeat) {
+        lineColor = "#FFFFFF40"; // Brighter for main beats
+        lineWidth = 1.5;
+        lineOpacity = 0.6;
+      } else if (isHalfBeat) {
+        lineColor = "#FFFFFF30"; // Medium for half beats
+        lineWidth = 1.2;
+        lineOpacity = 0.4;
+      } else if (isQuarterBeat) {
+        lineColor = "#FFFFFF25"; // Slightly brighter for quarter beats
+        lineWidth = 1;
+        lineOpacity = 0.35;
+      }
+      
       gridLines.push(
         <div
-          key={sec}
+          key={`grid-${time}`}
           style={{
             position: "absolute",
             left: `${x}px`,
-            top: "100px",
-            width: "1px",
-            height: `calc(100% - 100px)`,
-            background: "#FFFFFF1A",
+            top: "100px", // Start from below the ruler
+            width: `${lineWidth}px`,
+            height: `calc(100% - 100px)`, // Extend to bottom
+            background: lineColor,
+            opacity: lineOpacity,
             zIndex: 0,
             pointerEvents: "none",
           }}
@@ -418,6 +508,76 @@ const Timeline = () => {
     }
     return gridLines;
   };
+
+  // New function to render grid indicators in the main timeline area
+  // const renderTimelineGridIndicators = () => {
+  //   const width = timelineContainerRef.current?.clientWidth || 600;
+  //   const duration = audioDuration;
+    
+  //   if (width <= 0 || duration <= 0) return null;
+    
+  //   const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
+  //   const gridDivisions = getGridDivisions(selectedGrid);
+  //   const gridSpacing = 1 / gridDivisions;
+    
+  //   // Create SVG for grid indicators
+  //   const indicators = [];
+    
+  //   for (let time = 0; time <= duration; time += gridSpacing) {
+  //     const x = xScale(time);
+  //     const isMainBeat = Math.abs(time - Math.round(time)) < 0.01;
+  //     const isHalfBeat = Math.abs(time - Math.round(time * 2) / 2) < 0.01;
+  //     const isQuarterBeat = Math.abs(time - Math.round(time * 4) / 4) < 0.01;
+      
+  //     // Determine indicator height based on musical importance
+  //     let indicatorHeight = 4; // Default small indicator
+  //     let strokeWidth = 0.5;
+  //     let opacity = 0.6;
+      
+  //     if (isMainBeat) {
+  //       indicatorHeight = 12; // Tallest for main beats
+  //       strokeWidth = 1.5;
+  //       opacity = 1;
+  //     } else if (isHalfBeat) {
+  //       indicatorHeight = 8; // Medium for half beats
+  //       strokeWidth = 1;
+  //       opacity = 0.8;
+  //     } else if (isQuarterBeat) {
+  //       indicatorHeight = 6; // Slightly larger for quarter beats
+  //       strokeWidth = 0.8;
+  //       opacity = 0.7;
+  //     }
+      
+  //     indicators.push(
+  //       <line
+  //         key={`indicator-${time}`}
+  //         x1={x}
+  //         y1={100} // Start from below ruler
+  //         x2={x}
+  //         y2={100 - indicatorHeight} // Extend upward
+  //         stroke="#FFFFFF"
+  //         strokeWidth={strokeWidth}
+  //         opacity={opacity}
+  //       />
+  //     );
+  //   }
+    
+  //   return (
+  //     <svg
+  //       width="100%"
+  //       height="100%"
+  //       style={{
+  //         position: "absolute",
+  //         top: 0,
+  //         left: 0,
+  //         pointerEvents: "none",
+  //         zIndex: 1,
+  //       }}
+  //     >
+  //       {indicators}
+  //     </svg>
+  //   );
+  // };
 
   const playheadPosition = audioDuration > 0 ? (currentTime / audioDuration) * 100 : 0;
 
@@ -583,7 +743,14 @@ const Timeline = () => {
             <img src={settingIcon} alt="Settings" />
             {showGridSetting && (
               <div className="absolute top-full right-0 z-[50]">
-                <GridSetting />
+                <GridSetting 
+                  selectedGrid={selectedGrid}
+                  selectedTime={selectedTime}
+                  selectedRuler={selectedRuler}
+                  onGridChange={setSelectedGrid}
+                  onTimeChange={setSelectedTime}
+                  onRulerChange={setSelectedRuler}
+                />
               </div>
             )}
           </div>
