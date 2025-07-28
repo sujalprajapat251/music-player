@@ -13,13 +13,21 @@
   /* border: 1px solid rgba(255, 255, 255, 0.6); */
 }
 
+/* Default theme (dark) */
 body {
   background-color: #141414;
+  color: #ffffff;
   font-family: "Inter", sans-serif;
   user-select: none !important;
   -webkit-user-select: none !important;
   -ms-user-select: none !important;
   -moz-user-select: none !important;
+}
+
+body.light-theme .d_btn.d_createbtn:hover {
+  background-color: #f5f5f5;
+  color: #141414;
+  border-color: #d0d0d0;
 }
 
 .d_customborder {
@@ -44,19 +52,58 @@ body {
   font-size: 16px;
   font-weight: 500;
   border: 1px solid;
+  transition: all 0.3s ease;
 }
 
 .d_cancelbtn {
   background-color: transparent;
-  border-color: #FFFFFF4D;
-  color: #fff;
+  border-color: #141414;
+  color: #141414;
   transition: all 0.3s ease;
 }
 
-.d_createbtn {
-  background-color: #fff;
+.d_btn.d_cancelbtn:hover {
+  background-color: #1414141A;
   color: #141414;
+}
+
+.dark .d_cancelbtn {
+  background-color: transparent;
+  border-color: #ffffff;
+  color: #ffffff;
   transition: all 0.3s ease;
+}
+
+.dark .d_btn.d_cancelbtn:hover {
+  background-color: transparent;
+  color: #ffffff;
+  border-color: #FFFFFF4D;
+}
+
+.d_createbtn {
+  background-color: #141414;
+  color: #ffffff;
+  border-color: #141414;
+  transition: all 0.3s ease;
+}
+
+.d_btn.d_createbtn:hover {
+  background-color: #262529;
+  color: #ffffff;
+  /* border-color: #FFFFFF4D; */
+}
+
+.dark .d_createbtn {
+  background-color: #ffffff;
+  color: #141414;
+  border-color: #ffffff;
+  transition: all 0.3s ease;
+}
+
+.dark .d_btn.d_createbtn:hover {
+  background-color: transparent;
+  color: #ffffff;
+  border-color: #FFFFFF4D;
 }
 
 .d_deletebtn {
@@ -66,16 +113,7 @@ body {
   border: none;
 }
 
-.d_btn.d_cancelbtn:hover {
-  background-color: #fff;
-  color: #141414;
-}
 
-.d_btn.d_createbtn:hover {
-  background-color: transparent;
-  color: #fff;
-  border-color: #FFFFFF4D;
-}
 
 .d_btn.d_deletebtn:hover {
   background-color: #fff;

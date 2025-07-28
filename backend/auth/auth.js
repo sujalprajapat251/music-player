@@ -54,8 +54,6 @@ exports.userLogin = async (req, res) => {
       await checkEmailIsExist.save();
 
     }
-    console.log("access", accessToken)
-    console.log("refreshtoekn", refreshToken)
 
     return res.status(200)
       .cookie("accessToken", accessToken, { httpOnly: true, secure: false, sameSite: "Lax", maxAge: 1 * 24 * 60 * 60 * 1000 })

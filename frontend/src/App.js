@@ -27,6 +27,7 @@ import { ThemeProvider } from './Utils/ThemeContext';
 import Loops from './components/Loops';
 import GridSetting from './components/GridSetting';
 import Knob from './components/Knob';
+import Pattern from './components/Pattern';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -50,6 +51,7 @@ function App() {
           <Route path='/login' element={<Login />} />
           <Route path='/drum' element={<Drum />} />
           <Route path='/pianox' element={<Pianodemo />} />
+          <Route path='/pattern' element={<Pattern />} />
 
           <Route path="/" element={<Layout />} >
             <Route path='project' element={<Home2 />} />
