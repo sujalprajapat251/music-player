@@ -25,6 +25,8 @@ import Profile from './Pages/Profile';
 import Timeline from './components/Timeline';
 import { ThemeProvider } from './Utils/ThemeContext';
 import Loops from './components/Loops';
+import GridSetting from './components/GridSetting';
+import Knob from './components/Knob';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -57,6 +59,7 @@ function App() {
 
           <Route path='/sidebar' element={<ThemeProvider><Sidebar2 /></ThemeProvider>} >
             <Route path='timeline' element={<Timeline />} />
+            <Route path='knob' element={<Knob />} />
             <Route path='loop' element={<Loops />} />
           </Route>
         </Routes>

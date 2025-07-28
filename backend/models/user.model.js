@@ -30,6 +30,10 @@ const userSchema = mongoose.Schema({
     gender: {
         type: String,
     },
+    wishlist: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'sound',
+    }],
     refreshToken:{
         type:String
     }
