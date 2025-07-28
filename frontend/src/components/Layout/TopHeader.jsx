@@ -7,7 +7,7 @@ import { HiDownload } from "react-icons/hi";
 import subscription from "../../Images/subscriptionIcon.svg";
 import { IoIosShareAlt } from "react-icons/io";
 import { RxExit } from "react-icons/rx";
-import { Menu, MenuButton } from '@headlessui/react';
+import { Dialog, DialogBackdrop, DialogPanel, Menu, MenuButton } from '@headlessui/react';
 import { ReactComponent as NewFolderIcon } from '../../Images/New Folder.svg';
 import { ReactComponent as OpenFolderIcon } from "../../Images/OpenFolder.svg";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
@@ -18,30 +18,34 @@ import { ReactComponent as Shareproject } from "../../Images/shareproject.svg";
 import { ReactComponent as Gotoprofile } from "../../Images/gotoprofile.svg";
 import { ReactComponent as Audiotrack } from "../../Images/audiotrack.svg";
 import { ReactComponent as Mic } from "../../Images/micsvg.svg";
-import { ReactComponent as Undo} from "../../Images/undoIcon.svg";
-import { ReactComponent as Redo} from "../../Images/redoicon.svg";
-import { ReactComponent as Copy} from "../../Images/copyIcon.svg";
-import { ReactComponent as Paste} from "../../Images/pasteIcon.svg";
-import { ReactComponent as Delete} from "../../Images/deleteIcon.svg";
-import { ReactComponent as Region} from "../../Images/createRegionIcon.svg";
-import { ReactComponent as Effect} from "../../Images/EfectIcon.svg";
-import { ReactComponent as Midisetting} from "../../Images/MidiSettings.svg";
-import { ReactComponent as Tuner} from "../../Images/tuner.svg";
-import { ReactComponent as Keyboard} from "../../Images/keyboard.svg";
-import { ReactComponent as Lowlatancy} from "../../Images/lae latency.svg";
-import { ReactComponent as Soundquality} from "../../Images/soundquality.svg";
-import { ReactComponent as Tick} from "../../Images/Tick.svg";
-import { ReactComponent as Songsections} from "../../Images/sondsections.svg";
-import { ReactComponent as Language} from "../../Images/language.svg";
-import { ReactComponent as Theme} from "../../Images/themes.svg";
+import { ReactComponent as Undo } from "../../Images/undoIcon.svg";
+import { ReactComponent as Redo } from "../../Images/redoicon.svg";
+import { ReactComponent as Copy } from "../../Images/copyIcon.svg";
+import { ReactComponent as Paste } from "../../Images/pasteIcon.svg";
+import { ReactComponent as Delete } from "../../Images/deleteIcon.svg";
+import { ReactComponent as Region } from "../../Images/createRegionIcon.svg";
+import { ReactComponent as Effect } from "../../Images/EfectIcon.svg";
+import { ReactComponent as Midisetting } from "../../Images/MidiSettings.svg";
+import { ReactComponent as Tuner } from "../../Images/tuner.svg";
+import { ReactComponent as Keyboard } from "../../Images/keyboard.svg";
+import { ReactComponent as Lowlatancy } from "../../Images/lae latency.svg";
+import { ReactComponent as Soundquality } from "../../Images/soundquality.svg";
+import { ReactComponent as Tick } from "../../Images/Tick.svg";
+import { ReactComponent as Songsections } from "../../Images/sondsections.svg";
+import { ReactComponent as Language } from "../../Images/language.svg";
+import { ReactComponent as Theme } from "../../Images/themes.svg";
 import { useTheme } from '../../Utils/ThemeContext';
+import {ReactComponent as Close} from '../../Images/closeicon.svg';
+import midi from '../../Images/midi.svg';
 
 const TopHeader = () => {
 
     const [isActiveMenu, setIsActiveMenu] = useState("");
     const [isLowLatency, setIsLowLatency] = useState(false);
-    const [isLowLatency1, setIsLowLatency1] = useState(false);
+    const [isLowLatency1, setIsLowLatency1] = useState  (false);
     const [isLowLatency2, setIsLowLatency2] = useState(false);
+    const [lowlatencyomodal, setLowLatencyModel] = useState(false); 
+    const [midikeyboardmodal, setMidiKeyboardModel] = useState(false);
 
     // Add state for selected sound quality
     const [selectedSoundQuality, setSelectedSoundQuality] = useState('High');
@@ -119,8 +123,8 @@ const TopHeader = () => {
             }));
         }, 10);
     };
-    
-    
+
+
     const { isDark, setIsDark } = useTheme();
     const [selectedtheme, setSelectedtheme] = useState('Dark Theme');
 
@@ -133,7 +137,7 @@ const TopHeader = () => {
 
     const handlethemesSelect = (qualityId, qualityLabel) => {
         setSelectedtheme(qualityLabel);
-        setIsDark(qualityLabel === 'Dark Theme'); 
+        setIsDark(qualityLabel === 'Dark Theme');
         // Close all submenus
         setShowSubmenu(prev => ({
             ...prev,
@@ -165,11 +169,11 @@ const TopHeader = () => {
     const toggleTheme = () => {
         setIsDark((prev) => {
             const newIsDark = !prev;
-            setSelectedtheme(newIsDark ? 'Dark Theme' : 'Light Theme'); 
+            setSelectedtheme(newIsDark ? 'Dark Theme' : 'Light Theme');
             return newIsDark;
         });
     };
-    
+
     const [showSubmenu, setShowSubmenu] = useState({
         import: false,
         navigator: false
@@ -205,10 +209,6 @@ const TopHeader = () => {
             }));
         }, 10);
     };
-
-   
-
-
 
     return (
         <>
@@ -422,7 +422,7 @@ const TopHeader = () => {
                             <div className="">
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md600:py-2 flex md600:gap-3  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
+                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md600:py-2 flex md600:gap-3  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`} onClick={() => setMidiKeyboardModel(true)}>
                                             <Midisetting className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>MIDI Settings...</span>
                                         </p>
                                     )}
@@ -480,7 +480,15 @@ const TopHeader = () => {
                                                         type="checkbox"
                                                         className="sr-only peer"
                                                         checked={isLowLatency}
-                                                        onChange={() => setIsLowLatency(prev => !prev)}
+                                                        onChange={() => {
+                                                            if (!isLowLatency) {
+                                                                // Only show modal when enabling low latency
+                                                                setLowLatencyModel(true);
+                                                            } else {
+                                                                // Directly disable when unchecking
+                                                                setIsLowLatency(false);
+                                                            }
+                                                        }}
                                                     />
                                                     <div className="relative w-9 h-4 bg-gray-400 peer-focus:outline-none rounded-full peer dark:bg-[#353535] peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-[#357935] peer-checked:bg-[#357935] dark:peer-checked:bg-[#357935]"></div>
                                                 </label>
@@ -626,8 +634,6 @@ const TopHeader = () => {
                         </Menu.Items>
                     </Menu >
 
-
-
                     <PiArrowBendUpLeftBold className="text-[#5a5a5a] md:text-[16px] lg:text-[20px] xl:text-[26px] hidden md600:block" />
                     <PiArrowBendUpRightBold className="text-[#5a5a5a] md:text-[16px] lg:text-[20px] xl:text-[26px] hidden md600:block" />
                 </div >
@@ -690,7 +696,76 @@ const TopHeader = () => {
                         <p className="text-secondary-light dark:text-secondary-dark text-[10px]">Exit</p>
                     </div>
                 </div>
-            </div >
+            </div>
+
+            {/* MIDI Keyboard Modal */}
+            <Dialog open={midikeyboardmodal} onClose={setMidiKeyboardModel} className="relative z-10">
+                <DialogBackdrop transition className="fixed backdrop-blur-sm inset-0 bg-black/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in" />
+                <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+                    <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
+                        <DialogPanel transition className="relative transform overflow-hidden rounded-[4px] bg-primary-light dark:bg-[#1F1F1F] text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 w-full xs:max-w-[340px] sm:max-w-[400px] md:max-w-lg xl:max-w-xl  data-closed:sm:translate-y-0 data-closed:sm:scale-95">
+                            <div className="md:px-[10px] px-[20px]">
+                                <div className="md:py-[20px] py-[10px] md:px-[10px] bg-primary-light dark:bg-[#1F1F1F] border-b-[0.5px] border-[#1414141A] dark:border-[#FFFFFF1A]">
+                                    <div className="flex justify-between items-center">
+                                        <div className="sm:text-xl text-lg font-[600] text-secondary-light dark:text-secondary-dark">MIDI Keyboard</div>
+                                        <Close onClick={() => setMidiKeyboardModel(false)} className="cursor-pointer text-secondary-light dark:text-secondary-dark" />
+                                    </div>
+                                </div>
+                                <div className="md:pt-[20px] md:pb-[30px] py-[20px] md:w-[400px] m-auto">
+                                    <div className="flex mb-5">
+                                        <img src={midi} alt="" className='me-4 ' />
+                                        <div className=''>
+                                            <div className='text-sm text-secondary-light dark:text-secondary-dark font-[400] mb-[10px]'>Your device</div>
+                                            <input type="text" placeholder='Folder Name' className='text-secondary-light dark:text-secondary-dark rounded-[4px] w-full md:p-[11px] p-[8px] bg-[#FFFFFF0F] border-[0.5px] border-[#14141499]' />
+                                        </div>
+                                    </div>
+                                    <div className="md:w-[270px] [240px] bg-[#FF00001A] p-[12px] m-auto">
+                                        <div className='text-sm font-[500] text-[#FF0000] mb-3'>No device found</div>
+                                        <p className='text-secondary-light dark:text-secondary-dark text-sm font-[400]'>Check your keyboard connection and try pressing a key.</p>
+                                    </div>
+                                    <div className="text-center md:pt-[40px] pt-[20px]">
+                                        <button className="d_btn d_createbtn">Ok</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </DialogPanel>
+                    </div>
+                </div>
+            </Dialog>
+
+            {/* Low Latency Mode Modal */}
+            <Dialog open={lowlatencyomodal} onClose={setLowLatencyModel} className="relative z-10">
+                <DialogBackdrop transition className="fixed backdrop-blur-sm inset-0 bg-black/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in" />
+                <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+                    <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
+                        <DialogPanel transition className="relative transform overflow-hidden rounded-[4px] bg-primary-light dark:bg-[#1F1F1F] text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 w-full xs:max-w-[340px] sm:max-w-[400px] md:max-w-lg xl:max-w-xl  data-closed:sm:translate-y-0 data-closed:sm:scale-95">
+                            <div className="md:py-[20px] py-[10px] md:px-[20px] px-[10px] bg-primary-light dark:bg-[#1F1F1F]">
+                                <div className="flex justify-end items-center">
+                                    <Close onClick={() => setLowLatencyModel(false)} className="cursor-pointer text-secondary-light dark:text-secondary-dark" />
+                                </div>
+                            </div>
+                            <div className="md:pt-[20px] md:pb-[30px] py-[20px] md:w-[400px] m-auto">
+                                <div className='text-center'>
+                                    <div className='text-base text-secondary-light dark:text-secondary-dark font-[600] mb-[20px]'>Enable Low Latency Mode</div>
+                                    <p className='text-[#2D2D2D] dark:text-[#FFFFFF99] text-sm font-[400] md:w-[370px] w-[280px] m-auto'>Some audio effects will be disabled to reduce latency. We need to refresh the page to apply these changes. </p>
+                                </div>
+                                <div className="text-center md:pt-[40px] pt-[20px]">
+                                    <button className="d_btn d_cancelbtn sm:me-7 me-5 d_permanentlyall" onClick={() => {
+                                        setIsLowLatency(false);
+                                        setLowLatencyModel(false);
+                                    }}>Cancel </button>
+                                    <button className="d_btn d_createbtn d_permanentlyall" onClick={() => {
+                                        setIsLowLatency(true);
+                                        setLowLatencyModel(false);
+                                    }}>Apply and refresh</button>
+                                </div>
+                            </div>
+                        </DialogPanel>
+                    </div>
+                </div>
+            </Dialog>
+
+
         </>
     )
 }
