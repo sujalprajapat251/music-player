@@ -11,6 +11,7 @@ import tk from "../Images/tk.svg";
 import headphone from "../Images/headphone.svg";
 import mute from "../Images/mute.svg";
 import more from "../Images/more.svg";
+import TrackMenu from "./TrackMenu";
 
 const Sidebar2 = () => {
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
@@ -63,9 +64,7 @@ const Sidebar2 = () => {
                 </div>
                 
                 <div className="flex flex-col justify-between items-end h-full w-20">
-                  <div className="flex justify-end w-full me-2 mt-1">
-                    <img src={more} alt="Menu" className="w-5 h-5" />
-                  </div>
+                  <TrackMenu />
                   <div className="flex items-center justify-center gap-x-4 w-full pb-4">
                     <img
                       src={headphone}

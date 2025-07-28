@@ -1,22 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  tracks: [
-    {
-      id: 1,
-      name: 'Demo Track',
-      url: require('../../Audio/simple1.mp3'), // adjust path if needed
-      color: '#FFB6C1',
-      height: 80, // Fixed height for track alignment
-    },
-    {
-      id: 2,
-      name: 'Demo Track 2',
-      url: require('../../Audio/simple1.mp3'), // adjust path if needed
-      color: '#FFB6C1',
-      height: 80, // Fixed height for track alignment
-    }
-  ],
+  tracks: [],
   trackHeight: 80, // Standard height for each track
   timelineSettings: {
     pixelsPerSecond: 50,
@@ -53,7 +38,14 @@ const studioSlice = createSlice({
     },
     updateTimelineSettings: (state, action) => {
       state.timelineSettings = { ...state.timelineSettings, ...action.payload };
-    }
+    },
+    updateTrackStartTime: (state, action) => {
+      const { trackId, newStartTime } = action.payload;
+      const track = state.tracks.find(t => t.id === trackId);
+      if (track) {
+        track.startTime = newStartTime;
+      }
+    },
   },
 });
 
@@ -63,7 +55,8 @@ export const {
   updateTrack, 
   removeTrack, 
   setTrackHeight,
-  updateTimelineSettings 
+  updateTimelineSettings,
+  updateTrackStartTime
 } = studioSlice.actions;
 
 export default studioSlice.reducer;
