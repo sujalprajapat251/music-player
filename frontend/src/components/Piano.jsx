@@ -5,6 +5,17 @@ import Soundfont from 'soundfont-player';
 import { IoClose } from "react-icons/io5";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { GiPianoKeys } from "react-icons/gi";
+import { HiMiniChevronUpDown } from "react-icons/hi2";
+import Am from "../Images/am.svg";
+import Bdmi from "../Images/bdmi.svg";
+import C from "../Images/c.svg";
+import Dm from "../Images/r.svg";
+import E from "../Images/e.svg";
+import F from "../Images/f.svg";
+import G from "../Images/g.svg";
+import Am7 from "../Images/am7.svg";
+import { FaPlus } from "react-icons/fa6";
+import music from "../Images/playingsounds.svg";
 
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
@@ -276,10 +287,65 @@ const INSTRUMENTS = [
     { id: 'koto', name: 'Koto', category: 'Japanese' }
 ];
 
+
+
+
+
+const BasicData = [
+    { name: "Am", image: Am },
+    { name: "Bdmi", image: Bdmi },
+    { name: "C", image: C },
+    { name: "Dm", image: Dm },
+    { name: "E", image: E },
+    { name: "F", image: F },
+    { name: "G", image: G },
+    { name: "Am7", image: Am7 }
+];
+
+const BasicData1 = [
+    { name: "Full Chord" },
+    { name: "On One" },
+];
+
+const Stabs = [
+    { name: "On Air" },
+    { name: "Eight's" },
+    { name: "Soul Stabs" },
+    { name: "One and Three" },
+    { name: "Simple Stabs" },
+    { name: "Latinesque" },
+    { name: "All Four" },
+    { name: "Moderate Stabs" },
+]
+
+const Arpeggiated = [
+    { name: "Layout" },
+    { name: "Storytime" },
+    { name: "Rising Arp" },
+    { name: "Dreamer" },
+    { name: "Moving Arp" },
+    { name: "Quick Arp" },
+    { name: "Simple Stride" },
+    { name: "Simple Rain" }
+]
+
+const other = [
+    { name: "Simple Slide" },
+    { name: "Simple Player" },
+    { name: "Alternating Stride" }
+];
+
+
 const Pianodemo = () => {
 
     const [showOffcanvas, setShowOffcanvas] = useState(false);
     const [autoChords, setAutoChords] = useState(false);
+    const [selectedButtons, setSelectedButtons] = useState({
+        basic: null,
+        stabs: null,
+        arpeggiated: null,
+        other: null
+    });
     const [currentInstrumentIndex, setCurrentInstrumentIndex] = useState(0);
     const [activeTab, setActiveTab] = useState('Instruments');
     const [activePianoSection, setActivePianoSection] = useState(0); // 0: Low, 1: Middle, 2: High
@@ -334,6 +400,21 @@ const Pianodemo = () => {
         );
     };
 
+
+    // Function to select button (only one per section)
+    const toggleButton = (section, index) => {
+        setSelectedButtons(prev => ({
+            ...prev,
+            [section]: prev[section] === index ? null : index
+        }));
+    };
+
+    // Function to check if button is selected
+    const isButtonSelected = (section, index) => {
+        return selectedButtons[section] === index;
+    };
+
+
     return (
         <>
             <button className='p-2 bg-white text-black' onClick={() => setShowOffcanvas(prev => !prev)}>
@@ -341,9 +422,9 @@ const Pianodemo = () => {
             </button>
             {showOffcanvas === true && (
                 <>
-                    <div class="fixed z-40 w-full h-full bg-[#1F1F1F] transition-transform  left-0 right-0 translate-y-full sm:bottom-[200px] md600:bottom-[275px] md:bottom-[355px]  lg:bottom-[450px] xl:bottom-[465px] 2xl:bottom-[465px]" tabindex="-1" aria-labelledby="drawer-swipe-label">
+                    <div class="fixed z-40 w-full h-full bg-[#1F1F1F] transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[200px] md600:bottom-[275px] md:bottom-[355px]  lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[465px]" tabindex="-1" aria-labelledby="drawer-swipe-label">
                         {/* Static Navbar with Tabs */}
-                        <div className="bg-[#2A2A2A]  border-b border-[#FFFFFF1A] h-full">
+                        <div className="bg-[#1F1F1F]  border-b border-[#FFFFFF1A] h-full">
                             <div className="flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                                 {/* Close Button */}
                                 <div>
@@ -351,7 +432,7 @@ const Pianodemo = () => {
                                 </div>
                             </div>
                             {/* Tabs */}
-                            <div className="flex sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3">
+                            <div className="flex space-x-2 sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3">
                                 {['Instruments', 'Chords', 'Piano Roll', 'Effects'].map((tab) => (
                                     <button
                                         key={tab}
@@ -476,7 +557,7 @@ const Pianodemo = () => {
 
                                             <div className="flex gap-1 md600:gap-2 lg:gap-3 bg-[#141414]">
                                                 {autoChords === true &&
-                                                    <div className="w-[40%] md600:w-[25%] md:w-[30%] lg:w-[20%] xl:w-[18%] bg-[#1F1F1F] md600:ms-2 md600:mt-2 lg:ms-3 lg:mt-3 mb-1">
+                                                    <div className="w-[30%] sm:w-[40%] md600:w-[25%] md:w-[30%] lg:w-[20%] xl:w-[18%] bg-[#1F1F1F] md600:ms-2 md600:mt-2 lg:ms-3 lg:mt-3 mb-1">
                                                         <div className="w-full text-white p-1 md600:p-2 lg:p-3">
                                                             <div className="flex justify-between items-center">
                                                                 <p className="text-white text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Auto Chord</p>
@@ -509,7 +590,7 @@ const Pianodemo = () => {
                                                         </div>
                                                     </div>
                                                 }
-                                                <div className="w-full h-[130px] md:h-[200px] lg:h-[250px] overflow-x-auto pt-1 md600:pt-2 lg:pt-3 ">
+                                                <div className="w-full h-[105px] sm:h-[95px] md600:h-[140px] md:h-[200px] lg:h-[250px] overflow-x-auto pt-1 md600:pt-2 lg:pt-3 ">
                                                     <div className="w-full h-full flex items-center justify-center">
 
                                                         {activePianoSection === 0 && (
@@ -547,12 +628,95 @@ const Pianodemo = () => {
                                 )}
 
                                 {activeTab === 'Chords' && (
-                                    <div className="w-full h-[130px] md:h-[500px] lg:h-[250px] flex items-center justify-center">
-                                        <div className="text-center">
-                                            <h3 className="text-white text-xl font-semibold mb-4">Chords Tab</h3>
-                                            <p className="text-gray-400">Chord selection and management will be here</p>
+                                    <>
+                                        <div className="w-full flex items-center justify-center">
+                                            <div className="bg-[#FFFFFF1A] items-center mt-2 px-3 py-2  rounded-lg">
+                                                <div className=" flex gap-3 items-center px-3">
+                                                    <GiPianoKeys className='text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
+                                                    <p className='text-white text-[16px]'>Basic</p>
+                                                    <HiMiniChevronUpDown className='text-[#FFFFFF99] text-[16px]' />
+                                                </div>
+                                                <div className="grid grid-cols-4 gap-4 mx-3 mt-3">
+                                                    {BasicData.map((item, index) => (
+                                                        <div key={index} className="bg-[#1F1F1F] text-white p-2 w-[130px]">
+                                                            <p className='text-white text-[16px] text-center mb-1'>{item.name}</p>
+                                                            <div className="flex justify-between">
+                                                                <img src={item.image} alt="" className="w-3 h-3" />
+                                                                <FaPlus className='text-[12px] text-[#FFFFFF99]' />
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
+
+                                        <div className="w-full flex items-center justify-center">
+                                            <div className="bg-[#FFFFFF1A] items-center mt-2 px-3 py-2  rounded-lg">
+                                                <div className=" flex gap-3 items-center px-3">
+                                                    <img src={music} alt="" className="class" />
+                                                    <p className='text-white text-[16px]'>Playing Sounds</p>
+                                                </div>
+                                                <div className="flex">
+                                                    <div className='bg-[#1F1F1F] ms-3 mt-2 p-2 w-[116px] h-[157px]'>
+                                                        <p className='text-[#FFFFFF99] text-[14px]'>Basic</p>
+                                                        {BasicData1.map((item, index) => (
+                                                            <div key={index} className="">
+                                                                <button
+                                                                    className={`${isButtonSelected('basic', index) ? "bg-white text-black" : "text-[#FFFFFF] bg-transparent"} justify-center w-[100px] h-[30px] mt-2 text-[10px] rounded-md border border-[#FFFFFF1A]`}
+                                                                    onClick={() => toggleButton('basic', index)}
+                                                                >
+                                                                    {item.name}
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    <div className='bg-[#1F1F1F] mx-3 mt-2 p-2 w-[340px] h-[157px]'>
+                                                        <p className='text-[#FFFFFF99] text-[14px]'>Stabs</p>
+                                                        <div className="grid grid-cols-3 gap-3  pt-2">
+                                                            {Stabs.map((item, index) => (
+                                                                <div key={index} className="">
+                                                                    <button
+                                                                        className={`${isButtonSelected('stabs', index) ? "bg-white text-black" : "text-[#FFFFFF] bg-transparent"} justify-center w-[100px] h-[30px] text-[10px] rounded-md border border-[#FFFFFF1A]`}
+                                                                        onClick={() => toggleButton('stabs', index)}
+                                                                    >
+                                                                        {item.name}
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div className='bg-[#1F1F1F] mt-2 p-2 w-[340px] h-[157px]'>
+                                                        <p className='text-[#FFFFFF99] text-[14px]'>Stabs</p>
+                                                        <div className="grid grid-cols-3 gap-3  pt-2">
+                                                            {Arpeggiated.map((item, index) => (
+                                                                <div key={index} className=" flex">
+                                                                    <button
+                                                                        className={`${isButtonSelected('arpeggiated', index) ? "bg-white text-black" : "text-[#FFFFFF] bg-transparent"} justify-center w-[100px] h-[30px] text-[10px] rounded-md border border-[#FFFFFF1A]`}
+                                                                        onClick={() => toggleButton('arpeggiated', index)}
+                                                                    >
+                                                                        {item.name}
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div className='bg-[#1F1F1F] mx-3 mt-2 p-2 w-[116px] h-[157px]'>
+                                                        <p className='text-[#FFFFFF99] text-[14px]'>Basic</p>
+                                                        {other.map((item, index) => (
+                                                            <div key={index} className="">
+                                                                <button
+                                                                    className={`${isButtonSelected('other', index) ? "bg-white text-black" : "text-[#FFFFFF] bg-transparent"} mt-2 justify-center w-[100px] h-[30px] text-[10px] rounded-md border border-[#FFFFFF1A]`}
+                                                                    onClick={() => toggleButton('other', index)}
+                                                                >
+                                                                    {item.name}
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
                                 )}
 
                                 {activeTab === 'Piano Roll' && (
