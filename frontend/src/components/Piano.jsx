@@ -31,9 +31,51 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const dragging = useRef(false);
     const lastY = useRef(0);
 
+
+    // Tailwind-consistent responsive sizes
+    const getResponsiveSize = () => {
+        if (typeof window !== 'undefined') {
+            if (window.innerWidth >= 1440) return 56; // 2xl
+            if (window.innerWidth >= 1280) return 52; // xl  
+            if (window.innerWidth >= 1024) return 48; // lg
+            if (window.innerWidth >= 768) return 44;  // md
+            if (window.innerWidth >= 640) return 40;  // sm
+            return 30; // xs (mobile)
+        }
+        return 56;
+    };
+
+    const [size, setSize] = useState(getResponsiveSize());
+
+    useEffect(() => {
+        const handleResize = () => setSize(getResponsiveSize());
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+
+    // Tailwind-consistent responsive sizes
+    const getResponsiveStroke = () => {
+        if (typeof window !== 'undefined') {
+            if (window.innerWidth >= 768) return 3;  // md
+            // if (window.innerWidth >= 640) return 40;  // sm
+            return 2; // xs (mobile)
+        }
+        return 56;
+    };
+
+    const [stroke, setStroke] = useState(getResponsiveStroke());
+
+    useEffect(() => {
+        const handleResizeStroke = () => setStroke(getResponsiveStroke());
+        window.addEventListener('resize', handleResizeStroke);
+        return () => window.removeEventListener('resize', handleResizeStroke);
+    }, []);
+
+
     // SVG circle parameters
-    const size = 56;
-    const stroke = 4;
+    // const size = 56;
+    // const stroke = 4;
     const radius = (size - stroke) / 2;
     const center = size / 2;
     const onMouseDown = (e) => {
@@ -104,26 +146,15 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
                 </svg>
                 {/* Indicator line */}
                 <div
+                    className={`absolute top-1.5 left-1/2 w-0.5 h-2 md600:h-3 lg:h-4 bg-gray-400 rounded-sm -translate-x-1/2 origin-bottom`}
                     style={{
-                        position: "absolute",
-                        top: 6,
-                        left: "50%",
-                        width: 3,
-                        height: 16,
-                        background: "#aaa",
-                        borderRadius: 3,
                         transform: `translateX(-50%) rotate(${angle}deg)`,
-                        transformOrigin: "bottom center",
                     }}
                 />
             </div>
-            <div
+            <div className='text-[8px] md600:text-[10px] md:text-[12px] 2xl:text-[14px] mt-1 items-center text-[#aaa]'
                 style={{
-                    color: "#aaa",
-                    fontSize: 14,
-                    marginTop: 4,
-                    fontFamily: "sans-serif",
-                    alignItems: "center"
+                    fontFamily: "sans-serif"
                 }}
             >
                 {label}
@@ -132,6 +163,93 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     );
 }
 
+
+// Range Slider Component
+const RangeSlider = ({
+    min = 0,
+    max = 100,
+    step = 1,
+    initialValue = 0,
+    label = "Strum",
+    unit = "s",
+    onChange = () => { },
+    className = ""
+}) => {
+    const [value, setValue] = useState(initialValue);
+
+    const handleChange = (e) => {
+        const newValue = Number(e.target.value);
+        setValue(newValue);
+        onChange(newValue);
+    };
+
+    const percentage = ((value - min) / (max - min)) * 100;
+
+    return (
+        <div className={`w-full ${className}`}>
+            {/* Label and Value Display */}
+            <div className="flex justify-between items-center">
+                <label className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] text-[#FFFFFF]">
+                    {label}
+                </label>
+                <span className="text-[10px] md600:text-[12px] md:text-[14px] text-[#FFFFFF99] outline-none focus:outline-none">
+                    {value}{unit}
+                </span>
+            </div>
+
+            {/* Slider Container */}
+            <div className="relative">
+                {/* Custom styled range input */}
+                <input
+                    type="range"
+                    min={min}
+                    max={max}
+                    step={step}
+                    value={value}
+                    onChange={handleChange}
+                    className="w-full h-1 bg-[#444] rounded-lg appearance-none cursor-pointer slider"
+                    style={{
+                        background: `linear-gradient(to right, #bbb 0%, #bbb ${percentage}%, #444 ${percentage}%, #444 100%)`
+                    }}
+                />
+            </div>
+            <style jsx>{`
+        .slider::-webkit-slider-thumb {
+          appearance: none;
+          width: 12px;
+          height: 12px;
+          background: #bbb;
+          border: 2px solid white;
+          border-radius: 50%;
+          cursor: pointer;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+          transition: all 0.15s ease;
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+          background: #ccc;
+          transform: scale(1.1);
+        }
+        
+        .slider::-moz-range-thumb {
+          width: 16px;
+          height: 16px;
+          background: #bbb;
+          border: 2px solid white;
+          border-radius: 50%;
+          cursor: pointer;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+          transition: all 0.15s ease;
+        }
+        
+        .slider::-moz-range-thumb:hover {
+          background: #ccc;
+          transform: scale(1.1);
+        }
+      `}</style>
+        </div>
+    );
+};
 
 
 const INSTRUMENTS = [
@@ -161,9 +279,11 @@ const INSTRUMENTS = [
 const Pianodemo = () => {
 
     const [showOffcanvas, setShowOffcanvas] = useState(false);
+    const [autoChords, setAutoChords] = useState(false);
     const [currentInstrumentIndex, setCurrentInstrumentIndex] = useState(0);
     const [activeTab, setActiveTab] = useState('Instruments');
     const [activePianoSection, setActivePianoSection] = useState(0); // 0: Low, 1: Middle, 2: High
+    const [strumValue, setStrumValue] = useState(0);
 
     const audioContextRef = useRef(null);
     const pianoRef = useRef(null);
@@ -221,32 +341,23 @@ const Pianodemo = () => {
             </button>
             {showOffcanvas === true && (
                 <>
-                    <div class="fixed z-40 w-full h-full bg-[#1F1F1F] transition-transform  left-0 right-0 translate-y-full bottom-[480px]" tabindex="-1" aria-labelledby="drawer-swipe-label">
+                    <div class="fixed z-40 w-full h-full bg-[#1F1F1F] transition-transform  left-0 right-0 translate-y-full sm:bottom-[200px] md600:bottom-[275px] md:bottom-[355px]  lg:bottom-[450px] xl:bottom-[465px] 2xl:bottom-[465px]" tabindex="-1" aria-labelledby="drawer-swipe-label">
                         {/* Static Navbar with Tabs */}
-                        <div className="bg-[#2A2A2A] p-3 border-b border-[#FFFFFF1A]">
-                            <div className="flex items-center">
+                        <div className="bg-[#2A2A2A]  border-b border-[#FFFFFF1A] h-full">
+                            <div className="flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                                 {/* Close Button */}
                                 <div>
-                                    <IoClose className='text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => setShowOffcanvas(false)} />
+                                    <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => setShowOffcanvas(false)} />
                                 </div>
-
-
-
-                                {/* Save Preset Button
-                                    <button className="bg-[#353535] text-white px-4 py-2 rounded text-sm">
-                                        Save Preset
-                                    </button> */}
                             </div>
-
-                            <div></div>
                             {/* Tabs */}
-                            <div className="flex space-x-8 justify-center">
+                            <div className="flex sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3">
                                 {['Instruments', 'Chords', 'Piano Roll', 'Effects'].map((tab) => (
                                     <button
                                         key={tab}
                                         onClick={() => setActiveTab(tab)}
-                                        className={`text-sm font-medium transition-colors ${activeTab === tab
-                                            ? 'text-white border-b-2 border-white pb-1'
+                                        className={`text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab
+                                            ? 'text-white border-b-2 border-white '
                                             : 'text-gray-400 hover:text-white'
                                             }`}
                                     >
@@ -259,26 +370,26 @@ const Pianodemo = () => {
                             <div className=''>
                                 {activeTab === 'Instruments' && (
                                     <>
-                                        <div className="flex items-center justify-center py-5 gap-24">
+                                        <div className="flex items-center justify-center pt-1 pb-1 px-2 md600:px-2 md600:pt-2 md600:pb-1 gap-10 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
                                             {/* Instrument Selector */}
-                                            <div className="bg-[#353535] p-3 rounded-lg">
+                                            <div className="bg-[#353535] p-1 md600:p-2 lg:p-3 rounded-lg">
                                                 <div className="flex items-center justify-between">
                                                     <button
                                                         onClick={prevInstrument}
-                                                        className="text-gray-400 hover:text-white transition-colors p-2"
+                                                        className="text-gray-400 hover:text-white transition-colors p-1 md600:p-2"
                                                     >
-                                                        <FaChevronLeft className='text-[16px]' />
+                                                        <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px]' />
                                                     </button>
 
-                                                    <div className="flex items-center gap-5 flex-1 justify-center px-4 w-[250px]">
+                                                    <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-center 2xl:px-4 2xl:w-[250px]">
                                                         <div className="text-white">
-                                                            <GiPianoKeys className='text-[20px]' />
+                                                            <GiPianoKeys className='text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
                                                         </div>
                                                         <div className="">
-                                                            <div className="text-white fw-bolder text-[16px]">
+                                                            <div className="text-white fw-bolder text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[16px]">
                                                                 {INSTRUMENTS[currentInstrumentIndex].name}
                                                             </div>
-                                                            <div className="text-gray-400 text-[14px]">
+                                                            <div className="text-gray-400 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px]">
                                                                 {INSTRUMENTS[currentInstrumentIndex].category}
                                                             </div>
                                                         </div>
@@ -286,15 +397,15 @@ const Pianodemo = () => {
 
                                                     <button
                                                         onClick={nextInstrument}
-                                                        className="text-gray-400 hover:text-white transition-colors p-2"
+                                                        className="text-gray-400 hover:text-white transition-colors p-1 lg:p-2"
                                                     >
-                                                        <FaChevronRight className='text-[16px] text-[#FFFFFF99]' />
+                                                        <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] text-[#FFFFFF99]' />
                                                     </button>
                                                 </div>
                                             </div>
 
                                             {/* Audio Effect Knobs */}
-                                            <div className="flex space-x-6">
+                                            <div className="flex space-x-1 md600:space-x-2 lg:space-x-4 2xl:space-x-6">
                                                 {/* Reverb Knob */}
                                                 <div className="flex flex-col items-center">
                                                     <Knob label="Reverb" min={-135} max={135} defaultAngle={-90} />
@@ -317,79 +428,118 @@ const Pianodemo = () => {
 
 
                                         {/* Full-Width Piano with Navigation */}
-                                        <div className="w-full h-[400px] md:h-[500px] lg:h-[250px] pt-3">
+                                        <div className="w-full h-[400px] md:h-[500px] lg:h-[250px]">
                                             {/* Piano Navigation Buttons */}
-                                                <div className="flex gap-5 items-center justify-between">
-                                                    <div className='flex gap-5 items-center'>
-                                                        <div className='border rounded-3xl border-[#FFFFFF1A]'>
-                                                            <p className="text-[#FFFFFF99] text-[12px] px-6 py-1">Sustain</p>
-                                                        </div>
-                                                        <div className="flex items-center justify-between">
-                                                            <button
-                                                                onClick={() => setActivePianoSection(prev => prev > 0 ? prev - 1 : prev)}
-                                                                className={`transition-colors text-white p-2 ${activePianoSection === 0 ? ' cursor-not-allowed' : ' hover:text-white'}`}
-                                                                disabled={activePianoSection === 0}
-                                                            >
-                                                                <FaChevronLeft className='text-[16px]' />
-                                                            </button>
 
-                                                            <div className="items-center justify-center px-4 w-[100px]">
+                                            <div className="flex gap-1 md600:gap-2 md:gap-3 pb-1  lg:gap-4 lg:pb-2 2xl:gap-5 items-center justify-between 2xl:pb-3">
+                                                <div className='flex gap-1 sm:gap-2 md600:gap-3 lg:gap-4  2xl:gap-5 items-center ms-1 md600:ms-2 lg:ms-3'>
+                                                    <div className='border rounded-3xl border-[#FFFFFF1A]'>
+                                                        <p className="text-[#FFFFFF99] text-[8px] md600:text-[10px] lg:text-[12px] px-1 sm:px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Sustain</p>
+                                                    </div>
+                                                    <div className="flex items-center justify-between ">
+                                                        <button
+                                                            onClick={() => setActivePianoSection(prev => prev > 0 ? prev - 1 : prev)}
+                                                            className={`transition-colors text-white p-1 lg:p-2 ${activePianoSection === 0 ? ' cursor-not-allowed' : ' hover:text-white'}`}
+                                                            disabled={activePianoSection === 0}
+                                                        >
+                                                            <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]' />
+                                                        </button>
 
-                                                                <div className="">
-                                                                    <div className="text-white items-center fw-bolder text-[16px]">
-                                                                        {activePianoSection === 0 ? 'Octaves' : activePianoSection === 1 ? 'Octaves' : 'Octaves'}
-                                                                    </div>
+                                                        <div className="items-center justify-center px-1 md600:px-2  lg:px-3 2xl:px-4 w-[50px]  md600:w-[60px] lg:w-[80px] 2xl:w-[100px]">
 
+                                                            <div className="">
+                                                                <div className="text-white items-center fw-bolder text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">
+                                                                    {activePianoSection === 0 ? 'Octaves' : activePianoSection === 1 ? 'Octaves' : 'Octaves'}
                                                                 </div>
-                                                            </div>
 
-                                                            <button
-                                                                onClick={() => setActivePianoSection(prev => prev < 2 ? prev + 1 : prev)}
-                                                                className={`transition-colors p-2 ${activePianoSection === 2 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white'}`}
-                                                                disabled={activePianoSection === 2}
-                                                            >
-                                                                <FaChevronRight className='text-[16px]' />
-                                                            </button>
+                                                            </div>
                                                         </div>
-                                                        <div className='border rounded-3xl border-[#FFFFFF1A]'>
-                                                            <p className="text-[#FFFFFF99] text-[12px] px-6 py-1">Auto Chords</p>
-                                                        </div>
+
+                                                        <button
+                                                            onClick={() => setActivePianoSection(prev => prev < 2 ? prev + 1 : prev)}
+                                                            className={`transition-colors p-1 lg:p-2 ${activePianoSection === 2 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white'}`}
+                                                            disabled={activePianoSection === 2}
+                                                        >
+                                                            <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]' />
+                                                        </button>
                                                     </div>
-                                                    <div className='border rounded-3xl border-[#FFFFFF1A] ms-auto'>
-                                                        <p className="text-[#FFFFFF99] text-[12px] px-6 py-1">Save Preset</p>
+                                                    <div className='border rounded-3xl border-[#FFFFFF1A]' onClick={() => setAutoChords(prev => !prev)} >
+                                                        <p className={`${autoChords === true ? 'bg-white text-black rounded-3xl' : 'text-[#FFFFFF99] bg-[1F1F1F]'} text-[8px] md600:text-[10px] lg:text-[12px] px-1 sm:px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1`}>Auto Chords</p>
                                                     </div>
+                                                </div>
+                                                <div className='border rounded-lg border-[#FFFFFF1A] ms-auto me-1 md600:me-2 lg:me-3'>
+                                                    <p className="text-[#FFFFFF] text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
+                                                </div>
                                             </div>
                                             {/* Piano Container */}
-                                            <div className="w-full h-[400px] md:h-[500px] lg:h-[250px] overflow-x-auto pt-3 ">
-                                                <div className="w-full h-full flex items-center justify-center">
 
-                                                    {activePianoSection === 0 && (
-                                                        <Piano
-                                                            noteRange={{ first: MidiNumbers.fromNote('C0'), last: MidiNumbers.fromNote('B2') }}
-                                                            playNote={playNote}
-                                                            stopNote={stopNote}
-                                                            //  width={800}
-                                                            keyboardShortcuts={keyboardShortcuts}
-                                                        />
-                                                    )}
-                                                    {activePianoSection === 1 && (
-                                                        <Piano
-                                                            noteRange={{ first: MidiNumbers.fromNote('C3'), last: MidiNumbers.fromNote('B5') }}
-                                                            playNote={playNote}
-                                                            stopNote={stopNote}
-                                                            //  width={800}
-                                                            keyboardShortcuts={keyboardShortcuts}
-                                                        />
-                                                    )}
-                                                    {activePianoSection === 2 && (
-                                                        <Piano
-                                                            noteRange={{ first: MidiNumbers.fromNote('C5'), last: MidiNumbers.fromNote('C8') }}
-                                                            playNote={playNote}
-                                                            stopNote={stopNote}
-                                                            //  width={800}
-                                                            keyboardShortcuts={keyboardShortcuts}
-                                                        />
-                                                    )}
+
+                                            <div className="flex gap-1 md600:gap-2 lg:gap-3 bg-[#141414]">
+                                                {autoChords === true &&
+                                                    <div className="w-[40%] md600:w-[25%] md:w-[30%] lg:w-[20%] xl:w-[18%] bg-[#1F1F1F] md600:ms-2 md600:mt-2 lg:ms-3 lg:mt-3 mb-1">
+                                                        <div className="w-full text-white p-1 md600:p-2 lg:p-3">
+                                                            <div className="flex justify-between items-center">
+                                                                <p className="text-white text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Auto Chord</p>
+                                                                <IoClose className='text-[8px] sm:text-[10px] md600:text-[12px] md:text-[16px] lg:text-[20px] 2xl:text-[24px] text-[#FFFFFF99]' onClick={() => setAutoChords(false)} />
+                                                            </div>
+                                                            <p className="text-[#FFFFFF99] text-[8px] md:text-[10px] lg:text-[12px] 2xl:text-[14px] text-nowrap truncate ">Play full chords with a single key</p>
+                                                            <div className="flex justify-between gap-1 lg:gap-2 pt-1 md600:pt-2 lg:pt-4 2xl:gap-3 2xl:pt-5">
+                                                                <button className="text-white border border-[#FFFFFF1A] text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md">
+                                                                    Triad
+                                                                </button>
+                                                                <button className="text-white border border-[#FFFFFF1A] text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md">
+                                                                    7th
+                                                                </button>
+                                                                <button className="text-white border border-[#FFFFFF1A] text-[8px] md600:text-[10px] lg:text-[12px] py-1  px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md">
+                                                                    Add9
+                                                                </button>
+                                                            </div>
+                                                            {/* Range Slider - Added here after the chord buttons */}
+                                                            <div className=" pt-1 md600:pt-2 lg:pt-3">
+                                                                <RangeSlider
+                                                                    min={0}
+                                                                    max={10}
+                                                                    step={0.1}
+                                                                    initialValue={0}
+                                                                    label="Strum"
+                                                                    unit="s"
+                                                                    onChange={setStrumValue}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                <div className="w-full h-[130px] md:h-[200px] lg:h-[250px] overflow-x-auto pt-1 md600:pt-2 lg:pt-3 ">
+                                                    <div className="w-full h-full flex items-center justify-center">
+
+                                                        {activePianoSection === 0 && (
+                                                            <Piano
+                                                                noteRange={{ first: MidiNumbers.fromNote('C0'), last: MidiNumbers.fromNote('B2') }}
+                                                                playNote={playNote}
+                                                                stopNote={stopNote}
+                                                                //  width={800}
+                                                                keyboardShortcuts={keyboardShortcuts}
+                                                            />
+                                                        )}
+                                                        {activePianoSection === 1 && (
+                                                            <Piano
+                                                                noteRange={{ first: MidiNumbers.fromNote('C3'), last: MidiNumbers.fromNote('B5') }}
+                                                                playNote={playNote}
+                                                                stopNote={stopNote}
+                                                                //  width={800}
+                                                                keyboardShortcuts={keyboardShortcuts}
+                                                            />
+                                                        )}
+                                                        {activePianoSection === 2 && (
+                                                            <Piano
+                                                                noteRange={{ first: MidiNumbers.fromNote('C5'), last: MidiNumbers.fromNote('C8') }}
+                                                                playNote={playNote}
+                                                                stopNote={stopNote}
+                                                                //  width={800}
+                                                                keyboardShortcuts={keyboardShortcuts}
+                                                            />
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -397,7 +547,7 @@ const Pianodemo = () => {
                                 )}
 
                                 {activeTab === 'Chords' && (
-                                    <div className="w-full h-[400px] md:h-[500px] lg:h-[250px] flex items-center justify-center">
+                                    <div className="w-full h-[130px] md:h-[500px] lg:h-[250px] flex items-center justify-center">
                                         <div className="text-center">
                                             <h3 className="text-white text-xl font-semibold mb-4">Chords Tab</h3>
                                             <p className="text-gray-400">Chord selection and management will be here</p>
