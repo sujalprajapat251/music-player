@@ -422,7 +422,7 @@ const Pianodemo = () => {
             </button>
             {showOffcanvas === true && (
                 <>
-                    <div class="fixed z-40 w-full h-full bg-[#1F1F1F] transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[200px] md600:bottom-[275px] md:bottom-[355px]  lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[465px]" tabindex="-1" aria-labelledby="drawer-swipe-label">
+                    <div class="fixed z-40 w-full h-full bg-[#1F1F1F] transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px]  lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[465px]" tabindex="-1" aria-labelledby="drawer-swipe-label">
                         {/* Static Navbar with Tabs */}
                         <div className="bg-[#1F1F1F]  border-b border-[#FFFFFF1A] h-full">
                             <div className="flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
@@ -590,7 +590,7 @@ const Pianodemo = () => {
                                                         </div>
                                                     </div>
                                                 }
-                                                <div className="w-full h-[105px] sm:h-[95px] md600:h-[140px] md:h-[200px] lg:h-[250px] overflow-x-auto pt-1 md600:pt-2 lg:pt-3 ">
+                                                <div className="w-full h-[105px] sm:h-[150px] md600:h-[140px] md:h-[290px] lg:h-[250px] overflow-x-auto pt-1 md600:pt-2 lg:pt-3 ">
                                                     <div className="w-full h-full flex items-center justify-center">
 
                                                         {activePianoSection === 0 && (
@@ -629,89 +629,92 @@ const Pianodemo = () => {
 
                                 {activeTab === 'Chords' && (
                                     <>
-                                        <div className="w-full flex items-center justify-center">
-                                            <div className="bg-[#FFFFFF1A] items-center mt-2 px-3 py-2  rounded-lg">
-                                                <div className=" flex gap-3 items-center px-3">
-                                                    <GiPianoKeys className='text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
-                                                    <p className='text-white text-[16px]'>Basic</p>
-                                                    <HiMiniChevronUpDown className='text-[#FFFFFF99] text-[16px]' />
-                                                </div>
-                                                <div className="grid grid-cols-4 gap-4 mx-3 mt-3">
-                                                    {BasicData.map((item, index) => (
-                                                        <div key={index} className="bg-[#1F1F1F] text-white p-2 w-[130px]">
-                                                            <p className='text-white text-[16px] text-center mb-1'>{item.name}</p>
-                                                            <div className="flex justify-between">
-                                                                <img src={item.image} alt="" className="w-3 h-3" />
-                                                                <FaPlus className='text-[12px] text-[#FFFFFF99]' />
+                                        <div className="max-h-[180px] sm:max-h-[235px] md600:max-h-[235px] md:max-h-[400px]  overflow-auto xl:overflow-hidden ">
+                                            <div className="w-full flex items-center justify-center">
+                                                <div className="bg-[#FFFFFF1A] items-center mt-1 px-1 py-1 md:mt-2 md:px-2 md:py-2 lg:px-3 rounded-lg">
+                                                    <div className=" flex gap-1 px-1 md:gap-2 md:px-2 lg:gap-3 items-center lg:px-3">
+                                                        <GiPianoKeys className='text-[10px] md600:text-[12px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
+                                                        <p className='text-white text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]'>Basic</p>
+                                                        <HiMiniChevronUpDown className='text-[#FFFFFF99] text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]' />
+                                                    </div>
+                                                    <div className="grid grid-cols-3 gap-1 md600:gap-2 mx-1 mt-1 md:grid-cols-4 md:gap-3 md:mx-2 md:mt-2 lg:gap-4 lg:mx-3 lg:mt-3">
+                                                        {BasicData.map((item, index) => (
+                                                            <div key={index} className="bg-[#1F1F1F] text-white w-[90px] md600:w-[110px] p-1 md600:p-2 md:w-[120px] lg:w-[130px]">
+                                                                <p className='text-white text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px] text-center mb-1'>{item.name}</p>
+                                                                <div className="flex justify-between">
+                                                                    <img src={item.image} alt="" className="w-2 h-2 md600:w-3 md600:h-3 lg:w-4 lg:h-4" />
+                                                                    <FaPlus className='text-[10px] md600:text-[12px] lg:text-[16px] text-[#FFFFFF99]' />
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    ))}
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div className="w-full flex items-center justify-center">
-                                            <div className="bg-[#FFFFFF1A] items-center mt-2 px-3 py-2  rounded-lg">
-                                                <div className=" flex gap-3 items-center px-3">
-                                                    <img src={music} alt="" className="class" />
-                                                    <p className='text-white text-[16px]'>Playing Sounds</p>
-                                                </div>
-                                                <div className="flex">
-                                                    <div className='bg-[#1F1F1F] ms-3 mt-2 p-2 w-[116px] h-[157px]'>
-                                                        <p className='text-[#FFFFFF99] text-[14px]'>Basic</p>
-                                                        {BasicData1.map((item, index) => (
-                                                            <div key={index} className="">
-                                                                <button
-                                                                    className={`${isButtonSelected('basic', index) ? "bg-white text-black" : "text-[#FFFFFF] bg-transparent"} justify-center w-[100px] h-[30px] mt-2 text-[10px] rounded-md border border-[#FFFFFF1A]`}
-                                                                    onClick={() => toggleButton('basic', index)}
-                                                                >
-                                                                    {item.name}
-                                                                </button>
-                                                            </div>
-                                                        ))}
+                                            <div className="max-w-full md600:w-full flex items-center md600:justify-center my-3 lg:my-0 overflow-auto ">
+                                                <div className="bg-[#FFFFFF1A] items-center mt-1 px-1  md:mt-2 md:px-2 py-1 lg:px-3 lg:py-2  rounded-lg">
+                                                    <div className=" flex gap-1 px-1 md:gap-2 md:px-2 lg:gap-3 items-center lg:px-3">
+                                                        <img src={music} alt="" className="w-2 h-2 md600:w-3 md600:h-3 lg:w-4 lg:h-4" />
+                                                        <p className='text-white text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]'>Playing Sounds</p>
                                                     </div>
-                                                    <div className='bg-[#1F1F1F] mx-3 mt-2 p-2 w-[340px] h-[157px]'>
-                                                        <p className='text-[#FFFFFF99] text-[14px]'>Stabs</p>
-                                                        <div className="grid grid-cols-3 gap-3  pt-2">
-                                                            {Stabs.map((item, index) => (
+                                                    <div className="flex">
+                                                        <div className='bg-[#1F1F1F] ms-1 mt-1 p-1 w-[110px] h-[120px] md600:w-[100px] md600:h-[155px] md:ms-2 md:mt-2 md:p-2 md:w-[110px] md:h-[180px] lg:ms-3 lg:w-[116px] lg:h-[150px]'>
+                                                            <p className='text-[#FFFFFF99] text-[10px] md600:text-[12px] md:text-[14px] '>Basic</p>
+
+                                                            {BasicData1.map((item, index) => (
                                                                 <div key={index} className="">
                                                                     <button
-                                                                        className={`${isButtonSelected('stabs', index) ? "bg-white text-black" : "text-[#FFFFFF] bg-transparent"} justify-center w-[100px] h-[30px] text-[10px] rounded-md border border-[#FFFFFF1A]`}
-                                                                        onClick={() => toggleButton('stabs', index)}
+                                                                        className={`${isButtonSelected('basic', index) ? "bg-white text-black" : "text-[#FFFFFF] bg-transparent"} justify-center  w-[100px] mt-1  h-[25px] lg:w-[100px] lg:h-[30px]  md:mt-2 text-[8px] md600:text-[10px] rounded-md border border-[#FFFFFF1A]`}
+                                                                        onClick={() => toggleButton('basic', index)}
                                                                     >
                                                                         {item.name}
                                                                     </button>
                                                                 </div>
                                                             ))}
                                                         </div>
-                                                    </div>
-                                                    <div className='bg-[#1F1F1F] mt-2 p-2 w-[340px] h-[157px]'>
-                                                        <p className='text-[#FFFFFF99] text-[14px]'>Stabs</p>
-                                                        <div className="grid grid-cols-3 gap-3  pt-2">
-                                                            {Arpeggiated.map((item, index) => (
-                                                                <div key={index} className=" flex">
-                                                                    <button
-                                                                        className={`${isButtonSelected('arpeggiated', index) ? "bg-white text-black" : "text-[#FFFFFF] bg-transparent"} justify-center w-[100px] h-[30px] text-[10px] rounded-md border border-[#FFFFFF1A]`}
-                                                                        onClick={() => toggleButton('arpeggiated', index)}
-                                                                    >
-                                                                        {item.name}
-                                                                    </button>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                    <div className='bg-[#1F1F1F] mx-3 mt-2 p-2 w-[116px] h-[157px]'>
-                                                        <p className='text-[#FFFFFF99] text-[14px]'>Basic</p>
-                                                        {other.map((item, index) => (
-                                                            <div key={index} className="">
-                                                                <button
-                                                                    className={`${isButtonSelected('other', index) ? "bg-white text-black" : "text-[#FFFFFF] bg-transparent"} mt-2 justify-center w-[100px] h-[30px] text-[10px] rounded-md border border-[#FFFFFF1A]`}
-                                                                    onClick={() => toggleButton('other', index)}
-                                                                >
-                                                                    {item.name}
-                                                                </button>
+                                                        <div className='bg-[#1F1F1F] mx-1 mt-1 p-1 w-[315px] h-[120px] md600:w-[170px] md600:h-[155px] md:mx-2 lg:mx-3 md:mt-2 md:p-2 md:w-[200px] md:h-[180px] lg:w-[340px] lg:h-[150px]'>
+                                                            <p className='text-[#FFFFFF99] text-[8px] sm:text-[10px] md600:text-[12px] md:text-[14px]'>Stabs</p>
+                                                            <div className="grid grid-cols-3 pt-1 md600:grid-cols-2 gap-1 md:gap-2 lg:grid-cols-3 lg:gap-3  md:pt-2">
+                                                                {Stabs.map((item, index) => (
+                                                                    <div key={index} className="">
+                                                                        <button
+                                                                            className={`${isButtonSelected('stabs', index) ? "bg-white text-black" : "text-[#FFFFFF] bg-transparent"} justify-center w-[100px] h-[25px] md600:w-[80px] md:w-[90px]  md600:h-[25px] lg:w-[100px] lg:h-[30px]  text-[8px] md600:text-[10px] rounded-md border border-[#FFFFFF1A]`}
+                                                                            onClick={() => toggleButton('stabs', index)}
+                                                                        >
+                                                                            {item.name}
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
                                                             </div>
-                                                        ))}
+                                                        </div>
+                                                         <div className='bg-[#1F1F1F] mt-1 p-1 w-[315px] h-[120px] md600:w-[170px] md600:h-[155px]  md:mt-2 md:p-2 md:w-[200px] md:h-[180px] lg:w-[340px] lg:h-[150px]'>
+                                                            <p className='text-[#FFFFFF99] text-[8px] sm:text-[10px] md600:text-[12px] md:text-[14px]'>Arpeggiated</p>
+                                                            <div className="grid grid-cols-3  md600:grid-cols-2 gap-1 md:gap-2 lg:grid-cols-3 lg:gap-3 pt-1  md:pt-2">
+                                                                {Arpeggiated.map((item, index) => (
+                                                                    <div key={index} className=" flex">
+                                                                        <button
+                                                                            className={`${isButtonSelected('arpeggiated', index) ? "bg-white text-black" : "text-[#FFFFFF] bg-transparent"} justify-center  w-[100px] h-[25px] md600:w-[80px] md:w-[90px] mt-1 lg:mt-0  md600:h-[25px] lg:w-[100px] lg:h-[30px] text-[8px] md600:text-[10px] rounded-md border border-[#FFFFFF1A]`}
+                                                                            onClick={() => toggleButton('arpeggiated', index)}
+                                                                        >
+                                                                            {item.name}
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                        <div className='bg-[#1F1F1F] mt-1 mx-1 p-1 md:mx-2 lg:mx-3 md:mt-2 md:p-2 w-[110px] h-[120px] md600:w-[100px] md600:h-[155px]  md:w-[110px] md:h-[180px] lg:ms-3 lg:w-[116px] lg:h-[150px]'>
+                                                            <p className='text-[#FFFFFF99] text-[8px] sm:text-[10px] md600:text-[12px] md:text-[14px]'>other</p>
+                                                            {other.map((item, index) => (
+                                                                <div key={index} className="">
+                                                                    <button
+                                                                        className={`${isButtonSelected('other', index) ? "bg-white text-black" : "text-[#FFFFFF] bg-transparent"} mt-1 md:mt-2 justify-center w-[100px] h-[25px] md600:w-[90px] md600:h-[25px] lg:w-[100px] lg:h-[30px] text-[8px] md600:text-[10px] rounded-md border border-[#FFFFFF1A]`}
+                                                                        onClick={() => toggleButton('other', index)}
+                                                                    >
+                                                                        {item.name}
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
