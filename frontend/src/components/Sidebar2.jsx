@@ -28,7 +28,7 @@ const Sidebar2 = () => {
           <div className="h-[100px] border-b border-[#1414141A] dark:border-[#FFFFFF1A] flex items-end pb-2"></div>
           
           {/* Tracks container */}
-          <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 270px)' }}>
+          <div style={{ maxHeight: 'calc(100vh - 270px)' }}>
             {(tracks || []).map((track, idx) => (
               <div
                 key={track.id}
