@@ -64,7 +64,7 @@ const Sidebar2 = () => {
                 </div>
                 
                 <div className="flex flex-col justify-between items-end h-full w-20">
-                  <TrackMenu />
+                  <TrackMenu trackId={track.id} color={track.color} />
                   <div className="flex items-center justify-center gap-x-4 w-full pb-4">
                     <img
                       src={headphone}

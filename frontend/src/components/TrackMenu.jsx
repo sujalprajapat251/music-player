@@ -7,16 +7,19 @@ import DuplicateIcon from '../Images/duplicate.svg'
 import TrashIcon from '../Images/trash.svg'
 import FreezeIcon from '../Images/freeze.svg'
 import waveIcon from '../Images/wave.svg'
+import { useDispatch } from "react-redux";
+import { updateTrack } from "../Redux/Slice/studio.slice";
 const MENU_COLORS = [
   "#F05959", "#49B1A5", "#C579C8", "#5572F9",
   "#25A6CA", "#C059F0", "#4CAA47", "#F0F059",
   "#F09859" , "#8C8484"
 ];
 
-const TrackMenu = () => {
+const TrackMenu = ({ trackId, color }) => {
   const [open, setOpen] = useState(false);
   const [submenu, setSubmenu] = useState(null);
   const menuRef = useRef();
+  const dispatch = useDispatch();
 
   // Close menu on outside click
   useEffect(() => {
@@ -71,15 +74,13 @@ const TrackMenu = () => {
           <MenuItem
             icon={<img src={importIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)", transform: "rotate(90deg)" }} />}
             label="Export"
-            onMouseEnter={() => setSubmenu("export")}
-            onMouseLeave={() => setSubmenu(null)}
+            onClick={() => setSubmenu(submenu === "export" ? null : "export")}
             hasArrow
           />
           <MenuItem
-            icon={<span style={{ display: "inline-block", width: 12, height: 12, background: "#FF5A5A", borderRadius: 2 }} />}
+            icon={<span style={{ display: "inline-block", width: 12, height: 12, background: color, borderRadius: 2 }} />}
             label="Color"
-            onMouseEnter={() => setSubmenu("color")}
-            onMouseLeave={() => setSubmenu(null)}
+            onClick={() => setSubmenu(submenu === "color" ? null : "color")}
             hasArrow
           />
 
@@ -89,8 +90,8 @@ const TrackMenu = () => {
               position: "absolute", left: "100%", top: 250, background: "#232323", borderRadius: 8, minWidth: 300, zIndex: 10000, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", marginLeft: 4
             }}>
                <div className="mt-2 ms-3" style={{ fontSize: 13, color: "#aaa" }}>Export As</div>
-              <MenuItem icon={<img src={waveIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)" }} />} label="WAV audio file" />
-              <MenuItem icon={<img src={waveIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)" }} />} label="WAV audio file (no effects)" />
+              <MenuItem icon={<img src={waveIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)" }} />} label="WAV audio file" onClick={() => { setOpen(false); setSubmenu(null); /* handle export */ }} />
+              <MenuItem icon={<img src={waveIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)" }} />} label="WAV audio file (no effects)" onClick={() => { setOpen(false); setSubmenu(null); /* handle export no effects */ }} />
             </div>
           )}
 
@@ -101,14 +102,21 @@ const TrackMenu = () => {
             }}>
               <div style={{ fontSize: 13, color: "#aaa", marginBottom: 8 }}>Color</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {MENU_COLORS.map((color) => (
+                {MENU_COLORS.map((menuColor) => (
                   <div
-                    key={color}
+                    key={menuColor}
                     style={{
-                      width: 28, height: 28, background: color, borderRadius: 4, cursor: "pointer", border: "2px solid #232323"
+                      width: 28,
+                      height: 28,
+                      background: menuColor,
+                      borderRadius: 4,
+                      cursor: "pointer",
+                      border: `2px solid ${color === menuColor ? "#fff" : "#232323"}`,
+                      boxSizing: "border-box"
                     }}
                     onClick={() => {
-                      // handle color change here
+                      dispatch(updateTrack({ id: trackId, updates: { color: menuColor } }));
+                      setOpen(false); setSubmenu(null);
                     }}
                   />
                 ))}
@@ -121,10 +129,11 @@ const TrackMenu = () => {
   );
 };
 
-const MenuItem = ({ icon, label, onMouseEnter, onMouseLeave, hasArrow }) => (
+const MenuItem = ({ icon, label, onMouseEnter, onMouseLeave, hasArrow, onClick }) => (
   <div
     onMouseEnter={onMouseEnter}
     onMouseLeave={onMouseLeave}
+    onClick={onClick}
     style={{
       display: "flex",
       alignItems: "center",

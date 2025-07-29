@@ -22,7 +22,9 @@ const TimelineTrack = ({
   trackId,
   startTime = 0,
   duration,
-  onPositionChange,
+  trimStart = 0,
+  trimEnd = null,
+  originalDuration,
   isSelected,
   onSelect
 }) => {
@@ -98,10 +100,31 @@ const TimelineTrack = ({
         wavesurfer.current = null;
       }
     };
-  }, [trackId]);
+  }, [trackId, url]);
 
-  // Get timeline width and duration from parent (pass as props if needed)
-  // For now, assume 1 second = 100px (as in your timelineContainerRef minWidth)
+  // Update waveform view when trim values change
+  useEffect(() => {
+    if (wavesurfer.current && originalDuration && (trimStart > 0 || (trimEnd && trimEnd < originalDuration))) {
+      const waveformContainer = waveformRef.current;
+      if (waveformContainer) {
+        const actualTrimEnd = trimEnd || originalDuration;
+        const trimDuration = actualTrimEnd - trimStart;
+        const trimStartRatio = trimStart / originalDuration;
+        const trimDurationRatio = trimDuration / originalDuration;
+        
+        // Apply CSS transform to show only the trimmed portion
+        const waveformElement = waveformContainer.querySelector('wave');
+        if (waveformElement) {
+          const translateX = -(trimStartRatio * 100);
+          const scaleX = 1 / trimDurationRatio;
+          waveformElement.style.transform = `translateX(${translateX}%) scaleX(${scaleX})`;
+          waveformElement.style.transformOrigin = 'left center';
+        }
+      }
+    }
+  }, [trimStart, trimEnd, originalDuration]);
+
+  // Get timeline width and duration from parent
   const timelineWidthPerSecond = 100;
   const left = startTime * timelineWidthPerSecond;
   const width = (duration || 1) * timelineWidthPerSecond;
@@ -126,7 +149,6 @@ const TimelineTrack = ({
         position: "absolute",
         left: `${left}px`,
         width: `${width}px`,
-        overflow: "hidden",
         cursor: "move",
         border: isSelected ? "2px solid #AD00FF" : "1px solid transparent",
         boxSizing: "border-box",
@@ -141,7 +163,7 @@ const TimelineTrack = ({
           top: 0,
           left: 0,
           zIndex: 0,
-          pointerEvents: "none", // Prevent interference with dragging
+          pointerEvents: "none",
         }}
       />
     </div>
@@ -162,6 +184,7 @@ const Timeline = () => {
   const isDragging = useRef(false);
   const animationFrameId = useRef(null);
   const [selectedTrackId, setSelectedTrackId] = useState(null);
+  const playingTracks = useRef(new Map()); // Track which tracks are currently playing
 
   // Grid settings state
   const [selectedGrid, setSelectedGrid] = useState("1/1");
@@ -208,7 +231,7 @@ const Timeline = () => {
 
       const player = new Player(audioBuffer).toDestination();
 
-      // Store player with track metadata
+      // Store player with track metadata including trim information
       setPlayers((prev) => {
         const existingIndex = prev.findIndex(p => p.trackId === trackData.id);
         if (existingIndex !== -1) {
@@ -218,7 +241,11 @@ const Timeline = () => {
             player,
             trackId: trackData.id,
             startTime: trackData.startTime,
-            duration: trackData.duration
+            duration: trackData.duration,
+            trimStart: trackData.trimStart || 0,
+            trimEnd: trackData.trimEnd || trackData.originalDuration,
+            originalDuration: trackData.originalDuration || trackData.duration,
+            audioBuffer // Store the original audio buffer for proper trimming
           };
           return newPlayers;
         } else {
@@ -227,7 +254,11 @@ const Timeline = () => {
             player,
             trackId: trackData.id,
             startTime: trackData.startTime,
-            duration: trackData.duration
+            duration: trackData.duration,
+            trimStart: trackData.trimStart || 0,
+            trimEnd: trackData.trimEnd || trackData.originalDuration,
+            originalDuration: trackData.originalDuration || trackData.duration,
+            audioBuffer // Store the original audio buffer for proper trimming
           }];
         }
       });
@@ -248,43 +279,113 @@ const Timeline = () => {
       console.error("Error loading audio:", error);
     }
   }, []);
+
+  // Enhanced function to play trimmed audio
+  const playTrimmedTrack = useCallback((playerObj, startOffset = 0) => {
+    if (!playerObj?.player || !playerObj.audioBuffer) return;
+
+    try {
+      const { trimStart, trimEnd, originalDuration, trackId } = playerObj;
+      const actualTrimEnd = trimEnd || originalDuration;
+      
+      // Calculate the actual playback parameters
+      const trimmedDuration = actualTrimEnd - trimStart;
+      const playbackStart = trimStart + startOffset;
+      
+      // Don't play if we're beyond the trimmed range
+      if (playbackStart >= actualTrimEnd || startOffset >= trimmedDuration) {
+        return;
+      }
+      
+      // Calculate how long to play (don't exceed trim end)
+      const remainingDuration = actualTrimEnd - playbackStart;
+      
+      // Stop any existing playback for this track
+      if (playingTracks.current.has(trackId)) {
+        const existingPlayer = playingTracks.current.get(trackId);
+        if (existingPlayer && typeof existingPlayer.stop === 'function') {
+          existingPlayer.stop();
+        }
+      }
+      
+      // Create a new player instance for this specific playback
+      const trimmedPlayer = new Player(playerObj.audioBuffer).toDestination();
+      playingTracks.current.set(trackId, trimmedPlayer);
+      
+      // Start playback from the correct position
+      trimmedPlayer.start(undefined, playbackStart, remainingDuration);
+      
+      console.log(`Playing track ${trackId} from ${playbackStart.toFixed(2)}s for ${remainingDuration.toFixed(2)}s (trimmed: ${trimStart.toFixed(2)}s - ${actualTrimEnd.toFixed(2)}s)`);
+      
+      // Schedule stop to ensure it stops at trim end
+      setTimeout(() => {
+        if (trimmedPlayer && typeof trimmedPlayer.stop === 'function') {
+          trimmedPlayer.stop();
+          playingTracks.current.delete(trackId);
+        }
+      }, remainingDuration * 1000);
+      
+    } catch (error) {
+      console.error(`Error playing trimmed track ${playerObj.trackId}:`, error);
+    }
+  }, []);
+
+  // Enhanced function to stop all playing tracks
+  const stopAllTracks = useCallback(() => {
+    // Stop all tracks in playingTracks map
+    playingTracks.current.forEach((player, trackId) => {
+      if (player && typeof player.stop === 'function') {
+        try {
+          player.stop();
+        } catch (error) {
+          console.error(`Error stopping track ${trackId}:`, error);
+        }
+      }
+    });
+    playingTracks.current.clear();
+    
+    // Also stop original players as fallback
+    players.forEach((playerObj) => {
+      if (playerObj?.player && typeof playerObj.player.stop === 'function') {
+        try {
+          playerObj.player.stop();
+        } catch (error) {
+          // Silently ignore stop errors
+        }
+      }
+    });
+  }, [players]);
+
   const handlePlayPause = async () => {
     try {
       await start();
 
       if (isPlaying) {
-        players.forEach((playerObj) => {
-          if (playerObj?.player && typeof playerObj.player.stop === 'function') {
-            playerObj.player.stop();
-          }
-        });
+        stopAllTracks();
         setIsPlaying(false);
       } else {
         setIsPlaying(true);
+        
         players.forEach((playerObj) => {
-          if (playerObj?.player && typeof playerObj.player.start === 'function') {
-            const trackStartTime = playerObj.startTime || 0;
-            const trackDuration = playerObj.duration || 0;
+          const trackStartTime = playerObj.startTime || 0;
+          const trackDuration = playerObj.duration || 0;
+          const trackEndTime = trackStartTime + trackDuration;
 
-            // Calculate if the current playhead position is within this track's range
-            const trackEndTime = trackStartTime + trackDuration;
-
-            if (currentTime >= trackStartTime && currentTime < trackEndTime) {
-              // Calculate offset within the track
-              const offsetInTrack = currentTime - trackStartTime;
-              playerObj.player.start(undefined, offsetInTrack);
-            } else if (currentTime < trackStartTime) {
-              // If playhead is before track start, schedule the track to start later
-              const delayTime = trackStartTime - currentTime;
-              setTimeout(() => {
-                if (isPlaying) { // Check if still playing when delay expires
-                  playerObj.player.start();
-                }
-              }, delayTime * 1000);
-            }
-            // If currentTime > trackEndTime, don't play this track
+          if (currentTime >= trackStartTime && currentTime < trackEndTime) {
+            // Calculate offset within the track
+            const offsetInTrack = currentTime - trackStartTime;
+            playTrimmedTrack(playerObj, offsetInTrack);
+          } else if (currentTime < trackStartTime) {
+            // If playhead is before track start, schedule the track to start later
+            const delayTime = (trackStartTime - currentTime) * 1000;
+            setTimeout(() => {
+              if (isPlaying) {
+                playTrimmedTrack(playerObj, 0);
+              }
+            }, delayTime);
           }
         });
+        
         playbackStartRef.current = {
           systemTime: Date.now(),
           audioTime: currentTime,
@@ -299,25 +400,25 @@ const Timeline = () => {
   const getGridDivisions = (gridSize) => {
     switch (gridSize) {
       case "1/1":
-        return 1; // 1 grid line per second
+        return 1;
       case "1/2":
-        return 2; // 2 grid lines per second
+        return 2;
       case "1/2 dotted":
-        return 2; // 2 grid lines per second (dotted)
+        return 2;
       case "1/4":
-        return 4; // 4 grid lines per second
+        return 4;
       case "1/8":
-        return 8; // 8 grid lines per second
+        return 8;
       case "1/16":
-        return 16; // 16 grid lines per second
+        return 16;
       case "1/32":
-        return 32; // 32 grid lines per second
+        return 32;
       case "1/8 triplet":
-        return 12; // 12 grid lines per second (triplet)
+        return 12;
       case "1/16 triplet":
-        return 24; // 24 grid lines per second (triplet)
+        return 24;
       case "Automatic grid size":
-        return 4; // Default to 1/4
+        return 4;
       default:
         return 4;
     }
@@ -354,25 +455,24 @@ const Timeline = () => {
       const isLabeled = sec % labelInterval === 0 && isMainBeat;
 
       // Determine tick height and style
-      let tickHeight = 4; // Default small tick
+      let tickHeight = 4;
       let strokeWidth = 0.5;
       let opacity = 0.6;
 
       if (isMainBeat) {
-        tickHeight = 20; // Tallest for main beats (whole notes)
+        tickHeight = 20;
         strokeWidth = 1.5;
         opacity = 1;
       } else if (isHalfBeat) {
-        tickHeight = 14; // Medium for half beats
+        tickHeight = 14;
         strokeWidth = 1;
         opacity = 0.8;
       } else if (isQuarterBeat) {
-        tickHeight = 10; // Slightly larger for quarter beats
+        tickHeight = 10;
         strokeWidth = 0.8;
         opacity = 0.7;
       }
 
-      // Draw tick from axisY downwards
       svg
         .append("line")
         .attr("x1", x)
@@ -383,7 +483,6 @@ const Timeline = () => {
         .attr("stroke-width", strokeWidth)
         .attr("opacity", opacity);
 
-      // Draw label if main beat and label interval
       if (isLabeled) {
         const minutes = Math.floor(time / 60);
         const seconds = Math.floor(time % 60);
@@ -399,7 +498,6 @@ const Timeline = () => {
       }
     }
 
-    // Main baseline
     svg
       .append("line")
       .attr("x1", 0)
@@ -410,7 +508,7 @@ const Timeline = () => {
       .attr("stroke-width", 1);
   }, [audioDuration, selectedGrid]);
 
-  // Animation loop for playback with proper cleanup
+  // Enhanced animation loop for playback with proper track management
   useEffect(() => {
     let localAnimationId = null;
 
@@ -424,32 +522,33 @@ const Timeline = () => {
         if (newTime >= audioDuration) {
           setIsPlaying(false);
           setCurrentTime(audioDuration);
-          players.forEach((playerObj) => {
-            if (playerObj?.player && typeof playerObj.player.stop === 'function') {
-              try {
-                playerObj.player.stop();
-              } catch (error) {
-                // Silently ignore stop errors
-              }
-            }
-          });
+          stopAllTracks();
         } else {
           setCurrentTime(newTime);
 
-          // Check if any tracks should start playing now
+          // Check if any new tracks should start playing
           players.forEach((playerObj) => {
-            if (playerObj?.player) {
-              const trackStartTime = playerObj.startTime || 0;
-              const trackDuration = playerObj.duration || 0;
-              const trackEndTime = trackStartTime + trackDuration;
+            const trackStartTime = playerObj.startTime || 0;
+            const trackDuration = playerObj.duration || 0;
+            const trackEndTime = trackStartTime + trackDuration;
+            const trackId = playerObj.trackId;
 
-              // If we just crossed the start time of a track, start it
-              const previousTime = playbackStartRef.current.audioTime + (elapsedTime - 1 / 60); // Approximate previous frame
-              if (previousTime < trackStartTime && newTime >= trackStartTime && newTime < trackEndTime) {
-                try {
-                  playerObj.player.start();
-                } catch (error) {
-                  console.log("Track already playing or error starting:", error);
+            const previousTime = playbackStartRef.current.audioTime + (elapsedTime - 1 / 60);
+            
+            // Check if track should start playing now
+            if (previousTime < trackStartTime && newTime >= trackStartTime && newTime < trackEndTime) {
+              if (!playingTracks.current.has(trackId)) {
+                playTrimmedTrack(playerObj, 0);
+              }
+            }
+            
+            // Check if track should stop (reached its end or trim end)
+            if (newTime >= trackEndTime) {
+              if (playingTracks.current.has(trackId)) {
+                const player = playingTracks.current.get(trackId);
+                if (player && typeof player.stop === 'function') {
+                  player.stop();
+                  playingTracks.current.delete(trackId);
                 }
               }
             }
@@ -467,7 +566,7 @@ const Timeline = () => {
         cancelAnimationFrame(localAnimationId);
       }
     };
-  }, [isPlaying, audioDuration, players]);
+  }, [isPlaying, audioDuration, players, playTrimmedTrack, stopAllTracks]);
 
   // Render ruler when dependencies change
   useEffect(() => {
@@ -477,9 +576,10 @@ const Timeline = () => {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      players.forEach((player) => {
-        if (player && typeof player.dispose === 'function') {
-          player.dispose();
+      stopAllTracks();
+      players.forEach((playerObj) => {
+        if (playerObj.player && typeof playerObj.player.dispose === 'function') {
+          playerObj.player.dispose();
         }
       });
       waveSurfers.forEach((ws) => {
@@ -549,26 +649,19 @@ const Timeline = () => {
           console.error('Error fetching or decoding audio for duration:', err);
         }
 
-        console.log('Drop position:', {
-          x: x,
-          width: width,
-          duration: duration,
-          dropTime: dropTime,
-          timeInSeconds: dropTime,
-          timeInMinutes: Math.floor(dropTime / 60),
-          timeInSecondsRemaining: Math.floor(dropTime % 60)
-        });
-
         // Create new track with the dropped sound
         const newTrack = {
           id: Date.now(),
           name: soundItem.soundname || 'New Track',
           url: `${IMAGE_URL}uploads/soundfile/${soundItem.soundfile}`,
-          color: '#FFB6C1', // Default color, you can randomize this
+          color: '#FFB6C1',
           height: trackHeight,
-          startTime: dropTime, // Position where the sound starts
+          startTime: dropTime,
           duration: audioDurationSec,
-          soundData: soundItem // Store the original sound data
+          originalDuration: audioDurationSec,
+          trimStart: 0,
+          trimEnd: audioDurationSec,
+          soundData: soundItem
         };
 
         // Add the new track to Redux store
@@ -612,30 +705,24 @@ const Timeline = () => {
 
     if (isPlaying) {
       // Stop all current players
-      players.forEach((playerObj) => {
-        if (playerObj?.player && typeof playerObj.player.stop === 'function') {
-          playerObj.player.stop();
-        }
-      });
+      stopAllTracks();
 
-      // Restart players from new position
+      // Restart players from new position with proper trimming
       players.forEach((playerObj) => {
-        if (playerObj?.player && typeof playerObj.player.start === 'function') {
-          const trackStartTime = playerObj.startTime || 0;
-          const trackDuration = playerObj.duration || 0;
-          const trackEndTime = trackStartTime + trackDuration;
+        const trackStartTime = playerObj.startTime || 0;
+        const trackDuration = playerObj.duration || 0;
+        const trackEndTime = trackStartTime + trackDuration;
 
-          if (time >= trackStartTime && time < trackEndTime) {
-            const offsetInTrack = time - trackStartTime;
-            playerObj.player.start(undefined, offsetInTrack);
-          } else if (time < trackStartTime) {
-            const delayTime = trackStartTime - time;
-            setTimeout(() => {
-              if (isPlaying) {
-                playerObj.player.start();
-              }
-            }, delayTime * 1000);
-          }
+        if (time >= trackStartTime && time < trackEndTime) {
+          const offsetInTrack = time - trackStartTime;
+          playTrimmedTrack(playerObj, offsetInTrack);
+        } else if (time < trackStartTime) {
+          const delayTime = (trackStartTime - time) * 1000;
+          setTimeout(() => {
+            if (isPlaying) {
+              playTrimmedTrack(playerObj, 0);
+            }
+          }, delayTime);
         }
       });
 
@@ -657,28 +744,26 @@ const Timeline = () => {
     const gridDivisions = getGridDivisions(selectedGrid);
     const gridSpacing = 1 / gridDivisions;
 
-    // Generate grid lines for the entire timeline area
     for (let time = 0; time <= duration; time += gridSpacing) {
       const x = xScale(time);
       const isMainBeat = Math.abs(time - Math.round(time)) < 0.01;
       const isHalfBeat = Math.abs(time - Math.round(time * 2) / 2) < 0.01;
       const isQuarterBeat = Math.abs(time - Math.round(time * 4) / 4) < 0.01;
 
-      // Determine line style based on musical importance
-      let lineColor = "#FFFFFF1A"; // Default light grid
+      let lineColor = "#FFFFFF1A";
       let lineWidth = 1;
       let lineOpacity = 0.3;
 
       if (isMainBeat) {
-        lineColor = "#FFFFFF40"; // Brighter for main beats
+        lineColor = "#FFFFFF40";
         lineWidth = 1.5;
         lineOpacity = 0.6;
       } else if (isHalfBeat) {
-        lineColor = "#FFFFFF30"; // Medium for half beats
+        lineColor = "#FFFFFF30";
         lineWidth = 1.2;
         lineOpacity = 0.4;
       } else if (isQuarterBeat) {
-        lineColor = "#FFFFFF25"; // Slightly brighter for quarter beats
+        lineColor = "#FFFFFF25";
         lineWidth = 1;
         lineOpacity = 0.35;
       }
@@ -689,9 +774,9 @@ const Timeline = () => {
           style={{
             position: "absolute",
             left: `${x}px`,
-            top: "100px", // Start from below the ruler
+            top: "100px",
             width: `${lineWidth}px`,
-            height: `calc(100% - 100px)`, // Extend to bottom
+            height: `calc(100% - 100px)`,
             background: lineColor,
             opacity: lineOpacity,
             zIndex: 0,
@@ -736,6 +821,65 @@ const Timeline = () => {
     console.log(`Track ${trackId} moved to position: ${newStartTime.toFixed(2)}s`);
   }, [dispatch, timelineWidthPerSecond]);
 
+  const handleTrackResize = useCallback((trackId, newLeft, newWidth, isLeftHandle = false) => {
+    const track = tracks.find(t => t.id === trackId);
+    if (!track) return;
+
+    const newStartTime = Math.max(0, newLeft / timelineWidthPerSecond);
+    const newDuration = Math.max(0.1, newWidth / timelineWidthPerSecond);
+    const originalDuration = track.originalDuration || track.duration;
+
+    let trimStart = track.trimStart || 0;
+    let trimEnd = track.trimEnd || originalDuration;
+
+    if (isLeftHandle) {
+      // Left handle resize - adjust trim start
+      const timeDifference = newStartTime - track.startTime;
+      trimStart = Math.max(0, Math.min(originalDuration, (track.trimStart || 0) + timeDifference));
+      trimEnd = Math.min(originalDuration, trimStart + newDuration);
+    } else {
+      // Right handle resize - adjust trim end
+      trimEnd = Math.min(originalDuration, trimStart + newDuration);
+    }
+
+    // Ensure trim values are valid
+    if (trimStart >= trimEnd) {
+      trimStart = Math.max(0, trimEnd - 0.1);
+    }
+
+    const updates = {
+      startTime: newStartTime,
+      duration: newDuration,
+      trimStart,
+      trimEnd
+    };
+
+    // Update Redux store
+    dispatch(updateTrack({
+      id: trackId,
+      updates
+    }));
+
+    // Update players array
+    setPlayers(prev => prev.map(playerObj =>
+      playerObj.trackId === trackId
+        ? { 
+            ...playerObj, 
+            startTime: newStartTime,
+            duration: newDuration,
+            trimStart,
+            trimEnd
+          }
+        : playerObj
+    ));
+
+    console.log(`Track ${trackId} resized:`, {
+      startTime: newStartTime.toFixed(2),
+      duration: newDuration.toFixed(2),
+      trimStart: trimStart.toFixed(2),
+      trimEnd: trimEnd.toFixed(2)
+    });
+  }, [dispatch, timelineWidthPerSecond, tracks]);
 
   return (
     <>
@@ -826,17 +970,21 @@ const Timeline = () => {
                     onReady={(ws) => handleReady(ws, track.url, track)}
                     startTime={track.startTime}
                     duration={track.duration}
+                    trimStart={track.trimStart}
+                    trimEnd={track.trimEnd}
+                    originalDuration={track.originalDuration}
                     isSelected={selectedTrackId === track.id}
                     onSelect={handleTrackSelect}
                   />
 
-                  {/* Moveable component for dragging */}
+                  {/* Moveable component for dragging and resizing */}
                   {selectedTrackId === track.id && (
                     <Moveable
                       target={`.timeline-track-${track.id}`}
                       draggable={true}
                       resizable={true}
                       throttleDrag={1}
+                      throttleResize={1}
                       edgeDraggable={false}
                       startDragRotate={0}
                       throttleDragRotate={0}
@@ -847,51 +995,90 @@ const Timeline = () => {
                       padding={{ left: 0, top: 0, right: 0, bottom: 0 }}
                       renderDirections={["w", "e"]}
                       resizeOrigin="left top"
+                      onResizeStart={(e) => {
+                        console.log(`Started resizing track ${track.id}`);
+                      }}
                       onResize={(e) => {
-                        // Update position and size during resize
+                        // Determine which handle is being dragged
+                        const isLeftHandle = e.direction[0] < 0;
+                        
+                        // Calculate new dimensions
                         const newLeft = Math.max(0, e.drag.left);
-                        const newWidth = Math.max(20, e.width); // Minimum width 20px
-
+                        const newWidth = Math.max(20, e.width);
+                        
+                        // Apply visual changes immediately
                         e.target.style.left = `${newLeft}px`;
                         e.target.style.width = `${newWidth}px`;
-
-                        // Calculate new times
+                        
+                        // Calculate times for logging
                         const newStartTime = newLeft / timelineWidthPerSecond;
                         const newDuration = newWidth / timelineWidthPerSecond;
-
-                        console.log(`Resizing track ${track.id} - Start: ${newStartTime.toFixed(2)}s, Duration: ${newDuration.toFixed(2)}s`);
+                        
+                        console.log(`Resizing track ${track.id} - Left Handle: ${isLeftHandle}, Start: ${newStartTime.toFixed(2)}s, Duration: ${newDuration.toFixed(2)}s`);
                       }}
-                      
+                      onResizeEnd={(e) => {
+                        // Determine which handle was dragged
+                        const isLeftHandle = e.lastEvent && e.lastEvent.direction[0] < 0;
+                        
+                        if (!e.lastEvent) return;
+                        
+                        // Get final dimensions
+                        const newLeft = Math.max(0, e.lastEvent.drag.left);
+                        const newWidth = Math.max(20, e.lastEvent.width);
+                        
+                        // Snap to grid if needed
+                        const gridDivisions = getGridDivisions(selectedGrid);
+                        const gridSpacing = 1 / gridDivisions;
+                        
+                        const newStartTime = newLeft / timelineWidthPerSecond;
+                        const newDuration = newWidth / timelineWidthPerSecond;
+                        
+                        const snappedStartTime = Math.round(newStartTime / gridSpacing) * gridSpacing;
+                        const snappedDuration = Math.max(gridSpacing, Math.round(newDuration / gridSpacing) * gridSpacing);
+                        
+                        const snappedLeft = snappedStartTime * timelineWidthPerSecond;
+                        const snappedWidth = snappedDuration * timelineWidthPerSecond;
+                        
+                        // Apply final snapped position
+                        e.target.style.left = `${snappedLeft}px`;
+                        e.target.style.width = `${snappedWidth}px`;
+                        
+                        // Update track data with trim information
+                        handleTrackResize(track.id, snappedLeft, snappedWidth, isLeftHandle);
+                        
+                        console.log(`Track ${track.id} resize completed - Left Handle: ${isLeftHandle}, Final Start: ${snappedStartTime.toFixed(2)}s, Final Duration: ${snappedDuration.toFixed(2)}s`);
+                      }}
                       onDragStart={(e) => {
                         console.log(`Started dragging track ${track.id}`);
                       }}
                       onDrag={(e) => {
-                        // Update position during drag
+                        // Update position during drag (only horizontal movement)
                         const newLeft = Math.max(0, e.left);
                         e.target.style.left = `${newLeft}px`;
-
-                        // Calculate new start time
+                        
+                        // Calculate new start time for logging
                         const newStartTime = newLeft / timelineWidthPerSecond;
                         console.log(`Dragging track ${track.id} to position: ${newStartTime.toFixed(2)}s`);
                       }}
                       onDragEnd={(e) => {
-                        // Final position update
-                        if (!e.lastEvent) return; 
+                        // Final position update for drag
+                        if (!e.lastEvent) return;
+                        
                         const newLeft = Math.max(0, e.lastEvent.left);
                         const newStartTime = newLeft / timelineWidthPerSecond;
-                      
-                        // Snap to grid if needed (optional)
+                        
+                        // Snap to grid if needed
                         const gridDivisions = getGridDivisions(selectedGrid);
                         const gridSpacing = 1 / gridDivisions;
                         const snappedTime = Math.round(newStartTime / gridSpacing) * gridSpacing;
                         const snappedLeft = snappedTime * timelineWidthPerSecond;
-                      
+                        
                         // Update the visual position
                         e.target.style.left = `${snappedLeft}px`;
-                      
-                        // Update the track data
+                        
+                        // Update the track data (position only, not trim)
                         handleTrackMove(track.id, snappedLeft);
-                      
+                        
                         console.log(`Track ${track.id} moved to final position: ${snappedTime.toFixed(2)}s`);
                       }}
                       bounds={{
@@ -1023,7 +1210,7 @@ const Timeline = () => {
                   selectedTime={selectedTime}
                   selectedRuler={selectedRuler}
                   onGridChange={setSelectedGrid}
-                  onTimeChange={setSelectedTime}  
+                  onTimeChange={setSelectedTime}
                   onRulerChange={setSelectedRuler}
                 />
               </div>
