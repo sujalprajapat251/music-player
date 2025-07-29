@@ -3,7 +3,7 @@ import WaveSurfer from "wavesurfer.js";
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
-import { addTrack } from "../Redux/Slice/studio.slice";
+import { addTrack, updateTrack } from "../Redux/Slice/studio.slice";
 import { IMAGE_URL } from "../Utils/baseUrl";
 import magnetIcon from "../Images/magnet.svg";
 import settingIcon from "../Images/setting.svg";
@@ -12,11 +12,24 @@ import fxIcon from "../Images/fx.svg";
 import offce from "../Images/offce.svg";
 import GridSetting from "./GridSetting";
 import MusicOff from "./MusicOff";
+import Moveable from "react-moveable";
 
-const TimelineTrack = ({ url, onReady, color, height, trackId, startTime = 0, duration }) => {
+const TimelineTrack = ({
+  url,
+  onReady,
+  color,
+  height,
+  trackId,
+  startTime = 0,
+  duration,
+  onPositionChange,
+  isSelected,
+  onSelect
+}) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
   const isInitialized = useRef(false);
+  const trackRef = useRef(null);
 
   useEffect(() => {
     if (!waveformRef.current || !url || isInitialized.current) return;
@@ -85,7 +98,7 @@ const TimelineTrack = ({ url, onReady, color, height, trackId, startTime = 0, du
         wavesurfer.current = null;
       }
     };
-  }, [trackId]); // Only depend on trackId, not on url, height, or onReady
+  }, [trackId]);
 
   // Get timeline width and duration from parent (pass as props if needed)
   // For now, assume 1 second = 100px (as in your timelineContainerRef minWidth)
@@ -93,8 +106,16 @@ const TimelineTrack = ({ url, onReady, color, height, trackId, startTime = 0, du
   const left = startTime * timelineWidthPerSecond;
   const width = (duration || 1) * timelineWidthPerSecond;
 
+  const handleClick = (e) => {
+    e.stopPropagation();
+    onSelect(trackId);
+  };
+
   return (
     <div
+      ref={trackRef}
+      className={`timeline-track-${trackId}`}
+      onClick={handleClick}
       style={{
         background: color,
         borderRadius: 8,
@@ -102,10 +123,13 @@ const TimelineTrack = ({ url, onReady, color, height, trackId, startTime = 0, du
         height: `${height}px`,
         display: "flex",
         alignItems: "center",
-        position: "absolute", // <-- changed from relative
+        position: "absolute",
         left: `${left}px`,
         width: `${width}px`,
         overflow: "hidden",
+        cursor: "move",
+        border: isSelected ? "2px solid #AD00FF" : "1px solid transparent",
+        boxSizing: "border-box",
       }}
     >
       <div
@@ -117,6 +141,7 @@ const TimelineTrack = ({ url, onReady, color, height, trackId, startTime = 0, du
           top: 0,
           left: 0,
           zIndex: 0,
+          pointerEvents: "none", // Prevent interference with dragging
         }}
       />
     </div>
@@ -136,6 +161,7 @@ const Timeline = () => {
   const [showOffcanvas, setShowOffcanvas] = useState(false);
   const isDragging = useRef(false);
   const animationFrameId = useRef(null);
+  const [selectedTrackId, setSelectedTrackId] = useState(null);
 
   // Grid settings state
   const [selectedGrid, setSelectedGrid] = useState("1/1");
@@ -146,69 +172,71 @@ const Timeline = () => {
   const tracks = useSelector((state) => state.studio?.tracks || []);
   const trackHeight = useSelector((state) => state.studio?.trackHeight || 100);
 
+  const timelineWidthPerSecond = 100;
+
   const handleReady = useCallback(async (wavesurfer, url, trackData) => {
     if (!url) return;
-    
+
     let isCancelled = false;
-    
+
     try {
       const controller = new AbortController();
-      
+
       const cleanup = () => {
         isCancelled = true;
         controller.abort();
       };
-      
-      const response = await fetch(url, { 
-        signal: controller.signal 
+
+      const response = await fetch(url, {
+        signal: controller.signal
       });
-      
+
       if (isCancelled) return;
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch audio: ${response.statusText}`);
       }
-      
+
       const arrayBuffer = await response.arrayBuffer();
-      
+
       if (isCancelled) return;
-      
+
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-      
+
       if (isCancelled) return;
-      
+
       const player = new Player(audioBuffer).toDestination();
-      
+
       // Store player with track metadata
       setPlayers((prev) => {
         const existingIndex = prev.findIndex(p => p.trackId === trackData.id);
         if (existingIndex !== -1) {
           // Replace existing player for this track
           const newPlayers = [...prev];
-          newPlayers[existingIndex] = { 
-            player, 
-            trackId: trackData.id, 
+          newPlayers[existingIndex] = {
+            player,
+            trackId: trackData.id,
             startTime: trackData.startTime,
-            duration: trackData.duration 
+            duration: trackData.duration
           };
           return newPlayers;
         } else {
           // Add new player
-          return [...prev, { 
-            player, 
-            trackId: trackData.id, 
+          return [...prev, {
+            player,
+            trackId: trackData.id,
             startTime: trackData.startTime,
-            duration: trackData.duration 
+            duration: trackData.duration
           }];
         }
       });
-      
+
       setWaveSurfers((prev) => {
         if (prev.find(ws => ws === wavesurfer)) return prev;
         return [...prev, wavesurfer];
       });
-      
+
       const duration = wavesurfer.getDuration();
       if (duration > 0 && !isCancelled) {
         setAudioDuration((prev) => Math.max(prev, duration));
@@ -223,7 +251,7 @@ const Timeline = () => {
   const handlePlayPause = async () => {
     try {
       await start();
-  
+
       if (isPlaying) {
         players.forEach((playerObj) => {
           if (playerObj?.player && typeof playerObj.player.stop === 'function') {
@@ -237,10 +265,10 @@ const Timeline = () => {
           if (playerObj?.player && typeof playerObj.player.start === 'function') {
             const trackStartTime = playerObj.startTime || 0;
             const trackDuration = playerObj.duration || 0;
-            
+
             // Calculate if the current playhead position is within this track's range
             const trackEndTime = trackStartTime + trackDuration;
-            
+
             if (currentTime >= trackStartTime && currentTime < trackEndTime) {
               // Calculate offset within the track
               const offsetInTrack = currentTime - trackStartTime;
@@ -266,7 +294,7 @@ const Timeline = () => {
       console.error("Error during play/pause:", error);
     }
   };
-  
+
   // Function to get grid divisions based on selected grid
   const getGridDivisions = (gridSize) => {
     switch (gridSize) {
@@ -385,14 +413,14 @@ const Timeline = () => {
   // Animation loop for playback with proper cleanup
   useEffect(() => {
     let localAnimationId = null;
-  
+
     if (isPlaying) {
       const updateLoop = () => {
         if (!isPlaying) return;
-        
+
         const elapsedTime = (Date.now() - playbackStartRef.current.systemTime) / 1000;
         const newTime = playbackStartRef.current.audioTime + elapsedTime;
-  
+
         if (newTime >= audioDuration) {
           setIsPlaying(false);
           setCurrentTime(audioDuration);
@@ -407,16 +435,16 @@ const Timeline = () => {
           });
         } else {
           setCurrentTime(newTime);
-          
+
           // Check if any tracks should start playing now
           players.forEach((playerObj) => {
             if (playerObj?.player) {
               const trackStartTime = playerObj.startTime || 0;
               const trackDuration = playerObj.duration || 0;
               const trackEndTime = trackStartTime + trackDuration;
-              
+
               // If we just crossed the start time of a track, start it
-              const previousTime = playbackStartRef.current.audioTime + (elapsedTime - 1/60); // Approximate previous frame
+              const previousTime = playbackStartRef.current.audioTime + (elapsedTime - 1 / 60); // Approximate previous frame
               if (previousTime < trackStartTime && newTime >= trackStartTime && newTime < trackEndTime) {
                 try {
                   playerObj.player.start();
@@ -426,14 +454,14 @@ const Timeline = () => {
               }
             }
           });
-          
+
           localAnimationId = requestAnimationFrame(updateLoop);
         }
       };
-  
+
       localAnimationId = requestAnimationFrame(updateLoop);
     }
-  
+
     return () => {
       if (localAnimationId) {
         cancelAnimationFrame(localAnimationId);
@@ -493,20 +521,20 @@ const Timeline = () => {
   const handleDrop = useCallback(async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
       const data = e.dataTransfer.getData('text/plain');
       if (data) {
         const soundItem = JSON.parse(data);
         console.log('Dropped sound item:', soundItem);
-        
+
         // Calculate drop position
         const rect = timelineContainerRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const width = rect.width;
         const duration = audioDuration;
         const dropTime = (x / width) * duration;
-        
+
         // Get the audio file duration
         const url = `${IMAGE_URL}uploads/soundfile/${soundItem.soundfile}`;
         let audioDurationSec = null;
@@ -520,7 +548,7 @@ const Timeline = () => {
         } catch (err) {
           console.error('Error fetching or decoding audio for duration:', err);
         }
-        
+
         console.log('Drop position:', {
           x: x,
           width: width,
@@ -530,7 +558,7 @@ const Timeline = () => {
           timeInMinutes: Math.floor(dropTime / 60),
           timeInSecondsRemaining: Math.floor(dropTime % 60)
         });
-        
+
         // Create new track with the dropped sound
         const newTrack = {
           id: Date.now(),
@@ -542,10 +570,10 @@ const Timeline = () => {
           duration: audioDurationSec,
           soundData: soundItem // Store the original sound data
         };
-        
+
         // Add the new track to Redux store
         dispatch(addTrack(newTrack));
-        
+
         console.log('New track created:', {
           trackId: newTrack.id,
           trackName: newTrack.name,
@@ -559,88 +587,88 @@ const Timeline = () => {
     }
   }, [audioDuration, dispatch, trackHeight]);
 
- const movePlayhead = (e) => {
-  if (!timelineContainerRef.current) return;
+  const movePlayhead = (e) => {
+    if (!timelineContainerRef.current) return;
 
-  const svgRect = timelineContainerRef.current.getBoundingClientRect();
-  const x = e.clientX - svgRect.left;
-  const width = svgRect.width;
-  const duration = audioDuration;
-  
-  if (width <= 0 || duration <= 0) return;
-  
-  let time = (x / width) * duration;
-  time = Math.max(0, Math.min(duration, time));
-  setCurrentTime(time);
+    const svgRect = timelineContainerRef.current.getBoundingClientRect();
+    const x = e.clientX - svgRect.left;
+    const width = svgRect.width;
+    const duration = audioDuration;
 
-  waveSurfers.forEach((ws) => {
-    if (ws && typeof ws.seekTo === 'function' && typeof ws.getDuration === 'function') {
-      const wsDuration = ws.getDuration();
-      if (wsDuration > 0) {
-        ws.seekTo(time / wsDuration);
-      }
-    }
-  });
+    if (width <= 0 || duration <= 0) return;
 
-  if (isPlaying) {
-    // Stop all current players
-    players.forEach((playerObj) => {
-      if (playerObj?.player && typeof playerObj.player.stop === 'function') {
-        playerObj.player.stop();
-      }
-    });
-    
-    // Restart players from new position
-    players.forEach((playerObj) => {
-      if (playerObj?.player && typeof playerObj.player.start === 'function') {
-        const trackStartTime = playerObj.startTime || 0;
-        const trackDuration = playerObj.duration || 0;
-        const trackEndTime = trackStartTime + trackDuration;
-        
-        if (time >= trackStartTime && time < trackEndTime) {
-          const offsetInTrack = time - trackStartTime;
-          playerObj.player.start(undefined, offsetInTrack);
-        } else if (time < trackStartTime) {
-          const delayTime = trackStartTime - time;
-          setTimeout(() => {
-            if (isPlaying) {
-              playerObj.player.start();
-            }
-          }, delayTime * 1000);
+    let time = (x / width) * duration;
+    time = Math.max(0, Math.min(duration, time));
+    setCurrentTime(time);
+
+    waveSurfers.forEach((ws) => {
+      if (ws && typeof ws.seekTo === 'function' && typeof ws.getDuration === 'function') {
+        const wsDuration = ws.getDuration();
+        if (wsDuration > 0) {
+          ws.seekTo(time / wsDuration);
         }
       }
     });
-    
-    playbackStartRef.current = {
-      systemTime: Date.now(),
-      audioTime: time,
-    };
-  }
-};
+
+    if (isPlaying) {
+      // Stop all current players
+      players.forEach((playerObj) => {
+        if (playerObj?.player && typeof playerObj.player.stop === 'function') {
+          playerObj.player.stop();
+        }
+      });
+
+      // Restart players from new position
+      players.forEach((playerObj) => {
+        if (playerObj?.player && typeof playerObj.player.start === 'function') {
+          const trackStartTime = playerObj.startTime || 0;
+          const trackDuration = playerObj.duration || 0;
+          const trackEndTime = trackStartTime + trackDuration;
+
+          if (time >= trackStartTime && time < trackEndTime) {
+            const offsetInTrack = time - trackStartTime;
+            playerObj.player.start(undefined, offsetInTrack);
+          } else if (time < trackStartTime) {
+            const delayTime = trackStartTime - time;
+            setTimeout(() => {
+              if (isPlaying) {
+                playerObj.player.start();
+              }
+            }, delayTime * 1000);
+          }
+        }
+      });
+
+      playbackStartRef.current = {
+        systemTime: Date.now(),
+        audioTime: time,
+      };
+    }
+  };
 
   const renderGridLines = () => {
     const gridLines = [];
     const width = timelineContainerRef.current?.clientWidth || 600;
     const duration = audioDuration;
-    
+
     if (width <= 0 || duration <= 0) return gridLines;
-    
+
     const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
     const gridDivisions = getGridDivisions(selectedGrid);
     const gridSpacing = 1 / gridDivisions;
-    
+
     // Generate grid lines for the entire timeline area
     for (let time = 0; time <= duration; time += gridSpacing) {
       const x = xScale(time);
       const isMainBeat = Math.abs(time - Math.round(time)) < 0.01;
       const isHalfBeat = Math.abs(time - Math.round(time * 2) / 2) < 0.01;
       const isQuarterBeat = Math.abs(time - Math.round(time * 4) / 4) < 0.01;
-      
+
       // Determine line style based on musical importance
       let lineColor = "#FFFFFF1A"; // Default light grid
       let lineWidth = 1;
       let lineOpacity = 0.3;
-      
+
       if (isMainBeat) {
         lineColor = "#FFFFFF40"; // Brighter for main beats
         lineWidth = 1.5;
@@ -654,7 +682,7 @@ const Timeline = () => {
         lineWidth = 1;
         lineOpacity = 0.35;
       }
-      
+
       gridLines.push(
         <div
           key={`grid-${time}`}
@@ -677,6 +705,38 @@ const Timeline = () => {
 
   const playheadPosition = audioDuration > 0 ? (currentTime / audioDuration) * 100 : 0;
 
+  // Handle track selection
+  const handleTrackSelect = useCallback((trackId) => {
+    setSelectedTrackId(trackId);
+  }, []);
+
+  // Clear selection when clicking on timeline
+  const handleTimelineClick = useCallback((e) => {
+    if (e.target === timelineContainerRef.current || e.target.closest('.timeline-container')) {
+      setSelectedTrackId(null);
+    }
+  }, []);
+
+  const handleTrackMove = useCallback((trackId, newLeft) => {
+    const newStartTime = Math.max(0, newLeft / timelineWidthPerSecond);
+
+    // Update Redux store
+    dispatch(updateTrack({
+      id: trackId,
+      updates: { startTime: newStartTime }
+    }));
+
+    // Update players array
+    setPlayers(prev => prev.map(playerObj =>
+      playerObj.trackId === trackId
+        ? { ...playerObj, startTime: newStartTime }
+        : playerObj
+    ));
+
+    console.log(`Track ${trackId} moved to position: ${newStartTime.toFixed(2)}s`);
+  }, [dispatch, timelineWidthPerSecond]);
+
+
   return (
     <>
       <div
@@ -687,7 +747,8 @@ const Timeline = () => {
           height: "100%",
           marginRight: showOffcanvas ? "23vw" : 0,
         }}
-        className="relative overflow-hidden"
+        className="relative overflow-hidden timeline-container"
+        onClick={handleTimelineClick}
       >
         <div
           style={{ width: "100%", overflowX: "auto" }}
@@ -719,15 +780,15 @@ const Timeline = () => {
               style={{
                 overflow: "auto",
                 maxHeight: "calc(100vh - 300px)",
-                position: "relative", // <-- add this!
+                position: "relative",
                 minHeight: `${trackHeight * tracks.length}px`
               }}
             >
-              {tracks.map((track) => (
+              {tracks.map((track, index) => (
                 <div
                   key={track.id}
                   style={{
-                    position: "relative", // keep this relative for the parent of TimelineTrack
+                    position: "relative",
                     marginBottom: "1px",
                     height: `${trackHeight}px`,
                   }}
@@ -756,14 +817,96 @@ const Timeline = () => {
                       zIndex: 0,
                     }}
                   />
+
                   <TimelineTrack
                     url={track.url}
                     color={track.color}
                     height={trackHeight}
+                    trackId={track.id}
                     onReady={(ws) => handleReady(ws, track.url, track)}
                     startTime={track.startTime}
                     duration={track.duration}
+                    isSelected={selectedTrackId === track.id}
+                    onSelect={handleTrackSelect}
                   />
+
+                  {/* Moveable component for dragging */}
+                  {selectedTrackId === track.id && (
+                    <Moveable
+                      target={`.timeline-track-${track.id}`}
+                      draggable={true}
+                      resizable={true}
+                      throttleDrag={1}
+                      edgeDraggable={false}
+                      startDragRotate={0}
+                      throttleDragRotate={0}
+                      scalable={false}
+                      rotatable={false}
+                      keepRatio={false}
+                      origin={false}
+                      padding={{ left: 0, top: 0, right: 0, bottom: 0 }}
+                      renderDirections={["w", "e"]}
+                      resizeOrigin="left top"
+                      onResize={(e) => {
+                        // Update position and size during resize
+                        const newLeft = Math.max(0, e.drag.left);
+                        const newWidth = Math.max(20, e.width); // Minimum width 20px
+
+                        e.target.style.left = `${newLeft}px`;
+                        e.target.style.width = `${newWidth}px`;
+
+                        // Calculate new times
+                        const newStartTime = newLeft / timelineWidthPerSecond;
+                        const newDuration = newWidth / timelineWidthPerSecond;
+
+                        console.log(`Resizing track ${track.id} - Start: ${newStartTime.toFixed(2)}s, Duration: ${newDuration.toFixed(2)}s`);
+                      }}
+                      
+                      onDragStart={(e) => {
+                        console.log(`Started dragging track ${track.id}`);
+                      }}
+                      onDrag={(e) => {
+                        // Update position during drag
+                        const newLeft = Math.max(0, e.left);
+                        e.target.style.left = `${newLeft}px`;
+
+                        // Calculate new start time
+                        const newStartTime = newLeft / timelineWidthPerSecond;
+                        console.log(`Dragging track ${track.id} to position: ${newStartTime.toFixed(2)}s`);
+                      }}
+                      onDragEnd={(e) => {
+                        // Final position update
+                        if (!e.lastEvent) return; 
+                        const newLeft = Math.max(0, e.lastEvent.left);
+                        const newStartTime = newLeft / timelineWidthPerSecond;
+                      
+                        // Snap to grid if needed (optional)
+                        const gridDivisions = getGridDivisions(selectedGrid);
+                        const gridSpacing = 1 / gridDivisions;
+                        const snappedTime = Math.round(newStartTime / gridSpacing) * gridSpacing;
+                        const snappedLeft = snappedTime * timelineWidthPerSecond;
+                      
+                        // Update the visual position
+                        e.target.style.left = `${snappedLeft}px`;
+                      
+                        // Update the track data
+                        handleTrackMove(track.id, snappedLeft);
+                      
+                        console.log(`Track ${track.id} moved to final position: ${snappedTime.toFixed(2)}s`);
+                      }}
+                      bounds={{
+                        left: 0,
+                        right: audioDuration * timelineWidthPerSecond - (track.duration * timelineWidthPerSecond),
+                        top: 0,
+                        bottom: 0
+                      }}
+                      dragArea={true}
+                      style={{
+                        border: "2px solid #AD00FF",
+                        borderRadius: "8px",
+                      }}
+                    />
+                  )}
                 </div>
               ))}
             </div>
@@ -819,6 +962,23 @@ const Timeline = () => {
                 {renderGridLines()}
               </div>
             )}
+
+            {/* Snap guidelines (optional visual feedback) */}
+            {selectedTrackId && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100px",
+                  left: 0,
+                  width: "100%",
+                  height: "calc(100% - 100px)",
+                  pointerEvents: "none",
+                  zIndex: 50,
+                }}
+              >
+                {/* Add snap guidelines here if needed */}
+              </div>
+            )}
           </div>
         </div>
 
@@ -858,12 +1018,12 @@ const Timeline = () => {
             <img src={settingIcon} alt="Settings" />
             {showGridSetting && (
               <div className="absolute top-full right-0 z-[50]">
-                <GridSetting 
+                <GridSetting
                   selectedGrid={selectedGrid}
                   selectedTime={selectedTime}
                   selectedRuler={selectedRuler}
                   onGridChange={setSelectedGrid}
-                  onTimeChange={setSelectedTime}
+                  onTimeChange={setSelectedTime}  
                   onRulerChange={setSelectedRuler}
                 />
               </div>
