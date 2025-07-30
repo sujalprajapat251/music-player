@@ -12,9 +12,12 @@ import headphone from "../Images/headphone.svg";
 import mute from "../Images/mute.svg";
 import more from "../Images/more.svg";
 import TrackMenu from "./TrackMenu";
+import { renameTrack } from "../Redux/Slice/studio.slice";
 
 const Sidebar2 = () => {
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
+  const [editingTrackId, setEditingTrackId] = useState(null);
+const [editingName, setEditingName] = useState("");
   const tracks = useSelector((state) => state.studio.tracks);
   const trackHeight = useSelector((state) => state.studio.trackHeight);
   const dispatch = useDispatch();
@@ -46,38 +49,34 @@ const Sidebar2 = () => {
                 
                 <div className="flex flex-col border-e-[0.5px] border-[#FFFFFF1A] pe-2 flex-1">
                   <div>
-                    {track.isRenaming ? (
-                      <input
-                        type="text"
-                        className="font-bold text-white text-sm truncate bg-[#232323] border border-[#444] rounded px-1 py-0.5 outline-none"
-                        value={track.editingName ?? track.name ?? `Track ${idx + 1}`}
-                        autoFocus
-                        onChange={e => {
-                          // Dispatch an action or call a handler to update editingName in Redux or local state
-                          // For demo, you might want to lift editingName to Redux or local state
-                          if (track.onEditingNameChange) {
-                            track.onEditingNameChange(track.id, e.target.value);
+                  {editingTrackId === track.id ? (
+                    <input
+                      type="text"
+                      className="font-bold text-white text-sm truncate bg-[#232323] border border-[#AD00FF] rounded px-1 py-0.5 outline-none"
+                      value={editingName}
+                      autoFocus
+                      onChange={e => setEditingName(e.target.value)}
+                      onBlur={() => {
+                        if (editingName.trim() && editingName !== track.name) {
+                          dispatch(renameTrack({ id: track.id, newName: editingName.trim() }));
+                        }
+                        setEditingTrackId(null);
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === "Enter") {
+                          if (editingName.trim() && editingName !== track.name) {
+                            dispatch(renameTrack({ id: track.id, newName: editingName.trim() }));
                           }
-                        }}
-                        onBlur={e => {
-                          if (track.onRenameFinish) {
-                            track.onRenameFinish(track.id, e.target.value);
-                          }
-                        }}
-                        onKeyDown={e => {
-                          if (e.key === "Enter" && track.onRenameFinish) {
-                            track.onRenameFinish(track.id, e.target.value);
-                          }
-                          if (e.key === "Escape" && track.onRenameCancel) {
-                            track.onRenameCancel(track.id);
-                          }
-                        }}
-                      />
-                    ) : (
-                      <span className="font-bold text-white text-sm truncate">
-                        {track.name || `Track ${idx + 1}`}
-                      </span>
-                    )}
+                          setEditingTrackId(null);
+                        }
+                        if (e.key === "Escape") {
+                          setEditingTrackId(null);
+                        }
+                      }}
+                    />
+                  ) : (
+                    track.name || `Track ${idx + 1}`
+                  )}
                   </div>
                   <div className="flex flex-row items-center justify-around gap-x-2 mt-1">
                     <span className="w-6 h-6 rounded bg-[#444] text-xs font-bold flex items-center justify-center text-white">
@@ -93,7 +92,14 @@ const Sidebar2 = () => {
                 </div>
                 
                 <div className="flex flex-col justify-between items-end h-full w-20">
-                <TrackMenu trackId={track.id} trackName={track.name} color={track.color} />
+                  <TrackMenu
+                    trackId={track.id}
+                    color={track.color}
+                    onRename={() => {
+                      setEditingTrackId(track.id);
+                      setEditingName(track.name || "");
+                    }}
+                  />
                   <div className="flex items-center justify-center gap-x-4 w-full pb-4">
                     <img
                       src={headphone}
