@@ -28,6 +28,7 @@ import Loops from './components/Loops';
 import GridSetting from './components/GridSetting';
 import Knob from './components/Knob';
 import Pattern from './components/Pattern';
+import Effects from './components/Effects';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -63,6 +64,7 @@ function App() {
             <Route path='timeline' element={<Timeline />} />
             <Route path='knob' element={<Knob />} />
             <Route path='loop' element={<Loops />} />
+            <Route path="effects" element={<Effects />} />
           </Route>
         </Routes>
       </SnackbarProvider>
