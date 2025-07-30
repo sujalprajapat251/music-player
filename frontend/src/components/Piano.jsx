@@ -84,9 +84,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     }, []);
 
 
-    // SVG circle parameters
-    // const size = 56;
-    // const stroke = 4;
     const radius = (size - stroke) / 2;
     const center = size / 2;
     const onMouseDown = (e) => {
@@ -427,7 +424,7 @@ const Pianodemo = () => {
                         <div className="bg-[#1F1F1F]  border-b border-[#FFFFFF1A] h-full">
                             <div className="flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                                 {/* Close Button */}
-                                <div>
+                        <div>
                                     <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => setShowOffcanvas(false)} />
                                 </div>
                             </div>
@@ -588,7 +585,7 @@ const Pianodemo = () => {
                                                                 />
                                                             </div>
                                                         </div>
-                                                    </div>
+                        </div>
                                                 }
                                                 <div className="w-full h-[105px] sm:h-[150px] md600:h-[140px] md:h-[290px] lg:h-[250px] overflow-x-auto pt-1 md600:pt-2 lg:pt-3 ">
                                                     <div className="w-full h-full flex items-center justify-center">
@@ -612,13 +609,13 @@ const Pianodemo = () => {
                                                             />
                                                         )}
                                                         {activePianoSection === 2 && (
-                                                            <Piano
+                        <Piano
                                                                 noteRange={{ first: MidiNumbers.fromNote('C5'), last: MidiNumbers.fromNote('C8') }}
-                                                                playNote={playNote}
-                                                                stopNote={stopNote}
+                            playNote={playNote}
+                            stopNote={stopNote}
                                                                 //  width={800}
-                                                                keyboardShortcuts={keyboardShortcuts}
-                                                            />
+                            keyboardShortcuts={keyboardShortcuts}
+                        />
                                                         )}
                                                     </div>
                                                 </div>
