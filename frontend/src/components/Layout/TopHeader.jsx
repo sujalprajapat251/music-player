@@ -35,16 +35,17 @@ import { ReactComponent as Songsections } from "../../Images/sondsections.svg";
 import { ReactComponent as Language } from "../../Images/language.svg";
 import { ReactComponent as Theme } from "../../Images/themes.svg";
 import { useTheme } from '../../Utils/ThemeContext';
-import {ReactComponent as Close} from '../../Images/closeicon.svg';
+import { ReactComponent as Close } from '../../Images/closeicon.svg';
 import midi from '../../Images/midi.svg';
+import { Link } from 'react-router-dom';
 
 const TopHeader = () => {
 
     const [isActiveMenu, setIsActiveMenu] = useState("");
     const [isLowLatency, setIsLowLatency] = useState(false);
-    const [isLowLatency1, setIsLowLatency1] = useState  (false);
+    const [isLowLatency1, setIsLowLatency1] = useState(false);
     const [isLowLatency2, setIsLowLatency2] = useState(false);
-    const [lowlatencyomodal, setLowLatencyModel] = useState(false); 
+    const [lowlatencyomodal, setLowLatencyModel] = useState(false);
     const [midikeyboardmodal, setMidiKeyboardModel] = useState(false);
 
     // Add state for selected sound quality
@@ -318,15 +319,17 @@ const TopHeader = () => {
 
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 pt-2 pb-2 md600:px-4 lg:px-6 md600:pt-3 lg:pt-4 md600:pb-2 flex gap-2 md600:gap-3 border-[#FFFFFF1A]  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
-                                            <Gotoprofile className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Go to profile</span>
-                                        </p>
+                                        <Link to='/profile'>
+                                            <p className={`px-3 pt-2 pb-2 md600:px-4 lg:px-6 md600:pt-3 lg:pt-4 md600:pb-2 flex gap-2 md600:gap-3 border-[#FFFFFF1A]  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
+                                                <Gotoprofile className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Go to profile</span>
+                                            </p>
+                                        </Link>
                                     )}
                                 </Menu.Item>
 
                             </div>
                         </Menu.Items>
-                    </Menu >
+                    </Menu>
 
                     <Menu as="div" className="relative inline-block text-left">
                         <div>
