@@ -46,6 +46,13 @@ const studioSlice = createSlice({
         track.startTime = newStartTime;
       }
     },
+    renameTrack: (state, action) => {
+      const { id, newName } = action.payload;
+      const track = state.tracks.find(track => track.id === id);
+      if (track) {
+        track.name = newName;
+      }
+    },
   },
 });
 
@@ -56,7 +63,8 @@ export const {
   removeTrack, 
   setTrackHeight,
   updateTimelineSettings,
-  updateTrackStartTime
+  updateTrackStartTime,
+  renameTrack
 } = studioSlice.actions;
 
 export default studioSlice.reducer;

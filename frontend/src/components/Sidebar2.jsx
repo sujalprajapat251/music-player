@@ -46,9 +46,38 @@ const Sidebar2 = () => {
                 
                 <div className="flex flex-col border-e-[0.5px] border-[#FFFFFF1A] pe-2 flex-1">
                   <div>
-                    <span className="font-bold text-white text-sm truncate">
-                      {track.name || `Track ${idx + 1}`}
-                    </span>
+                    {track.isRenaming ? (
+                      <input
+                        type="text"
+                        className="font-bold text-white text-sm truncate bg-[#232323] border border-[#444] rounded px-1 py-0.5 outline-none"
+                        value={track.editingName ?? track.name ?? `Track ${idx + 1}`}
+                        autoFocus
+                        onChange={e => {
+                          // Dispatch an action or call a handler to update editingName in Redux or local state
+                          // For demo, you might want to lift editingName to Redux or local state
+                          if (track.onEditingNameChange) {
+                            track.onEditingNameChange(track.id, e.target.value);
+                          }
+                        }}
+                        onBlur={e => {
+                          if (track.onRenameFinish) {
+                            track.onRenameFinish(track.id, e.target.value);
+                          }
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === "Enter" && track.onRenameFinish) {
+                            track.onRenameFinish(track.id, e.target.value);
+                          }
+                          if (e.key === "Escape" && track.onRenameCancel) {
+                            track.onRenameCancel(track.id);
+                          }
+                        }}
+                      />
+                    ) : (
+                      <span className="font-bold text-white text-sm truncate">
+                        {track.name || `Track ${idx + 1}`}
+                      </span>
+                    )}
                   </div>
                   <div className="flex flex-row items-center justify-around gap-x-2 mt-1">
                     <span className="w-6 h-6 rounded bg-[#444] text-xs font-bold flex items-center justify-center text-white">
@@ -64,7 +93,7 @@ const Sidebar2 = () => {
                 </div>
                 
                 <div className="flex flex-col justify-between items-end h-full w-20">
-                  <TrackMenu trackId={track.id} color={track.color} />
+                <TrackMenu trackId={track.id} trackName={track.name} color={track.color} />
                   <div className="flex items-center justify-center gap-x-4 w-full pb-4">
                     <img
                       src={headphone}

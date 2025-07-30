@@ -12,7 +12,7 @@ import fxIcon from "../Images/fx.svg";
 import offce from "../Images/offce.svg";
 import GridSetting from "./GridSetting";
 import MusicOff from "./MusicOff";
-import Moveable from "react-moveable";
+import { Rnd } from "react-rnd";
 
 const TimelineTrack = ({
   url,
@@ -26,12 +26,16 @@ const TimelineTrack = ({
   trimEnd = null,
   originalDuration,
   isSelected,
-  onSelect
+  onSelect,
+  onMove,
+  onResize,
+  timelineWidthPerSecond,
+  selectedGrid,
+  getGridDivisions
 }) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
   const isInitialized = useRef(false);
-  const trackRef = useRef(null);
 
   useEffect(() => {
     if (!waveformRef.current || !url || isInitialized.current) return;
@@ -124,49 +128,127 @@ const TimelineTrack = ({
     }
   }, [trimStart, trimEnd, originalDuration]);
 
-  // Get timeline width and duration from parent
-  const timelineWidthPerSecond = 100;
-  const left = startTime * timelineWidthPerSecond;
-  const width = (duration || 1) * timelineWidthPerSecond;
-
   const handleClick = (e) => {
     e.stopPropagation();
     onSelect(trackId);
   };
 
+  // Calculate grid snapping
+  const snapToGrid = (value) => {
+    const gridDivisions = getGridDivisions(selectedGrid);
+    const gridSpacing = 1 / gridDivisions;
+    const timeValue = value / timelineWidthPerSecond;
+    const snappedTime = Math.round(timeValue / gridSpacing) * gridSpacing;
+    return snappedTime * timelineWidthPerSecond;
+  };
+
+  const handleDragStop = (e, data) => {
+    const snappedX = snapToGrid(data.x);
+    const newStartTime = Math.max(0, snappedX / timelineWidthPerSecond);
+    onMove(trackId, snappedX);
+    console.log(`Track ${trackId} moved to position: ${newStartTime.toFixed(2)}s`);
+  };
+
+  const handleResizeStop = (e, direction, ref, delta, position) => {
+    const newWidth = parseInt(ref.style.width);
+    const newLeft = position.x;
+    
+    // Snap to grid
+    const snappedLeft = snapToGrid(newLeft);
+    const snappedWidth = snapToGrid(newWidth);
+    
+    // Determine if left handle was used
+    const isLeftHandle = direction === 'left' || direction === 'topLeft' || direction === 'bottomLeft';
+    
+    onResize(trackId, snappedLeft, snappedWidth, isLeftHandle);
+    
+    const newStartTime = snappedLeft / timelineWidthPerSecond;
+    const newDuration = snappedWidth / timelineWidthPerSecond;
+    
+    console.log(`Track ${trackId} resized - Left Handle: ${isLeftHandle}, Start: ${newStartTime.toFixed(2)}s, Duration: ${newDuration.toFixed(2)}s`);
+  };
+
+  // Get timeline position and dimensions
+  const left = startTime * timelineWidthPerSecond;
+  const width = (duration || 1) * timelineWidthPerSecond;
+
   return (
-    <div
-      ref={trackRef}
+    <Rnd
+      size={{ width: width, height: height }}
+      position={{ x: left, y: 0 }}
+      onDragStop={handleDragStop}
+      onResizeStop={handleResizeStop}
+      dragAxis="x"
+      resizeHandleStyles={{
+        left: {
+          width: '10px',
+          height: '100%',
+          left: '-5px',
+          top: '0',
+          cursor: 'ew-resize',
+          background: isSelected ? '#AD00FF' : 'transparent',
+          borderRadius: '2px 0 0 2px',
+        },
+        right: {
+          width: '10px',
+          height: '100%',
+          right: '-5px',
+          top: '0',
+          cursor: 'ew-resize',
+          background: isSelected ? '#AD00FF' : 'transparent',
+          borderRadius: '0 2px 2px 0',
+        }
+      }}
+      enableResizing={{
+        top: false,
+        right: true,
+        bottom: false,
+        left: true,
+        topRight: false,
+        bottomRight: false,
+        bottomLeft: false,
+        topLeft: false,
+      }}
+      bounds="parent"
+      dragHandleClassName="track-drag-handle"
+      disableDragging={!isSelected}
       className={`timeline-track-${trackId}`}
-      onClick={handleClick}
       style={{
         background: color,
         borderRadius: 8,
         marginBottom: 1,
-        height: `${height}px`,
         display: "flex",
         alignItems: "center",
-        position: "absolute",
-        left: `${left}px`,
-        width: `${width}px`,
-        cursor: "move",
+        cursor: isSelected ? "move" : "pointer",
         border: isSelected ? "2px solid #AD00FF" : "1px solid transparent",
         boxSizing: "border-box",
+        zIndex: isSelected ? 10 : 1,
       }}
     >
       <div
-        ref={waveformRef}
+        className="track-drag-handle"
+        onClick={handleClick}
         style={{
           width: "100%",
           height: "100%",
-          position: "absolute",
-          top: 0,
-          left: 0,
-          zIndex: 0,
-          pointerEvents: "none",
+          position: "relative",
+          cursor: isSelected ? "move" : "pointer",
         }}
-      />
-    </div>
+      >
+        <div
+          ref={waveformRef}
+          style={{
+            width: "100%",
+            height: "100%",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            zIndex: 0,
+            pointerEvents: "none",
+          }}
+        />
+      </div>
+    </Rnd>
   );
 };
 
@@ -895,12 +977,16 @@ const Timeline = () => {
         onClick={handleTimelineClick}
       >
         <div
-          style={{ width: "100%", overflowX: "auto" }}
+          style={{ width: "100%", overflowX: "hidden" }}
           className="hide-scrollbar"
         >
           <div
             ref={timelineContainerRef}
-            style={{ minWidth: `${Math.max(audioDuration, 12) * 100}px`, position: "relative", height: "100%" }}
+            style={{ 
+              minWidth: `${Math.max(audioDuration, 12) * 100}px`, 
+              position: "relative", 
+              height: "100%"
+            }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -919,7 +1005,7 @@ const Timeline = () => {
               />
             </div>
 
-            {/* Tracks */}
+            {/* Tracks Container with bounds for RND */}
             <div
               style={{
                 overflow: "auto",
@@ -975,125 +1061,12 @@ const Timeline = () => {
                     originalDuration={track.originalDuration}
                     isSelected={selectedTrackId === track.id}
                     onSelect={handleTrackSelect}
+                    onMove={handleTrackMove}
+                    onResize={handleTrackResize}
+                    timelineWidthPerSecond={timelineWidthPerSecond}
+                    selectedGrid={selectedGrid}
+                    getGridDivisions={getGridDivisions}
                   />
-
-                  {/* Moveable component for dragging and resizing */}
-                  {selectedTrackId === track.id && (
-                    <Moveable
-                      target={`.timeline-track-${track.id}`}
-                      draggable={true}
-                      resizable={true}
-                      throttleDrag={1}
-                      throttleResize={1}
-                      edgeDraggable={false}
-                      startDragRotate={0}
-                      throttleDragRotate={0}
-                      scalable={false}
-                      rotatable={false}
-                      keepRatio={false}
-                      origin={false}
-                      padding={{ left: 0, top: 0, right: 0, bottom: 0 }}
-                      renderDirections={["w", "e"]}
-                      resizeOrigin="left top"
-                      onResizeStart={(e) => {
-                        console.log(`Started resizing track ${track.id}`);
-                      }}
-                      onResize={(e) => {
-                        // Determine which handle is being dragged
-                        const isLeftHandle = e.direction[0] < 0;
-                        
-                        // Calculate new dimensions
-                        const newLeft = Math.max(0, e.drag.left);
-                        const newWidth = Math.max(20, e.width);
-                        
-                        // Apply visual changes immediately
-                        e.target.style.left = `${newLeft}px`;
-                        e.target.style.width = `${newWidth}px`;
-                        
-                        // Calculate times for logging
-                        const newStartTime = newLeft / timelineWidthPerSecond;
-                        const newDuration = newWidth / timelineWidthPerSecond;
-                        
-                        console.log(`Resizing track ${track.id} - Left Handle: ${isLeftHandle}, Start: ${newStartTime.toFixed(2)}s, Duration: ${newDuration.toFixed(2)}s`);
-                      }}
-                      onResizeEnd={(e) => {
-                        // Determine which handle was dragged
-                        const isLeftHandle = e.lastEvent && e.lastEvent.direction[0] < 0;
-                        
-                        if (!e.lastEvent) return;
-                        
-                        // Get final dimensions
-                        const newLeft = Math.max(0, e.lastEvent.drag.left);
-                        const newWidth = Math.max(20, e.lastEvent.width);
-                        
-                        // Snap to grid if needed
-                        const gridDivisions = getGridDivisions(selectedGrid);
-                        const gridSpacing = 1 / gridDivisions;
-                        
-                        const newStartTime = newLeft / timelineWidthPerSecond;
-                        const newDuration = newWidth / timelineWidthPerSecond;
-                        
-                        const snappedStartTime = Math.round(newStartTime / gridSpacing) * gridSpacing;
-                        const snappedDuration = Math.max(gridSpacing, Math.round(newDuration / gridSpacing) * gridSpacing);
-                        
-                        const snappedLeft = snappedStartTime * timelineWidthPerSecond;
-                        const snappedWidth = snappedDuration * timelineWidthPerSecond;
-                        
-                        // Apply final snapped position
-                        e.target.style.left = `${snappedLeft}px`;
-                        e.target.style.width = `${snappedWidth}px`;
-                        
-                        // Update track data with trim information
-                        handleTrackResize(track.id, snappedLeft, snappedWidth, isLeftHandle);
-                        
-                        console.log(`Track ${track.id} resize completed - Left Handle: ${isLeftHandle}, Final Start: ${snappedStartTime.toFixed(2)}s, Final Duration: ${snappedDuration.toFixed(2)}s`);
-                      }}
-                      onDragStart={(e) => {
-                        console.log(`Started dragging track ${track.id}`);
-                      }}
-                      onDrag={(e) => {
-                        // Update position during drag (only horizontal movement)
-                        const newLeft = Math.max(0, e.left);
-                        e.target.style.left = `${newLeft}px`;
-                        
-                        // Calculate new start time for logging
-                        const newStartTime = newLeft / timelineWidthPerSecond;
-                        console.log(`Dragging track ${track.id} to position: ${newStartTime.toFixed(2)}s`);
-                      }}
-                      onDragEnd={(e) => {
-                        // Final position update for drag
-                        if (!e.lastEvent) return;
-                        
-                        const newLeft = Math.max(0, e.lastEvent.left);
-                        const newStartTime = newLeft / timelineWidthPerSecond;
-                        
-                        // Snap to grid if needed
-                        const gridDivisions = getGridDivisions(selectedGrid);
-                        const gridSpacing = 1 / gridDivisions;
-                        const snappedTime = Math.round(newStartTime / gridSpacing) * gridSpacing;
-                        const snappedLeft = snappedTime * timelineWidthPerSecond;
-                        
-                        // Update the visual position
-                        e.target.style.left = `${snappedLeft}px`;
-                        
-                        // Update the track data (position only, not trim)
-                        handleTrackMove(track.id, snappedLeft);
-                        
-                        console.log(`Track ${track.id} moved to final position: ${snappedTime.toFixed(2)}s`);
-                      }}
-                      bounds={{
-                        left: 0,
-                        right: audioDuration * timelineWidthPerSecond - (track.duration * timelineWidthPerSecond),
-                        top: 0,
-                        bottom: 0
-                      }}
-                      dragArea={true}
-                      style={{
-                        border: "2px solid #AD00FF",
-                        borderRadius: "8px",
-                      }}
-                    />
-                  )}
                 </div>
               ))}
             </div>

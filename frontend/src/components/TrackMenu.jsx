@@ -8,14 +8,14 @@ import TrashIcon from '../Images/trash.svg'
 import FreezeIcon from '../Images/freeze.svg'
 import waveIcon from '../Images/wave.svg'
 import { useDispatch } from "react-redux";
-import { updateTrack } from "../Redux/Slice/studio.slice";
+import { updateTrack , renameTrack } from "../Redux/Slice/studio.slice";
 const MENU_COLORS = [
   "#F05959", "#49B1A5", "#C579C8", "#5572F9",
   "#25A6CA", "#C059F0", "#4CAA47", "#F0F059",
   "#F09859" , "#8C8484"
 ];
 
-const TrackMenu = ({ trackId, color }) => {
+const TrackMenu = ({ trackId, trackName, color }) => {
   const [open, setOpen] = useState(false);
   const [submenu, setSubmenu] = useState(null);
   const menuRef = useRef();
@@ -36,6 +36,13 @@ const TrackMenu = ({ trackId, color }) => {
   const handleMenuClick = (e) => {
     e.stopPropagation(); // Prevent event bubbling
     setOpen((v) => !v);
+  };
+
+  const handleRename = () => {
+    const newName = window.prompt("Enter new track name:", trackName);
+    if (newName && newName.trim() !== "" && newName !== trackName) {
+      dispatch(renameTrack({ id: trackId, newName }));
+    }
   };
 
   return (
@@ -65,10 +72,14 @@ const TrackMenu = ({ trackId, color }) => {
           }}
         >
           <div style={{ fontSize: 13, color: "#aaa", marginBottom: 8 }}>Menu</div>
-          <MenuItem icon={<img src={PencilIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)" }} />} label="Rename" />
-          <MenuItem icon={<img src={DuplicateIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)" }} />} label="Duplicate track" />
-          <MenuItem icon={<img src={TrashIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)" }} />} label="Delete track" />
-          <MenuItem icon={<img src={FreezeIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)" }} />} label="Freeze track (Free up CPU)" />
+            <MenuItem
+              icon={<img src={PencilIcon} alt="Rename" style={{ width: 16, height: 16, filter: "invert(1)" }} />}
+              label="Rename"
+              onClick={handleRename}
+            />
+          <MenuItem icon={<img src={DuplicateIcon} alt="Duplicate track" style={{ width: 16, height: 16, filter: "invert(1)" }} />} label="Duplicate track" />
+          <MenuItem icon={<img src={TrashIcon} alt="Delete track" style={{ width: 16, height: 16, filter: "invert(1)" }} />} label="Delete track" />
+          <MenuItem icon={<img src={FreezeIcon} alt="Freeze track" style={{ width: 16, height: 16, filter: "invert(1)" }} />} label="Freeze track (Free up CPU)" />
           <div style={{ borderTop: "1px solid #333", margin: "8px 0" }} />
           <MenuItem icon={<img src={importIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)" }} />} label="Import" />
           <MenuItem
