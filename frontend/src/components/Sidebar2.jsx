@@ -13,6 +13,7 @@ import mute from "../Images/mute.svg";
 import more from "../Images/more.svg";
 import TrackMenu from "./TrackMenu";
 import { renameTrack } from "../Redux/Slice/studio.slice";
+import FreezeIcon from "../Images/freeze.svg";
 
 const Sidebar2 = () => {
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
@@ -35,55 +36,69 @@ const [editingName, setEditingName] = useState("");
             {(tracks || []).map((track, idx) => (
               <div
                 key={track.id}
-                className="flex items-center justify-between px-3 bg-[#232323] border-b border-[#1414141A] dark:border-[#FFFFFF1A]"
+                className={`flex items-center justify-between px-3 border-b border-[#1414141A] dark:border-[#FFFFFF1A] bg-[#232323]`}
                 style={{ 
                   height: `${trackHeight + 1}px`, // 8px for padding
                   minHeight: `${trackHeight + 1}px`
                 }}
               >
                 <div className="flex items-center w-16 justify-center">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-black">
-                    <img src={mic} alt="mic" />
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    track.frozen ? 'bg-[#2a2a2a]' : 'bg-black'
+                  }`}>
+                    <img src={mic} alt="mic" className={track.frozen ? 'opacity-60' : ''} />
                   </div>
                 </div>
                 
                 <div className="flex flex-col border-e-[0.5px] border-[#FFFFFF1A] pe-2 flex-1">
-                  <div>
-                  {editingTrackId === track.id ? (
-                    <input
-                      type="text"
-                      className="font-bold text-white text-sm truncate bg-[#232323] border border-[#AD00FF] rounded px-1 py-0.5 outline-none"
-                      value={editingName}
-                      autoFocus
-                      onChange={e => setEditingName(e.target.value)}
-                      onBlur={() => {
-                        if (editingName.trim() && editingName !== track.name) {
-                          dispatch(renameTrack({ id: track.id, newName: editingName.trim() }));
-                        }
-                        setEditingTrackId(null);
-                      }}
-                      onKeyDown={e => {
-                        if (e.key === "Enter") {
+                  <div className="flex items-center gap-2">
+                    {editingTrackId === track.id ? (
+                      <input
+                        type="text"
+                        className="font-bold text-white text-sm truncate bg-[#232323] border border-[#AD00FF] rounded px-1 py-0.5 outline-none"
+                        value={editingName}
+                        autoFocus
+                        onChange={e => setEditingName(e.target.value)}
+                        onBlur={() => {
                           if (editingName.trim() && editingName !== track.name) {
                             dispatch(renameTrack({ id: track.id, newName: editingName.trim() }));
                           }
                           setEditingTrackId(null);
-                        }
-                        if (e.key === "Escape") {
-                          setEditingTrackId(null);
-                        }
-                      }}
-                    />
-                  ) : (
-                    track.name || `Track ${idx + 1}`
-                  )}
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === "Enter") {
+                            if (editingName.trim() && editingName !== track.name) {
+                              dispatch(renameTrack({ id: track.id, newName: editingName.trim() }));
+                            }
+                            setEditingTrackId(null);
+                          }
+                          if (e.key === "Escape") {
+                            setEditingTrackId(null);
+                          }
+                        }}
+                      />
+                    ) : (
+                      <span className={`font-bold text-sm truncate ${
+                        track.frozen ? 'text-[#4CAF50]' : 'text-white'
+                      }`}>
+                        {track.name || `Track ${idx + 1}`}
+                      </span>
+                    )}
+                    {track.frozen && (
+                      <img 
+                        src={FreezeIcon} 
+                        alt="Frozen" 
+                        className="w-4 h-4 opacity-80" 
+                        style={{ filter: "invert(1) brightness(1.5)" }}
+                      />
+                    )}
                   </div>
                   <div className="flex flex-row items-center justify-around gap-x-2 mt-1">
-                    <span className="w-6 h-6 rounded bg-[#444] text-xs font-bold flex items-center justify-center text-white">
+                    <span className={`w-6 h-6 rounded text-xs font-bold flex items-center justify-center bg-[#444] text-white`}>
                       R
                     </span>
                     <span className="w-8 h-8 rounded-full bg-transparent">
-                      <img src={tk} alt="" className="w-full h-full" />
+                      <img src={tk} alt="" className={`w-full h-full opacity-60`} />
                     </span>
                    <span>
                    <VolumeKnob />
@@ -104,9 +119,9 @@ const [editingName, setEditingName] = useState("");
                     <img
                       src={headphone}
                       alt="Headphone"
-                      className="w-6 h-6 opacity-60"
+                      className={`w-6 h-6 opacity-60`}
                     />
-                    <img src={mute} alt="Mute" className="w-6 h-6 opacity-60" />
+                    <img src={mute} alt="Mute" className={`w-6 h-6 opacity-60`} />
                   </div>
                 </div>
               </div>

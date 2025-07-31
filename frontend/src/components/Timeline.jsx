@@ -177,7 +177,8 @@ const TimelineTrack = ({
   duration, 
   trimStart = 0, 
   trimEnd = null, 
-  onTrimChange 
+  onTrimChange,
+  frozen = false
 }) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
@@ -201,8 +202,8 @@ const TimelineTrack = ({
 
         wavesurfer.current = WaveSurfer.create({
           container: waveformRef.current,
-          waveColor: "#ffffff",
-          progressColor: "#ffffff",
+          waveColor: frozen ? "#666666" : "#ffffff", // Dimmed color for frozen tracks
+          progressColor: frozen ? "#999999" : "#ffffff", // Dimmed progress for frozen tracks
           height: height - 8,
           barWidth: 2,
           responsive: true,
@@ -251,9 +252,12 @@ const TimelineTrack = ({
         wavesurfer.current = null;
       }
     };
-  }, [trackId]);
+  }, [trackId, frozen]);
 
   const handleTrimResize = useCallback((type, newPosition) => {
+    // Disable trimming for frozen tracks
+    if (frozen) return;
+    
     if (!onTrimChange || !duration) return;
     
     const currentTrimStart = trimStart || 0;
@@ -266,11 +270,13 @@ const TimelineTrack = ({
       const newTrimEnd = Math.max(currentTrimStart + 0.1, Math.min(newPosition, duration));
       onTrimChange({ trimStart: currentTrimStart, trimEnd: newTrimEnd });
     }
-  }, [trimStart, trimEnd, duration, onTrimChange]);
+  }, [trimStart, trimEnd, duration, onTrimChange, frozen]);
 
   const handleDragStart = useCallback((type) => {
+    // Disable dragging for frozen tracks
+    if (frozen) return;
     setIsDraggingTrim(type);
-  }, []);
+  }, [frozen]);
 
   const handleDragEnd = useCallback(() => {
     setIsDraggingTrim(null);
@@ -289,7 +295,7 @@ const TimelineTrack = ({
       ref={trackRef}
       data-track-container
       style={{
-        background: color,
+        background: frozen ? `${color}80` : color, // Add transparency for frozen tracks
         borderRadius: 8,
         marginBottom: 1,
         height: `${height}px`,
@@ -298,117 +304,63 @@ const TimelineTrack = ({
         position: "absolute",
         left: `${left}px`,
         width: `${width}px`,
-        overflow: "hidden",
-        border: isDraggingTrim ? "2px solid #AD00FF" : "1px solid rgba(255,255,255,0.1)",
-        boxShadow: isDraggingTrim ? "0 4px 20px rgba(173,0,255,0.3)" : "none",
-        transition: isDraggingTrim ? "none" : "all 0.2s ease",
+        opacity: frozen ? 0.7 : 1, // Reduce opacity for frozen tracks
+        pointerEvents: frozen ? "none" : "auto", // Disable interactions for frozen tracks
       }}
     >
-      {/* Waveform */}
+      {/* Frozen overlay indicator */}
+      {frozen && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.3)",
+            borderRadius: 8,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 10,
+          }}
+        >
+        </div>
+      )}
+      
       <div
         ref={waveformRef}
         style={{
           width: "100%",
           height: "100%",
-          position: "absolute",
-          top: 0,
-          left: 0,
-          zIndex: 1,
+          position: "relative",
         }}
-      />
-
-      {/* Left trim overlay (dimmed area) */}
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 0,
-          width: `${trimStartPercent}%`,
-          height: "100%",
-          background: "rgba(0, 0, 0, 0.7)",
-          zIndex: 5,
-          pointerEvents: "none",
-          borderRight: trimStartPercent > 0 ? "2px solid rgba(173,0,255,0.5)" : "none",
-        }}
-      />
-
-      {/* Right trim overlay (dimmed area) */}
-      <div
-        style={{
-          position: "absolute",
-          right: 0,
-          top: 0,
-          width: `${100 - trimEndPercent}%`,
-          height: "100%",
-          background: "rgba(0, 0, 0, 0.7)",
-          zIndex: 5,
-          pointerEvents: "none",
-          borderLeft: trimEndPercent < 100 ? "2px solid rgba(173,0,255,0.5)" : "none",
-        }}
-      />
-
-      {/* Trim Handles using ResizableTrimHandle */}
-      <ResizableTrimHandle
-        type="start"
-        position={trimStart}
-        onResize={handleTrimResize}
-        isDragging={isDraggingTrim === 'start'}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        trackDuration={duration}
-        trackWidth={width}
       />
       
-      <ResizableTrimHandle
-        type="end"
-        position={actualTrimEnd}
-        onResize={handleTrimResize}
-        isDragging={isDraggingTrim === 'end'}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        trackDuration={duration}
-        trackWidth={width}
-      />
-
-      {/* Track name/info overlay */}
-      <div
-        style={{
-          position: "absolute",
-          left: `${Math.max(trimStartPercent + 2, 5)}%`,
-          top: "50%",
-          transform: "translateY(-50%)",
-          color: "white",
-          fontSize: "12px",
-          fontWeight: "500",
-          zIndex: 10,
-          pointerEvents: "none",
-          textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
-          background: "rgba(0,0,0,0.3)",
-          padding: "2px 6px",
-          borderRadius: "3px",
-        }}
-      >
-        Track {trackId}
-      </div>
-
-      {/* Trim indicators */}
-      {(trimStart > 0 || actualTrimEnd < duration) && (
-        <div
-          style={{
-            position: "absolute",
-            right: "8px",
-            top: "8px",
-            background: "rgba(173,0,255,0.8)",
-            color: "white",
-            fontSize: "10px",
-            padding: "2px 4px",
-            borderRadius: "2px",
-            zIndex: 10,
-            pointerEvents: "none",
-          }}
-        >
-          ✂️ Trimmed
-        </div>
+      {/* Trim handles - only show for non-frozen tracks */}
+      {!frozen && (
+        <>
+          <ResizableTrimHandle
+            type="start"
+            position={trimStart}
+            onResize={handleTrimResize}
+            isDragging={isDraggingTrim === "start"}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            trackDuration={duration}
+            trackWidth={width}
+          />
+          <ResizableTrimHandle
+            type="end"
+            position={actualTrimEnd}
+            onResize={handleTrimResize}
+            isDragging={isDraggingTrim === "end"}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            trackDuration={duration}
+            trackWidth={width}
+          />
+        </>
       )}
     </div>
   );
@@ -1062,6 +1014,7 @@ const Timeline = () => {
                     trimStart={track.trimStart || 0}
                     trimEnd={track.trimEnd || track.duration}
                     onTrimChange={(trimData) => handleTrimChange(track.id, trimData)}
+                    frozen={track.frozen}
                   />
                 </div>
               ))}

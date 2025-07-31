@@ -6,7 +6,10 @@ const initialState = {
   timelineSettings: {
     pixelsPerSecond: 50,
     maxDuration: 10,
-  }
+  },
+  // Track effects and plugins state
+  trackEffects: {}, // Store effects for each track
+  frozenTrackData: {}, // Store processed audio data for frozen tracks
 };
 
 const studioSlice = createSlice({
@@ -17,7 +20,9 @@ const studioSlice = createSlice({
       state.tracks = action.payload;
     },
     addTrack: (state, action) => {
-      state.tracks.push(action.payload);
+      // Ensure new tracks have frozen property
+      const track = { ...action.payload, frozen: false };
+      state.tracks.push(track);
     },
     updateTrack: (state, action) => {
       const { id, updates } = action.payload;
@@ -27,7 +32,11 @@ const studioSlice = createSlice({
       }
     },
     removeTrack: (state, action) => {
-      state.tracks = state.tracks.filter(track => track.id !== action.payload);
+      const trackId = action.payload;
+      state.tracks = state.tracks.filter(track => track.id !== trackId);
+      // Clean up related data
+      delete state.trackEffects[trackId];
+      delete state.frozenTrackData[trackId];
     },
     setTrackHeight: (state, action) => {
       state.trackHeight = action.payload;
@@ -53,6 +62,68 @@ const studioSlice = createSlice({
         track.name = newName;
       }
     },
+    freezeTrack: (state, action) => {
+      const trackId = action.payload;
+      const track = state.tracks.find(track => track.id === trackId);
+      if (track) {
+        track.frozen = !track.frozen; // Toggle freeze state
+        
+        // If freezing, store current effects state
+        if (track.frozen) {
+          state.frozenTrackData[trackId] = {
+            effects: state.trackEffects[trackId] || {},
+            frozenAt: Date.now(),
+            originalTrackData: { ...track }
+          };
+        } else {
+          // If unfreezing, restore effects state
+          const frozenData = state.frozenTrackData[trackId];
+          if (frozenData) {
+            state.trackEffects[trackId] = frozenData.effects;
+          }
+        }
+      }
+    },
+    duplicateTrack: (state, action) => {
+      const trackId = action.payload;
+      const originalTrack = state.tracks.find(track => track.id === trackId);
+      if (originalTrack) {
+        // Create a new track with a unique ID and "Copy" suffix
+        const duplicatedTrack = {
+          ...originalTrack,
+          id: Date.now().toString(), // Generate unique ID
+          name: `${originalTrack.name}`,
+          startTime: originalTrack.startTime || 0,
+          frozen: false // Reset frozen state for the copy
+        };
+        
+        // Add the duplicated track to the tracks array
+        state.tracks.push(duplicatedTrack);
+        
+        // Copy effects if they exist
+        if (state.trackEffects[trackId]) {
+          state.trackEffects[duplicatedTrack.id] = { ...state.trackEffects[trackId] };
+        }
+      }
+    },
+    updateTrackAudio: (state, action) => {
+      const { trackId, audioData } = action.payload;
+      const track = state.tracks.find(track => track.id === trackId);
+      if (track) {
+        // Update track with audio data
+        track.url = audioData.url;
+        track.name = audioData.name || track.name;
+        track.duration = audioData.duration;
+        track.trimStart = audioData.trimStart || 0;
+        track.trimEnd = audioData.duration || audioData.trimEnd;
+        track.soundData = audioData.soundData || null;
+      }
+    },
+    exportTrack: (state, action) => {
+      // This is just a placeholder action for tracking export events
+      // The actual export logic will be handled in the component
+      return state;
+    }
   },
 });
 
@@ -64,7 +135,11 @@ export const {
   setTrackHeight,
   updateTimelineSettings,
   updateTrackStartTime,
-  renameTrack
+  renameTrack,
+  freezeTrack,
+  duplicateTrack,
+  updateTrackAudio,
+  exportTrack
 } = studioSlice.actions;
 
 export default studioSlice.reducer;
