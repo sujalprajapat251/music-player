@@ -1,20 +1,13 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import { IoSearch } from 'react-icons/io5'
-// import profile from '../Images/Profile.svg'
-// import { ReactComponent as Play } from '../Images/play.svg';
-// import { ReactComponent as Pause } from '../Images/pause.svg';
-// import { ReactComponent as Scale } from '../Images/scale.svg';
-import playblack from '../Images/playblack.svg';
-import pauseblack from '../Images/pauseblack.svg';
-// import { FaPlus, FaRegHeart } from "react-icons/fa";
-// import { FaAngleLeft } from "react-icons/fa6";
-// import { FaHeart } from "react-icons/fa";
+
+// import playblack from '../Images/playblack.svg';
+// import pauseblack from '../Images/pauseblack.svg';
+
 import { getAllCategory } from '../Redux/Slice/category.slice';
 import { useDispatch, useSelector } from 'react-redux';
-// import { getAllSound } from '../Redux/Slice/sound.slice';
-// import { IMAGE_URL } from '../Utils/baseUrl';
-// import { addToWishList, removeFromWishList, getUserWishList } from '../Redux/Slice/user.slice';
+
 import { FaPlus } from "react-icons/fa6";
 import subscription from "../Images/subscription.svg";
 import { MdOutlinePause } from "react-icons/md";
@@ -37,6 +30,12 @@ import Rotary from "../Images/Rotary.svg";
 import RotaryPro from "../Images/Rotary Pro.svg";
 import StereoChorus from "../Images/Stereo Chorus.svg";
 import TapeWobble from "../Images/Tape Wobble.svg";
+import Pianodemo from './Piano';
+import Effects2 from './Effects2';
+
+
+
+
 
 const effects = [
     { id: 1, name: "Bitcrushar", subscription: true, image: Bitcrushar, color: "#8F7CFD" },
@@ -66,43 +65,15 @@ const Loops = () => {
     const [showOffcanvas, setShowOffcanvas] = useState(true);
     const [pauseButton, setPauseButton] = useState(true)
     const [playingEffectId, setPlayingEffectId] = useState(null);
-    // const [showAll, setShowAll] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    // const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-    // const audioRefs = useRef([]);
-    // const [playingIndex, setPlayingIndex] = useState(null);
-
     const category = useSelector((state) => state.category?.category || []);
-    // const sound = useSelector((state) => state.sound?.allsounds || [])
-    // const userWishList = useSelector((state) => state.user?.userWishList || null);
 
 
     useEffect(() => {
         dispatch(getAllCategory());
-        // dispatch(getAllSound());
-        // dispatch(getUserWishList());
     }, [dispatch])
 
-    // // Check if a sound item is in the wishlist
-    // const isInWishlist = (soundId) => {
-    //     if (!userWishList || !userWishList?.wishlist || !Array.isArray(userWishList.wishlist)) return false;
-    //     return userWishList.wishlist.some(item => item._id === soundId);
-    // };
-
-
-    // const filteredSounds = sound?.filter(soundItem => {
-    //     const matchesCategory = !selectedCategory ||
-    //         soundItem.category?.some(cat => cat.name === selectedCategory);
-
-    //     const matchesSearch = !searchTerm ||
-    //         soundItem.soundname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    //         soundItem.category?.some(cat => cat.name.toLowerCase().includes(searchTerm.toLowerCase()));
-
-    //     const matchesFavorites = !showFavoritesOnly || isInWishlist(soundItem._id);
-
-    //     return matchesCategory && matchesSearch && matchesFavorites;
-    // });
 
     const handleCategoryClick = (categoryName) => {
         if (selectedCategory === categoryName) {
@@ -129,39 +100,10 @@ const Loops = () => {
         }
     };
 
-
-    // const toggleWishlist = (soundId) => {
-    //     if (isInWishlist(soundId)) {
-    //         dispatch(removeFromWishList(soundId));
-    //     } else {
-    //         dispatch(addToWishList(soundId));
-    //     }
-    // };
-
-    // const handlePlayPause = (index) => {
-    //     if (playingIndex === index) {
-    //         audioRefs.current[index].pause();
-    //         setPlayingIndex(null);
-    //     } else {
-    //         audioRefs.current.forEach((audio, i) => {
-    //             if (audio && i !== index) audio.pause();
-    //         });
-    //         if (audioRefs.current[index]) {
-    //             audioRefs.current[index].play();
-    //             setPlayingIndex(index);
-    //         }
-    //     }
-    // };
-
-    // const handleEnded = (index) => {
-    //     if (playingIndex === index) {
-    //         setPlayingIndex(null);
-    //     }
-    // };
-
-
     return (
         <>
+
+
             <button className='p-2 bg-white text-black' onClick={() => setShowOffcanvas(prev => !prev)}>
                 on/off
             </button>
@@ -262,6 +204,9 @@ const Loops = () => {
                     </div>
                 </>
             )}
+
+            <Effects2 />
+           
         </>
     )
 }
