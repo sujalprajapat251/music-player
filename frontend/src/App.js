@@ -29,6 +29,7 @@ import GridSetting from './components/GridSetting';
 import Knob from './components/Knob';
 import Pattern from './components/Pattern';
 import Effects from './components/Effects';
+import Effects2 from './components/Effects2';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -48,6 +49,8 @@ function App() {
           <Route path='privacy' element={<PrivacyPolicy />} />
           <Route path='ani' element={<Animation />} />
           <Route path='piano' element={<Piano />} />
+          <Route path='effcts2' element={<Effects2 />} />
+          
 
           <Route path='/login' element={<Login />} />
           <Route path='/drum' element={<Drum />} />
@@ -65,6 +68,7 @@ function App() {
             <Route path='knob' element={<Knob />} />
             <Route path='loop' element={<Loops />} />
             <Route path="effects" element={<Effects />} />
+           
           </Route>
         </Routes>
       </SnackbarProvider>

@@ -335,7 +335,7 @@ const other = [
 
 const Pianodemo = () => {
 
-    const [showOffcanvas, setShowOffcanvas] = useState(false);
+    const [showOffcanvas1, setShowOffcanvas1] = useState(false);
     const [autoChords, setAutoChords] = useState(false);
     const [selectedButtons, setSelectedButtons] = useState({
         basic: null,
@@ -414,22 +414,22 @@ const Pianodemo = () => {
 
     return (
         <>
-            <button className='p-2 bg-white text-black' onClick={() => setShowOffcanvas(prev => !prev)}>
+            <button className='p-2 bg-white text-black' onClick={() => setShowOffcanvas1(prev => !prev)}>
                 on/off
             </button>
-            {showOffcanvas === true && (
+            {showOffcanvas1 === true && (
                 <>
-                    <div class="fixed z-40 w-full h-full bg-[#1F1F1F] transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px]  lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[465px]" tabindex="-1" aria-labelledby="drawer-swipe-label">
+                    <div class="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px]  lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[516px]" tabindex="-1" aria-labelledby="drawer-swipe-label">
                         {/* Static Navbar with Tabs */}
-                        <div className="bg-[#1F1F1F]  border-b border-[#FFFFFF1A] h-full">
-                            <div className="flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
+                        <div className="  border-b border-[#FFFFFF1A] h-full">
+                            <div className=" bg-[#1F1F1F] flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                                 {/* Close Button */}
-                        <div>
-                                    <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => setShowOffcanvas(false)} />
+                                <div>
+                                    <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => setShowOffcanvas1(false)} />
                                 </div>
                             </div>
                             {/* Tabs */}
-                            <div className="flex space-x-2 sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3">
+                            <div className=" bg-[#1F1F1F] flex space-x-2 sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3">
                                 {['Instruments', 'Chords', 'Piano Roll', 'Effects'].map((tab) => (
                                     <button
                                         key={tab}
@@ -448,7 +448,7 @@ const Pianodemo = () => {
                             <div className=''>
                                 {activeTab === 'Instruments' && (
                                     <>
-                                        <div className="flex items-center justify-center pt-1 pb-1 px-2 md600:px-2 md600:pt-2 md600:pb-1 gap-10 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
+                                        <div className=" bg-[#1F1F1F] flex items-center justify-center pt-1 pb-1 px-2 md600:px-2 md600:pt-2 md600:pb-1 gap-10 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
                                             {/* Instrument Selector */}
                                             <div className="bg-[#353535] p-1 md600:p-2 lg:p-3 rounded-lg">
                                                 <div className="flex items-center justify-between">
@@ -509,36 +509,38 @@ const Pianodemo = () => {
                                         <div className="w-full h-[400px] md:h-[500px] lg:h-[250px]">
                                             {/* Piano Navigation Buttons */}
 
-                                            <div className="flex gap-1 md600:gap-2 md:gap-3 pb-1  lg:gap-4 lg:pb-2 2xl:gap-5 items-center justify-between 2xl:pb-3">
+                                            <div className="bg-[#1F1F1F] flex gap-1 md600:gap-2 md:gap-3 pb-1  lg:gap-4 lg:pb-2 2xl:gap-5 items-center justify-between 2xl:pb-3">
                                                 <div className='flex gap-1 sm:gap-2 md600:gap-3 lg:gap-4  2xl:gap-5 items-center ms-1 md600:ms-2 lg:ms-3'>
                                                     <div className='border rounded-3xl border-[#FFFFFF1A]'>
                                                         <p className="text-[#FFFFFF99] text-[8px] md600:text-[10px] lg:text-[12px] px-1 sm:px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Sustain</p>
                                                     </div>
-                                                    <div className="flex items-center justify-between ">
+                                                    <div className="flex items-center justify-between">
                                                         <button
-                                                            onClick={() => setActivePianoSection(prev => prev > 0 ? prev - 1 : prev)}
-                                                            className={`transition-colors text-white p-1 lg:p-2 ${activePianoSection === 0 ? ' cursor-not-allowed' : ' hover:text-white'}`}
-                                                            disabled={activePianoSection === 0}
+                                                            onClick={prevInstrument}
+                                                            className="text-gray-400 hover:text-white transition-colors p-1 md600:p-2"
                                                         >
-                                                            <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]' />
+                                                            <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px]' />
                                                         </button>
 
-                                                        <div className="items-center justify-center px-1 md600:px-2  lg:px-3 2xl:px-4 w-[50px]  md600:w-[60px] lg:w-[80px] 2xl:w-[100px]">
-
+                                                        <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-center 2xl:px-4 2xl:w-[250px]">
+                                                            <div className="text-white">
+                                                                <GiPianoKeys className='text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
+                                                            </div>
                                                             <div className="">
-                                                                <div className="text-white items-center fw-bolder text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">
-                                                                    {activePianoSection === 0 ? 'Octaves' : activePianoSection === 1 ? 'Octaves' : 'Octaves'}
+                                                                <div className="text-white fw-bolder text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[16px]">
+                                                                    {INSTRUMENTS[currentInstrumentIndex].name}
                                                                 </div>
-
+                                                                <div className="text-gray-400 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px]">
+                                                                    {INSTRUMENTS[currentInstrumentIndex].category}
+                                                                </div>
                                                             </div>
                                                         </div>
 
                                                         <button
-                                                            onClick={() => setActivePianoSection(prev => prev < 2 ? prev + 1 : prev)}
-                                                            className={`transition-colors p-1 lg:p-2 ${activePianoSection === 2 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white'}`}
-                                                            disabled={activePianoSection === 2}
+                                                            onClick={nextInstrument}
+                                                            className="text-gray-400 hover:text-white transition-colors p-1 lg:p-2"
                                                         >
-                                                            <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]' />
+                                                            <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] text-[#FFFFFF99]' />
                                                         </button>
                                                     </div>
                                                     <div className='border rounded-3xl border-[#FFFFFF1A]' onClick={() => setAutoChords(prev => !prev)} >
@@ -585,7 +587,7 @@ const Pianodemo = () => {
                                                                 />
                                                             </div>
                                                         </div>
-                        </div>
+                                                    </div>
                                                 }
                                                 <div className="w-full h-[105px] sm:h-[150px] md600:h-[140px] md:h-[290px] lg:h-[250px] overflow-x-auto pt-1 md600:pt-2 lg:pt-3 ">
                                                     <div className="w-full h-full flex items-center justify-center">
@@ -609,13 +611,13 @@ const Pianodemo = () => {
                                                             />
                                                         )}
                                                         {activePianoSection === 2 && (
-                        <Piano
+                                                            <Piano
                                                                 noteRange={{ first: MidiNumbers.fromNote('C5'), last: MidiNumbers.fromNote('C8') }}
-                            playNote={playNote}
-                            stopNote={stopNote}
+                                                                playNote={playNote}
+                                                                stopNote={stopNote}
                                                                 //  width={800}
-                            keyboardShortcuts={keyboardShortcuts}
-                        />
+                                                                keyboardShortcuts={keyboardShortcuts}
+                                                            />
                                                         )}
                                                     </div>
                                                 </div>
@@ -626,7 +628,7 @@ const Pianodemo = () => {
 
                                 {activeTab === 'Chords' && (
                                     <>
-                                        <div className="max-h-[180px] sm:max-h-[235px] md600:max-h-[235px] md:max-h-[400px]  overflow-auto xl:overflow-hidden ">
+                                        <div className=" bg-[#1F1F1F] max-h-[180px] sm:max-h-[235px] md600:max-h-[235px] md:max-h-[410px]  overflow-auto xl:overflow-hidden ">
                                             <div className="w-full flex items-center justify-center">
                                                 <div className="bg-[#FFFFFF1A] items-center mt-1 px-1 py-1 md:mt-2 md:px-2 md:py-2 lg:px-3 rounded-lg">
                                                     <div className=" flex gap-1 px-1 md:gap-2 md:px-2 lg:gap-3 items-center lg:px-3">
@@ -684,7 +686,7 @@ const Pianodemo = () => {
                                                                 ))}
                                                             </div>
                                                         </div>
-                                                         <div className='bg-[#1F1F1F] mt-1 p-1 w-[315px] h-[120px] md600:w-[170px] md600:h-[155px]  md:mt-2 md:p-2 md:w-[200px] md:h-[180px] lg:w-[340px] lg:h-[150px]'>
+                                                        <div className='bg-[#1F1F1F] mt-1 p-1 w-[315px] h-[120px] md600:w-[170px] md600:h-[155px]  md:mt-2 md:p-2 md:w-[200px] md:h-[180px] lg:w-[340px] lg:h-[150px]'>
                                                             <p className='text-[#FFFFFF99] text-[8px] sm:text-[10px] md600:text-[12px] md:text-[14px]'>Arpeggiated</p>
                                                             <div className="grid grid-cols-3  md600:grid-cols-2 gap-1 md:gap-2 lg:grid-cols-3 lg:gap-3 pt-1  md:pt-2">
                                                                 {Arpeggiated.map((item, index) => (
@@ -740,8 +742,7 @@ const Pianodemo = () => {
                         </div>
                     </div>
                 </>
-            )
-            }
+            )}
             {/* <div>
                 <label>Instrument: </label>
                 <select
