@@ -25,10 +25,19 @@ const ResizableTrimHandle = ({
   trackDuration,
   trackWidth,
   trimStart,
-  trimEnd
+  trimEnd,
+  gridSpacing = 0.25 // Default to 1/4 beat grid
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const dragStartRef = useRef({ startX: 0, startPosition: 0 });
+
+  // Grid snapping function
+  const snapToGrid = useCallback((time) => {
+    if (!gridSpacing || gridSpacing <= 0) return time;
+    
+    const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+    return Math.max(0, Math.min(trackDuration, gridPosition));
+  }, [gridSpacing, trackDuration]);
 
   const handleMouseDown = useCallback((e) => {
     e.preventDefault();
@@ -44,9 +53,12 @@ const ResizableTrimHandle = ({
     const handleMouseMove = (moveEvent) => {
       const deltaX = moveEvent.clientX - dragStartRef.current.startX;
       const deltaTime = (deltaX / trackWidth) * trackDuration;
-      const newPosition = Math.max(0, Math.min(trackDuration, dragStartRef.current.startPosition + deltaTime));
+      const rawPosition = Math.max(0, Math.min(trackDuration, dragStartRef.current.startPosition + deltaTime));
       
-      onResize(type, newPosition);
+      // Snap to grid
+      const snappedPosition = snapToGrid(rawPosition);
+      
+      onResize(type, snappedPosition);
     };
     
     const handleMouseUp = () => {
@@ -57,7 +69,7 @@ const ResizableTrimHandle = ({
     
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  }, [position, onResize, onDragStart, onDragEnd, type, trackDuration, trackWidth]);
+  }, [position, onResize, onDragStart, onDragEnd, type, trackDuration, trackWidth, snapToGrid]);
 
   // Calculate position relative to the visible track portion
   const actualTrimEnd = trimEnd || trackDuration;
@@ -154,6 +166,7 @@ const TimelineTrack = ({
   onPositionChange,
   timelineWidthPerSecond = 100,
   frozen = false,
+  gridSpacing = 0.25
 }) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
@@ -237,8 +250,16 @@ const TimelineTrack = ({
     const currentTrimStart = trimStart || 0;
     const currentTrimEnd = trimEnd || duration;
     
+    // Grid snapping function for trim
+    const snapToGrid = (time) => {
+      if (!gridSpacing || gridSpacing <= 0) return time;
+      const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+      return Math.max(0, Math.min(duration, gridPosition));
+    };
+    
     if (type === 'start') {
-      const newTrimStart = Math.max(0, Math.min(newPosition, currentTrimEnd - 0.1));
+      const snappedPosition = snapToGrid(newPosition);
+      const newTrimStart = Math.max(0, Math.min(snappedPosition, currentTrimEnd - gridSpacing));
       // Calculate how much the trim start moved
       const trimStartDelta = newTrimStart - currentTrimStart;
       
@@ -251,10 +272,11 @@ const TimelineTrack = ({
         newStartTime: Math.max(0, newStartTime) // Also update position
       });
     } else if (type === 'end') {
-      const newTrimEnd = Math.max(currentTrimStart + 0.1, Math.min(newPosition, duration));
+      const snappedPosition = snapToGrid(newPosition);
+      const newTrimEnd = Math.max(currentTrimStart + gridSpacing, Math.min(snappedPosition, duration));
       onTrimChange({ trimStart: currentTrimStart, trimEnd: newTrimEnd });
     }
-  }, [trimStart, trimEnd, duration, startTime, onTrimChange]);
+  }, [trimStart, trimEnd, duration, startTime, onTrimChange, gridSpacing, frozen]);
 
   const handleDragStart = useCallback((type) => {
     // Disable dragging for frozen tracks
@@ -266,13 +288,23 @@ const TimelineTrack = ({
     setIsDraggingTrim(null);
   }, []);
 
-  // Handle drag (position change)
+  // Handle drag (position change) with grid snapping
   const handleDragStop = useCallback((e, d) => {
-    const newStartTime = Math.max(0, d.x / timelineWidthPerSecond);
+    const rawStartTime = Math.max(0, d.x / timelineWidthPerSecond);
+    
+    // Grid snapping for track position
+    const snapToGrid = (time) => {
+      if (!gridSpacing || gridSpacing <= 0) return time;
+      const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+      return Math.max(0, gridPosition);
+    };
+    
+    const snappedStartTime = snapToGrid(rawStartTime);
+    
     if (onPositionChange) {
-      onPositionChange(trackId, newStartTime);
+      onPositionChange(trackId, snappedStartTime);
     }
-  }, [trackId, onPositionChange, timelineWidthPerSecond]);
+  }, [trackId, onPositionChange, timelineWidthPerSecond, gridSpacing]);
 
   const width = (duration || 1) * timelineWidthPerSecond;
   const actualTrimEnd = trimEnd || duration;
@@ -331,6 +363,7 @@ const TimelineTrack = ({
         trackWidth={width}
         trimStart={trimStart}
         trimEnd={actualTrimEnd}
+        gridSpacing={gridSpacing} // Pass grid spacing to the handle
       />
       
       <ResizableTrimHandle
@@ -344,6 +377,7 @@ const TimelineTrack = ({
         trackWidth={width}
         trimStart={trimStart}
         trimEnd={actualTrimEnd}
+        gridSpacing={gridSpacing} // Pass grid spacing to the handle
       />
 
       {/* Trim indicators */}
@@ -395,11 +429,21 @@ const Timeline = () => {
 
   const timelineWidthPerSecond = 100;
 
-  // Handle track position changes (drag)
+  // Handle track position changes (drag) with grid snapping
   const handleTrackPositionChange = useCallback((trackId, newStartTime) => {
+    // Grid snapping for track position
+    const gridSpacing = getGridSpacing(selectedGrid);
+    const snapToGrid = (time) => {
+      if (!gridSpacing || gridSpacing <= 0) return time;
+      const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+      return Math.max(0, gridPosition);
+    };
+    
+    const snappedStartTime = snapToGrid(newStartTime);
+    
     dispatch(updateTrack({ 
       id: trackId, 
-      updates: { startTime: Math.max(0, newStartTime) } 
+      updates: { startTime: snappedStartTime } 
     }));
 
     // Update the corresponding player
@@ -408,13 +452,13 @@ const Timeline = () => {
         if (playerObj.trackId === trackId) {
           return {
             ...playerObj,
-            startTime: Math.max(0, newStartTime)
+            startTime: snappedStartTime
           };
         }
         return playerObj;
       });
     });
-  }, [dispatch]);
+  }, [dispatch, selectedGrid]);
 
   // Updated trim change handler to support position changes from left trim
   const handleTrimChange = useCallback((trackId, trimData) => {
@@ -424,8 +468,16 @@ const Timeline = () => {
     
     if (!track || !track.duration) return;
     
-    const validatedTrimStart = Math.max(0, Math.min(trimStart, track.duration - 0.1));
-    const validatedTrimEnd = Math.max(validatedTrimStart + 0.1, Math.min(trimEnd, track.duration));
+    // Grid snapping for validation
+    const gridSpacing = getGridSpacing(selectedGrid);
+    const snapToGrid = (time) => {
+      if (!gridSpacing || gridSpacing <= 0) return time;
+      const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+      return Math.max(0, Math.min(track.duration, gridPosition));
+    };
+    
+    const validatedTrimStart = snapToGrid(Math.max(0, Math.min(trimStart, track.duration - gridSpacing)));
+    const validatedTrimEnd = snapToGrid(Math.max(validatedTrimStart + gridSpacing, Math.min(trimEnd, track.duration)));
     
     // Prepare updates object
     const updates = { 
@@ -435,7 +487,8 @@ const Timeline = () => {
     
     // If newStartTime is provided (from left trim), update the position too
     if (newStartTime !== undefined) {
-      updates.startTime = Math.max(0, newStartTime);
+      const snappedStartTime = snapToGrid(Math.max(0, newStartTime));
+      updates.startTime = snappedStartTime;
     }
     
     dispatch(updateTrack({ 
@@ -455,7 +508,7 @@ const Timeline = () => {
           
           // Update startTime if provided
           if (newStartTime !== undefined) {
-            updatedPlayer.startTime = Math.max(0, newStartTime);
+            updatedPlayer.startTime = snapToGrid(Math.max(0, newStartTime));
           }
           
           return updatedPlayer;
@@ -463,7 +516,7 @@ const Timeline = () => {
         return playerObj;
       });
     });
-  }, [dispatch, tracks]);
+  }, [dispatch, tracks, selectedGrid]);
 
   const handleReady = useCallback(async (wavesurfer, url, trackData) => {
     if (!url) return;
@@ -610,8 +663,18 @@ const Timeline = () => {
     
     if (width <= 0 || duration <= 0) return;
     
-    let time = (x / width) * duration;
-    time = Math.max(0, Math.min(duration, time));
+    let rawTime = (x / width) * duration;
+    rawTime = Math.max(0, Math.min(duration, rawTime));
+    
+    // Grid snapping for playhead
+    const gridSpacing = getGridSpacing(selectedGrid);
+    const snapToGrid = (time) => {
+      if (!gridSpacing || gridSpacing <= 0) return time;
+      const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+      return Math.max(0, Math.min(duration, gridPosition));
+    };
+    
+    const time = snapToGrid(rawTime);
     setCurrentTime(time);
 
     // Update wavesurfer visual progress
@@ -777,6 +840,12 @@ const Timeline = () => {
     }
   };
 
+  // Calculate grid spacing in seconds based on selected grid
+  const getGridSpacing = (gridSize) => {
+    const divisions = getGridDivisions(gridSize);
+    return 1 / divisions; // 1 second divided by number of divisions
+  };
+
   const renderRuler = useCallback(() => {
     if (!svgRef.current) return;
 
@@ -921,7 +990,17 @@ const Timeline = () => {
         const x = e.clientX - rect.left;
         const width = rect.width;
         const duration = audioDuration;
-        const dropTime = (x / width) * duration;
+        const rawDropTime = (x / width) * duration;
+        
+        // Grid snapping for drop position
+        const gridSpacing = getGridSpacing(selectedGrid);
+        const snapToGrid = (time) => {
+          if (!gridSpacing || gridSpacing <= 0) return time;
+          const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+          return Math.max(0, gridPosition);
+        };
+        
+        const dropTime = snapToGrid(rawDropTime);
         
         const url = `${IMAGE_URL}uploads/soundfile/${soundItem.soundfile}`;
         let audioDurationSec = null;
@@ -953,7 +1032,7 @@ const Timeline = () => {
     } catch (error) {
       console.error('Error processing dropped item:', error);
     }
-  }, [audioDuration, dispatch, trackHeight]);
+  }, [audioDuration, dispatch, trackHeight, selectedGrid]);
 
   const renderGridLines = () => {
     const gridLines = [];
@@ -1089,7 +1168,7 @@ const Timeline = () => {
                     left: 0,
                     width: "100%",
                     height: `${trackHeight}px`,
-                    zIndex: 5,
+                    zIndex: 0,
                   }}
                 >
                   <TimelineTrack
@@ -1107,6 +1186,7 @@ const Timeline = () => {
                     onPositionChange={handleTrackPositionChange}
                     timelineWidthPerSecond={timelineWidthPerSecond}
                     frozen={track.frozen}
+                    gridSpacing={getGridSpacing(selectedGrid)} // Pass grid spacing to the track
                   />
                 </div>
               ))}
@@ -1121,7 +1201,7 @@ const Timeline = () => {
                 height: "100%",
                 width: "2px",
                 pointerEvents: "none",
-                zIndex: 100,
+                zIndex: 0,
               }}
             >
               <div
