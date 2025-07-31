@@ -8,16 +8,17 @@ import TrashIcon from '../Images/trash.svg'
 import FreezeIcon from '../Images/freeze.svg'
 import waveIcon from '../Images/wave.svg'
 import { useDispatch } from "react-redux";
-import { updateTrack , renameTrack } from "../Redux/Slice/studio.slice";
+import { updateTrack , renameTrack, removeTrack } from "../Redux/Slice/studio.slice";
 const MENU_COLORS = [
   "#F05959", "#49B1A5", "#C579C8", "#5572F9",
   "#25A6CA", "#C059F0", "#4CAA47", "#F0F059",
   "#F09859" , "#8C8484"
 ];
 
-const TrackMenu = ({ trackId, trackName, color }) => {
+const TrackMenu = ({ trackId, trackName, color, onRename }) => {
   const [open, setOpen] = useState(false);
   const [submenu, setSubmenu] = useState(null);
+  const [isShiftPressed, setIsShiftPressed] = useState(false);
   const menuRef = useRef();
   const dispatch = useDispatch();
 
@@ -32,6 +33,26 @@ const TrackMenu = ({ trackId, trackName, color }) => {
     if (open) document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
+
+  // Keyboard event handling for Shift + Backspace
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Check if Shift + Backspace is pressed
+      if (e.shiftKey && e.key === 'Backspace') {
+        e.preventDefault(); // Prevent default browser behavior
+        dispatch(removeTrack(trackId));
+        setOpen(false);
+      }
+    };
+
+    // Add event listener to document
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup event listener on component unmount
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [dispatch, trackId]);
 
   const handleMenuClick = (e) => {
     e.stopPropagation(); // Prevent event bubbling
@@ -72,16 +93,29 @@ const TrackMenu = ({ trackId, trackName, color }) => {
           }}
         >
           <div style={{ fontSize: 13, color: "#aaa", marginBottom: 8 }}>Menu</div>
-            <MenuItem
-              icon={<img src={PencilIcon} alt="Rename" style={{ width: 16, height: 16, filter: "invert(1)" }} />}
-              label="Rename"
-              onClick={handleRename}
-            />
+          <MenuItem
+            icon={<img src={PencilIcon} alt="Rename" style={{ width: 16, height: 16, filter: "invert(1)" }} />}
+            label="Rename"
+            onClick={onRename}
+          />
           <MenuItem icon={<img src={DuplicateIcon} alt="Duplicate track" style={{ width: 16, height: 16, filter: "invert(1)" }} />} label="Duplicate track" />
-          <MenuItem icon={<img src={TrashIcon} alt="Delete track" style={{ width: 16, height: 16, filter: "invert(1)" }} />} label="Delete track" />
+          <MenuItem 
+            icon={<img src={TrashIcon} alt="Delete track" style={{ width: 16, height: 16, filter: "invert(1)" }} />} 
+            label="Delete track" 
+            onClick={() => {
+                if (isShiftPressed) {
+                    // If Shift is pressed, delete without confirmation
+                    dispatch(removeTrack(trackId));
+                    setOpen(false);
+                } else {
+                        dispatch(removeTrack(trackId));
+                        setOpen(false);                  
+                }
+            }}
+          />
           <MenuItem icon={<img src={FreezeIcon} alt="Freeze track" style={{ width: 16, height: 16, filter: "invert(1)" }} />} label="Freeze track (Free up CPU)" />
           <div style={{ borderTop: "1px solid #333", margin: "8px 0" }} />
-          <MenuItem icon={<img src={importIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)" }} />} label="Import" />
+          <MenuItem icon={<img src={importIcon} alt="Import" style={{ width: 16, height: 16, filter: "invert(1)" }} />} label="Import" />
           <MenuItem
             icon={<img src={importIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)", transform: "rotate(90deg)" }} />}
             label="Export"
