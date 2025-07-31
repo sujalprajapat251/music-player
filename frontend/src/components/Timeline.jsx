@@ -152,7 +152,8 @@ const TimelineTrack = ({
   trimEnd = null, 
   onTrimChange,
   onPositionChange,
-  timelineWidthPerSecond = 100
+  timelineWidthPerSecond = 100,
+  frozen = false,
 }) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
@@ -1092,6 +1093,7 @@ const Timeline = () => {
                   }}
                 >
                   <TimelineTrack
+                    key={track.id}
                     url={track.url}
                     color={track.color}
                     height={trackHeight}
@@ -1104,6 +1106,7 @@ const Timeline = () => {
                     onTrimChange={(trimData) => handleTrimChange(track.id, trimData)}
                     onPositionChange={handleTrackPositionChange}
                     timelineWidthPerSecond={timelineWidthPerSecond}
+                    frozen={track.frozen}
                   />
                 </div>
               ))}
