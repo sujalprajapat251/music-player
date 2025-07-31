@@ -448,7 +448,7 @@ const Pianodemo = () => {
                             <div className=''>
                                 {activeTab === 'Instruments' && (
                                     <>
-                                        <div className=" bg-[#1F1F1F] flex items-center justify-center pt-1 pb-1 px-2 md600:px-2 md600:pt-2 md600:pb-1 gap-10 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
+                                        <div className=" bg-[#1F1F1F] flex items-center justify-center pt-1 pb-1 px-2 md600:px-2 md600:pt-2 md600:pb-1 sm:gap-6 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
                                             {/* Instrument Selector */}
                                             <div className="bg-[#353535] p-1 md600:p-2 lg:p-3 rounded-lg">
                                                 <div className="flex items-center justify-between">
@@ -514,33 +514,31 @@ const Pianodemo = () => {
                                                     <div className='border rounded-3xl border-[#FFFFFF1A]'>
                                                         <p className="text-[#FFFFFF99] text-[8px] md600:text-[10px] lg:text-[12px] px-1 sm:px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Sustain</p>
                                                     </div>
-                                                    <div className="flex items-center justify-between">
+                                                    <div className="flex items-center justify-between ">
                                                         <button
-                                                            onClick={prevInstrument}
-                                                            className="text-gray-400 hover:text-white transition-colors p-1 md600:p-2"
+                                                            onClick={() => setActivePianoSection(prev => prev > 0 ? prev - 1 : prev)}
+                                                            className={`transition-colors text-white p-1 lg:p-2 ${activePianoSection === 0 ? ' cursor-not-allowed' : ' hover:text-white'}`}
+                                                            disabled={activePianoSection === 0}
                                                         >
-                                                            <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px]' />
+                                                            <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]' />
                                                         </button>
 
-                                                        <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-center 2xl:px-4 2xl:w-[250px]">
-                                                            <div className="text-white">
-                                                                <GiPianoKeys className='text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
-                                                            </div>
+                                                        <div className="items-center justify-center px-1 md600:px-2  lg:px-3 2xl:px-4 w-[50px]  md600:w-[60px] lg:w-[80px] 2xl:w-[100px]">
+
                                                             <div className="">
-                                                                <div className="text-white fw-bolder text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[16px]">
-                                                                    {INSTRUMENTS[currentInstrumentIndex].name}
+                                                                <div className="text-white items-center fw-bolder text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">
+                                                                    {activePianoSection === 0 ? 'Octaves' : activePianoSection === 1 ? 'Octaves' : 'Octaves'}
                                                                 </div>
-                                                                <div className="text-gray-400 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px]">
-                                                                    {INSTRUMENTS[currentInstrumentIndex].category}
-                                                                </div>
+
                                                             </div>
                                                         </div>
 
                                                         <button
-                                                            onClick={nextInstrument}
-                                                            className="text-gray-400 hover:text-white transition-colors p-1 lg:p-2"
+                                                            onClick={() => setActivePianoSection(prev => prev < 2 ? prev + 1 : prev)}
+                                                            className={`transition-colors p-1 lg:p-2 ${activePianoSection === 2 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white'}`}
+                                                            disabled={activePianoSection === 2}
                                                         >
-                                                            <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] text-[#FFFFFF99]' />
+                                                            <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]' />
                                                         </button>
                                                     </div>
                                                     <div className='border rounded-3xl border-[#FFFFFF1A]' onClick={() => setAutoChords(prev => !prev)} >
