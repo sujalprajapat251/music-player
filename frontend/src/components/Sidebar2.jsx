@@ -32,14 +32,15 @@ const [editingName, setEditingName] = useState("");
           <div className="h-[100px] border-b border-[#1414141A] dark:border-[#FFFFFF1A] flex items-end pb-2"></div>
           
           {/* Tracks container */}
-          <div style={{ maxHeight: 'calc(100vh - 270px)' }}>
+          <div style={{ maxHeight: 'calc(100vh - 270px)' ,marginTop: "40px", }}>
             {(tracks || []).map((track, idx) => (
               <div
                 key={track.id}
                 className={`flex items-center justify-between px-3 border-b border-[#1414141A] dark:border-[#FFFFFF1A] bg-[#232323]`}
                 style={{ 
                   height: `${trackHeight + 1}px`, // 8px for padding
-                  minHeight: `${trackHeight + 1}px`
+                  minHeight: `${trackHeight + 1}px`,
+                  
                 }}
               >
                 <div className="flex items-center w-16 justify-center">
