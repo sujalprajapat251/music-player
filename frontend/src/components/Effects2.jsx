@@ -6,6 +6,10 @@ import { GiPianoKeys } from "react-icons/gi";
 import { MdOutlinePause } from "react-icons/md";
 import { FaPlay } from "react-icons/fa6";
 import drum from "../Images/drum.svg";
+import Bhopu from "../Images/Bhopu.svg";
+import piano from "../Images/piano.svg";
+import Drumkit from "../Images/Drumgroup.svg";
+import { useTheme } from '../Utils/ThemeContext';
 
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
@@ -331,6 +335,12 @@ const effects = [
 
 const Effects2 = () => {
 
+    const { isDark } = useTheme();
+
+    const [volume, setVolume] = useState(25);
+    const [volume1, setVolume1] = useState(50);
+    const [volume2, setVolume2] = useState(75);
+
     const [showOffcanvas, setShowOffcanvas] = useState(false);
     const [currentInstrumentIndex, setCurrentInstrumentIndex] = useState(0);
     const [activeTab, setActiveTab] = useState('Instruments');
@@ -342,6 +352,17 @@ const Effects2 = () => {
     const [hihatIndex, setHihatIndex] = useState(0);
     const [toopIndex, setToopIndex] = useState(0);
 
+
+    const [toggles, setToggles] = useState(Array(4).fill(false));
+    const [humanizeToggle, setHumanizeToggle] = useState(false);
+
+    const handleToggle = (idx) => {
+        setToggles(prev => prev.map((val, i) => i === idx ? !val : val));
+    };
+
+    const handleHumanizeToggle = () => {
+        setHumanizeToggle(prev => !prev);
+    };
 
     // Separate navigation functions for each instrument
     const nextKick = () => {
@@ -401,6 +422,7 @@ const Effects2 = () => {
         {
             id: 'kick',
             name: 'Kick',
+            image: drum,
             currentIndex: kickIndex,
             nextFunction: nextKick,
             prevFunction: prevKick,
@@ -409,6 +431,7 @@ const Effects2 = () => {
         {
             id: 'snare',
             name: 'Snare',
+            image: Bhopu,
             currentIndex: snareIndex,
             nextFunction: nextSnare,
             prevFunction: prevSnare,
@@ -417,6 +440,7 @@ const Effects2 = () => {
         {
             id: 'hihat',
             name: 'Hi-Hat',
+            image: piano,
             currentIndex: hihatIndex,
             nextFunction: nextHihat,
             prevFunction: prevHihat,
@@ -425,6 +449,7 @@ const Effects2 = () => {
         {
             id: 'toop',
             name: 'Toop',
+            image: Drumkit,
             currentIndex: toopIndex,
             nextFunction: nextToop,
             prevFunction: prevToop,
@@ -439,7 +464,7 @@ const Effects2 = () => {
             </button>
             {showOffcanvas === true && (
                 <>
-                    <div class="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px]  lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[516px]" tabindex="-1" aria-labelledby="drawer-swipe-label">
+                    <div class="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[337px] md600:bottom-[363px] md:bottom-[450px]  lg:bottom-[483px] xl:bottom-[492px] 2xl:bottom-[516px]" tabindex="-1" aria-labelledby="drawer-swipe-label">
                         {/* Static Navbar with Tabs */}
                         <div className="  border-b border-[#FFFFFF1A] h-full">
                             <div className=" bg-[#1F1F1F] flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
@@ -520,60 +545,155 @@ const Effects2 = () => {
                                                 </div>
                                             </div>
 
-                                            <div className="py-2 px-5 border border-[#FFFFFF1A] rounded-md">
-                                                <p className="text-white">Save Preset</p>
+                                            <div className="py-1 lg:py-2 sm:px-3 md:px-4 xl:px-5 border border-[#FFFFFF1A] rounded-md">
+                                                <p className="text-white sm:text-[12px] lg:text-[14px]">Save Preset</p>
                                             </div>
                                         </div>
 
-                                        <div className='bg-[#141414] py-5'>
-                                            <div className="flex gap-5 justify-center">
-                                                <div className=" pe-5 border-r border-[#FFFFFF99] max-h-[252px] overflow-auto">
+                                        <div className='bg-[#141414] sm:py-3 md:py-4 lg:py-5 max-w-full md600:w-full md600:justify-center flex items-center overflow-auto'>
+                                            <div className="flex sm:gap-3 md:gap-4 lg:gap-5 justify-center">
+                                                <div className=" sm:pe-3 md:pe-4 lg:pe-5 border-r border-[#FFFFFF99] sm:max-h-[200px] md:max-h-[247px] lg:max-h-[245px] xl:max-h-[252px] overflow-auto scroll">
                                                     {effects?.map((effect) => (
-                                                        <div key={effect?.id} className="flex gap-5 mb-2 ps-5 py-2 rounded-md w-[230px] bg-[#FFFFFF1A] hover:bg-[#FFFFFF4D]">
+                                                        <div key={effect?.id} className="flex sm:gap-3 md:gap-4 lg:gap-5 mb-1 md:mb-2 sm:ps-3 md:ps-4 lg:ps-5 py-1 md:py-2 rounded-md w-[138px] md600:w-[138px] md:w-[176px] lg:w-[230px] bg-[#FFFFFF1A] hover:bg-[#FFFFFF4D]">
                                                             <button
                                                                 onClick={() => handleEffectPlayPause(effect?.id)}
-                                                                className='flex justify-center p-2 bg-[#FFFFFF1A] rounded-full items-center'
+                                                                className='flex justify-center p-1 md:p-2 bg-[#FFFFFF1A] rounded-full items-center'
                                                             >
                                                                 {playingEffectId === effect?.id ?
-                                                                    <MdOutlinePause className='text-black text-[12px] lg:text-[10px] xl:text-[12px]' /> :
-                                                                    <FaPlay className='text-black text-[12px] lg:text-[10px] xl:text-[12px]' />
+                                                                    <MdOutlinePause className='text-black sm:text-[10px] md:text-[12px] lg:text-[10px] xl:text-[12px]' /> :
+                                                                    <FaPlay className='text-black sm:text-[10px] md:text-[12px] lg:text-[10px] xl:text-[12px]' />
                                                                 }
                                                             </button>
-                                                            <p className="text-white text-[14px] content-center">{effect?.name}</p>
+                                                            <p className="text-white sm:text-[10px] md:text-[12px] lg:text-[14px] content-center">{effect?.name}</p>
                                                             <nbsp></nbsp>
                                                         </div>
                                                     ))}
                                                 </div>
-                                                <div className=" pe-3  my-auto">
-                                                    {instrumentConfigs.map((instrument) => (
-                                                        <div key={instrument.id} className="flex gap-5 content justify-center items-center mb-2">
-                                                            <div className="p-2 rounded-full bg-[#FFFFFF1A]">
-                                                                <img src={drum} alt="" className="w-4 h-4 content-center self-center" />
-                                                            </div>
-                                                            <div className="flex items-center w-[230px] justify-between bg-[#353535] p-1 md600:p-2 lg:p-2 rounded-lg my-1">
-                                                                <button
-                                                                    onClick={instrument.prevFunction}
-                                                                    className="text-gray-400 hover:text-white transition-colors p-1"
-                                                                >
-                                                                    <FaChevronLeft className='text-[14px text-[#FFFFFF99]]' />
-                                                                </button>
-                                                                <div className="">
-                                                                    <div className="text-white fw-bolder text-[14px] ">
-                                                                        {instrument.data[instrument.currentIndex].name}
-                                                                    </div>
+                                                <div className=" sm:pe-2 lg:pe-3  my-auto">
+                                                    {instrumentConfigs.map((instrument, index) => (
+                                                        <>
+                                                            <div key={instrument.id} className="flex sm:gap-3 md:gap-4 lg:gap-5 content justify-center items-center sm:mb-2 lg:mb-3">
+                                                                <div className="p-1 md:p-2 rounded-full bg-[#FFFFFF1A]">
+                                                                    <img src={instrument?.image} alt="" className="sm:w-3 sm:h-3 lg:w-4 lg:h-4 content-center self-center" />
                                                                 </div>
-                                                                <button
-                                                                    onClick={instrument.nextFunction}
-                                                                    className="text-gray-400 hover:text-white transition-colors p-1"
+                                                                <div className="flex items-center sm:w-[136px] md:w-[155px] lg:w-[230px] justify-between bg-[#353535] p-1 sm:p-2 lg:p-2 rounded-lg md:my-1">
+                                                                    <button
+                                                                        onClick={instrument.prevFunction}
+                                                                        className="text-gray-400 hover:text-white transition-colors p-1"
+                                                                    >
+                                                                        <FaChevronLeft className='sm:text-[10px] md:text-[12px] lg:text-[14px] text-[#FFFFFF99]' />
+                                                                    </button>
+                                                                    <div className="">
+                                                                        <div className="text-white fw-bolder sm:text-[10px] md:text-[12px] lg:text-[14px] ">
+                                                                            {instrument.data[instrument.currentIndex].name}
+                                                                        </div>
+                                                                    </div>
+                                                                    <button
+                                                                        onClick={instrument.nextFunction}
+                                                                        className="text-gray-400 hover:text-white transition-colors p-1"
+                                                                    >
+                                                                        <FaChevronRight className='sm:text-[10px] md:text-[12px] lg:text-[14px] text-[#FFFFFF99]' />
+                                                                    </button>
+                                                                </div>
+                                                                <div >
+                                                                    <div className="flex  items-center justify-center sm:gap-4 md:gap-6 lg:gap-8">
+                                                                        <div className="flex items-center sm:gap-2 md:gap-3 lg:gap-4">
+
+                                                                            {/* Toggle Switch */}
+                                                                            <div
+                                                                                onClick={() => handleToggle(index)}
+                                                                                className={`relative w-8 h-4 rounded-full cursor-pointer transition-colors duration-300 ${toggles[index] ? 'bg-white' : 'bg-[#FFFFFF1A]'
+                                                                                    }`}
+                                                                            >
+                                                                                {/* Toggle Circle */}
+                                                                                <div
+                                                                                    className={`absolute top-0.5 w-3 h-3  rounded-full transition-transform duration-300 ${toggles[index] ? 'translate-x-4 bg-black' : 'translate-x-1 bg-white'
+                                                                                        }`}
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <p className="text-white text-[10px] md:text-[12px] lg:text-[14px] mt-1 md:mt-2">HalfTime</p>
+                                                                </div>
+                                                            </div>
+                                                        </>
+                                                    ))}
+                                                </div >
+                                                <div className="ps-1 md:ps-2 lg:ps-3 border-l border-[#FFFFFF99]">
+                                                    <div className="flex sm:gap-2 sm:mt-4 md:gap-4 md:mt-6 lg:gap-5 lg:mt-7 items-center">
+                                                        <p className="text-white sm:text-[10px] md:text-[12px] lg:text-[14px]">Complexity</p>
+                                                        <div className=" sm:w-28  md:w-32 lg:w-40 2xl:w-48  pb-1 ">
+                                                            <input
+                                                                type="range"
+                                                                min="0"
+                                                                max="100"
+                                                                value={volume}
+                                                                onChange={(e) => setVolume(e.target.value)}
+                                                                className="w-full h-1 lg:h-2 bg-[#2B2B2B]  rounded-lg appearance-none cursor-pointer slider outline-none focus:outline-none"
+                                                                style={{
+                                                                    background: isDark
+                                                                        ? `linear-gradient(to right, #ffffff 0%, #ffffff ${volume}%, #2B2B2B ${volume}%, #2B2B2B 100%)`
+                                                                        : `linear-gradient(to right, #141414 0%, #141414 ${volume}%, #1414141A ${volume}%, #1414141A 100%)`
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex sm:gap-3 sm:mt-4 md:gap-6 md:mt-6 lg:gap-7  lg:mt-7 items-center">
+                                                        <p className="text-white sm:text-[10px] md:text-[12px] lg:text-[14px]">Loudness</p>
+                                                        <div className="sm:w-28 md:w-32 lg:w-40 2xl:w-48  pb-1 ">
+                                                            <input
+                                                                type="range"
+                                                                min="0"
+                                                                max="100"
+                                                                value={volume1}
+                                                                onChange={(e) => setVolume1(e.target.value)}
+                                                                className="w-full h-1 lg:h-2 bg-[#2B2B2B]  rounded-lg appearance-none cursor-pointer slider outline-none focus:outline-none"
+                                                                style={{
+                                                                    background: isDark
+                                                                        ? `linear-gradient(to right, #ffffff 0%, #ffffff ${volume1}%, #2B2B2B ${volume1}%, #2B2B2B 100%)`
+                                                                        : `linear-gradient(to right, #141414 0%, #141414 ${volume1}%, #1414141A ${volume1}%, #1414141A 100%)`
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex sm:gap-9 md:gap-14 md:mt-6 lg:gap-16 sm:mt-4 lg:mt-7 items-center">
+                                                        <p className="text-white sm:text-[12px] md:text-[12px] lg:text-[14px]">Fills</p>
+                                                        <div className="sm:w-28 md:w-32 lg:w-40 2xl:w-48  pb-1 ">
+                                                            <input
+                                                                type="range"
+                                                                min="0"
+                                                                max="100"
+                                                                value={volume2}
+                                                                onChange={(e) => setVolume2(e.target.value)}
+                                                                className="w-full h-1 lg:h-2 bg-[#2B2B2B]  rounded-lg appearance-none cursor-pointer slider outline-none focus:outline-none"
+                                                                style={{
+                                                                    background: isDark
+                                                                        ? `linear-gradient(to right, #ffffff 0%, #ffffff ${volume2}%, #2B2B2B ${volume2}%, #2B2B2B 100%)`
+                                                                        : `linear-gradient(to right, #141414 0%, #141414 ${volume2}%, #1414141A ${volume2}%, #1414141A 100%)`
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex sm:gap-1 sm:mt-4 md:gap-4 md:mt-6 lg:gap-5 lg:mt-7 items-center">
+                                                        <p className="text-white sm:text-[10px] md:text-[12px] lg:text-[14px]">Humanize</p>
+                                                        <div className="flex  items-center justify-center md:gap-6 lg:gap-8">
+                                                            <div className="flex items-center gap-4">
+
+                                                                {/* Toggle Switch */}
+                                                                <div
+                                                                    onClick={handleHumanizeToggle}
+                                                                    className={`relative w-8 h-4 rounded-full cursor-pointer transition-colors duration-300 ${humanizeToggle ? 'bg-white' : 'bg-[#FFFFFF1A]'
+                                                                        }`}
                                                                 >
-                                                                    <FaChevronRight className='text-[14px] text-[#FFFFFF99]' />
-                                                                </button>
+                                                                    {/* Toggle Circle */}
+                                                                    <div
+                                                                        className={`absolute top-0.5 w-3 h-3  rounded-full transition-transform duration-300 ${humanizeToggle ? 'translate-x-4 bg-black' : 'translate-x-1 bg-white'
+                                                                            }`}
+                                                                    />
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    ))}
-                                                </div>
-                                                <div className=" pe-3 border-l border-r border-[#FFFFFF99]">
-                                                    sdg
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
