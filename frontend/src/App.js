@@ -30,6 +30,7 @@ import Knob from './components/Knob';
 import Pattern from './components/Pattern';
 import Effects from './components/Effects';
 import Effects2 from './components/Effects2';
+import TimelineDemo from './components/TimelineDemo';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -64,7 +65,8 @@ function App() {
           </Route>
 
           <Route path='/sidebar' element={<ThemeProvider><Sidebar2 /></ThemeProvider>} >
-            <Route path='timeline' element={<Timeline />} />
+            <Route path='timeline' element={<TimelineDemo />} />
+          <Route path='timelinedemo' element={<TimelineDemo />} />
             <Route path='knob' element={<Knob />} />
             <Route path='loop' element={<Loops />} />
             <Route path="effects" element={<Effects />} />

@@ -10,6 +10,10 @@ const initialState = {
   // Track effects and plugins state
   trackEffects: {}, // Store effects for each track
   frozenTrackData: {}, // Store processed audio data for frozen tracks
+  pianoRecord: [],
+  isRecording: false,
+  newtrackType: '',
+  currentTrackId: ''
 };
 
 const studioSlice = createSlice({
@@ -119,6 +123,18 @@ const studioSlice = createSlice({
         track.soundData = audioData.soundData || null;
       }
     },
+    setRecordingAudio: (state, action) => {
+      state.pianoRecord = action.payload;
+    },
+    setRecording: (state, action) => {
+      state.isRecording = action.payload;
+    },
+    setTrackType: (state, action) => {
+      state.newtrackType = action.payload;
+    },
+    setCurrentTrackId: (state, action) => {
+      state.currentTrackId = action.payload;
+    },
     exportTrack: (state, action) => {
       // This is just a placeholder action for tracking export events
       // The actual export logic will be handled in the component
@@ -139,7 +155,11 @@ export const {
   freezeTrack,
   duplicateTrack,
   updateTrackAudio,
-  exportTrack
+  exportTrack,
+  setRecordingAudio,
+  setRecording,
+  setTrackType,
+  setCurrentTrackId
 } = studioSlice.actions;
 
 export default studioSlice.reducer;
