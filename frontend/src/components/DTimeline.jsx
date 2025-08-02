@@ -3,7 +3,7 @@ import WaveSurfer from "wavesurfer.js";
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
-import { addTrack, updateTrack } from "../Redux/Slice/studio.slice";
+import { addTrack, updateTrack, setSoloTrackId } from "../Redux/Slice/studio.slice";
 import { IMAGE_URL } from "../Utils/baseUrl";
 import magnetIcon from "../Images/magnet.svg";
 import settingIcon from "../Images/setting.svg";
@@ -468,6 +468,7 @@ const DTimeline = () => {
   const tracks = useSelector((state) => state.studio?.tracks || []);
   const trackHeight = useSelector((state) => state.studio?.trackHeight || 100);
   const patterns = useSelector((state) => state.studio?.patterns || {});
+  const soloTrackId = useSelector((state) => state.studio.soloTrackId);
 
   const timelineWidthPerSecond = 100;
 
@@ -991,6 +992,20 @@ const DTimeline = () => {
     };
   }, []);
 
+  // Mute functionality
+
+  useEffect(() => {
+    players.forEach(playerObj => {
+      const track = tracks.find(t => t.id === playerObj.trackId);
+      const isMuted = soloTrackId
+        ? soloTrackId !== track.id
+        : track.muted;
+      if (playerObj.player && track) {
+        playerObj.player.volume.value = isMuted ? -Infinity : 0;
+      }
+    });
+  }, [tracks, players, soloTrackId]);
+
   const handleMouseDown = (e) => {
     // Only handle playhead movement if not clicking on a track
     const isTrackElement = e.target.closest('[data-rnd]');
@@ -1211,6 +1226,8 @@ const DTimeline = () => {
                     width: "100%",
                     height: `${trackHeight}px`,
                     zIndex: 0,
+                    opacity: (soloTrackId ? soloTrackId !== track.id : track.muted) ? 0.5 : 1,
+                    pointerEvents: "auto",
                   }}
                 >
                   <TimelineTrack
