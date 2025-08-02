@@ -41,6 +41,7 @@ import Rotary from "./components/Rotary";
 import StereoChorus from "./components/StereoChorus";
 import Clipper from "./components/Clipper";
 import Crusher from "./components/Crusher";
+import DTimeline from './components/DTimeline';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -87,6 +88,7 @@ function App() {
 
           <Route path='/sidebar' element={<ThemeProvider><Sidebar2 /></ThemeProvider>} >
             <Route path='timeline' element={<Timeline />} />
+            <Route path='dtimeline' element={<DTimeline />} />
             <Route path='knob' element={<Knob />} />
             <Route path='loop' element={<Loops />} />
             <Route path="effects" element={<Effects />} />

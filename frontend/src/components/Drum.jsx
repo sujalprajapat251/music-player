@@ -71,6 +71,29 @@ const DrumPadMachine = () => {
         { id: 'T', label: 'T', audioUrl: '/Audio/Tasty/t.mp3' },
         { id: 'J', label: 'J', audioUrl: '/Audio/Tasty/j.mp3' },
       ]
+    },
+    {
+      name: "Muffle Kit",
+      type:"Machine",
+      color: '#7c3aed',
+      pads: [
+        { id: 'Q', label: 'Q', audioUrl: '/Audio/Muffled/q.mp3' },
+        { id: '1', label: '1', audioUrl: '/Audio/Muffled/1.mp3' },
+        { id: 'E', label: 'E', audioUrl: '/Audio/Muffled/e.mp3' },
+        { id: '8', label: '8', audioUrl: '/Audio/Muffled/8.mp3' },
+        { id: 'D', label: 'D', audioUrl: '/Audio/Muffled/d.mp3' },
+        { id: 'O', label: 'O', audioUrl: '/Audio/Muffled/o.mp3' },
+        { id: 'A', label: 'A', audioUrl: '/Audio/Muffled/a.mp3' },
+        { id: 'U', label: 'U', audioUrl: '/Audio/Muffled/u.mp3' },
+        { id: 'X', label: 'X', audioUrl: '/Audio/Muffled/x.mp3' },
+        { id: 'T', label: 'T', audioUrl: '/Audio/Muffled/t.mp3' },
+        { id: 'J', label: 'J', audioUrl: '/Audio/Muffled/j.mp3' },
+        { id: 'H', label: 'H', audioUrl: '/Audio/Muffled/h.mp3' },
+        { id: 'K', label: 'K', audioUrl: '/Audio/Muffled/k.mp3' },
+        { id: 'Y', label: 'Y', audioUrl: '/Audio/Muffled/y.mp3' },
+        { id: '9', label: '9', audioUrl: '/Audio/Muffled/9.mp3' },
+        { id: '7', label: '7', audioUrl: '/Audio/Muffled/7.mp3' },
+      ]
     }
   ];
 
@@ -395,7 +418,7 @@ const DrumPadMachine = () => {
   };
 
   return (
-    <div className="w-full h-screen bg-gray-900 text-white overflow-hidden">
+    <div className="w-full  bg-gray-900 text-white ">
       {/* Top Navigation */}
       <div className="flex justify-center items-center py-4 border-b border-gray-700">
         <div className="flex space-x-8">
