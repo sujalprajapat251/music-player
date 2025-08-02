@@ -12,16 +12,23 @@ import headphone from "../Images/headphone.svg";
 import mute from "../Images/mute.svg";
 import more from "../Images/more.svg";
 import TrackMenu from "./TrackMenu";
-import { renameTrack } from "../Redux/Slice/studio.slice";
+import { renameTrack, setCurrentTrackId } from "../Redux/Slice/studio.slice";
 import FreezeIcon from "../Images/freeze.svg";
 
 const Sidebar2 = () => {
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
   const [editingTrackId, setEditingTrackId] = useState(null);
-const [editingName, setEditingName] = useState("");
+  const [editingName, setEditingName] = useState("");
   const tracks = useSelector((state) => state.studio.tracks);
   const trackHeight = useSelector((state) => state.studio.trackHeight);
   const dispatch = useDispatch();
+
+  const currentTrackId = useSelector((state) => state.studio.currentTrackId);
+
+
+  const handleChangeTrack = (trackId) => {
+    dispatch(setCurrentTrackId(trackId));
+  }
 
   return (
     <>
@@ -36,20 +43,21 @@ const [editingName, setEditingName] = useState("");
             {(tracks || []).map((track, idx) => (
               <div
                 key={track.id}
-                className={`flex items-center justify-between px-3 border-b border-[#1414141A] dark:border-[#FFFFFF1A] bg-[#232323]`}
-                style={{ 
+                className={`flex items-center justify-between px-3 border-b border-[#1414141A] dark:border-[#FFFFFF1A] bg-[#232323] cursor-pointer ${track.id === currentTrackId ? 'border-l-4 border-[#a33bff]' : ''
+                  }`}
+                style={{
                   height: `${trackHeight + 1}px`, // 8px for padding
                   minHeight: `${trackHeight + 1}px`
                 }}
+                onClick={() => handleChangeTrack(track.id)}
               >
                 <div className="flex items-center w-16 justify-center">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    track.frozen ? 'bg-[#2a2a2a]' : 'bg-black'
-                  }`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${track.frozen ? 'bg-[#2a2a2a]' : 'bg-black'
+                    }`}>
                     <img src={mic} alt="mic" className={track.frozen ? 'opacity-60' : ''} />
                   </div>
                 </div>
-                
+
                 <div className="flex flex-col border-e-[0.5px] border-[#FFFFFF1A] pe-2 flex-1">
                   <div className="flex items-center gap-2">
                     {editingTrackId === track.id ? (
@@ -78,17 +86,16 @@ const [editingName, setEditingName] = useState("");
                         }}
                       />
                     ) : (
-                      <span className={`font-bold text-sm truncate ${
-                        track.frozen ? 'text-[#4CAF50]' : 'text-white'
-                      }`}>
+                      <span className={`font-bold text-sm truncate ${track.frozen ? 'text-[#4CAF50]' : 'text-white'
+                        }`}>
                         {track.name || `Track ${idx + 1}`}
                       </span>
                     )}
                     {track.frozen && (
-                      <img 
-                        src={FreezeIcon} 
-                        alt="Frozen" 
-                        className="w-4 h-4 opacity-80" 
+                      <img
+                        src={FreezeIcon}
+                        alt="Frozen"
+                        className="w-4 h-4 opacity-80"
                         style={{ filter: "invert(1) brightness(1.5)" }}
                       />
                     )}
@@ -100,12 +107,12 @@ const [editingName, setEditingName] = useState("");
                     <span className="w-8 h-8 rounded-full bg-transparent">
                       <img src={tk} alt="" className={`w-full h-full opacity-60`} />
                     </span>
-                   <span>
-                   <VolumeKnob />
-                   </span>
+                    <span>
+                      <VolumeKnob />
+                    </span>
                   </div>
                 </div>
-                
+
                 <div className="flex flex-col justify-between items-end h-full w-20">
                   <TrackMenu
                     trackId={track.id}
@@ -126,7 +133,7 @@ const [editingName, setEditingName] = useState("");
                 </div>
               </div>
             ))}
-            
+
             {/* Add New Track Button */}
             <div
               className="flex items-center justify-center gap-2 py-3 px-4 text-secondary-light dark:text-secondary-dark bg-[#1414141A] dark:bg-[#FFFFFF1A] hover:bg-[#232323] cursor-pointer"
@@ -138,7 +145,7 @@ const [editingName, setEditingName] = useState("");
             </div>
           </div>
         </div>
-        
+
         <div className="w-[80%] sm:w-[77%] md:w-[78%] lg:w-[80%] xl:w-[83%] 2xl:w-[85%] bg-primary-light dark:bg-primary-dark">
           <Outlet />
         </div>

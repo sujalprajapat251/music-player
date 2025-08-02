@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react'
 import { Piano, KeyboardShortcuts, MidiNumbers } from 'react-piano';
 import 'react-piano/dist/styles.css';
 import Soundfont from 'soundfont-player';
+import { useSelector, useDispatch } from "react-redux";
 import { IoClose } from "react-icons/io5";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { GiPianoKeys } from "react-icons/gi";
@@ -14,8 +15,11 @@ import E from "../Images/e.svg";
 import F from "../Images/f.svg";
 import G from "../Images/g.svg";
 import Am7 from "../Images/am7.svg";
-import { FaPlus } from "react-icons/fa6";
+import { FaPlus, FaStop } from "react-icons/fa6";
 import music from "../Images/playingsounds.svg";
+import BottomToolbar from './Layout/BottomToolbar';
+import { setRecordingAudio } from '../Redux/Slice/studio.slice';
+
 
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
@@ -334,8 +338,8 @@ const other = [
 
 
 const Pianodemo = () => {
-
-    const [showOffcanvas1, setShowOffcanvas1] = useState(false);
+    const dispatch = useDispatch();
+    const [showOffcanvas1, setShowOffcanvas1] = useState(true);
     const [autoChords, setAutoChords] = useState(false);
     const [selectedButtons, setSelectedButtons] = useState({
         basic: null,
@@ -348,20 +352,31 @@ const Pianodemo = () => {
     const [activePianoSection, setActivePianoSection] = useState(0); // 0: Low, 1: Middle, 2: High
     const [strumValue, setStrumValue] = useState(0);
 
-    const audioContextRef = useRef(null);
+    // const audioContextRef = useRef(null);
     const pianoRef = useRef(null);
     const activeAudioNodes = useRef({});
     const selectedInstrument = INSTRUMENTS[currentInstrumentIndex].id;
 
+    const getIsRecording = useSelector((state) => state.studio.isRecording);
+
     useEffect(() => {
-        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-        Soundfont.instrument(audioContextRef.current, selectedInstrument).then((piano) => {
-            pianoRef.current = piano;
-        });
-        return () => {
-            audioContextRef.current && audioContextRef.current.close();
-        };
-    }, [selectedInstrument]);
+        if (getIsRecording) {
+            hendleRecord();      // start recording
+        } else {
+            hendleStopRecord();  // stop recording
+        }
+    }, [getIsRecording]);
+
+
+    // useEffect(() => {
+    //     audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    //     Soundfont.instrument(audioContextRef.current, selectedInstrument).then((piano) => {
+    //         pianoRef.current = piano;
+    //     });
+    //     return () => {
+    //         audioContextRef.current && audioContextRef.current.close();
+    //     };
+    // }, [selectedInstrument]);
 
     const firstNote = MidiNumbers.fromNote('C0');
     const lastNote = MidiNumbers.fromNote('C5');
@@ -371,14 +386,56 @@ const Pianodemo = () => {
         keyboardConfig: KeyboardShortcuts.HOME_ROW,
     });
 
+
+
+    const [recordedNotes, setRecordedNotes] = useState([]);
+
+    const audioContextRef = useRef(null);
+    const mediaRecorderRef = useRef(null);
+    const recordedChunksRef = useRef([]);
+    const destinationRef = useRef(null);
+
+    useEffect(() => {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const destination = audioContext.createMediaStreamDestination();
+        const gainNode = audioContext.createGain(); // controls volume, optional
+
+        gainNode.connect(audioContext.destination);      // to speakers
+        gainNode.connect(destination);                   // to MediaRecorder
+
+        audioContextRef.current = audioContext;
+        destinationRef.current = destination;
+
+        Soundfont.instrument(audioContext, selectedInstrument, {
+            destination: gainNode, // sends to both speakers and recording
+        }).then((piano) => {
+            pianoRef.current = piano;
+        });
+
+        return () => {
+            audioContext && audioContext.close();
+        };
+    }, [selectedInstrument]);
+
+
+
     const playNote = (midiNumber) => {
+        setRecordedNotes((prevNotes) => [
+            ...prevNotes,
+            { midiNumber, time: Date.now(), type: 'play' },
+        ]);
         if (pianoRef.current) {
             const audioNode = pianoRef.current.play(midiNumber);
+            // audioNode.connect(destination.current);
             activeAudioNodes.current[midiNumber] = audioNode;
         }
     };
 
     const stopNote = (midiNumber) => {
+        setRecordedNotes((prevNotes) => [
+            ...prevNotes,
+            { midiNumber, time: Date.now(), type: 'stop' },
+        ]);
         if (activeAudioNodes.current[midiNumber]) {
             activeAudioNodes.current[midiNumber].stop();
             delete activeAudioNodes.current[midiNumber];
@@ -411,15 +468,54 @@ const Pianodemo = () => {
         return selectedButtons[section] === index;
     };
 
+    const [isRecording, setIsRecording] = useState(false);
+
+    const hendleRecord = () => {
+        const stream = destinationRef.current?.stream;
+        if (!stream) return;
+
+        recordedChunksRef.current = [];
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) recordedChunksRef.current.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunksRef.current, { type: 'audio/webm' });
+
+            console.log("blob :::: > ", blob);
+            dispatch(setRecordingAudio(blob));
+            // const url = URL.createObjectURL(blob);
+            // const a = document.createElement('a');
+            // a.href = url;
+            // a.download = 'piano_recording.webm';
+            // a.click();
+            // URL.revokeObjectURL(url);
+        };
+
+        mediaRecorder.start();
+        setIsRecording(true);
+    };
+
+    const hendleStopRecord = () => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            mediaRecorderRef.current.stop();
+        }
+        setIsRecording(false);
+    };
+
+
 
     return (
         <>
-            <button className='p-2 bg-white text-black' onClick={() => setShowOffcanvas1(prev => !prev)}>
+            {/* <button className='p-2 bg-white text-black' onClick={() => setShowOffcanvas1(prev => !prev)}>
                 on/off
-            </button>
+            </button> */}
             {showOffcanvas1 === true && (
                 <>
-                    <div class="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px]  lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[516px]" tabindex="-1" aria-labelledby="drawer-swipe-label">
+                    <div className="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px]  lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[516px]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
                         {/* Static Navbar with Tabs */}
                         <div className="  border-b border-[#FFFFFF1A] h-full">
                             <div className=" bg-[#1F1F1F] flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
@@ -481,6 +577,19 @@ const Pianodemo = () => {
                                                     </button>
                                                 </div>
                                             </div>
+
+                                            {/* {isRecording ? (<button onClick={hendleStopRecord} className="cursor-pointer">
+                                                <FaStop />
+                                            </button>
+                                            ) :
+                                                (<button onClick={hendleRecord} className="cursor-pointer">
+                                                    <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
+                                                        <p className="rounded-full p-[3px] sm:p-[3px] lg:p-2 bg-[#FF6767]"></p>
+                                                        <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px]">Rec</p>
+                                                    </div>
+                                                </button>)
+                                            } */}
+
 
                                             {/* Audio Effect Knobs */}
                                             <div className="flex space-x-1 md600:space-x-2 lg:space-x-4 2xl:space-x-6">
@@ -592,6 +701,7 @@ const Pianodemo = () => {
 
                                                         {activePianoSection === 0 && (
                                                             <Piano
+                                                                // audioContext={audioContext.current}
                                                                 noteRange={{ first: MidiNumbers.fromNote('C0'), last: MidiNumbers.fromNote('B2') }}
                                                                 playNote={playNote}
                                                                 stopNote={stopNote}
@@ -601,6 +711,7 @@ const Pianodemo = () => {
                                                         )}
                                                         {activePianoSection === 1 && (
                                                             <Piano
+                                                                // audioContext={audioContext.current}
                                                                 noteRange={{ first: MidiNumbers.fromNote('C3'), last: MidiNumbers.fromNote('B5') }}
                                                                 playNote={playNote}
                                                                 stopNote={stopNote}
@@ -610,6 +721,7 @@ const Pianodemo = () => {
                                                         )}
                                                         {activePianoSection === 2 && (
                                                             <Piano
+                                                                // audioContext={audioContext.current}
                                                                 noteRange={{ first: MidiNumbers.fromNote('C5'), last: MidiNumbers.fromNote('C8') }}
                                                                 playNote={playNote}
                                                                 stopNote={stopNote}

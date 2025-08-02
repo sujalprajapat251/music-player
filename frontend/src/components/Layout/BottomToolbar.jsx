@@ -5,13 +5,17 @@ import media1 from "../../Images/media1Icon.svg";
 import media2 from "../../Images/media2Icon.svg";
 import media3 from "../../Images/media3Icon.svg";
 import media4 from "../../Images/media4Icon.svg";
+import pauseIcon from "../../Images/pausewhite.svg";
 import Strange from "../../Images/StrangeIcon.svg";
 import darkStrange from "../../Images/darkStrangeIcon.svg";
 import { IoIosArrowDown } from 'react-icons/io';
 import { useTheme } from '../../Utils/ThemeContext';
-import { ReactComponent as Clears} from "../../Images/clearIcons.svg";
+import { ReactComponent as Clears } from "../../Images/clearIcons.svg";
 import { ReactComponent as Tempobutton } from "../../Images/Tempobutton.svg";
-import { ReactComponent as Tick} from "../../Images/Tick.svg";
+import { ReactComponent as Tick } from "../../Images/Tick.svg";
+import { FaStop } from 'react-icons/fa6';
+import { useDispatch } from 'react-redux';
+import { setRecording } from '../../Redux/Slice/studio.slice';
 
 const BottomToolbar = () => {
     const [volume, setVolume] = useState(50);
@@ -31,6 +35,7 @@ const BottomToolbar = () => {
     const [selectedMenuitems, setSelectedMenuitems] = useState('Click');
     const [selectedCountIn, setSelectedCountIn] = useState('2 bars');
 
+    const dispatch = useDispatch();
 
     useEffect(() => {
         const handleClickOutside1 = (event) => {
@@ -136,9 +141,21 @@ const BottomToolbar = () => {
 
     const { isDark } = useTheme();
 
+    const [isRecording, setIsRecording] = useState(false);
+
+    const hendleRecord = () => {
+        setIsRecording(true);
+        dispatch(setRecording(true));
+    }
+
+    const hendleStopRecord = () => {
+        setIsRecording(false);
+        dispatch(setRecording(false));
+    }
+
     return (
         <>
-            <div className="flex justify-center md600:justify-between bg-primary-light dark:bg-primary-dark border-t border-[#1414141A] dark:border-[#FFFFFF1A] px-2 py-2 sm:px-3 sm:py-1 md:px-5 md:py-2 xl:px-7">
+            <div className=" w-full flex justify-center md600:justify-between bg-primary-light dark:bg-primary-dark border-t border-[#1414141A] dark:border-[#FFFFFF1A] px-2 py-2 sm:px-3 sm:py-1 md:px-5 md:py-2 xl:px-7 absolute z-[99999999]">
                 <div className='flex gap-2 sm:gap-3 md:gap-3 lg:gap-5 2xl:gap-7 items-center'>
                     <HiOutlineSpeakerWave className='text-secondary-light dark:text-secondary-dark text-[16px] md:text-[20px] lg:text-[24px]' />
                     <div className=" md:w-32 lg:w-40 2xl:w-48  pb-1 hidden md:block">
@@ -157,10 +174,17 @@ const BottomToolbar = () => {
                         />
                     </div>
                     <p className="text-secondary-light dark:text-secondary-dark sm:text-[10px] md:text-[16px] lg:text-[18px] self-center hidden sm:block">00:00.0</p>
-                    <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
-                        <p className="rounded-full p-[3px] sm:p-[3px] lg:p-2 bg-[#FF6767]"></p>
-                        <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px]">Rec</p>
-                    </div>
+                    {isRecording ? (<button onClick={hendleStopRecord} className="cursor-pointer">
+                        <FaStop />
+                    </button>
+                    ) :
+                        (<button onClick={hendleRecord} className="cursor-pointer">
+                            <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
+                                <p className="rounded-full p-[3px] sm:p-[3px] lg:p-2 bg-[#FF6767]"></p>
+                                <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px]">Rec</p>
+                            </div>
+                        </button>)
+                    }
                     <div className="flex gap-1 sm:gap-2 lg:gap-3">
                         <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2">
                             <img src={media1} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
@@ -169,7 +193,7 @@ const BottomToolbar = () => {
                             <img src={media2} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </div>
                         <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2">
-                            <img src={media3} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
+                            <img src={isRecording ? pauseIcon : media3} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </div>
                         <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2">
                             <img src={media4} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />

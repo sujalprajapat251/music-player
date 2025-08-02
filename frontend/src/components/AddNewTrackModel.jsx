@@ -1,16 +1,16 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { ReactComponent as Track1 } from '../Images/track1.svg'
 import { ReactComponent as Track2 } from '../Images/track2.svg'
 import { ReactComponent as Track3 } from '../Images/track3.svg'
 import { ReactComponent as Track4 } from '../Images/track4.svg'
-import {ReactComponent as Track5} from '../Images/track5.svg'
-import {ReactComponent as Track6} from '../Images/track6.svg'
-import {ReactComponent as Track7} from '../Images/track7.svg'
-import {ReactComponent as Track8} from '../Images/track8.svg'
-import {ReactComponent as ImpIcon} from '../Images/import.svg'
-import {ReactComponent as Loop} from '../Images/loop.svg'
+import { ReactComponent as Track5 } from '../Images/track5.svg'
+import { ReactComponent as Track6 } from '../Images/track6.svg'
+import { ReactComponent as Track7 } from '../Images/track7.svg'
+import { ReactComponent as Track8 } from '../Images/track8.svg'
+import { ReactComponent as ImpIcon } from '../Images/import.svg'
+import { ReactComponent as Loop } from '../Images/loop.svg'
 import { useDispatch } from "react-redux";
-import { addTrack } from "../Redux/Slice/studio.slice";
+import { addTrack, setTrackType } from "../Redux/Slice/studio.slice";
 
 const instrumentOptions = [
   {
@@ -71,6 +71,7 @@ const AddNewTrackModel = ({ onClose }) => {
       // No url property!
     };
     dispatch(addTrack(newTrack));
+    dispatch(setTrackType(trackType));
     onClose();
   };
 
