@@ -26,6 +26,6 @@ export const rootReducer = combineReducers({
     studio: studioReducer,
     subscribe: subscribeReducer,
     category: categoryReducer,
-    pattern:patternReducer
+    pattern:patternReducer,
     effects: effectsReducer,
 });
