@@ -66,7 +66,7 @@ const Loops = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const category = useSelector((state) => state.category?.category || []);
 
-    const { activeEffects, showEffectsLibrary } = useSelector((state) => state.effects);
+    const { activeEffects, showEffectsLibrary, effectsLibrary} = useSelector((state) => state.effects);
 
     useEffect(() => {
         dispatch(getAllCategory());
@@ -98,7 +98,7 @@ const Loops = () => {
     };
 
     const handleAddEffect = (effect) => {
-        if (activeEffects.length < 4) {
+        if (activeEffects?.length < effectsLibrary?.length) {
             dispatch(addEffect(effect));
         }
     };

@@ -359,6 +359,8 @@ const Effects2 = () => {
 
     // Get effects state from Redux
     const { activeEffects, showEffectsLibrary, effectsLibrary } = useSelector((state) => state.effects);
+    console.log("activeEffects",activeEffects, "showEffectsLibrary", showEffectsLibrary, );
+    
 
     // Local state for effects library
     const [effectsSearchTerm, setEffectsSearchTerm] = useState('');
@@ -521,14 +523,14 @@ const Effects2 = () => {
         <div class="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[337px] md600:bottom-[363px] md:bottom-[450px]  lg:bottom-[483px] xl:bottom-[492px] 2xl:bottom-[516px]" tabindex="-1" aria-labelledby="drawer-swipe-label">
             {/* Static Navbar with Tabs */}
             <div className="  border-b border-[#FFFFFF1A] h-full">
-                <div className=" bg-[#1F1F1F] flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
+                <div className=" bg-[#1F1F1F] flex items-center px-1md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                     {/* Close Button */}
                     <div>
                         <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => setShowOffcanvas(false)} />
                     </div>
                 </div>
                 {/* Tabs */}
-                <div className=" bg-[#1F1F1F] flex space-x-2 sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3">
+                <div className=" bg-[#1F1F1F] flex space-x-2 pb-3 sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3">
                     {['Instruments', 'Effects'].map((tab) => (
                         <button key={tab} onClick={() => setActiveTab(tab)} className={`text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white ' : 'text-gray-400 hover:text-white'}`}>
                             {tab}
@@ -679,42 +681,35 @@ const Effects2 = () => {
                     )}
 
                     {activeTab === 'Effects' && (
-                        <div className="w-full h-full flex items-center justify-center p-4">
-                            <div className="flex gap-4 w-full max-w-6xl justify-center flex-wrap">
-                                {activeEffects.map((effect) => (
-                                    <div key={effect.instanceId} className="w-64 h-80 bg-[#1a1a1a] rounded-lg overflow-hidden shadow-lg text-white flex flex-col">
-                                        <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: effect.color }}>
-                                            <button className="text-white text-lg">🔌</button>
-                                            <h2 className="text-sm font-medium">{effect.name}</h2>
-                                            <button className="text-white text-lg hover:text-red-400 transition-colors" onClick={() => handleRemoveEffect(effect.instanceId)}>✖</button>
-                                        </div>
-                                        <div className="flex-1 flex flex-col items-center justify-center p-6">
-                                            <div className="grid grid-cols-2 gap-6 mb-6">
-                                                {effect.parameters.slice(0, 2).map((param, index) => (
-                                                    <div key={index} className="flex flex-col items-center">
-                                                        <Knob label={param.name} min={param.min} max={param.max} defaultAngle={param.defaultAngle} />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            {effect.parameters.length > 2 && (
-                                                <div className="flex flex-col items-center">
-                                                    <Knob label={effect.parameters[2].name} min={effect.parameters[2].min} max={effect.parameters[2].max} defaultAngle={effect.parameters[2].defaultAngle} />
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                                {activeEffects.length < 4 && (
-                                    <div className="w-64 h-80 bg-[#1a1a1a] rounded-lg flex flex-col items-center justify-center text-white cursor-pointer hover:bg-[#2a2a2a] transition-colors">
-                                        <div className="w-14 h-14 bg-white text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4" >+</div>
-                                        <p className="text-center text-sm leading-snug">Select From the<br />effects library</p>
-                                    </div>
+                        <div className="w-full overflow-x-auto">
+                        <div className="flex items-center p-4 min-w-max bg-black">
+                          <div className="flex gap-4 min-w-max">
+                            {activeEffects.map((effect) => (
+                              <div key={effect.instanceId} className="w-64 sm:w-56 md:w-64 h-[342px] bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-white flex flex-col shrink-0">
+                                <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: effect.color }}>
+                                  <button className="text-white text-lg">🔌</button>
+                                  <h2 className="text-sm font-medium text-center flex-1">{effect.name}</h2>
+                                  <button className="text-white text-lg hover:text-red-400 transition-colors" onClick={() => handleRemoveEffect(effect.instanceId)}>✖</button>
+                                </div>
+                                {effect.image && (
+                                  <div className="flex-1 w-full flex items-center justify-center">
+                                    <img src={effect.image} alt={effect.name} className="w-full h-full object-cover"/>
+                                  </div>
                                 )}
-                                {Array.from({ length: 4 - activeEffects.length - 1 }, (_, index) => (
-                                    <div key={index} className="w-64 h-80 bg-[#1a1a1a] rounded-lg"></div>
-                                ))}
-                            </div>
+                              </div>
+                            ))}
+                            {activeEffects.length < effectsLibrary?.length && (
+                              <div className="w-64 sm:w-56 md:w-64 h-[342px] bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-white cursor-pointer hover:bg-[#2a2a2a] transition-colors shrink-0">
+                                <div className="w-14 h-14 bg-white text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
+                                <p className="text-center text-sm leading-snug">Select from the<br />effects library</p>
+                              </div>
+                            )}
+                            {Array.from({ length: 3 - activeEffects.length - 1 }, (_, index) => (
+                              <div key={index} className="w-64 sm:w-56 md:w-64 h-[342px] bg-[#1a1a1a] rounded-xl shrink-0"></div>
+                            ))}
+                          </div>
                         </div>
+                      </div>                      
                     )}
                 </div>
             </div>

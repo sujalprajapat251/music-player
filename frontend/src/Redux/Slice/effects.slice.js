@@ -162,18 +162,16 @@ const effectsSlice = createSlice({
     reducers: {
         addEffect: (state, action) => {
             const effect = action.payload;
-            if (state.activeEffects.length < 4) { // Limit to 4 effects
-                const newEffect = {
-                    ...effect,
-                    instanceId: Date.now(),
-                    parameters: EFFECT_CONFIGS[effect.name]?.parameters || [
-                        { name: "Parameter 1", min: -135, max: 135, defaultAngle: 0 },
-                        { name: "Parameter 2", min: -135, max: 135, defaultAngle: 45 },
-                        { name: "Parameter 3", min: -135, max: 135, defaultAngle: 90 }
-                    ]
-                };
-                state.activeEffects.push(newEffect);
-            }
+            const newEffect = {
+                ...effect,
+                instanceId: Date.now(),
+                parameters: EFFECT_CONFIGS[effect.name]?.parameters || [
+                    { name: "Parameter 1", min: -135, max: 135, defaultAngle: 0 },
+                    { name: "Parameter 2", min: -135, max: 135, defaultAngle: 45 },
+                    { name: "Parameter 3", min: -135, max: 135, defaultAngle: 90 }
+                ]
+            };
+            state.activeEffects.push(newEffect);
         },
         removeEffect: (state, action) => {
             const instanceId = action.payload;
