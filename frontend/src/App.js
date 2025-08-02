@@ -42,6 +42,7 @@ import StereoChorus from "./components/StereoChorus";
 import Clipper from "./components/Clipper";
 import Crusher from "./components/Crusher";
 import DTimeline from './components/DTimeline';
+import TimelineDemo from './components/TimelineDemo';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -89,6 +90,8 @@ function App() {
           <Route path='/sidebar' element={<ThemeProvider><Sidebar2 /></ThemeProvider>} >
             <Route path='timeline' element={<Timeline />} />
             <Route path='dtimeline' element={<DTimeline />} />
+            <Route path='timeline' element={<TimelineDemo />} />
+          <Route path='timelinedemo' element={<TimelineDemo />} />
             <Route path='knob' element={<Knob />} />
             <Route path='loop' element={<Loops />} />
             <Route path="effects" element={<Effects />} />
