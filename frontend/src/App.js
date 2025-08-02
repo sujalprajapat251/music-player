@@ -32,6 +32,7 @@ import Effects from './components/Effects';
 import Effects2 from './components/Effects2';
 import DTimeline from './components/DTimeline';
 import TimelineDemo from './components/TimelineDemo';
+import SDemo from './components/SDemo';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -73,6 +74,8 @@ function App() {
             <Route path='knob' element={<Knob />} />
             <Route path='loop' element={<Loops />} />
             <Route path="effects" element={<Effects />} />
+            <Route path="savani" element={<SDemo />} />
+
            
           </Route>
         </Routes>
