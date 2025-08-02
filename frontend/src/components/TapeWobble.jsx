@@ -20,6 +20,7 @@ function describeArc(cx, cy, r, startAngle, endAngle) {
     ].join(" ");
 }
 
+// Compact Badge Tooltip Component
 function BadgeTooltip({ value, visible }) {
     if (!visible) return null;
 
@@ -28,7 +29,7 @@ function BadgeTooltip({ value, visible }) {
 
     return (
         <div
-            className="absolute -top-7 right-7 bg-[#409C9F] text-white text-xs px-2 py-1 rounded-md shadow-lg pointer-events-none z-10 font-medium"
+            className="absolute -top-6 right-1 bg-[#409C9F] text-white text-xs px-2 py-1 rounded-md shadow-lg pointer-events-none z-10 font-medium"
             style={{
                 minWidth: '32px',
                 textAlign: 'center'
@@ -39,8 +40,7 @@ function BadgeTooltip({ value, visible }) {
     );
 }
 
-
-function Knob3({ label = "Bite", min = -135, max = 135, defaultAngle }) {
+function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const [angle, setAngle] = useState(defaultAngle ?? min);
     const [showTooltip, setShowTooltip] = useState(false);
     const knobRef = useRef(null);
@@ -51,10 +51,10 @@ function Knob3({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     // Tailwind-consistent responsive sizes
     const getResponsiveSize = () => {
         if (typeof window !== 'undefined') {
-            if (window.innerWidth >= 1440) return 100; // 2xl
-            if (window.innerWidth >= 1280) return 80; // xl  
-            if (window.innerWidth >= 1024) return 60; // lg
-            if (window.innerWidth >= 768) return 40;  // md
+            if (window.innerWidth >= 1440) return 50; // 2xl
+            if (window.innerWidth >= 1280) return 40; // xl  
+            if (window.innerWidth >= 1024) return 36; // lg
+            if (window.innerWidth >= 768) return 32;  // md
             if (window.innerWidth >= 640) return 28;  // sm
             return 20; // xs (mobile)
         }
@@ -93,6 +93,7 @@ function Knob3({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const radius = (size - stroke) / 2;
     const center = size / 2;
 
+
     const onMouseDown = (e) => {
         dragging.current = true;
         lastY.current = e.clientY;
@@ -118,7 +119,6 @@ function Knob3({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
     };
-
 
     const onMouseEnter = () => {
         if (!dragging.current) {
@@ -181,7 +181,7 @@ function Knob3({ label = "Bite", min = -135, max = 135, defaultAngle }) {
                         transform: `translateX(-50%) rotate(${angle}deg)`,
                     }}
                 />
-                    <BadgeTooltip value={angle} visible={showTooltip} />
+                 <BadgeTooltip value={angle} visible={showTooltip} />
             </div>
             <div className='text-[8px] md600:text-[10px] md:text-[12px] 2xl:text-[16px] mt-1 items-center text-[#aaa]'
                 style={{
@@ -194,26 +194,34 @@ function Knob3({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     );
 }
 
-
-
-const Rotary = () => {
+const TapeWobble = () => {
     return (
         <div className='bg-[#141414]'>
             <div className='flex justify-between items-center w-[256px] h-[52px] rounded-t-lg bg-[#409C9F] px-3'>
                 <FaPowerOff className='text-white text-[20px]' />
-                <p className='text-white text-[16px]'>Rotary</p>
+                <p className='text-white text-[16px]'>Tape Wobble</p>
                 <IoClose className='text-white text-[20px]' />
             </div>
-            <div className='w-[256px] h-[268px] bg-[#302f2f] flex items-center justify-center'>
-                {/* Tone Knob - Top Right */}
-                <div className="">
-                    <Knob3 label="Rate" min={-135} max={135} defaultAngle={0} />
-                </div>
+            <div className='w-[256px] h-[268px] bg-[#302f2f] p-8'>
+                <div className="grid grid-cols-2 gap-10 items-center justify-center">
+                    <div className="">
+                        <Knob1 label="Low cut" min={-135} max={135} defaultAngle={0} />
+                    </div>
 
-               
+                    <div className="">
+                        <Knob1 label="High cut" min={-135} max={135} defaultAngle={90} />
+                    </div>
+                    <div className="">
+                        <Knob1 label="Gain" min={-135} max={135} defaultAngle={0} />
+                    </div>
+
+                    <div className="">
+                        <Knob1 label="Mix" min={-135} max={135} defaultAngle={90} />
+                    </div>
+                </div>
             </div>
         </div>
     )
 }
 
-export default Rotary
+export default TapeWobble
