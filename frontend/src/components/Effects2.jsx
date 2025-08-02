@@ -68,7 +68,8 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
             if (window.innerWidth >= 1024) return 48; // lg
             if (window.innerWidth >= 768) return 44;  // md
             if (window.innerWidth >= 640) return 40;  // sm
-            return 30; // xs (mobile)
+            if (window.innerWidth >= 425) return 36;  // sm
+            return 26; // xs (mobile)
         }
         return 56;
     };

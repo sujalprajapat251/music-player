@@ -30,6 +30,17 @@ import Knob from './components/Knob';
 import Pattern from './components/Pattern';
 import Effects from './components/Effects';
 import Effects2 from './components/Effects2';
+import Fuzz from './components/Fuzz';
+import Overdrive from "./components/Overdrive";
+import AutoPan from "./components/AutoPan";
+import AutoWah from "./components/AutoWah";
+import Chorus from "./components/Chorus";
+import Flanger from "./components/Flanger";
+import Phaser from "./components/Phaser";
+import Rotary from "./components/Rotary";
+import StereoChorus from "./components/StereoChorus";
+import Clipper from "./components/Clipper";
+import Crusher from "./components/Crusher";
 import DTimeline from './components/DTimeline';
 import TimelineDemo from './components/TimelineDemo';
 import SDemo from './components/SDemo';
@@ -53,6 +64,17 @@ function App() {
           <Route path='ani' element={<Animation />} />
           <Route path='piano' element={<Piano />} />
           <Route path='effcts2' element={<Effects2 />} />
+          <Route path='fuzz' element={<Fuzz />} />
+          <Route path='Overdrive' element={<Overdrive />} />
+          <Route path='autopan' element={<AutoPan />} />
+          <Route path='autowah' element={<AutoWah />} />
+          <Route path="Chorus" element={<Chorus />} />
+          <Route path="Flanger" element={<Flanger />} />
+          <Route path="Phaser" element={<Phaser />} />
+          <Route path="rotery" element={<Rotary />} />
+          <Route path="StereoChorus" element={<StereoChorus />} />
+          <Route path='Clipper' element={<Clipper />} />
+          <Route path='Crusher' element={<Crusher />} />
           
 
           <Route path='/login' element={<Login />} />
