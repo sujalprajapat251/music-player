@@ -13,6 +13,8 @@ import offce from "../Images/offce.svg";
 import GridSetting from "./GridSetting";
 import MusicOff from "./MusicOff";
 import { Rnd } from "react-rnd";
+import rightSize from '../Images/right-size.svg'
+import LeftSize from '../Images/left-size.svg'
 
 // Custom Resizable Trim Handle Component
 const ResizableTrimHandle = ({ 
@@ -380,27 +382,207 @@ const TimelineTrack = ({
         gridSpacing={gridSpacing} // Pass grid spacing to the handle
       />
 
-      {/* Trim indicators */}
-      {/* {(trimStart > 0 || actualTrimEnd < duration) && (
+    
+    </Rnd>
+  );
+};
+
+// Loop Bar Component
+const LoopBar = ({ 
+  audioDuration, 
+  loopStart, 
+  loopEnd, 
+  onLoopChange, 
+  timelineWidthPerSecond,
+  gridSpacing = 0.25,
+  currentTime,
+  isLoopEnabled = false
+}) => {
+  const [isDraggingStart, setIsDraggingStart] = useState(false);
+  const [isDraggingEnd, setIsDraggingEnd] = useState(false);
+  const [isDraggingLoop, setIsDraggingLoop] = useState(false);
+  const dragStartRef = useRef({ startX: 0, startLoopStart: 0, startLoopEnd: 0 });
+
+  // Grid snapping function
+  const snapToGrid = useCallback((time) => {
+    if (!gridSpacing || gridSpacing <= 0) return time;
+    const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+    return Math.max(0, Math.min(audioDuration, gridPosition));
+  }, [gridSpacing, audioDuration]);
+
+  const handleMouseDown = useCallback((e, type) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const rect = e.currentTarget.closest('.loop-bar-container').getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const width = rect.width;
+    const duration = audioDuration;
+    
+    if (width <= 0 || duration <= 0) return;
+    
+    const rawTime = (x / width) * duration;
+    const time = Math.max(0, Math.min(duration, rawTime));
+    
+    dragStartRef.current = {
+      startX: e.clientX,
+      startLoopStart: loopStart,
+      startLoopEnd: loopEnd
+    };
+    
+    if (type === 'start') {
+      setIsDraggingStart(true);
+      const snappedTime = snapToGrid(time);
+      onLoopChange(snappedTime, loopEnd);
+    } else if (type === 'end') {
+      setIsDraggingEnd(true);
+      const snappedTime = snapToGrid(time);
+      onLoopChange(loopStart, snappedTime);
+    } else if (type === 'loop') {
+      setIsDraggingLoop(true);
+    }
+    
+    const handleMouseMove = (moveEvent) => {
+      const deltaX = moveEvent.clientX - dragStartRef.current.startX;
+      const deltaTime = (deltaX / width) * duration;
+      
+      if (type === 'start') {
+        const newStart = Math.max(0, Math.min(loopEnd - gridSpacing, dragStartRef.current.startLoopStart + deltaTime));
+        const snappedStart = snapToGrid(newStart);
+        onLoopChange(snappedStart, loopEnd);
+      } else if (type === 'end') {
+        const newEnd = Math.max(loopStart + gridSpacing, Math.min(duration, dragStartRef.current.startLoopEnd + deltaTime));
+        const snappedEnd = snapToGrid(newEnd);
+        onLoopChange(loopStart, snappedEnd);
+      } else if (type === 'loop') {
+        const loopWidth = loopEnd - loopStart;
+        const newStart = Math.max(0, Math.min(duration - loopWidth, dragStartRef.current.startLoopStart + deltaTime));
+        const snappedStart = snapToGrid(newStart);
+        const snappedEnd = Math.min(duration, snappedStart + loopWidth);
+        onLoopChange(snappedStart, snappedEnd);
+      }
+    };
+    
+    const handleMouseUp = () => {
+      setIsDraggingStart(false);
+      setIsDraggingEnd(false);
+      setIsDraggingLoop(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [loopStart, loopEnd, audioDuration, onLoopChange, snapToGrid, gridSpacing]);
+
+  const startPosition = (loopStart / audioDuration) * 100;
+  const endPosition = (loopEnd / audioDuration) * 100;
+  const loopWidth = endPosition - startPosition;
+
+  return (
+    <div
+      className="loop-bar-container"
+      style={{
+        position: "absolute",
+        top: "80px", // Position right below the timeline ruler
+        left: 0,
+        width: "100%",
+        height: "30px",
+        background: "transparent",
+        zIndex: 5,
+        pointerEvents: "auto"
+      }}
+    >
+      {/* Loop Bar Background Track */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: "8px",
+          width: "100%",
+          height: "17px",
+          background: "#141414",
+          borderRadius: "2px",
+          border: "1px solid #444",
+          cursor: "pointer"
+        }}
+        onMouseDown={(e) => handleMouseDown(e, 'loop')}
+      />
+      
+      {/* Loop Region */}
+      <div
+        style={{
+          position: "absolute",
+          left: `${startPosition}%`,
+          top: "8px",
+          width: `${loopWidth}%`,
+          height: "18px",
+          background: isLoopEnabled 
+            ? "linear-gradient(90deg, #FF8C00 0%, #FF6B35 100%)" 
+            : "linear-gradient(90deg, #FF8C00AA 0%, #FF6B35AA 100%)",
+          borderRadius: "4px",
+          border: `2px solid ${isLoopEnabled ? "#FF8C00" : "#FF8C0080"}`,
+          cursor: "move",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: isLoopEnabled 
+            ? "0 2px 8px rgba(255, 140, 0, 0.4)" 
+            : "0 1px 4px rgba(255, 140, 0, 0.2)",
+          transition: "all 0.2s ease"
+        }}
+        onMouseDown={(e) => handleMouseDown(e, 'loop')}
+      >
+        {/* Loop Start Handle */}
         <div
           style={{
             position: "absolute",
-            right: "8px",
-            top: "8px",
-            background: "rgba(173,0,255,0.9)",
+            left: "0px",
+            top: "-4px",
+            width: "12px",
+            height: "22px",
+            cursor: "ew-resize",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onMouseDown={(e) => handleMouseDown(e, 'start')}
+        >
+          <img src={LeftSize} alt="" />
+        </div>
+
+        {/* Loop End Handle */}
+        <div
+          style={{
+            position: "absolute",
+            right: "0px",
+            top: "-4px",
+            width: "12px",
+            height: "22px",
+            cursor: "ew-resize",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onMouseDown={(e) => handleMouseDown(e, 'end')}
+        >
+          <img src={rightSize} alt="" />
+        </div>
+
+        {/* Loop Icon */}
+        <div
+          style={{
             color: "white",
             fontSize: "10px",
-            padding: "2px 4px",
-            borderRadius: "2px",
-            zIndex: 10,
-            pointerEvents: "none",
             fontWeight: "bold",
+            textShadow: "0 1px 2px rgba(0,0,0,0.5)"
           }}
         >
-          ✂️ Trimmed
+         <img src={reverceIcon} alt="" />
         </div>
-      )} */}
-    </Rnd>
+      </div>
+
+    </div>
   );
 };
 
@@ -410,6 +592,9 @@ const Timeline = () => {
   const [audioDuration, setAudioDuration] = useState(150);
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [loopStart, setLoopStart] = useState(0);
+  const [loopEnd, setLoopEnd] = useState(10);
+  const [isLoopEnabled, setIsLoopEnabled] = useState(false);
   const svgRef = useRef(null);
   const timelineContainerRef = useRef(null);
   const playbackStartRef = useRef({ systemTime: 0, audioTime: 0 });
@@ -428,6 +613,22 @@ const Timeline = () => {
   const trackHeight = useSelector((state) => state.studio?.trackHeight || 100);
 
   const timelineWidthPerSecond = 100;
+
+  // Loop change handler
+  const handleLoopChange = useCallback((newStart, newEnd) => {
+    const gridSpacing = getGridSpacing(selectedGrid);
+    const snapToGrid = (time) => {
+      if (!gridSpacing || gridSpacing <= 0) return time;
+      const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+      return Math.max(0, Math.min(audioDuration, gridPosition));
+    };
+    
+    const snappedStart = snapToGrid(newStart);
+    const snappedEnd = snapToGrid(Math.max(snappedStart + gridSpacing, newEnd));
+    
+    setLoopStart(snappedStart);
+    setLoopEnd(snappedEnd);
+  }, [audioDuration, selectedGrid]);
 
   // Handle track position changes (drag) with grid snapping
   const handleTrackPositionChange = useCallback((trackId, newStartTime) => {
@@ -733,7 +934,7 @@ const Timeline = () => {
     }
   };
 
-  // Fixed animation loop to respect trim boundaries
+  // Fixed animation loop to respect trim boundaries and looping
   useEffect(() => {
     let localAnimationId = null;
 
@@ -742,9 +943,53 @@ const Timeline = () => {
         if (!isPlaying) return;
         
         const elapsedTime = (Date.now() - playbackStartRef.current.systemTime) / 1000;
-        const newTime = playbackStartRef.current.audioTime + elapsedTime;
+        let newTime = playbackStartRef.current.audioTime + elapsedTime;
 
-        if (newTime >= audioDuration) {
+        // Handle looping
+        if (isLoopEnabled && newTime >= loopEnd) {
+          newTime = loopStart;
+          playbackStartRef.current = {
+            systemTime: Date.now(),
+            audioTime: loopStart,
+          };
+          
+          // Stop all players and restart them at loop start
+          players.forEach((playerObj) => {
+            if (playerObj?.player && typeof playerObj.player.stop === 'function') {
+              try {
+                playerObj.player.stop();
+              } catch (error) {
+                // Silently ignore stop errors
+              }
+            }
+          });
+          
+          // Restart players that should be playing at loop start
+          players.forEach((playerObj) => {
+            if (playerObj?.player && typeof playerObj.player.start === 'function') {
+              const trackStartTime = playerObj.startTime || 0;
+              const trimStart = playerObj.trimStart || 0;
+              const trimEnd = playerObj.trimEnd || playerObj.duration;
+              
+              const trimmedTrackStart = trackStartTime;
+              const trimmedTrackEnd = trackStartTime + (trimEnd - trimStart);
+              
+              if (loopStart >= trimmedTrackStart && loopStart < trimmedTrackEnd) {
+                const offsetInTrimmedRegion = loopStart - trimmedTrackStart;
+                const startOffsetInOriginalAudio = trimStart + offsetInTrimmedRegion;
+                const remainingTrimmedDuration = (trimEnd - trimStart) - offsetInTrimmedRegion;
+                
+                if (remainingTrimmedDuration > 0) {
+                  try {
+                    playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
+                  } catch (error) {
+                    console.log("Track start error during loop:", error);
+                  }
+                }
+              }
+            }
+          });
+        } else if (!isLoopEnabled && newTime >= audioDuration) {
           setIsPlaying(false);
           setCurrentTime(audioDuration);
           players.forEach((playerObj) => {
@@ -756,51 +1001,52 @@ const Timeline = () => {
               }
             }
           });
-        } else {
-          setCurrentTime(newTime);
-          
-          // Update each player based on trim boundaries
-          players.forEach((playerObj) => {
-            if (playerObj?.player) {
-              const trackStartTime = playerObj.startTime || 0;
-              const trimStart = playerObj.trimStart || 0;
-              const trimEnd = playerObj.trimEnd || playerObj.duration;
-              
-              const trimmedTrackStart = trackStartTime;
-              const trimmedTrackEnd = trackStartTime + (trimEnd - trimStart);
-              
-              // Stop track if playhead moves beyond the trimmed end
-              if (newTime >= trimmedTrackEnd && playerObj.player.state === 'started') {
-                try {
-                  playerObj.player.stop();
-                } catch (error) {
-                  // Silently ignore stop errors
-                }
-              }
-              
-              // Start track if playhead enters the trimmed region
-              const previousTime = playbackStartRef.current.audioTime + ((elapsedTime - 1/60));
-              if (previousTime < trimmedTrackStart && 
-                  newTime >= trimmedTrackStart && 
-                  newTime < trimmedTrackEnd &&
-                  playerObj.player.state !== 'started') {
-                try {
-                  const offsetInTrimmedRegion = newTime - trimmedTrackStart;
-                  const startOffsetInOriginalAudio = trimStart + offsetInTrimmedRegion;
-                  const remainingTrimmedDuration = (trimEnd - trimStart) - offsetInTrimmedRegion;
-                  
-                  if (remainingTrimmedDuration > 0) {
-                    playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
-                  }
-                } catch (error) {
-                  console.log("Track start error during animation:", error);
-                }
+          return;
+        }
+
+        setCurrentTime(newTime);
+        
+        // Update each player based on trim boundaries
+        players.forEach((playerObj) => {
+          if (playerObj?.player) {
+            const trackStartTime = playerObj.startTime || 0;
+            const trimStart = playerObj.trimStart || 0;
+            const trimEnd = playerObj.trimEnd || playerObj.duration;
+            
+            const trimmedTrackStart = trackStartTime;
+            const trimmedTrackEnd = trackStartTime + (trimEnd - trimStart);
+            
+            // Stop track if playhead moves beyond the trimmed end
+            if (newTime >= trimmedTrackEnd && playerObj.player.state === 'started') {
+              try {
+                playerObj.player.stop();
+              } catch (error) {
+                // Silently ignore stop errors
               }
             }
-          });
-          
-          localAnimationId = requestAnimationFrame(updateLoop);
-        }
+            
+            // Start track if playhead enters the trimmed region
+            const previousTime = playbackStartRef.current.audioTime + ((elapsedTime - 1/60));
+            if (previousTime < trimmedTrackStart && 
+                newTime >= trimmedTrackStart && 
+                newTime < trimmedTrackEnd &&
+                playerObj.player.state !== 'started') {
+              try {
+                const offsetInTrimmedRegion = newTime - trimmedTrackStart;
+                const startOffsetInOriginalAudio = trimStart + offsetInTrimmedRegion;
+                const remainingTrimmedDuration = (trimEnd - trimStart) - offsetInTrimmedRegion;
+                
+                if (remainingTrimmedDuration > 0) {
+                  playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
+                }
+              } catch (error) {
+                console.log("Track start error during animation:", error);
+              }
+            }
+          }
+        });
+        
+        localAnimationId = requestAnimationFrame(updateLoop);
       };
 
       localAnimationId = requestAnimationFrame(updateLoop);
@@ -811,7 +1057,7 @@ const Timeline = () => {
         cancelAnimationFrame(localAnimationId);
       }
     };
-  }, [isPlaying, audioDuration, players]);
+  }, [isPlaying, audioDuration, players, isLoopEnabled, loopStart, loopEnd]);
 
   const getGridDivisions = (gridSize) => {
     switch (gridSize) {
@@ -931,6 +1177,18 @@ const Timeline = () => {
     renderRuler();
   }, [renderRuler]);
 
+  // Update loop end when audio duration changes
+  useEffect(() => {
+    if (audioDuration > 0) {
+      if (loopEnd > audioDuration) {
+        setLoopEnd(audioDuration);
+      } else if (loopEnd === 10 && audioDuration > 10) {
+        // Initialize loop end to a reasonable value when audio loads
+        setLoopEnd(Math.min(30, audioDuration));
+      }
+    }
+  }, [audioDuration, loopEnd]);
+
   useEffect(() => {
     return () => {
       players.forEach((player) => {
@@ -1045,6 +1303,9 @@ const Timeline = () => {
     const gridDivisions = getGridDivisions(selectedGrid);
     const gridSpacing = 1 / gridDivisions;
     
+    // Calculate the total height of all tracks
+    const totalTracksHeight = trackHeight * Math.max(tracks.length, 3);
+    
     for (let time = 0; time <= duration; time += gridSpacing) {
       const x = xScale(time);
       const isMainBeat = Math.abs(time - Math.round(time)) < 0.01;
@@ -1075,12 +1336,12 @@ const Timeline = () => {
           style={{
             position: "absolute",
             left: `${x}px`,
-            top: "100px",
+            top: "0px", // Start from the top of tracks container
             width: `${lineWidth}px`,
-            height: `calc(100% - 100px)`,
+            height: `${totalTracksHeight}px`, // Extend through all tracks
             background: lineColor,
             opacity: lineOpacity,
-            zIndex: 0,
+            zIndex: 1,
             pointerEvents: "none",
           }}
         />
@@ -1088,12 +1349,30 @@ const Timeline = () => {
     }
     return gridLines;
   };
-
+  
+  // Also update the grid lines container positioning in the JSX:
+  // Replace the existing grid lines container with this:
+  {/* Grid lines - positioned to cover all tracks */}
+  {tracks.length > 0 && (
+    <div
+      style={{
+        position: "absolute",
+        top: "0px", // Start from the top of tracks container
+        left: 0,
+        width: "100%",
+        height: `${trackHeight * Math.max(tracks.length, 3)}px`, // Cover all track lanes
+        pointerEvents: "none",
+        zIndex: 1, // Behind tracks but above track lanes
+      }}
+    >
+      {renderGridLines()}
+    </div>
+  )}
   const playheadPosition = audioDuration > 0 ? (currentTime / audioDuration) * 100 : 0;
 
   return (
     <>
-      <div
+        <div
         style={{
           padding: "0",
           color: "white",
@@ -1132,13 +1411,26 @@ const Timeline = () => {
               />
             </div>
 
-            {/* Tracks Container */}
+            {/* Loop Bar - positioned right below timeline header */}
+            <LoopBar
+              audioDuration={audioDuration}
+              loopStart={loopStart}
+              loopEnd={loopEnd}
+              onLoopChange={handleLoopChange}
+              timelineWidthPerSecond={timelineWidthPerSecond}
+              gridSpacing={getGridSpacing(selectedGrid)}
+              currentTime={currentTime}
+              isLoopEnabled={isLoopEnabled}
+            />
+
+            {/* Tracks Container - adjusted top margin to account for loop bar */}
             <div
               style={{
                 overflow: "visible",
                 position: "relative",
                 minHeight: `${trackHeight * Math.max(tracks.length, 1)}px`,
-                height: `${trackHeight * Math.max(tracks.length, 1)}px`
+                height: `${trackHeight * Math.max(tracks.length, 1)}px`,
+                marginTop: "40px",
               }}
             >
               {/* Track lanes with separators */}
@@ -1186,13 +1478,13 @@ const Timeline = () => {
                     onPositionChange={handleTrackPositionChange}
                     timelineWidthPerSecond={timelineWidthPerSecond}
                     frozen={track.frozen}
-                    gridSpacing={getGridSpacing(selectedGrid)} // Pass grid spacing to the track
+                    gridSpacing={getGridSpacing(selectedGrid)}
                   />
                 </div>
               ))}
             </div>
 
-            {/* Playhead */}
+            {/* Playhead - adjusted to account for loop bar */}
             <div
               style={{
                 position: "absolute",
@@ -1201,7 +1493,7 @@ const Timeline = () => {
                 height: "100%",
                 width: "2px",
                 pointerEvents: "none",
-                zIndex: 0,
+                zIndex: 10,
               }}
             >
               <div
@@ -1233,10 +1525,10 @@ const Timeline = () => {
               <div
                 style={{
                   position: "absolute",
-                  top: 0,
+                  top: "140px", // Adjusted for loop bar
                   left: 0,
                   width: "100%",
-                  height: "100%",
+                  height: "calc(100% - 140px)",
                   pointerEvents: "none",
                 }}
               >
@@ -1246,13 +1538,16 @@ const Timeline = () => {
           </div>
         </div>
 
-        {/* Controls */}
+        {/* Controls - keep your existing controls */}
         <div
           style={{
             position: "fixed",
             bottom: "80px",
             left: "50%",
             transform: "translateX(-50%)",
+            display: "flex",
+            gap: "10px",
+            alignItems: "center"
           }}
         >
           <button
@@ -1308,7 +1603,7 @@ const Timeline = () => {
               </div>
             )}
           </div>
-          <div className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full">
+          <div className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full"   onClick={() => setIsLoopEnabled(!isLoopEnabled)}>
             <img src={reverceIcon} alt="Reverse" />
           </div>
         </div>
