@@ -3,7 +3,7 @@ import WaveSurfer from "wavesurfer.js";
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
-import { addTrack, updateTrack } from "../Redux/Slice/studio.slice";
+import { addTrack, updateTrack, updateTrackAudio } from "../Redux/Slice/studio.slice";
 import { IMAGE_URL } from "../Utils/baseUrl";
 import magnetIcon from "../Images/magnet.svg";
 import settingIcon from "../Images/setting.svg";
@@ -242,7 +242,7 @@ const TimelineTrack = ({
         wavesurfer.current = null;
       }
     };
-  }, [trackId, frozen]);
+  }, [trackId, frozen, url]);
 
   const handleTrimResize = useCallback((type, newPosition) => {
     // Disable trimming for frozen tracks
@@ -412,33 +412,61 @@ const TimelineDemo = () => {
   const timelineWidthPerSecond = 100;
 
   const pianoRecording = useSelector((state) => state.studio.pianoRecord);
+  const currentTrackId = useSelector((state) => state.studio.currentTrackId);
+  const lastProcessedRef = useRef(null);
+
   useEffect(() => {
-    if (pianoRecording instanceof Blob) {
-      const url = URL.createObjectURL(pianoRecording);
+    if (pianoRecording instanceof Blob && currentTrackId && pianoRecording !== lastProcessedRef.current) {
+      lastProcessedRef.current = pianoRecording;
+      getAudioDuration(pianoRecording).then((duration) => {
+        // Ensure the blob is fully usable
+        const url = URL.createObjectURL(pianoRecording);
 
-      // Optional auto-download
-      // const a = document.createElement('a');
-      // a.href = url;
-      // a.download = 'piano_recording.webm';
-      // a.click();
-      // URL.revokeObjectURL(url);
+        const audio = new Audio();
+        audio.src = url;
 
-      const newTrack = {
-        id: Date.now(), // Unique ID
-        url: url,
-        color: '#FF6767',
-        startTime: 0,
-        duration: 10, // <-- You should estimate this or get it dynamically
-        trimStart: 0,
-        trimEnd: null,
-        frozen: false,
-      };
+        function generateRandomHexColor() {
+          let randomNumber = Math.floor(Math.random() * 16777215);
+          let hexColor = randomNumber.toString(16);
+          hexColor = hexColor.padStart(6, '0');
+          return `#${hexColor}`;
+        }
 
-      dispatch(addTrack(newTrack)); // 👈 Store this new track in Redux
+        audio.oncanplaythrough = () => {
+          const newColor = generateRandomHexColor();
 
-      console.log("Added new track from recording:", newTrack);
+          dispatch(updateTrackAudio({
+            trackId: currentTrackId,
+            audioData: {
+              url,
+              duration,
+              color: newColor,
+              trimStart: 0,
+              trimEnd: duration,
+              name: "Piano Recording",
+              frozen: false,
+            },
+          }));
+
+          console.log("Track updated with recording:", { url, duration });
+        };
+
+        audio.onerror = (err) => {
+          console.error("Audio load error:", err);
+        };
+      }).catch((err) => {
+        console.error("Failed to decode audio:", err);
+      });
     }
-  }, [pianoRecording]);
+  }, [pianoRecording, currentTrackId]);
+
+
+  const getAudioDuration = async (blob) => {
+    const arrayBuffer = await blob.arrayBuffer();
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    return audioBuffer.duration;
+  };
 
 
   const getTrackType = useSelector((state) => state.studio.newtrackType);

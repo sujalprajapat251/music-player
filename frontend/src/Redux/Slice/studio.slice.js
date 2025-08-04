@@ -13,7 +13,7 @@ const initialState = {
   pianoRecord: [],
   isRecording: false,
   newtrackType: '',
-  currentTrackId: ''
+  currentTrackId: null
 };
 
 const studioSlice = createSlice({
@@ -121,6 +121,8 @@ const studioSlice = createSlice({
         track.trimStart = audioData.trimStart || 0;
         track.trimEnd = audioData.duration || audioData.trimEnd;
         track.soundData = audioData.soundData || null;
+        track.color = audioData.color || null;
+        track.frozen = audioData.frozen || false;
       }
     },
     setRecordingAudio: (state, action) => {
