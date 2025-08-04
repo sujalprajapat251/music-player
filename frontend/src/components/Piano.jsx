@@ -19,6 +19,7 @@ import { FaPlus, FaStop } from "react-icons/fa6";
 import music from "../Images/playingsounds.svg";
 import BottomToolbar from './Layout/BottomToolbar';
 import { setRecordingAudio } from '../Redux/Slice/studio.slice';
+import PianoRolls from './PianoRolls';
 
 
 function polarToCartesian(cx, cy, r, angle) {
@@ -832,12 +833,7 @@ const Pianodemo = () => {
                                 )}
 
                                 {activeTab === 'Piano Roll' && (
-                                    <div className="w-full h-[400px] md:h-[500px] lg:h-[250px] flex items-center justify-center">
-                                        <div className="text-center">
-                                            <h3 className="text-white text-xl font-semibold mb-4">Piano Roll Tab</h3>
-                                            <p className="text-gray-400">Piano roll editor will be here</p>
-                                        </div>
-                                    </div>
+                                   <PianoRolls />
                                 )}
 
                                 {activeTab === 'Effects' && (
