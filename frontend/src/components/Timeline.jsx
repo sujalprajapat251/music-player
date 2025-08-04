@@ -3,7 +3,7 @@ import WaveSurfer from "wavesurfer.js";
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
-import { addTrack, updateTrack } from "../Redux/Slice/studio.slice";
+import { addTrack, updateTrack, setSoloTrackId } from "../Redux/Slice/studio.slice";
 import { IMAGE_URL } from "../Utils/baseUrl";
 import magnetIcon from "../Images/magnet.svg";
 import settingIcon from "../Images/setting.svg";
@@ -15,6 +15,7 @@ import MusicOff from "./MusicOff";
 import { Rnd } from "react-rnd";
 import rightSize from '../Images/right-size.svg'
 import LeftSize from '../Images/left-size.svg'
+import WaveMenu from "./WaveMenu";
 
 // Custom Resizable Trim Handle Component
 const ResizableTrimHandle = ({ 
@@ -168,7 +169,8 @@ const TimelineTrack = ({
   onPositionChange,
   timelineWidthPerSecond = 100,
   frozen = false,
-  gridSpacing = 0.25
+  gridSpacing = 0.25,
+  onContextMenu
 }) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
@@ -351,6 +353,7 @@ const TimelineTrack = ({
           zIndex: 1,
           clipPath: `inset(0 ${(1 - (actualTrimEnd / duration)) * 100}% 0 ${(trimStart / duration) * 100}%)`,
         }}
+        onContextMenu={onContextMenu}
       />
 
       {/* Trim Handles using ResizableTrimHandle */}
@@ -602,6 +605,13 @@ const Timeline = () => {
   const [showOffcanvas, setShowOffcanvas] = useState(false);
   const isDragging = useRef(false);
   const animationFrameId = useRef(null);
+  
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState({
+    isOpen: false,
+    position: { x: 0, y: 0 },
+    trackId: null
+  });
 
   // Grid settings state
   const [selectedGrid, setSelectedGrid] = useState("1/1");
@@ -611,9 +621,22 @@ const Timeline = () => {
   const dispatch = useDispatch();
   const tracks = useSelector((state) => state.studio?.tracks || []);
   const trackHeight = useSelector((state) => state.studio?.trackHeight || 100);
-
+  const sidebarScrollOffset = useSelector((state) => state.studio?.sidebarScrollOffset || 0);
+  const soloTrackId = useSelector((state) => state.studio.soloTrackId);
   const timelineWidthPerSecond = 100;
-
+// Mute functionality
+ 
+useEffect(() => {
+  players.forEach(playerObj => {
+    const track = tracks.find(t => t.id === playerObj.trackId);
+    const isMuted = soloTrackId
+      ? soloTrackId !== track.id
+      : track.muted;
+    if (playerObj.player && track) {
+      playerObj.player.volume.value = isMuted ? -Infinity : 0;
+    }
+  });
+}, [tracks, players, soloTrackId]);
   // Loop change handler
   const handleLoopChange = useCallback((newStart, newEnd) => {
     const gridSpacing = getGridSpacing(selectedGrid);
@@ -1175,7 +1198,7 @@ const Timeline = () => {
 
   useEffect(() => {
     renderRuler();
-  }, [renderRuler]);
+  }, [renderRuler]);  
 
   // Update loop end when audio duration changes
   useEffect(() => {
@@ -1254,7 +1277,7 @@ const Timeline = () => {
         const gridSpacing = getGridSpacing(selectedGrid);
         const snapToGrid = (time) => {
           if (!gridSpacing || gridSpacing <= 0) return time;
-          const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+          const gridPosition = Math.round(time / gridSpacing) * gridPosition;
           return Math.max(0, gridPosition);
         };
         
@@ -1291,6 +1314,103 @@ const Timeline = () => {
       console.error('Error processing dropped item:', error);
     }
   }, [audioDuration, dispatch, trackHeight, selectedGrid]);
+
+  // Context menu handlers
+  const handleContextMenu = useCallback((e, trackId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setContextMenu({
+      isOpen: true,
+      position: { x: e.clientX, y: e.clientY },
+      trackId: trackId
+    });
+  }, []);
+
+  const handleContextMenuClose = useCallback(() => {
+    setContextMenu({
+      isOpen: false,
+      position: { x: 0, y: 0 },
+      trackId: null
+    });
+  }, []);
+
+  const handleContextMenuAction = useCallback((action) => {
+    const { trackId } = contextMenu;
+    if (!trackId) return;
+
+    const track = tracks.find(t => t.id === trackId);
+    if (!track) return;
+
+    switch (action) {
+      case 'cut':
+        // Implement cut functionality
+        console.log('Cut track:', trackId);
+        break;
+      case 'copy':
+        // Implement copy functionality
+        console.log('Copy track:', trackId);
+        break;
+      case 'paste':
+        // Implement paste functionality
+        console.log('Paste track');
+        break;
+      case 'delete':
+        // Implement delete functionality
+        console.log('Delete track:', trackId);
+        break;
+      case 'editName':
+        // Implement edit name functionality
+        console.log('Edit name for track:', trackId);
+        break;
+      case 'splitRegion':
+        // Implement split region functionality
+        console.log('Split region for track:', trackId);
+        break;
+      case 'muteRegion':
+        // Implement mute region functionality
+        console.log('Mute region for track:', trackId);
+        break;
+      case 'changePitch':
+        // Implement change pitch functionality
+        console.log('Change pitch for track:', trackId);
+        break;
+      case 'vocalCleanup':
+        // Implement vocal cleanup functionality
+        console.log('Vocal cleanup for track:', trackId);
+        break;
+      case 'vocalTuner':
+        // Implement vocal tuner functionality
+        console.log('Vocal tuner for track:', trackId);
+        break;
+      case 'voiceTransform':
+        // Implement voice transform functionality
+        console.log('Voice transform for track:', trackId);
+        break;
+      case 'reverse':
+        // Implement reverse functionality
+        console.log('Reverse track:', trackId);
+        break;
+      case 'effects':
+        // Implement effects functionality
+        console.log('Effects for track:', trackId);
+        break;
+      case 'matchProjectKey':
+        // Implement match project key functionality
+        console.log('Match project key for track:', trackId);
+        break;
+      case 'addToLoopLibrary':
+        // Implement add to loop library functionality
+        console.log('Add to loop library for track:', trackId);
+        break;
+      case 'openInSampler':
+        // Implement open in sampler functionality
+        console.log('Open in sampler for track:', trackId);
+        break;
+      default:
+        console.log('Unknown action:', action);
+    }
+  }, [contextMenu, tracks]);
 
   const renderGridLines = () => {
     const gridLines = [];
@@ -1350,14 +1470,12 @@ const Timeline = () => {
     return gridLines;
   };
   
-  // Also update the grid lines container positioning in the JSX:
-  // Replace the existing grid lines container with this:
-  {/* Grid lines - positioned to cover all tracks */}
+
   {tracks.length > 0 && (
     <div
       style={{
         position: "absolute",
-        top: "0px", // Start from the top of tracks container
+        top: `${-sidebarScrollOffset}px`, // Adjust for scroll offset
         left: 0,
         width: "100%",
         height: `${trackHeight * Math.max(tracks.length, 3)}px`, // Cover all track lanes
@@ -1439,11 +1557,11 @@ const Timeline = () => {
                   key={`lane-${index}`}
                   style={{
                     position: "absolute",
-                    top: `${index * trackHeight}px`,
+                    top: `${(index * trackHeight) - sidebarScrollOffset}px`,
                     left: 0,
                     width: "100%",
                     height: `${trackHeight}px`,
-                    borderTop: index === 0 ? "none" : "1px solid #FFFFFF1A",
+                    borderTop: "1px solid #FFFFFF1A",
                     borderBottom: "1px solid #FFFFFF1A",
                     zIndex: 0,
                   }}
@@ -1456,11 +1574,13 @@ const Timeline = () => {
                   key={track.id}
                   style={{
                     position: "absolute",
-                    top: `${index * trackHeight}px`,
+                    top: `${(index * trackHeight) - sidebarScrollOffset}px`,
                     left: 0,
                     width: "100%",
                     height: `${trackHeight}px`,
                     zIndex: 0,
+                    opacity: (soloTrackId ? soloTrackId !== track.id : track.muted) ? 0.5 : 1,
+                    pointerEvents: "auto",
                   }}
                 >
                   <TimelineTrack
@@ -1479,6 +1599,7 @@ const Timeline = () => {
                     timelineWidthPerSecond={timelineWidthPerSecond}
                     frozen={track.frozen}
                     gridSpacing={getGridSpacing(selectedGrid)}
+                    onContextMenu={(e) => handleContextMenu(e, track.id)}
                   />
                 </div>
               ))}
@@ -1525,7 +1646,7 @@ const Timeline = () => {
               <div
                 style={{
                   position: "absolute",
-                  top: "140px", // Adjusted for loop bar
+                  top: `${140 - sidebarScrollOffset}px`, // Adjusted for loop bar and scroll offset
                   left: 0,
                   width: "100%",
                   height: "calc(100% - 140px)",
@@ -1624,6 +1745,14 @@ const Timeline = () => {
       </div>
 
       <MusicOff showOffcanvas={showOffcanvas} setShowOffcanvas={setShowOffcanvas} />
+      
+      {/* Context Menu */}
+      <WaveMenu
+        isOpen={contextMenu.isOpen}
+        position={contextMenu.position}
+        onClose={handleContextMenuClose}
+        onAction={handleContextMenuAction}
+      />
     </>
   );
 };
