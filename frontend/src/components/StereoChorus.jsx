@@ -1,6 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FaPowerOff } from 'react-icons/fa6';
 import { IoClose } from 'react-icons/io5';
+import { useDispatch, useSelector } from 'react-redux';
+import { removeEffect} from '../Redux/Slice/effects.slice';
+
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
     return {
@@ -347,14 +350,26 @@ function Knob2({ label = "Bite", min = -135, max = 135, defaultAngle }) {
 }
 
 const StereoChorus = () => {
+
+    const dispatch = useDispatch();
+    const { activeEffects} = useSelector((state) => state.effects);
+    
+    const handleRemoveEffect = (instanceId) => {
+        dispatch(removeEffect(instanceId));
+    };
+
+    // Get the current effect's instanceId from activeEffects
+    const currentEffect = activeEffects.find(effect => effect.name === "Stereo Chorus");
+    const currentInstanceId = currentEffect?.instanceId;
+
     return (
         <div className='bg-[#141414]'>
-            <div className='flex justify-between items-center w-[256px] h-[52px] rounded-t-lg bg-[#409C9F] px-3'>
+            <div className='flex justify-between items-center w-[256px] h-[64px] rounded-t-lg bg-[#409C9F] px-3'>
                 <FaPowerOff className='text-white text-[20px]' />
                 <p className='text-white text-[16px]'>Stereo Chorus</p>
-                <IoClose className='text-white text-[20px]' />
+                <IoClose className='text-white text-[20px] hover:text-[#ff0000]' onClick={() => handleRemoveEffect(currentInstanceId)} />
             </div>
-            <div className='w-[256px] h-[268px] bg-[#302f2f] relative'>
+            <div className='w-[256px] h-[300px] bg-[#302f2f] relative'>
                 {/* Tone Knob - Top Right */}
                 <div className="absolute top-[35px] left-[50px]">
                     <Knob1 label="Rate" min={-135} max={135} defaultAngle={0} />
