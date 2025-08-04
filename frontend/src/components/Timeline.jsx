@@ -3,7 +3,7 @@ import WaveSurfer from "wavesurfer.js";
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
-import { addTrack, updateTrack, setSoloTrackId } from "../Redux/Slice/studio.slice";
+import { addTrack, updateTrack, setSoloTrackId, toggleMuteTrack } from "../Redux/Slice/studio.slice";
 import { IMAGE_URL } from "../Utils/baseUrl";
 import magnetIcon from "../Images/magnet.svg";
 import settingIcon from "../Images/setting.svg";
@@ -170,7 +170,6 @@ const TimelineTrack = ({
   timelineWidthPerSecond = 100,
   frozen = false,
   gridSpacing = 0.25,
-  onContextMenu
 }) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
@@ -243,7 +242,7 @@ const TimelineTrack = ({
         wavesurfer.current = null;
       }
     };
-  }, [trackId, frozen]);
+  }, [trackId, frozen,url]);
 
   const handleTrimResize = useCallback((type, newPosition) => {
     // Disable trimming for frozen tracks
@@ -332,7 +331,7 @@ const TimelineTrack = ({
       dragAxis="x"
       bounds="parent"
       style={{
-        background: color,
+        background: color || "transparent",
         borderRadius: '8px',
         border: isDraggingTrim ? "2px solid #AD00FF" : "1px solid rgba(255,255,255,0.1)",
         boxShadow: isDraggingTrim ? "0 4px 20px rgba(173,0,255,0.3)" : "none",
@@ -342,7 +341,9 @@ const TimelineTrack = ({
       }}
     >
       {/* Waveform with clip-path to show only trimmed portion */}
-      <div
+      {url && duration > 0 && (
+      <>
+        <div
         ref={waveformRef}
         style={{
           width: `${width}px`,
@@ -353,7 +354,6 @@ const TimelineTrack = ({
           zIndex: 1,
           clipPath: `inset(0 ${(1 - (actualTrimEnd / duration)) * 100}% 0 ${(trimStart / duration) * 100}%)`,
         }}
-        onContextMenu={onContextMenu}
       />
 
       {/* Trim Handles using ResizableTrimHandle */}
@@ -384,6 +384,8 @@ const TimelineTrack = ({
         trimEnd={actualTrimEnd}
         gridSpacing={gridSpacing} // Pass grid spacing to the handle
       />
+      </>
+    )}
 
     
     </Rnd>
@@ -605,6 +607,8 @@ const Timeline = () => {
   const [showOffcanvas, setShowOffcanvas] = useState(false);
   const isDragging = useRef(false);
   const animationFrameId = useRef(null);
+  const [clipboard, setClipboard] = useState(null);
+  const [selectedTrackId, setSelectedTrackId] = useState(null);
   
   // Context menu state
   const [contextMenu, setContextMenu] = useState({
@@ -1355,8 +1359,8 @@ useEffect(() => {
     });
   }, []);
 
-  const handleContextMenuAction = useCallback((action) => {
-    const { trackId } = contextMenu;
+  const handleContextMenuAction = useCallback((action, overrideTrackId) => {
+    const trackId = overrideTrackId ?? contextMenu.trackId;
     if (!trackId) return;
 
     const track = tracks.find(t => t.id === trackId);
@@ -1364,20 +1368,49 @@ useEffect(() => {
 
     switch (action) {
       case 'cut':
-        // Implement cut functionality
-        console.log('Cut track:', trackId);
+        setClipboard({ ...track }); // Store the full track object
+        dispatch(updateTrack({
+          id: trackId,
+          updates: {
+            url: "",
+            color: "",
+            duration: 0,
+            trimStart: 0,
+            trimEnd: 0,
+          }
+        }));
         break;
       case 'copy':
-        // Implement copy functionality
-        console.log('Copy track:', trackId);
+        setClipboard({ ...track }); // Store the full track object
         break;
       case 'paste':
-        // Implement paste functionality
-        console.log('Paste track');
+        // Paste clipboard region into this track if clipboard is not empty
+        if (clipboard) {
+          dispatch(updateTrack({
+            id: trackId,
+            updates: {
+              url: clipboard.url,
+              color: clipboard.color,
+              duration: clipboard.duration,
+              trimStart: clipboard.trimStart,
+              trimEnd: clipboard.trimEnd,
+            }
+          }));
+        }
         break;
       case 'delete':
         // Implement delete functionality
         console.log('Delete track:', trackId);
+        dispatch(updateTrack({
+          id: trackId,
+          updates: {
+            url: "",
+            color: "",
+            duration: 0,
+            trimStart: 0,
+            trimEnd: 0,
+          }
+        }));
         break;
       case 'editName':
         // Implement edit name functionality
@@ -1389,6 +1422,7 @@ useEffect(() => {
         break;
       case 'muteRegion':
         // Implement mute region functionality
+          dispatch(toggleMuteTrack(trackId));
         console.log('Mute region for track:', trackId);
         break;
       case 'changePitch':
@@ -1430,7 +1464,35 @@ useEffect(() => {
       default:
         console.log('Unknown action:', action);
     }
-  }, [contextMenu, tracks]);
+  }, [contextMenu, tracks, clipboard, dispatch, currentTime]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!selectedTrackId) return;
+
+      if (e.ctrlKey && e.key === 'x') {
+        e.preventDefault();
+        handleContextMenuAction('cut', selectedTrackId);
+      } else if (e.ctrlKey && e.key === 'c') {
+        e.preventDefault();
+        handleContextMenuAction('copy', selectedTrackId);
+      } else if (e.ctrlKey && e.key === 'v') {
+        e.preventDefault();
+        handleContextMenuAction('paste', selectedTrackId);
+      } else if (e.key === 'Backspace') {
+        e.preventDefault();
+        handleContextMenuAction('delete', selectedTrackId);
+      }
+      else if (e.ctrlKey && e.key === 'm') {
+        e.preventDefault();
+        handleContextMenuAction('muteRegion', selectedTrackId);
+      }
+      // Add more shortcuts as needed
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedTrackId, handleContextMenuAction]);
 
   const renderGridLines = () => {
     const gridLines = [];
@@ -1507,6 +1569,8 @@ useEffect(() => {
     </div>
   )}
   const playheadPosition = audioDuration > 0 ? (currentTime / audioDuration) * 100 : 0;
+
+ 
 
   return (
     <>
@@ -1602,6 +1666,10 @@ useEffect(() => {
                     opacity: (soloTrackId ? soloTrackId !== track.id : track.muted) ? 0.5 : 1,
                     pointerEvents: "auto",
                   }}
+                  onClick={() => setSelectedTrackId(track.id)}
+                  tabIndex={0} // Make it focusable for keyboard navigation
+                  onFocus={() => setSelectedTrackId(track.id)}
+                  onContextMenu={(e) => handleContextMenu(e, track.id)}
                 >
                   <TimelineTrack
                     key={track.id}
@@ -1619,7 +1687,6 @@ useEffect(() => {
                     timelineWidthPerSecond={timelineWidthPerSecond}
                     frozen={track.frozen}
                     gridSpacing={getGridSpacing(selectedGrid)}
-                    onContextMenu={(e) => handleContextMenu(e, track.id)}
                   />
                 </div>
               ))}
