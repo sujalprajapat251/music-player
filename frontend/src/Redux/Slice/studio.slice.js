@@ -13,7 +13,11 @@ const initialState = {
   pianoRecord: [],
   isRecording: false,
   newtrackType: '',
-  currentTrackId: null
+  currentTrackId: null,
+  currentTrackId: '',
+  soloTrackId: null,
+  sidebarScrollOffset: 0
+  
 };
 
 const studioSlice = createSlice({
@@ -25,7 +29,7 @@ const studioSlice = createSlice({
     },
     addTrack: (state, action) => {
       // Ensure new tracks have frozen property
-      const track = { ...action.payload, frozen: false };
+      const track = { ...action.payload, frozen: false, muted: false };
       state.tracks.push(track);
     },
     updateTrack: (state, action) => {
@@ -137,11 +141,24 @@ const studioSlice = createSlice({
     setCurrentTrackId: (state, action) => {
       state.currentTrackId = action.payload;
     },
+    toggleMuteTrack: (state, action) => {
+      const trackId = action.payload;
+      const track = state.tracks.find(track => track.id === trackId);
+      if (track) {
+        track.muted = !track.muted;
+      }
+    },
+    setSoloTrackId: (state, action) => {
+      state.soloTrackId = action.payload;
+    },
     exportTrack: (state, action) => {
       // This is just a placeholder action for tracking export events
       // The actual export logic will be handled in the component
       return state;
-    }
+    },
+    setSidebarScrollOffset: (state, action) => {
+      state.sidebarScrollOffset = action.payload;
+    },
   },
 });
 
@@ -161,7 +178,10 @@ export const {
   setRecordingAudio,
   setRecording,
   setTrackType,
-  setCurrentTrackId
+  setCurrentTrackId,
+  toggleMuteTrack,
+  setSoloTrackId,
+  setSidebarScrollOffset,
 } = studioSlice.actions;
 
 export default studioSlice.reducer;

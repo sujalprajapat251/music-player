@@ -63,15 +63,15 @@ const AddNewTrackModel = ({ onClose }) => {
   const fileInputRef = React.useRef();
 
   // Add empty/instrument track
-  const handleBoxSelect = (trackType) => {
+  const handleBoxSelect = (option) => {
     const newTrack = {
       id: Date.now(),
-      name: trackType,
+      name: option.label,
+      iconKey: option.icon, 
       height: trackHeight,
-      // No url property!
     };
     dispatch(addTrack(newTrack));
-    dispatch(setTrackType(trackType));
+    dispatch(setTrackType(option.label));
     onClose();
   };
 
@@ -103,7 +103,7 @@ const AddNewTrackModel = ({ onClose }) => {
         {/* Instrument Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 my-8">
           {instrumentOptions.map((opt) => (
-            <button key={opt.label} className="text-secondary-light dark:text-secondary-dark flex flex-col items-center justify-center bg-[#E5E5E5] dark:bg-primary-dark hover:bg-[#aaaaaa] dark:hover:bg-[#262529] rounded-[4px] p-4 transition-colors border border-transparent hover:border-[#1414141A] hover:dark:border-[#FFFFFF1A]" onClick={() => handleBoxSelect(opt.label)}>
+            <button key={opt.label} className="text-secondary-light dark:text-secondary-dark flex flex-col items-center justify-center bg-[#E5E5E5] dark:bg-primary-dark hover:bg-[#aaaaaa] dark:hover:bg-[#262529] rounded-[4px] p-4 transition-colors border border-transparent hover:border-[#1414141A] hover:dark:border-[#FFFFFF1A]" onClick={() => handleBoxSelect(opt)}>
               {opt.icon}
               <span className="mt-2 text-secondary-light dark:text-secondary-dark text-sm text-center font-medium leading-tight">{opt.label}</span>
             </button>
