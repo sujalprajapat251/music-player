@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FaPowerOff } from 'react-icons/fa6';
 import { IoClose } from 'react-icons/io5';
+
+
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
     return {
@@ -20,7 +22,6 @@ function describeArc(cx, cy, r, startAngle, endAngle) {
     ].join(" ");
 }
 
-
 function BadgeTooltip({ value, visible }) {
     if (!visible) return null;
 
@@ -36,161 +37,6 @@ function BadgeTooltip({ value, visible }) {
             }}
         >
             {roundedValue}
-        </div>
-    );
-}
-
-function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
-    const [angle, setAngle] = useState(defaultAngle ?? min);
-    const [showTooltip, setShowTooltip] = useState(false);
-    const knobRef = useRef(null);
-    const dragging = useRef(false);
-    const lastY = useRef(0);
-
-
-    // Tailwind-consistent responsive sizes
-    const getResponsiveSize = () => {
-        if (typeof window !== 'undefined') {
-            if (window.innerWidth >= 1440) return 66; // 2xl
-            if (window.innerWidth >= 1280) return 52; // xl  
-            if (window.innerWidth >= 1024) return 48; // lg
-            if (window.innerWidth >= 768) return 44;  // md
-            if (window.innerWidth >= 640) return 40;  // sm
-            return 30; // xs (mobile)
-        }
-        return 56;
-    };
-
-    const [size, setSize] = useState(getResponsiveSize());
-
-    useEffect(() => {
-        const handleResize = () => setSize(getResponsiveSize());
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-
-    // Tailwind-consistent responsive sizes
-    const getResponsiveStroke = () => {
-        if (typeof window !== 'undefined') {
-            if (window.innerWidth >= 768) return 3;
-            if (window.innerWidth >= 768) return 3;  // md
-            // if (window.innerWidth >= 640) return 40;  // sm
-            return 2; // xs (mobile)
-        }
-        return 56;
-    };
-
-    const [stroke, setStroke] = useState(getResponsiveStroke());
-
-    useEffect(() => {
-        const handleResizeStroke = () => setStroke(getResponsiveStroke());
-        window.addEventListener('resize', handleResizeStroke);
-        return () => window.removeEventListener('resize', handleResizeStroke);
-    }, []);
-
-
-    const radius = (size - stroke) / 2;
-    const center = size / 2;
-
-
-    const onMouseDown = (e) => {
-        dragging.current = true;
-        lastY.current = e.clientY;
-        setShowTooltip(true);
-        document.addEventListener("mousemove", onMouseMove);
-        document.addEventListener("mouseup", onMouseUp);
-    };
-
-    const onMouseMove = (e) => {
-        if (!dragging.current) return;
-        const deltaY = lastY.current - e.clientY; // up is negative, down is positive
-        lastY.current = e.clientY;
-        setAngle((prev) => {
-            let next = prev + deltaY * 1.5; // adjust sensitivity as needed
-            next = Math.max(min, Math.min(max, next));
-            return next;
-        });
-    };
-
-    const onMouseUp = () => {
-        dragging.current = false;
-        setShowTooltip(false);
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
-    };
-
-    const onMouseEnter = () => {
-        if (!dragging.current) {
-            setShowTooltip(true);
-        }
-    };
-
-    const onMouseLeave = () => {
-        if (!dragging.current) {
-            setShowTooltip(false);
-        }
-    };
-
-
-    const arcStart = min; // -135
-    const valueAngle = angle; // current angle
-    const fgArc = describeArc(center, center, radius, arcStart, valueAngle);
-
-    return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                // marginTop: 40,
-            }}
-        >
-            <div
-                ref={knobRef}
-                style={{
-                    width: size,
-                    height: size,
-                    position: "relative",
-                    cursor: "pointer",
-                }}
-                onMouseDown={onMouseDown}
-            >
-                <svg width={size} height={size}>
-                    {/* Full background circle */}
-                    <circle
-                        cx={center}
-                        cy={center}
-                        r={radius}
-                        stroke="#444"
-                        strokeWidth={stroke}
-                        fill="#1F1F1F"
-                    />
-                    {/* Colored arc (top half, up to value) */}
-                    <path
-                        d={fgArc}
-                        stroke="#bbb"
-                        strokeWidth={stroke}
-                        fill="#1F1F1F"
-                        strokeLinecap="round"
-                    />
-                </svg>
-                {/* Indicator line */}
-                <div
-                    className={`absolute top-1.5 left-1/2 w-0.5 h-2 md600:h-3 lg:h-6 bg-gray-400 rounded-sm -translate-x-1/2 origin-bottom`}
-                    style={{
-                        transform: `translateX(-50%) rotate(${angle}deg)`,
-                    }}
-                />
-                <BadgeTooltip value={angle} visible={showTooltip} />
-            </div>
-            <div className='text-[8px] md600:text-[10px] md:text-[12px] 2xl:text-[16px] mt-1 items-center text-[#aaa]'
-                style={{
-                    fontFamily: "sans-serif"
-                }}
-            >
-                {label}
-            </div>
         </div>
     );
 }
@@ -336,7 +182,7 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
                         transform: `translateX(-50%) rotate(${angle}deg)`,
                     }}
                 />
-                 <BadgeTooltip value={angle} visible={showTooltip} />
+                <BadgeTooltip value={angle} visible={showTooltip} />
             </div>
             <div className='text-[8px] md600:text-[10px] md:text-[12px] 2xl:text-[16px] mt-1 items-center text-[#aaa]'
                 style={{
@@ -349,32 +195,193 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     );
 }
 
-const Overdrive = () => {
+function Knob2({ label = "Bite", min = -135, max = 135, defaultAngle }) {
+    const [angle, setAngle] = useState(defaultAngle ?? min);
+    const [showTooltip, setShowTooltip] = useState(false);
+    const knobRef = useRef(null);
+    const dragging = useRef(false);
+    const lastY = useRef(0);
+
+
+    // Tailwind-consistent responsive sizes
+    const getResponsiveSize = () => {
+        if (typeof window !== 'undefined') {
+            if (window.innerWidth >= 1440) return 36; // 2xl
+            if (window.innerWidth >= 1280) return 32; // xl  
+            if (window.innerWidth >= 1024) return 28; // lg
+            if (window.innerWidth >= 768) return 24;  // md
+            if (window.innerWidth >= 640) return 20;  // sm
+            return 16; // xs (mobile)
+        }
+        return 56;
+    };
+
+    const [size, setSize] = useState(getResponsiveSize());
+
+    useEffect(() => {
+        const handleResize = () => setSize(getResponsiveSize());
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+
+    // Tailwind-consistent responsive sizes
+    const getResponsiveStroke = () => {
+        if (typeof window !== 'undefined') {
+            if (window.innerWidth >= 1440) return 2;
+            if (window.innerWidth >= 768) return 3;  // md
+            // if (window.innerWidth >= 640) return 40;  // sm
+            return 2; // xs (mobile)
+        }
+        return 56;
+    };
+
+    const [stroke, setStroke] = useState(getResponsiveStroke());
+
+    useEffect(() => {
+        const handleResizeStroke = () => setStroke(getResponsiveStroke());
+        window.addEventListener('resize', handleResizeStroke);
+        return () => window.removeEventListener('resize', handleResizeStroke);
+    }, []);
+
+
+    const radius = (size - stroke) / 2;
+    const center = size / 2;
+
+    const onMouseDown = (e) => {
+        dragging.current = true;
+        lastY.current = e.clientY;
+        setShowTooltip(true);
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+    };
+
+    const onMouseMove = (e) => {
+        if (!dragging.current) return;
+        const deltaY = lastY.current - e.clientY; // up is negative, down is positive
+        lastY.current = e.clientY;
+        setAngle((prev) => {
+            let next = prev + deltaY * 1.5; // adjust sensitivity as needed
+            next = Math.max(min, Math.min(max, next));
+            return next;
+        });
+    };
+
+    const onMouseUp = () => {
+        dragging.current = false;
+        setShowTooltip(false);
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+    };
+
+    const onMouseEnter = () => {
+        if (!dragging.current) {
+            setShowTooltip(true);
+        }
+    };
+
+    const onMouseLeave = () => {
+        if (!dragging.current) {
+            setShowTooltip(false);
+        }
+    };
+
+    const arcStart = min; // -135
+    const valueAngle = angle; // current angle
+    const fgArc = describeArc(center, center, radius, arcStart, valueAngle);
+
+    return (
+        <div
+            style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                // marginTop: 40,
+            }}
+        >
+            <div
+                ref={knobRef}
+                style={{
+                    width: size,
+                    height: size,
+                    position: "relative",
+                    cursor: "pointer",
+                }}
+                onMouseDown={onMouseDown}
+            >
+                <svg width={size} height={size}>
+                    {/* Full background circle */}
+                    <circle
+                        cx={center}
+                        cy={center}
+                        r={radius}
+                        stroke="#444"
+                        strokeWidth={stroke}
+                        fill="#1F1F1F"
+                    />
+                    {/* Colored arc (top half, up to value) */}
+                    <path
+                        d={fgArc}
+                        stroke="#bbb"
+                        strokeWidth={stroke}
+                        fill="#1F1F1F"
+                        strokeLinecap="round"
+                    />
+                </svg>
+                {/* Indicator line */}
+                <div
+                    className={`absolute top-1.5 left-1/2 w-0.5 h-2 md600:h-3 lg:h-3 bg-gray-400 rounded-sm -translate-x-1/2 origin-bottom`}
+                    style={{
+                        transform: `translateX(-50%) rotate(${angle}deg)`,
+                    }}
+                />
+                    <BadgeTooltip value={angle} visible={showTooltip} />    
+            </div>
+            <div className='text-[8px] md600:text-[10px] md:text-[12px] 2xl:text-[16px] mt-1 items-center text-[#aaa]'
+                style={{
+                    fontFamily: "sans-serif"
+                }}
+            >
+                {label}
+            </div>
+        </div>
+    );
+}
+
+
+const JuicyDistrotion = () => {
     return (
         <div className='bg-[#141414]'>
             <div className='flex justify-between items-center w-[256px] h-[52px] rounded-t-lg bg-[#8F7CFD99] px-3'>
                 <FaPowerOff className='text-white text-[20px]' />
-                <p className='text-white text-[16px]'>Overdrive</p>
+                <p className='text-white text-[16px]'>Juicy Distrotion</p>
                 <IoClose className='text-white text-[20px]' />
             </div>
-            <div className='w-[256px] h-[268px] bg-[#302f2f] relative'>
-                {/* Dist Knob - Top Left */}
-                <div className="absolute top-[25px] left-[40px]">
-                    <Knob label="Dist" min={-135} max={135} defaultAngle={-90} />
-                </div>
+            <div className='w-[256px] h-[268px] bg-[#302f2f] p-8'>
+                <div className="flex justify-between">
+                    <div className="">
+                        <Knob1 label="Dist" min={-135} max={135} defaultAngle={0} />
+                    </div>
 
-                {/* Tone Knob - Top Right */}
-                <div className="absolute top-[80px] right-[35px]">
-                    <Knob label="Tone" min={-135} max={135} defaultAngle={0} />
+                    <div className="">
+                        <Knob1 label="Volume" min={-135} max={135} defaultAngle={90} />
+                    </div>
                 </div>
+                <div className='flex justify-between mt-5'>
+                    <div className="">
+                        <Knob2 label="Tone" min={-135} max={135} defaultAngle={0} />
+                    </div>
 
-                {/* Low cut Knob - Bottom Center */}
-                <div className="absolute left-[40px] bottom-[30px] ">
-                    <Knob1 label="Low cut" min={-135} max={135} defaultAngle={90} />
+                    <div className="">
+                        <Knob2 label="Low cut" min={-135} max={135} defaultAngle={90} />
+                    </div>
+                    <div className="">
+                        <Knob2 label="Mix" min={-135} max={135} defaultAngle={90} />
+                    </div>
                 </div>
             </div>
         </div>
     )
 }
 
-export default Overdrive
+export default JuicyDistrotion

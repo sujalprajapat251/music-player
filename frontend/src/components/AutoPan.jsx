@@ -20,8 +20,29 @@ function describeArc(cx, cy, r, startAngle, endAngle) {
     ].join(" ");
 }
 
+
+function BadgeTooltip({ value, visible }) {
+    if (!visible) return null;
+
+    // Round the angle value to nearest integer
+    const roundedValue = Math.round(value);
+
+    return (
+        <div
+            className="absolute -top-6 right-1 bg-[#409C9F] text-white text-xs px-2 py-1 rounded-md shadow-lg pointer-events-none z-10 font-medium"
+            style={{
+                minWidth: '32px',
+                textAlign: 'center'
+            }}
+        >
+            {roundedValue}
+        </div>
+    );
+}
+
 function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const [angle, setAngle] = useState(defaultAngle ?? min);
+    const [showTooltip, setShowTooltip] = useState(false);
     const knobRef = useRef(null);
     const dragging = useRef(false);
     const lastY = useRef(0);
@@ -71,9 +92,12 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
 
     const radius = (size - stroke) / 2;
     const center = size / 2;
+
+
     const onMouseDown = (e) => {
         dragging.current = true;
         lastY.current = e.clientY;
+        setShowTooltip(true);
         document.addEventListener("mousemove", onMouseMove);
         document.addEventListener("mouseup", onMouseUp);
     };
@@ -91,8 +115,21 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
 
     const onMouseUp = () => {
         dragging.current = false;
+        setShowTooltip(false);
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
+    };
+
+    const onMouseEnter = () => {
+        if (!dragging.current) {
+            setShowTooltip(true);
+        }
+    };
+
+    const onMouseLeave = () => {
+        if (!dragging.current) {
+            setShowTooltip(false);
+        }
     };
 
     const arcStart = min; // -135
@@ -144,6 +181,7 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
                         transform: `translateX(-50%) rotate(${angle}deg)`,
                     }}
                 />
+                 <BadgeTooltip value={angle} visible={showTooltip} />
             </div>
             <div className='text-[8px] md600:text-[10px] md:text-[12px] 2xl:text-[16px] mt-1 items-center text-[#aaa]'
                 style={{
@@ -159,12 +197,12 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
 const AutoPan = () => {
     return (
         <div className='bg-[#141414]'>
-            <div className='flex justify-between items-center w-[250px] h-[63px] rounded-t-lg bg-[#409C9F] px-3'>
+            <div className='flex justify-between items-center w-[256px] h-[52px] rounded-t-lg bg-[#409C9F] px-3'>
                 <FaPowerOff className='text-white text-[20px]' />
                 <p className='text-white text-[16px]'>Auto Pan</p>
                 <IoClose className='text-white text-[20px]' />
             </div>
-            <div className='w-[250px] h-[337px] bg-[#302f2f] relative'>
+            <div className='w-[256px] h-[268px] bg-[#302f2f] relative'>
                 {/* Tone Knob - Top Right */}
                 <div className="absolute top-[50px] right-[30px]">
                     <Knob1 label="Rate" min={-135} max={135} defaultAngle={0} />

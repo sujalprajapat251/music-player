@@ -44,6 +44,8 @@ import Crusher from "./components/Crusher";
 import DTimeline from './components/DTimeline';
 import TimelineDemo from './components/TimelineDemo';
 import SDemo from './components/SDemo';
+import JuicyDistrotion from './components/JuicyDistrotion';
+import TapeWobble from './components/TapeWobble';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -75,7 +77,9 @@ function App() {
           <Route path="StereoChorus" element={<StereoChorus />} />
           <Route path='Clipper' element={<Clipper />} />
           <Route path='Crusher' element={<Crusher />} />
-          
+          <Route path='JuicyDistrotion' element={<JuicyDistrotion />} />
+          <Route path='TapeWobble' element={<TapeWobble />} />
+
 
           <Route path='/login' element={<Login />} />
           <Route path='/drum' element={<Drum />} />
@@ -92,13 +96,14 @@ function App() {
             <Route path='timeline' element={<Timeline />} />
             <Route path='dtimeline' element={<DTimeline />} />
             <Route path='timeline' element={<TimelineDemo />} />
-          <Route path='timelinedemo' element={<TimelineDemo />} />
+            <Route path='timelinedemo' element={<TimelineDemo />} />
             <Route path='knob' element={<Knob />} />
             <Route path='loop' element={<Loops />} />
             <Route path="effects" element={<Effects />} />
             <Route path="savani" element={<SDemo />} />
 
            
+
           </Route>
         </Routes>
       </SnackbarProvider>
