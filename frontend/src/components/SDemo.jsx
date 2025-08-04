@@ -1,397 +1,282 @@
-import React, { useState, useEffect } from 'react';
-import { GiPianoKeys } from 'react-icons/gi';
-import { HiMiniChevronUpDown } from 'react-icons/hi2';
-import { FaPlus } from 'react-icons/fa';
+import React, { useState, useEffect, useRef } from 'react';
+import { Piano } from 'lucide-react';
 import * as Tone from 'tone';
 
 const SDemo = () => {
-  const [selectedButtons, setSelectedButtons] = useState({});
-  const [synth, setSynth] = useState(null);
-  const [drumSynth, setDrumSynth] = useState(null);
-  const [arpSynth, setArpSynth] = useState(null);
-  const [bassSynth, setBassSynth] = useState(null);
+  // --- STATE MANAGEMENT ---
+  const [isAudioReady, setIsAudioReady] = useState(false);
   const [isAudioStarted, setIsAudioStarted] = useState(false);
+  
+  const [activeChord, setActiveChord] = useState('Am');
+  const [activePatternKey, setActivePatternKey] = useState(null);
 
-  // Initialize Tone.js with multiple synths for different sounds
+  const synths = useRef(null);
+  const loop = useRef(null);
+  const effects = useRef(null);
+
+  // --- DATA (CHORDS & PATTERNS) ---
+  const chordNotes = {
+    'Am': ['A0', 'A2', 'A3', 'C4', 'E4'],
+    'Bdim': ['B3', 'D4', 'F4', 'B4'],
+    'C': ['C3', 'E3', 'G3', 'C4'],
+    'Dm': ['D3', 'F3', 'A3', 'D4'],
+    'E': ['E3', 'G#3', 'B3', 'E4'],
+    'F': ['F3', 'A3', 'C4', 'F4'],
+    'G': ['G3', 'B3', 'D4', 'G4'],
+    'Am7': ['A3', 'C4', 'E4', 'G4']
+  };
+
+  const patternCategories = {
+    basic: [
+      { name: 'Full Chord' }, { name: 'On One' },
+      { name: 'One and Three' }, { name: 'All Four' }
+    ],
+    stabs: [
+      { name: 'On Air' }, { name: "Eight's" }, { name: 'Soul Stabs' },
+      { name: 'Simple Stabs' }, { name: 'Latinesque' }, { name: 'Moderate Stabs' }
+    ],
+    arpeggiated: [
+      { name: 'Layout' }, { name: 'Storytime' }, { name: 'Rising Arp' },
+      { name: 'Dreamer' }, { name: 'Moving Arp' }, { name: 'Quick Arp' },
+      { name: 'Simple Stride' }, { name: 'Simple Rain' }
+    ],
+    other: [
+      { name: 'Simple Slide' }, { name: 'Simple Player' }, { name: 'Alternating Stride' }
+    ]
+  };
+
+  // --- AUDIO INITIALIZATION (No changes here) ---
   useEffect(() => {
-    // Create effects
-    const reverb = new Tone.Reverb({
-      decay: 2,
-      wet: 0.3
-    }).toDestination();
+    const initializeAudio = async () => {
+      try {
+        const reverb = new Tone.Reverb({ decay: 3, wet: 0.4, preDelay: 0.01 }).toDestination();
+        const delay = new Tone.PingPongDelay({ delayTime: "8n", feedback: 0.2, wet: 0.1 }).toDestination();
+        const compressor = new Tone.Compressor({ threshold: -18, ratio: 8, attack: 0.001, release: 0.2 }).toDestination();
+        effects.current = { reverb, compressor, delay };
 
-    const compressor = new Tone.Compressor({
-      threshold: -24,
-      ratio: 8,
-      attack: 0.003,
-      release: 0.1
-    });
+        const createPianoSynth = () => new Tone.PolySynth(Tone.FMSynth, { harmonicity: 3.01, modulationIndex: 14, oscillator: { type: 'sine' }, envelope: { attack: 0.001, decay: 0.3, sustain: 0.1, release: 1.5, }, modulation: { type: 'square' }, modulationEnvelope: { attack: 0.002, decay: 0.2, sustain: 0, release: 0.2, }, volume: -10 }).chain(compressor, delay, reverb);
+        const createStabSynth = () => new Tone.PolySynth(Tone.FMSynth, { harmonicity: 2, modulationIndex: 3, oscillator: { type: 'square' }, envelope: { attack: 0.001, decay: 0.2, sustain: 0.1, release: 0.3 }, modulation: { type: 'sine' }, modulationEnvelope: { attack: 0.002, decay: 0.3, sustain: 0, release: 0.2 }, volume: -12 }).chain(compressor, reverb);
+        const createArpSynth = () => new Tone.PolySynth(Tone.AMSynth, { harmonicity: 1.5, oscillator: { type: 'fmsine' }, envelope: { attack: 0.02, decay: 0.3, sustain: 0.2, release: 0.8 }, modulation: { type: 'square' }, modulationEnvelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.3 }, volume: -10 }).chain(compressor, delay, reverb);
+        const createBassSynth = () => new Tone.MonoSynth({ oscillator: { type: 'fatsawtooth', count: 3, spread: 40 }, envelope: { attack: 0.02, decay: 0.4, sustain: 0.6, release: 1.2 }, filterEnvelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 0.8, baseFrequency: 300, octaves: 3, exponent: 2 }, volume: -6 }).chain(compressor, reverb);
 
-    // Main piano synth for chords
-    const polySynth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: {
-        type: 'fatsawtooth',
-        partials: [1, 0.5, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05]
-      },
-      envelope: {
-        attack: 0.005,
-        decay: 0.3,
-        sustain: 0.4,
-        release: 1.2,
-        attackCurve: 'exponential',
-        releaseCurve: 'exponential'
+        synths.current = {
+          piano: createPianoSynth(),
+          stabSynth: createStabSynth(),
+          arpSynth: createArpSynth(),
+          bassSynth: createBassSynth()
+        };
+        Tone.Transport.bpm.value = 120;
+        setIsAudioReady(true);
+      } catch (error) {
+        console.error("Audio initialization error:", error);
       }
-    });
-
-    // Drum/Percussion synth for stabs
-    const drumSynth = new Tone.MembraneSynth({
-      pitchDecay: 0.05,
-      octaves: 10,
-      oscillator: { type: 'sine' },
-      envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 }
-    });
-
-    // Arpeggiator synth - bright and bell-like
-    const arpSynth = new Tone.PolySynth(Tone.FMSynth, {
-      harmonicity: 3,
-      modulationIndex: 10,
-      detune: 0,
-      oscillator: { type: 'sine' },
-      envelope: { attack: 0.01, decay: 0.01, sustain: 1, release: 0.5 },
-      modulation: { type: 'square' },
-      modulationEnvelope: { attack: 0.5, decay: 0, sustain: 1, release: 0.5 }
-    });
-
-    // Bass synth for other category
-    const bassSynth = new Tone.MonoSynth({
-      oscillator: { type: 'square' },
-      envelope: { attack: 0.1, decay: 0.3, sustain: 0.9, release: 0.8 },
-      filter: { Q: 6, type: 'lowpass', rolloff: -24 },
-      filterEnvelope: { attack: 0.6, decay: 0.2, sustain: 0.5, release: 2, baseFrequency: 200, octaves: 7, exponent: 2 }
-    });
-
-    // Connect effects chain
-    polySynth.chain(compressor, reverb);
-    drumSynth.chain(compressor, reverb);
-    arpSynth.chain(compressor, reverb);
-    bassSynth.chain(compressor, reverb);
-    
-    setSynth(polySynth);
-    setDrumSynth(drumSynth);
-    setArpSynth(arpSynth);
-    setBassSynth(bassSynth);
-
+    };
+    initializeAudio();
     return () => {
-      polySynth.dispose();
-      drumSynth.dispose();
-      arpSynth.dispose();
-      bassSynth.dispose();
-      compressor.dispose();
-      reverb.dispose();
+        try {
+            Tone.Transport.stop();
+            Tone.Transport.cancel();
+            if (loop.current) loop.current.dispose();
+            if (synths.current) Object.values(synths.current).forEach(synth => synth?.dispose());
+            if (effects.current) Object.values(effects.current).forEach(effect => effect?.dispose());
+        } catch (e) { console.error("Cleanup error", e); }
     };
   }, []);
 
-  const startAudio = async () => {
+  const startAudioContext = async () => {
     if (Tone.context.state !== 'running') {
       await Tone.start();
-      // Set better audio context settings
-      Tone.context.lookAhead = 0.05;
-      Tone.context.latencyHint = 'interactive';
       setIsAudioStarted(true);
     }
   };
-
-  // Better chord definitions with proper voicing
-  const chordNotes = {
-    'Am': ['A2', 'C3', 'E3', 'A3'],
-    'Bdmi': ['B2', 'D3', 'F3', 'B3'],
-    'C': ['C3', 'E3', 'G3', 'C4'],
-    'Dm': ['D3', 'F3', 'A3', 'D4'],
-    'E': ['E2', 'G#2', 'B2', 'E3'],
-    'F': ['F2', 'A2', 'C3', 'F3'],
-    'G': ['G2', 'B2', 'D3', 'G3'],
-    'Am7': ['A2', 'C3', 'E3', 'G3', 'A3']
-  };
-
-  const BasicData = [
-    { name: 'Am', image: '⚪' },
-    { name: 'Bdmi', image: '⚪' },
-    { name: 'C', image: '⚪' },
-    { name: 'Dm', image: '⚪' },
-    { name: 'E', image: '⚪' },
-    { name: 'F', image: '⚪' },
-    { name: 'G', image: '⚪' },
-    { name: 'Am7', image: '⚪' }
-  ];
-
-  const BasicData1 = [
-    { name: 'Full Chord' },
-    { name: 'On One' },
-    { name: 'One and Three' },
-    { name: 'All Four' }
-  ];
-
-  const Stabs = [
-    { name: 'On Air' },
-    { name: "Eight's" },
-    { name: 'Soul Stabs' },
-    { name: 'Simple Stabs' },
-    { name: 'Latinesque' },
-    { name: 'Moderate Stabs' }
-  ];
-
-  const Arpeggiated = [
-    { name: 'Layout' },
-    { name: 'Storytime' },
-    { name: 'Rising Arp' },
-    { name: 'Dreamer' },
-    { name: 'Moving Arp' },
-    { name: 'Quick Arp' },
-    { name: 'Simple Stride' },
-    { name: 'Simple Rain' }
-  ];
-
-  const other = [
-    { name: 'Simple Slide' },
-    { name: 'Simple Player' },
-    { name: 'Alternating Stride' }
-  ];
-
-  const isButtonSelected = (category, index) => {
-    return selectedButtons[`${category}-${index}`] || false;
-  };
-
-  const toggleButton = async (category, index) => {
-    await startAudio();
+  
+  const generatePatternData = (patternKey, notes) => {
+    console.log("Hello " , patternKey , notes);
     
-    const key = `${category}-${index}`;
-    setSelectedButtons(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
-
-    // Play different sounds based on category
-    const playButtonSound = () => {
-      switch(category) {
-        case 'basic':
-          // Piano-style chord sounds for basic
-          if (synth) {
-            const basicChords = [
-              ['C4', 'E4', 'G4'], // Full Chord
-              ['C4'], // On One
-              ['C4', 'G4'], // One and Three
-              ['C4', 'E4', 'G4', 'C5'] // All Four
-            ];
-            const chord = basicChords[index] || ['C4'];
-            synth.triggerAttackRelease(chord, '8n', undefined, 0.6);
-          }
-          break;
-          
-        case 'stabs':
-          // Percussive/drum sounds for stabs
-          if (drumSynth) {
-            const stabNotes = ['C2', 'D2', 'E2', 'F2', 'G2', 'A2'];
-            const note = stabNotes[index] || 'C2';
-            drumSynth.triggerAttackRelease(note, '16n', undefined);
-            
-            // Add some high-hat style sound
-            if (synth) {
-              synth.triggerAttackRelease('C6', '32n', undefined, 0.1);
-            }
-          }
-          break;
-          
-        case 'arpeggiated':
-          // Bell-like arpeggiated sounds
-          if (arpSynth) {
-            const arpPatterns = [
-              ['C4', 'E4', 'G4', 'C5'], // Layout
-              ['C4', 'D4', 'E4', 'F4'], // Storytime
-              ['C4', 'F4', 'A4', 'C5'], // Rising Arp
-              ['A3', 'C4', 'E4', 'A4'], // Dreamer
-              ['G3', 'B3', 'D4', 'G4'], // Moving Arp
-              ['F3', 'A3', 'C4', 'F4'], // Quick Arp
-              ['E3', 'G3', 'B3', 'E4'], // Simple Stride
-              ['D3', 'F3', 'A3', 'D4']  // Simple Rain
-            ];
-            
-            const pattern = arpPatterns[index] || ['C4', 'E4', 'G4'];
-            // Play notes in sequence for arpeggio effect
-            pattern.forEach((note, i) => {
-              setTimeout(() => {
-                arpSynth.triggerAttackRelease(note, '8n', undefined, 0.4);
-              }, i * 100);
-            });
-          }
-          break;
-          
-        case 'other':
-          // Bass/low-end sounds for other category
-          if (bassSynth) {
-            const bassNotes = ['C1', 'G1', 'F1'];
-            const note = bassNotes[index] || 'C1';
-            bassSynth.triggerAttackRelease(note, '4n', undefined);
-            
-            // Add some texture with the main synth
-            if (synth) {
-              setTimeout(() => {
-                synth.triggerAttackRelease(['C3', 'E3'], '8n', undefined, 0.3);
-              }, 200);
-            }
-          }
-          break;
-      }
-    };
-
-    playButtonSound();
-  };
-
-  const playChord = async (chordName) => {
-    await startAudio();
+    const [category, indexStr] = patternKey.split('-');
+    const index = parseInt(indexStr, 10);
+    const root = notes[0], third = notes[1], fifth = notes[2] || notes[1], seventh = notes[3] || notes[2];
     
-    if (synth && chordNotes[chordName]) {
-      const notes = chordNotes[chordName];
-      
-      // Stop any currently playing notes
-      synth.releaseAll();
-      
-      // Add slight delay between notes for more realistic piano effect
-      notes.forEach((note, index) => {
-        setTimeout(() => {
-          synth.triggerAttackRelease(note, '1.5n', undefined, 0.8 - (index * 0.1));
-        }, index * 15);
-      });
-      
-      // Add a subtle bass note for fuller sound
-      setTimeout(() => {
-        const bassNote = notes[0].replace(/\d/, '1');
-        synth.triggerAttackRelease(bassNote, '2n', undefined, 0.3);
-      }, 50);
+    switch (category) {
+      case 'basic':
+        switch(index) {
+          case 0: return { measure: '1m', synth: 'piano', volume: 0.8, data: [{ time: '0:0', note: notes, duration: '1n', velocity: 0.9 }] };
+          case 1: return { measure: '1m', synth: 'piano', volume: 0.8, data: [{ time: '0:0', note: root, duration: '2n', velocity: 0.8 }] };
+          case 2: return { measure: '1m', synth: 'piano', volume: 0.8, data: [{ time: '0:0', note: root, duration: '2n', velocity: 0.8 }, { time: '0:2', note: fifth, duration: '2n', velocity: 0.7 }] };
+          case 3: return { measure: '1m', synth: 'piano', volume: 0.8, data: notes.map((n, i) => ({ time: `0:${i}`, note: n, duration: '4n', velocity: 0.8 - (i * 0.1) })) };
+          default: return {};
+        }
+      case 'stabs':
+        switch(index) {
+          case 0: return { measure: '1m', synth: 'stabSynth', volume: 0.6, data: [{ time: '0:0:2', note: [root, third, fifth], duration: '8n', velocity: 0.7 }, { time: '0:2:2', note: [root, third, fifth], duration: '8n', velocity: 0.6 }] };
+          case 1: return { measure: '1m', synth: 'stabSynth', volume: 0.7, data: [{ time: '0:0', note: [root, fifth], duration: '8n', velocity: 0.8 }, { time: '0:0:2', note: [third, seventh], duration: '8n', velocity: 0.7 }, { time: '0:1', note: [root, fifth], duration: '8n', velocity: 0.7 }, { time: '0:1:2', note: [third, seventh], duration: '8n', velocity: 0.6 }, { time: '0:2', note: [root, fifth], duration: '8n', velocity: 0.7 }, { time: '0:2:2', note: [third, seventh], duration: '8n', velocity: 0.6 }, { time: '0:3', note: [root, fifth], duration: '8n', velocity: 0.6 }, { time: '0:3:2', note: [third, seventh], duration: '8n', velocity: 0.5 }] };
+          case 2: return { measure: '1m', synth: 'stabSynth', volume: 0.8, data: [{ time: '0:0:2', note: notes, duration: '16n', velocity: 0.9 }, { time: '0:1:2', note: notes, duration: '16n', velocity: 0.8 }, { time: '0:2:2', note: notes, duration: '16n', velocity: 0.7 }, { time: '0:3:2', note: notes, duration: '16n', velocity: 0.6 }] };
+          default: return {};
+        }
+      case 'arpeggiated':
+         switch(index) {
+          case 6: return { measure: '1m', synth: 'arpSynth', volume: 0.7, data: [{ time: '0:0', note: root, duration: '4n', velocity: 0.8 }, { time: '0:1', note: [third, fifth], duration: '8n', velocity: 0.6 }, { time: '0:2', note: root, duration: '4n', velocity: 0.7 }, { time: '0:3', note: [third, fifth], duration: '8n', velocity: 0.5 }] };
+          case 7: return { measure: '1m', synth: 'arpSynth', volume: 0.6, data: [...notes].reverse().map((n, i) => ({ time: `0:${i}:2`, note: n, duration: '8n', velocity: 0.8 - (i * 0.15) })) };
+          default: return {};
+         }
+      case 'other':
+         const bassRoot = root.replace(/\d/, '2');
+         const bassFifth = fifth.replace(/\d/, '2');
+         switch(index) {
+           case 0: return { measure: '1m', synth: 'bassSynth', volume: 0.8, data: [{ time: '0:0', note: bassRoot, duration: '4n', velocity: 0.9 }, { time: '0:1:2', note: bassFifth, duration: '8n', velocity: 0.7 }, { time: '0:2:2', note: bassRoot, duration: '4n', velocity: 0.8 }, { time: '0:3:2', note: bassFifth, duration: '8n', velocity: 0.6 }] };
+           default: return {};
+         }
+      default:
+        return {};
     }
   };
 
+  const startOrUpdateLoop = (patternKey, chordName) => {
+    if (!isAudioReady || !synths.current) return;
+    try {
+      if (loop.current) {
+        loop.current.stop();
+        loop.current.dispose();
+      }
+  
+      const currentNotes = chordNotes[chordName];
+      const patternData = generatePatternData(patternKey, currentNotes);
+      if (!patternData.data?.length || !patternData.synth) return;
+  
+      const synthToUse = synths.current[patternData.synth];
+      if (patternData.volume) synthToUse.volume.value = Tone.gainToDb(patternData.volume);
+  
+      loop.current = new Tone.Part((time, value) => {
+        synthToUse.triggerAttackRelease(value.note, value.duration, time, value.velocity);
+      }, patternData.data).start(0);
+  
+      loop.current.loop = true;
+      loop.current.loopEnd = patternData.measure;
+  
+      if (Tone.Transport.state !== 'started') {
+        Tone.Transport.start();
+      }
+    } catch (error) {
+      console.error("Error in startOrUpdateLoop:", error);
+    }
+  };
+  
+
+  // --- EVENT HANDLERS (Major changes here) ---
+  const handlePatternSelect = async (key) => {
+    if (activePatternKey === key) {
+      // Deselect pattern & stop music
+      setActivePatternKey(null);
+      if (loop.current) {
+        loop.current.stop();
+        loop.current.dispose();
+        loop.current = null;
+      }
+      Tone.Transport.stop();
+    } else {
+      // Set new pattern key (but don't play sound yet)
+      setActivePatternKey(key);
+      // Stop any currently playing loop
+      if (loop.current) {
+        loop.current.stop();
+        loop.current.dispose();
+        loop.current = null;
+      }
+      Tone.Transport.stop();
+    }
+    Tone.Transport.stop();
+
+  };
+  
+
+  const handleChordClick = async (chordName) => {
+    setActiveChord(chordName);
+    await startAudioContext();
+  
+    // If pattern is selected, generate and play loop
+    if (activePatternKey) {
+      startOrUpdateLoop(activePatternKey, chordName);
+    } else {
+      // Otherwise, just trigger plain chord sound
+      synths.current.piano.triggerAttackRelease(chordNotes[chordName], "1n", Tone.now());
+    }
+  };
+  
+  
+
   return (
-    <div className="bg-[#1F1F1F] max-h-[180px] sm:max-h-[235px] md600:max-h-[235px] md:max-h-[410px] overflow-auto xl:overflow-hidden">
-      {/* Chord Section */}
-      <div className="w-full flex items-center justify-center">
-        <div className="bg-[#FFFFFF1A] items-center mt-1 px-1 py-1 md:mt-2 md:px-2 md:py-2 lg:px-3 rounded-lg">
-          <div className="flex gap-1 px-1 md:gap-2 md:px-2 lg:gap-3 items-center lg:px-3">
-            <GiPianoKeys className='text-[10px] md600:text-[12px] md:text-[16px] lg:text-[18px] 2xl:text-[20px]' />
-            <p className='text-white text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]'>Basic</p>
-            <HiMiniChevronUpDown className='text-[#FFFFFF99] text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]' />
-          </div>
-          <div className="grid grid-cols-3 gap-1 md600:gap-2 mx-1 mt-1 md:grid-cols-4 md:gap-3 md:mx-2 md:mt-2 lg:gap-4 lg:mx-3 lg:mt-3">
-            {BasicData.map((item, index) => (
-              <div 
-                key={index} 
-                className="bg-[#1F1F1F] text-white w-[90px] md600:w-[110px] p-1 md600:p-2 md:w-[120px] lg:w-[130px] rounded-lg border border-[#333] hover:border-[#555] cursor-pointer transition-all"
-                onClick={() => playChord(item.name)}
-              >
-                <p className='text-white text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px] text-center mb-1'>{item.name}</p>
-                <div className="flex justify-between items-center">
-                  <span className="w-2 h-2 md600:w-3 md600:h-3 lg:w-4 lg:h-4 text-[8px] md600:text-[10px] lg:text-[12px]">⚪</span>
-                  <FaPlus className='text-[10px] md600:text-[12px] lg:text-[16px] text-[#FFFFFF99] hover:text-white transition-colors' />
-                </div>
-              </div>
-            ))}
-          </div>
+    <div className="bg-[#1F1F1F] p-4 font-sans flex flex-col gap-4 items-center min-h-screen">
+      {/* Chords Section (The Main Trigger) */}
+      <div className="w-full max-w-4xl bg-[#2a2a2a] p-3 rounded-lg">
+        <div className="flex items-center gap-2 mb-3">
+          <Piano className='text-xl text-gray-300' />
+          <p className='text-white text-lg font-bold'>Chords (Click to Play)</p>
+        </div>
+        <div className="grid grid-cols-4 gap-3">
+          {Object.keys(chordNotes).map((name) => (
+            <button
+              key={name}
+              onClick={() => handleChordClick(name)}
+              className={`p-3 rounded-lg transition-all duration-200 ${
+                activeChord === name && Tone.Transport.state === 'started' ? 'bg-blue-500 text-white shadow-lg scale-105' : 'bg-[#383838] text-gray-300 hover:bg-[#4a4a4a]'
+              }`}
+            >
+              <p className='text-lg font-semibold text-center'>{name}</p>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Playing Sounds Section */}
-      <div className="max-w-full md600:w-full flex items-center md600:justify-center my-3 lg:my-0 overflow-auto">
-        <div className="bg-[#FFFFFF1A] items-center mt-1 px-1 md:mt-2 md:px-2 py-1 lg:px-3 lg:py-2 rounded-lg">
-          <div className="flex gap-1 px-1 md:gap-2 md:px-2 lg:gap-3 items-center lg:px-3">
-            <div className="w-2 h-2 md600:w-3 md600:h-3 lg:w-4 lg:h-4 text-[8px] md600:text-[10px] lg:text-[12px]">🎵</div>
-            <p className='text-white text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]'>Playing Sounds</p>
-          </div>
-          
-          <div className="flex">
-            {/* Basic Column */}
-            <div className='bg-[#1F1F1F] ms-1 mt-1 p-1 w-[110px] h-[120px] md600:w-[100px] md600:h-[155px] md:ms-2 md:mt-2 md:p-2 md:w-[110px] md:h-[180px] lg:ms-3 lg:w-[116px] lg:h-[150px] rounded-lg'>
-              <p className='text-[#FFFFFF99] text-[10px] md600:text-[12px] md:text-[14px] mb-2'>Basic</p>
-              {BasicData1.map((item, index) => (
-                <div key={index} className="mb-1">
+      {/* Playing Sounds Section (Selector Only) */}
+      <div className="w-full max-w-4xl bg-[#2a2a2a] p-3 rounded-lg">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-xl">🎵</span>
+          <p className='text-white text-lg font-bold'>Select a Pattern</p>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          {Object.entries(patternCategories).map(([category, patterns]) => (
+            <div key={category} className="bg-[#1F1F1F] p-3 rounded-lg flex flex-col gap-2">
+              <p className='text-white font-semibold capitalize text-md mb-1'>{category}</p>
+              {patterns.map((item, index) => {
+                const key = `${category}-${index}`;
+                const isSelected = activePatternKey === key;
+                return (
                   <button
-                    className={`${isButtonSelected('basic', index) ? "bg-white text-black" : "text-[#FFFFFF] bg-transparent"} justify-center w-[100px] mt-1 h-[25px] lg:w-[100px] lg:h-[30px] md:mt-2 text-[8px] md600:text-[10px] rounded-md border border-[#FFFFFF1A] hover:border-[#FFFFFF3A] transition-all relative`}
-                    onClick={() => toggleButton('basic', index)}
+                    key={key}
+                    onClick={() => handlePatternSelect(key)}
+                    className={`w-full p-2 text-sm rounded-md border transition-all duration-200 relative ${
+                      isSelected ? "bg-white text-black font-semibold border-white shadow-lg" : "text-gray-300 bg-transparent border-[#444] hover:border-gray-400 hover:bg-[#333]"
+                    }`}
                   >
-                    {isButtonSelected('basic', index) && (
+                    {isSelected && (
                       <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[#1F1F1F]"></div>
                     )}
                     {item.name}
                   </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
-
-            {/* Stabs Column */}
-            <div className='bg-[#1F1F1F] mx-1 mt-1 p-1 w-[315px] h-[120px] md600:w-[170px] md600:h-[155px] md:mx-2 lg:mx-3 md:mt-2 md:p-2 md:w-[200px] md:h-[180px] lg:w-[340px] lg:h-[150px] rounded-lg'>
-              <p className='text-[#FFFFFF99] text-[8px] sm:text-[10px] md600:text-[12px] md:text-[14px] mb-2'>Stabs</p>
-              <div className="grid grid-cols-3 pt-1 md600:grid-cols-2 gap-1 md:gap-2 lg:grid-cols-3 lg:gap-3 md:pt-2">
-                {Stabs.map((item, index) => (
-                  <div key={index}>
-                    <button
-                      className={`${isButtonSelected('stabs', index) ? "bg-white text-black" : "text-[#FFFFFF] bg-transparent"} justify-center w-[100px] h-[25px] md600:w-[80px] md:w-[90px] md600:h-[25px] lg:w-[100px] lg:h-[30px] text-[8px] md600:text-[10px] rounded-md border border-[#FFFFFF1A] hover:border-[#FFFFFF3A] transition-all relative`}
-                      onClick={() => toggleButton('stabs', index)}
-                    >
-                      {isButtonSelected('stabs', index) && (
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[#1F1F1F]"></div>
-                      )}
-                      {item.name}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Arpeggiated Column */}
-            <div className='bg-[#1F1F1F] mt-1 p-1 w-[315px] h-[120px] md600:w-[170px] md600:h-[155px] md:mt-2 md:p-2 md:w-[200px] md:h-[180px] lg:w-[340px] lg:h-[150px] rounded-lg'>
-              <p className='text-[#FFFFFF99] text-[8px] sm:text-[10px] md600:text-[12px] md:text-[14px] mb-2'>Arpeggiated</p>
-              <div className="grid grid-cols-3 md600:grid-cols-2 gap-1 md:gap-2 lg:grid-cols-3 lg:gap-3 pt-1 md:pt-2">
-                {Arpeggiated.map((item, index) => (
-                  <div key={index} className="flex">
-                    <button
-                      className={`${isButtonSelected('arpeggiated', index) ? "bg-white text-black" : "text-[#FFFFFF] bg-transparent"} justify-center w-[100px] h-[25px] md600:w-[80px] md:w-[90px] mt-1 lg:mt-0 md600:h-[25px] lg:w-[100px] lg:h-[30px] text-[8px] md600:text-[10px] rounded-md border border-[#FFFFFF1A] hover:border-[#FFFFFF3A] transition-all relative`}
-                      onClick={() => toggleButton('arpeggiated', index)}
-                    >
-                      {isButtonSelected('arpeggiated', index) && (
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[#1F1F1F]"></div>
-                      )}
-                      {item.name}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Other Column */}
-            <div className='bg-[#1F1F1F] mt-1 mx-1 p-1 md:mx-2 lg:mx-3 md:mt-2 md:p-2 w-[110px] h-[120px] md600:w-[100px] md600:h-[155px] md:w-[110px] md:h-[180px] lg:ms-3 lg:w-[116px] lg:h-[150px] rounded-lg'>
-              <p className='text-[#FFFFFF99] text-[8px] sm:text-[10px] md600:text-[12px] md:text-[14px] mb-2'>Other</p>
-              {other.map((item, index) => (
-                <div key={index} className="mb-1">
-                  <button
-                    className={`${isButtonSelected('other', index) ? "bg-white text-black" : "text-[#FFFFFF] bg-transparent"} mt-1 md:mt-2 justify-center w-[100px] h-[25px] md600:w-[90px] md600:h-[25px] lg:w-[100px] lg:h-[30px] text-[8px] md600:text-[10px] rounded-md border border-[#FFFFFF1A] hover:border-[#FFFFFF3A] transition-all relative`}
-                    onClick={() => toggleButton('other', index)}
-                  >
-                    {isButtonSelected('other', index) && (
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[#1F1F1F]"></div>
-                    )}
-                    {item.name}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
       </div>
-
-      {/* Audio Start Notice */}
-      {!isAudioStarted && (
-        <div className="text-center p-2">
-          <p className="text-[#FFFFFF99] text-xs">Click any button to start audio</p>
-        </div>
-      )}
+      
+      {/* Status Section */}
+      <div className="text-center p-2 text-xs">
+          {!isAudioReady && <p className="text-yellow-400 animate-pulse">Loading Instruments...</p>}
+          {isAudioReady && !isAudioStarted && <p className="text-gray-400">Click any button to start audio</p>}
+          {isAudioReady && isAudioStarted && (
+              <div className="space-y-1">
+                  {activePatternKey ? (
+                      <p className="text-green-400">Pattern '{activePatternKey.replace('-', ' - ')}' selected. Click a chord to play.</p>
+                  ) : (
+                      <p className="text-yellow-400">Please select a pattern first.</p>
+                  )}
+                  {Tone.Transport.state === 'started' && activePatternKey &&
+                    <p className="text-blue-400 animate-pulse">Playing chord: {activeChord}</p>
+                  }
+              </div>
+          )}
+      </div>
     </div>
   );
 };
