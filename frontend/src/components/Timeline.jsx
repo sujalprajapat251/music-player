@@ -1262,10 +1262,21 @@ useEffect(() => {
     e.preventDefault();
     e.stopPropagation();
     
+    console.log('Drop event triggered');
+    console.log('DataTransfer types:', e.dataTransfer.types);
+    
     try {
       const data = e.dataTransfer.getData('text/plain');
+      console.log('Dropped data:', data);
+      
       if (data) {
         const soundItem = JSON.parse(data);
+        console.log('Parsed sound item:', soundItem);
+        
+        if (!soundItem.soundfile) {
+          console.error('No soundfile found in dropped item');
+          return;
+        }
         
         const rect = timelineContainerRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -1273,15 +1284,18 @@ useEffect(() => {
         const duration = audioDuration;
         const rawDropTime = (x / width) * duration;
         
+        console.log('Drop coordinates:', { x, width, duration, rawDropTime });
+        
         // Grid snapping for drop position
         const gridSpacing = getGridSpacing(selectedGrid);
         const snapToGrid = (time) => {
           if (!gridSpacing || gridSpacing <= 0) return time;
-          const gridPosition = Math.round(time / gridSpacing) * gridPosition;
+          const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
           return Math.max(0, gridPosition);
         };
         
         const dropTime = snapToGrid(rawDropTime);
+        console.log('Snapped drop time:', dropTime);
         
         const url = `${IMAGE_URL}uploads/soundfile/${soundItem.soundfile}`;
         let audioDurationSec = null;
@@ -1291,8 +1305,11 @@ useEffect(() => {
           const audioContext = new (window.AudioContext || window.webkitAudioContext)();
           const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
           audioDurationSec = audioBuffer.duration;
+          console.log('Audio duration:', audioDurationSec);
         } catch (err) {
           console.error('Error fetching or decoding audio for duration:', err);
+          // Use a default duration if we can't get the actual duration
+          audioDurationSec = 5; // 5 seconds default
         }
         
         const newTrack = {
@@ -1308,7 +1325,10 @@ useEffect(() => {
           soundData: soundItem
         };
         
+        console.log('Creating new track:', newTrack);
         dispatch(addTrack(newTrack));
+      } else {
+        console.log('No data found in drop event');
       }
     } catch (error) {
       console.error('Error processing dropped item:', error);
