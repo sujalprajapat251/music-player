@@ -7,7 +7,7 @@ import { IoSearch } from 'react-icons/io5'
 
 import { getAllCategory } from '../Redux/Slice/category.slice';
 import { useDispatch, useSelector } from 'react-redux';
-import { addEffect, setShowEffectsLibrary } from '../Redux/Slice/effects.slice';
+import { addEffect, setShowEffectsLibrary, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
 
 import { FaPlus } from "react-icons/fa6";
 import subscription from "../Images/subscription.svg";
@@ -59,14 +59,14 @@ const Loops = () => {
 
     const dispatch = useDispatch();
 
-    const [showOffcanvas, setShowOffcanvas] = useState(true);
     const [pauseButton, setPauseButton] = useState(true)
     const [playingEffectId, setPlayingEffectId] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isDragging, setIsDragging] = useState(false);
     const category = useSelector((state) => state.category?.category || []);
 
-    const { activeEffects, showEffectsLibrary, effectsLibrary} = useSelector((state) => state.effects);
+    const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas } = useSelector((state) => state.effects);
 
     useEffect(() => {
         dispatch(getAllCategory());
@@ -103,14 +103,31 @@ const Loops = () => {
         }
     };
 
+    const handleDragStart = (e, effect) => {
+        setIsDragging(true);
+        e.dataTransfer.setData('application/json', JSON.stringify(effect));
+        e.dataTransfer.effectAllowed = 'copy';
+        e.target.style.opacity = '0.5';
+        e.target.style.transform = 'scale(0.95)';
+        e.dataTransfer.setDragImage(e.target, 0, 0);
+    };
+
+    const handleDragEnd = (e) => {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'scale(1)';
+        setTimeout(() => {
+            setIsDragging(false);
+        }, 100);
+    };
+
     const handleOpenEffectsLibrary = () => {
         dispatch(setShowEffectsLibrary(true));
     };
 
     return (
     <>
-    <button className='p-2 bg-white text-black' onClick={() => setShowOffcanvas(prev => !prev)}>on/off</button>
-    {showOffcanvas && (
+    <button className='p-2 bg-white text-black' onClick={() => dispatch(toggleEffectsOffcanvas())}>on/off</button>
+    {showEffectsOffcanvas && (
     <>
     <div className="absolute top-0 bg-primary-light dark:bg-primary-dark right-0 max-h-[calc(100vh-82px)] sm:max-h-[calc(100vh-66px)] md:max-h-[calc(100vh-96px)]  z-50 shadow-lg transition-transform duration-300 transform translate-x-0 overflow-auto w-[70%] md600:w-[30%]  2xl:w-[25%] 3xl:w-[23%]">
         <div className=" text-secondary-light dark:text-secondary-dark bg-primary-light dark:bg-primary-dark">
@@ -162,7 +179,13 @@ const Loops = () => {
                     <div className="mt-2 sm:mt-3 md600:mt-4 md:mt-3 lg:mt-4 3xl:mt-5">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 md600:grid-cols-1 md600:gap-3 md:grid-cols-2 md:gap-2 lg:grid-cols-3 lg:gap-2">
                             {effects.map((effect) => (
-                                <div key={effect.id} className=''>
+                                <div 
+                                    key={effect.id} 
+                                    className='cursor-grab active:cursor-grabbing transition-all duration-200 hover:scale-105'
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, effect)}
+                                    onDragEnd={handleDragEnd}
+                                >
                                     {effect?.subscription === true ?
                                         <div className="flex py-1 gap-1 md600:gap-2  md:gap-3 lg:gap-2 justify-center md600:py-2 items-center text-white" style={{ backgroundColor: effect?.color || '#8F7CFD' }}>
                                             <img src={subscription} alt="" className='w-5 h-5 sm:w-3 sm:h-3 md600:w-4 md600:h-4 md:w-4 md:h-4 3xl:w-5 3xl:h-5' />
@@ -181,9 +204,28 @@ const Loops = () => {
                                             <p className="text-white text-[16px] sm:text-[14px] md600:text-[19px] md:text-[12px] lg:text-[11px] xl:text-[13px] 2xl:text-[12px] 3xl:text-[13px] 4xl:text-[14px]">{effect.name}</p>
                                         </div>
                                     }
-                                    <img onClick={() => handleAddEffect(effect)}  src={effect.image} alt={effect.name} className="w-full" />
+                                    <img 
+                                        onClick={(e) => {
+                                            // Prevent click if we're currently dragging or just finished dragging
+                                            if (!isDragging && e.target.style.opacity !== '0.5') {
+                                                handleAddEffect(effect);
+                                                // Add visual feedback for click
+                                                e.target.style.transform = 'scale(0.95)';
+                                                setTimeout(() => {
+                                                    e.target.style.transform = 'scale(1)';
+                                                }, 150);
+                                            }
+                                        }}  
+                                        src={effect.image} 
+                                        alt={effect.name} 
+                                        className="w-full transition-transform duration-150" 
+                                    />
                                     <div className="flex gap-1 justify-center my-2">
-                                        <button onClick={() => handleEffectPlayPause(effect.id)} className='flex justify-center p-2 bg-[#FFFFFF1A] rounded-full items-center'>
+                                        <button 
+                                            onClick={() => handleEffectPlayPause(effect.id)} 
+                                            className='flex justify-center p-2 bg-[#FFFFFF1A] rounded-full items-center'
+                                            draggable={false}
+                                        >
                                             {playingEffectId === effect.id ?
                                                 <MdOutlinePause className='text-white text-[12px] lg:text-[10px] xl:text-[12px]' /> :
                                                 <FaPlay className='text-white text-[12px] lg:text-[10px] xl:text-[12px]' />
