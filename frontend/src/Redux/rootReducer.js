@@ -13,6 +13,7 @@ import subscribeReducer from './Slice/subscribe.slice';
 import categoryReducer from './Slice/category.slice';
 import patternReducer from './Slice/pattern.slice';
 import effectsReducer from './Slice/effects.slice';
+import gridReducer from './Slice/grid.slice';
 
 export const rootReducer = combineReducers({
     alert: alertSlice,
@@ -28,4 +29,5 @@ export const rootReducer = combineReducers({
     category: categoryReducer,
     pattern:patternReducer,
     effects: effectsReducer,
+    grid: gridReducer,
 });

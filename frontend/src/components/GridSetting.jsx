@@ -1,20 +1,5 @@
 import React, { useState, useEffect } from "react";
-
-const gridSizes = [
-  "Automatic grid size",
-  "1/1",
-  "1/2",
-  "1/2 dotted",
-  "1/4",
-  "1/8",
-  "1/16",
-  "1/32",
-  "1/8 triplet",
-  "1/16 triplet",
-];
-
-const timeSignatures = ["3/4", "4/4", "5/4", "6/4", "7/4", "6/8", "12/8"];
-const rulers = ["Beats", "Time"];
+import { gridSizes, timeSignatures, rulers } from "../Utils/gridUtils";
 
 const sectionLabelStyle = {
   color: "#aaa",

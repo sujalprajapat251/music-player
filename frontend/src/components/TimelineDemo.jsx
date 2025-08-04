@@ -4,6 +4,7 @@ import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
 import { addTrack, updateTrack, updateTrackAudio } from "../Redux/Slice/studio.slice";
+import { getGridDivisions, getGridSpacing } from "../Utils/gridUtils";
 import { IMAGE_URL } from "../Utils/baseUrl";
 import magnetIcon from "../Images/magnet.svg";
 import settingIcon from "../Images/setting.svg";

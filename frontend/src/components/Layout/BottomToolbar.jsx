@@ -14,8 +14,8 @@ import { ReactComponent as Clears } from "../../Images/clearIcons.svg";
 import { ReactComponent as Tempobutton } from "../../Images/Tempobutton.svg";
 import { ReactComponent as Tick } from "../../Images/Tick.svg";
 import { FaStop } from 'react-icons/fa6';
-import { useDispatch } from 'react-redux';
-import { setRecording } from '../../Redux/Slice/studio.slice';
+import { useDispatch, useSelector } from 'react-redux';
+import { setRecording, togglePlayPause, setCurrentTime } from '../../Redux/Slice/studio.slice';
 
 const BottomToolbar = () => {
     const [volume, setVolume] = useState(50);
@@ -36,6 +36,66 @@ const BottomToolbar = () => {
     const [selectedCountIn, setSelectedCountIn] = useState('2 bars');
 
     const dispatch = useDispatch();
+    
+    // Get play/pause state from Redux
+    const isPlaying = useSelector((state) => state.studio?.isPlaying || false);
+    const currentTime = useSelector((state) => state.studio?.currentTime || 0);
+    const audioDuration = useSelector((state) => state.studio?.audioDuration || 150);
+    
+    // Format time for display
+    const formatTime = (timeInSeconds) => {
+        const minutes = Math.floor(timeInSeconds / 60);
+        const seconds = Math.floor(timeInSeconds % 60);
+        const tenths = Math.floor((timeInSeconds % 1) * 10);
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${tenths}`;
+    };
+
+    // Handle play/pause button click
+    const handlePlayPause = () => {
+        dispatch(togglePlayPause());
+    };
+
+    // Handle move one second ahead
+    const handleMoveForward = () => {
+        const newTime = Math.min(currentTime + 1, audioDuration);
+        dispatch(setCurrentTime(newTime));
+    };
+
+    // Handle move one second behind
+    const handleMoveBackward = () => {
+        const newTime = Math.max(currentTime - 1, 0);
+        dispatch(setCurrentTime(newTime));
+    };
+
+    // Keyboard shortcuts for navigation
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            // Only handle shortcuts when not typing in input fields
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+                return;
+            }
+
+            switch (event.key) {
+                case 'ArrowLeft':
+                    event.preventDefault();
+                    handleMoveBackward();
+                    break;
+                case 'ArrowRight':
+                    event.preventDefault();
+                    handleMoveForward();
+                    break;
+                case ' ':
+                    event.preventDefault();
+                    handlePlayPause();
+                    break;
+                default:
+                    break;
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [currentTime]); // Re-create listener when currentTime changes
 
     useEffect(() => {
         const handleClickOutside1 = (event) => {
@@ -173,7 +233,7 @@ const BottomToolbar = () => {
                             }}
                         />
                     </div>
-                    <p className="text-secondary-light dark:text-secondary-dark sm:text-[10px] md:text-[16px] lg:text-[18px] self-center hidden sm:block">00:00.0</p>
+                    <p className="text-secondary-light dark:text-secondary-dark sm:text-[10px] md:text-[16px] lg:text-[18px] self-center hidden sm:block">{formatTime(currentTime)}</p>
                     {isRecording ? (<button onClick={hendleStopRecord} className="cursor-pointer">
                         <FaStop />
                     </button>
@@ -189,18 +249,21 @@ const BottomToolbar = () => {
                         <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2">
                             <img src={media1} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </div>
-                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2">
+                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2"  onClick={handleMoveBackward}>
                             <img src={media2} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </div>
-                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2">
-                            <img src={isRecording ? pauseIcon : media3} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
-                        </div>
-                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2">
+                        <button 
+                            onClick={handlePlayPause}
+                            className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2 cursor-pointer hover:bg-[#1414142A] dark:hover:bg-[#2F2F2F] transition-colors"
+                        >
+                            <img src={isPlaying ? pauseIcon : media3} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
+                        </button>
+                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2"  onClick={handleMoveForward}>
                             <img src={media4} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </div>
                     </div>
                     {/* <p className="sm:text-[8px] lg:text-[12px] text-[#14141499] dark:text-[#FFFFFF99] hidden sm:block">Key <span className='text-secondary-light dark:text-secondary-dark'>-</span></p> */}
-                    <div className="flex items-center justify-center ">
+                    <div className="flex items-center justify-center">
                         <div className="relative" ref={keyDropdownRef}>
                             {/* Trigger Button */}
                             <button
