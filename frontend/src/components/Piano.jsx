@@ -383,10 +383,40 @@ const Pianodemo = () => {
     const keyboardShortcuts = KeyboardShortcuts.create({
         firstNote: firstNote,
         lastNote: lastNote,
-        keyboardConfig: KeyboardShortcuts.HOME_ROW,
+        keyboardConfig: [
+            // First Octave (Lower Keys)
+            { natural: 'z', flat: 's', sharp: 's' },
+            { natural: 'x', flat: 'd', sharp: 'd' },
+            { natural: 'c', flat: 'f', sharp: 'f' },
+            { natural: 'v', flat: 'g', sharp: 'g' },
+            { natural: 'b', flat: 'h', sharp: 'h' },
+            { natural: 'n', flat: 'j', sharp: 'j' },
+            { natural: 'm', flat: 'k', sharp: 'k' },
+
+            { natural: ',', flat: 'l', sharp: 'l' },
+            { natural: '.', flat: ';', sharp: ';' },
+
+            // Second Octave (Middle Keys)
+            { natural: 'q', flat: '1', sharp: '1' },
+            { natural: 'w', flat: '2', sharp: '2' },
+            { natural: 'e', flat: '3', sharp: '3' },
+            { natural: 'r', flat: '4', sharp: '4' },
+            { natural: 't', flat: '5', sharp: '5' },
+            { natural: 'y', flat: '6', sharp: '6' },
+            { natural: 'u', flat: '7', sharp: '7' },
+
+            // Third Octave (Higher Keys)
+            { natural: 'i', flat: '8', sharp: '8' },
+            { natural: 'o', flat: '9', sharp: '9' },
+            { natural: 'p', flat: '0', sharp: '0' },
+        ],
     });
 
-
+    const pianoSections = [
+        { first: MidiNumbers.fromNote('C0'), last: MidiNumbers.fromNote('B2') },
+        { first: MidiNumbers.fromNote('C3'), last: MidiNumbers.fromNote('B5') },
+        { first: MidiNumbers.fromNote('C5'), last: MidiNumbers.fromNote('C8') }
+    ];
 
     const [recordedNotes, setRecordedNotes] = useState([]);
 
@@ -625,29 +655,27 @@ const Pianodemo = () => {
                                                     </div>
                                                     <div className="flex items-center justify-between ">
                                                         <button
-                                                            onClick={() => setActivePianoSection(prev => prev > 0 ? prev - 1 : prev)}
-                                                            className={`transition-colors text-white p-1 lg:p-2 ${activePianoSection === 0 ? ' cursor-not-allowed' : ' hover:text-white'}`}
+                                                            onClick={() => setActivePianoSection(prev => Math.max(prev - 1, 0))}
                                                             disabled={activePianoSection === 0}
+                                                            className={`transition-colors p-1 lg:p-2 ${activePianoSection === 0 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white'
+                                                                }`}
                                                         >
-                                                            <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]' />
+                                                            <FaChevronLeft className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                                                         </button>
 
-                                                        <div className="items-center justify-center px-1 md600:px-2  lg:px-3 2xl:px-4 w-[50px]  md600:w-[60px] lg:w-[80px] 2xl:w-[100px]">
-
-                                                            <div className="">
-                                                                <div className="text-white items-center fw-bolder text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">
-                                                                    {activePianoSection === 0 ? 'Octaves' : activePianoSection === 1 ? 'Octaves' : 'Octaves'}
-                                                                </div>
-
+                                                        <div className="px-1 md600:px-2 lg:px-3 2xl:px-4 w-[50px] md600:w-[60px] lg:w-[80px] 2xl:w-[100px]">
+                                                            <div className="text-white text-center fw-bolder text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">
+                                                                Octaves
                                                             </div>
                                                         </div>
 
                                                         <button
-                                                            onClick={() => setActivePianoSection(prev => prev < 2 ? prev + 1 : prev)}
-                                                            className={`transition-colors p-1 lg:p-2 ${activePianoSection === 2 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white'}`}
+                                                            onClick={() => setActivePianoSection(prev => Math.min(prev + 1, 2))}
                                                             disabled={activePianoSection === 2}
+                                                            className={`transition-colors p-1 lg:p-2 ${activePianoSection === 2 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white'
+                                                                }`}
                                                         >
-                                                            <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]' />
+                                                            <FaChevronRight className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                                                         </button>
                                                     </div>
                                                     <div className='border rounded-3xl border-[#FFFFFF1A]' onClick={() => setAutoChords(prev => !prev)} >
@@ -697,38 +725,22 @@ const Pianodemo = () => {
                                                     </div>
                                                 }
                                                 <div className="w-full h-[105px] sm:h-[150px] md600:h-[140px] md:h-[290px] lg:h-[250px] overflow-x-auto pt-1 md600:pt-2 lg:pt-3 ">
-                                                    <div className="w-full h-full flex items-center justify-center">
-
-                                                        {activePianoSection === 0 && (
-                                                            <Piano
-                                                                // audioContext={audioContext.current}
-                                                                noteRange={{ first: MidiNumbers.fromNote('C0'), last: MidiNumbers.fromNote('B2') }}
-                                                                playNote={playNote}
-                                                                stopNote={stopNote}
-                                                                //  width={800}
-                                                                keyboardShortcuts={keyboardShortcuts}
-                                                            />
-                                                        )}
-                                                        {activePianoSection === 1 && (
-                                                            <Piano
-                                                                // audioContext={audioContext.current}
-                                                                noteRange={{ first: MidiNumbers.fromNote('C3'), last: MidiNumbers.fromNote('B5') }}
-                                                                playNote={playNote}
-                                                                stopNote={stopNote}
-                                                                //  width={800}
-                                                                keyboardShortcuts={keyboardShortcuts}
-                                                            />
-                                                        )}
-                                                        {activePianoSection === 2 && (
-                                                            <Piano
-                                                                // audioContext={audioContext.current}
-                                                                noteRange={{ first: MidiNumbers.fromNote('C5'), last: MidiNumbers.fromNote('C8') }}
-                                                                playNote={playNote}
-                                                                stopNote={stopNote}
-                                                                //  width={800}
-                                                                keyboardShortcuts={keyboardShortcuts}
-                                                            />
-                                                        )}
+                                                    <div className="w-full h-full">
+                                                        <div
+                                                            className="flex transition-transform duration-300 ease-in-out h-full"
+                                                            style={{ transform: `translateX(-${activePianoSection * 100}%)` }}
+                                                        >
+                                                            {pianoSections.map((section, index) => (
+                                                                <div key={index} className="w-full flex-shrink-0">
+                                                                    <Piano
+                                                                        noteRange={{ first: section.first, last: section.last }}
+                                                                        playNote={playNote}
+                                                                        stopNote={stopNote}
+                                                                        keyboardShortcuts={keyboardShortcuts}
+                                                                    />
+                                                                </div>
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

@@ -157,3 +157,26 @@ body.light-theme .d_btn.d_createbtn:hover {
     font-size: 12px;
   }
 }
+
+.ReactPiano__NoteLabelContainer {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.ReactPiano__NoteLabel--accidental,
+.ReactPiano__NoteLabel--natural {
+  display: inline;
+  padding: 6px 11px;
+  margin-top: -70px;
+  border-radius: 5px;
+  font-weight: 600;
+}
+
+.ReactPiano__NoteLabel--accidental {
+  border: 1px solid #a0a0a0;
+}
+
+.ReactPiano__NoteLabel--natural {
+  border: 1px solid #aeaeae;
+  border-bottom: 3px solid #aeaeae;
+}

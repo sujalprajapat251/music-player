@@ -174,7 +174,7 @@ const BottomToolbar = () => {
                         />
                     </div>
                     <p className="text-secondary-light dark:text-secondary-dark sm:text-[10px] md:text-[16px] lg:text-[18px] self-center hidden sm:block">00:00.0</p>
-                    {isRecording ? (<button onClick={hendleStopRecord} className="cursor-pointer">
+                    {isRecording ? (<button onClick={hendleStopRecord} className="cursor-pointer rounded-2xl bg-[#b4074b] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-[27px]">
                         <FaStop />
                     </button>
                     ) :
