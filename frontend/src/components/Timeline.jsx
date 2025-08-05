@@ -3,7 +3,7 @@ import WaveSurfer from "wavesurfer.js";
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
-import { addTrack, updateTrack, setPlaying, setCurrentTime, setAudioDuration } from "../Redux/Slice/studio.slice";
+import { addTrack, updateTrack, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack } from "../Redux/Slice/studio.slice";
 import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler } from "../Redux/Slice/grid.slice";
 import { getGridDivisions, getGridSpacing, snapToGrid } from "../Utils/gridUtils";
 import { IMAGE_URL } from "../Utils/baseUrl";
