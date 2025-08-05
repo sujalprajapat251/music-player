@@ -12,7 +12,7 @@ import piano from "../Images/piano.svg";
 import Drumkit from "../Images/Drumgroup.svg";
 import { useTheme } from '../Utils/ThemeContext';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect } from '../Redux/Slice/effects.slice';
+import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
 
 // Import effect images
 import Bitcrushar from "../Images/Bitcrushar.svg";
@@ -358,13 +358,14 @@ const Effects2 = () => {
     const [playingEffectId, setPlayingEffectId] = useState(null);
 
     // Get effects state from Redux
-    const { activeEffects, showEffectsLibrary, effectsLibrary } = useSelector((state) => state.effects);
+    const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas } = useSelector((state) => state.effects);
     console.log("activeEffects",activeEffects, "showEffectsLibrary", showEffectsLibrary, );
     
 
     // Local state for effects library
     const [effectsSearchTerm, setEffectsSearchTerm] = useState('');
     const [selectedEffectCategory, setSelectedEffectCategory] = useState(null);
+    const [isDragOver, setIsDragOver] = useState(false);
 
     // Separate state for each instrument type
     const [kickIndex, setKickIndex] = useState(0);
@@ -515,24 +516,50 @@ const Effects2 = () => {
         }
     ];
 
+    // Add function to handle plus button click
+    const handlePlusButtonClick = () => {
+        dispatch(toggleEffectsOffcanvas());
+    };
+
     return (
     <>
     <button className='p-2 bg-white text-black' onClick={() => setShowOffcanvas(prev => !prev)}>on/off</button>
     {showOffcanvas === true && (
         <>
-        <div class="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[337px] md600:bottom-[363px] md:bottom-[450px]  lg:bottom-[483px] xl:bottom-[492px] 2xl:bottom-[516px]" tabindex="-1" aria-labelledby="drawer-swipe-label">
-            {/* Static Navbar with Tabs */}
+        <div 
+            class="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[337px] md600:bottom-[363px] md:bottom-[450px]  lg:bottom-[483px] xl:bottom-[492px] 2xl:bottom-[516px]" 
+            tabindex="-1" 
+            aria-labelledby="drawer-swipe-label"
+            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy';
+                if (activeTab === 'Effects') {
+                    setIsDragOver(true);
+                }
+            }}
+            onDragLeave={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget)) {
+                    setIsDragOver(false);
+                }
+            }}
+            onDrop={(e) => { e.preventDefault(); setIsDragOver(false);
+                if (activeTab === 'Effects') {
+                    try {
+                        const effectData = JSON.parse(e.dataTransfer.getData('application/json'));
+                        handleAddEffectFromLibrary(effectData);
+                    } catch (error) {
+                        console.error('Error parsing dropped effect data:', error);
+                    }
+                }
+            }}
+        >
             <div className="  border-b border-[#FFFFFF1A] h-full">
                 <div className=" bg-[#1F1F1F] flex items-center px-1md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
-                    {/* Close Button */}
                     <div>
                         <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => setShowOffcanvas(false)} />
                     </div>
                 </div>
-                {/* Tabs */}
                 <div className=" bg-[#1F1F1F] flex space-x-2 pb-3 sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3">
                     {['Instruments', 'Effects'].map((tab) => (
-                        <button key={tab} onClick={() => setActiveTab(tab)} className={`text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white ' : 'text-gray-400 hover:text-white'}`}>
+                        <button key={tab} onClick={() => setActiveTab(tab)} className={`text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${ activeTab === tab ? 'text-white border-b-2 border-white' : 'text-gray-400 hover:text-white' } ${ tab === 'Effects' && isDragOver ? 'bg-[#409C9F] bg-opacity-20 rounded-t-lg px-2 border-2 border-[#409C9F]' : ''}`}>
                             {tab}
                         </button>
                     ))}
@@ -568,20 +595,10 @@ const Effects2 = () => {
                                 </div>
                             </div>
 
-                            {/* Audio Effect Knobs */}
                             <div className="flex space-x-1 md600:space-x-2 lg:space-x-4 2xl:space-x-6">
-                                {/* Reverb Knob */}
-                                <div className="flex flex-col items-center">
-                                    <Knob label="Reverb" min={-135} max={135} defaultAngle={-90} />
-                                </div>
-                                {/* Pan Knob */}
-                                <div className="flex flex-col items-center">
-                                    <Knob label="Pan" min={-135} max={135} defaultAngle={0} />
-                                </div>
-                                {/* Volume Knob */}
-                                <div className="flex flex-col items-center">
-                                    <Knob label="Volume" min={-135} max={135} defaultAngle={90} />
-                                </div>
+                                <div className="flex flex-col items-center"><Knob label="Reverb" min={-135} max={135} defaultAngle={-90} /></div>
+                                <div className="flex flex-col items-center"><Knob label="Pan" min={-135} max={135} defaultAngle={0} /></div>
+                                <div className="flex flex-col items-center"><Knob label="Volume" min={-135} max={135} defaultAngle={90} /></div>
                             </div>
                             <div className="py-1 lg:py-2 sm:px-3 md:px-4 xl:px-5 border border-[#FFFFFF1A] rounded-md">
                                 <p className="text-white sm:text-[12px] lg:text-[14px]">Save Preset</p>
@@ -593,10 +610,7 @@ const Effects2 = () => {
                                     {effects?.map((effect) => (
                                         <div key={effect?.id} className="flex sm:gap-3 md:gap-4 lg:gap-5 mb-1 md:mb-2 sm:ps-3 md:ps-4 lg:ps-5 py-1 md:py-2 rounded-md w-[138px] md600:w-[138px] md:w-[176px] lg:w-[230px] bg-[#FFFFFF1A] hover:bg-[#FFFFFF4D]">
                                             <button onClick={() => handleEffectPlayPause(effect?.id)} className='flex justify-center p-1 md:p-2 bg-[#FFFFFF1A] rounded-full items-center'>
-                                                {playingEffectId === effect?.id ?
-                                                    <MdOutlinePause className='text-black sm:text-[10px] md:text-[12px] lg:text-[10px] xl:text-[12px]' /> :
-                                                    <FaPlay className='text-black sm:text-[10px] md:text-[12px] lg:text-[10px] xl:text-[12px]' />
-                                                }
+                                                {playingEffectId === effect?.id ? <MdOutlinePause className='text-black sm:text-[10px] md:text-[12px] lg:text-[10px] xl:text-[12px]' /> : <FaPlay className='text-black sm:text-[10px] md:text-[12px] lg:text-[10px] xl:text-[12px]' />}
                                             </button>
                                             <p className="text-white sm:text-[10px] md:text-[12px] lg:text-[14px] content-center">{effect?.name}</p>
                                             <nbsp></nbsp>
@@ -624,10 +638,7 @@ const Effects2 = () => {
                                                 <div>
                                                     <div className="flex  items-center justify-center sm:gap-4 md:gap-6 lg:gap-8">
                                                         <div className="flex items-center sm:gap-2 md:gap-3 lg:gap-4">
-
-                                                            {/* Toggle Switch */}
                                                             <div onClick={() => handleToggle(index)} className={`relative w-8 h-4 rounded-full cursor-pointer transition-colors duration-300 ${toggles[index] ? 'bg-white' : 'bg-[#FFFFFF1A]'}`}>
-                                                                {/* Toggle Circle */}
                                                                 <div className={`absolute top-0.5 w-3 h-3  rounded-full transition-transform duration-300 ${toggles[index] ? 'translate-x-4 bg-black' : 'translate-x-1 bg-white'}`}/>
                                                             </div>
                                                         </div>
@@ -665,10 +676,7 @@ const Effects2 = () => {
                                         <p className="text-white sm:text-[10px] md:text-[12px] lg:text-[14px]">Humanize</p>
                                         <div className="flex  items-center justify-center md:gap-6 lg:gap-8">
                                             <div className="flex items-center gap-4">
-
-                                                {/* Toggle Switch */}
                                                 <div onClick={handleHumanizeToggle} className={`relative w-8 h-4 rounded-full cursor-pointer transition-colors duration-300 ${humanizeToggle ? 'bg-white' : 'bg-[#FFFFFF1A]'}`}>
-                                                    {/* Toggle Circle */}
                                                     <div className={`absolute top-0.5 w-3 h-3  rounded-full transition-transform duration-300 ${humanizeToggle ? 'translate-x-4 bg-black' : 'translate-x-1 bg-white'}`}/>
                                                 </div>
                                             </div>
@@ -681,7 +689,10 @@ const Effects2 = () => {
                     )}
 
                     {activeTab === 'Effects' && (
-                        <div className="w-full overflow-x-auto">
+                        <div className={`w-full overflow-x-auto transition-all duration-200 ${isDragOver ? 'bg-[#409C9F] bg-opacity-10' : ''}`}>
+                        {isDragOver && (
+                            <div className="text-center py-4 text-white text-sm bg-[#409C9F] bg-opacity-20">Drop effect here to add it to your active effects</div>
+                        )}
                         <div className="flex items-center p-4 min-w-max bg-black">
                           <div className="flex gap-4 min-w-max">
                             {activeEffects.map((effect) => (
@@ -699,13 +710,26 @@ const Effects2 = () => {
                               </div>
                             ))}
                             {activeEffects.length < effectsLibrary?.length && (
-                              <div className="w-64 sm:w-56 md:w-64 h-[342px] bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-white cursor-pointer hover:bg-[#2a2a2a] transition-colors shrink-0">
+                              <div className="w-64 sm:w-56 md:w-64 h-[342px] bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-white cursor-pointer hover:bg-[#2a2a2a] transition-colors shrink-0 border-2 border-dashed border-gray-600"
+                                onClick={handlePlusButtonClick}
+                              >
                                 <div className="w-14 h-14 bg-white text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
-                                <p className="text-center text-sm leading-snug">Select from the<br />effects library</p>
+                                <p className="text-center text-sm leading-snug">Drop effects here or<br />select from library</p>
                               </div>
                             )}
                             {Array.from({ length: 3 - activeEffects.length - 1 }, (_, index) => (
-                              <div key={index} className="w-64 sm:w-56 md:w-64 h-[342px] bg-[#1a1a1a] rounded-xl shrink-0"></div>
+                              <div key={index} className="w-64 sm:w-56 md:w-64 h-[342px] bg-[#1a1a1a] rounded-xl shrink-0 border-2 border-dashed border-gray-600"
+                                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; e.currentTarget.style.borderColor = '#409C9F'; e.currentTarget.style.backgroundColor = '#2a2a2a';}}
+                                onDragLeave={(e) => { e.currentTarget.style.borderColor = '#4B5563'; e.currentTarget.style.backgroundColor = '#1a1a1a';}}
+                                onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = '#4B5563'; e.currentTarget.style.backgroundColor = '#1a1a1a'; 
+                                  try {
+                                    const effectData = JSON.parse(e.dataTransfer.getData('application/json'));
+                                    handleAddEffectFromLibrary(effectData);
+                                  } catch (error) {
+                                    console.error('Error parsing dropped effect data:', error);
+                                  }
+                                }}
+                              ></div>
                             ))}
                           </div>
                         </div>
@@ -721,19 +745,17 @@ const Effects2 = () => {
     {showEffectsLibrary && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
             <div className="bg-[#1a1a1a] rounded-lg w-full max-w-4xl max-h-[80vh] overflow-hidden">
-                {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-[#FFFFFF1A]">
                     <h2 className="text-white text-lg font-medium">Effects Library</h2>
                     <button className="text-white text-xl hover:text-gray-400 transition-colors"onClick={() => dispatch(setShowEffectsLibrary(false))}>✖</button>
                 </div>
-
-                {/* Search and Categories */}
                 <div className="p-4 border-b border-[#FFFFFF1A]">
                     <div className="relative mb-4">
                         <IoSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <input type="text" placeholder="Search effects..." className="w-full bg-[#2a2a2a] border border-[#FFFFFF1A] text-white placeholder-gray-400 rounded-md pl-10 pr-4 py-2 outline-none focus:border-white transition-colors"value={effectsSearchTerm}onChange={handleEffectsSearchChange}/>
                     </div>
                     <div className="flex flex-wrap gap-2">
+      
                         {categories.map((category) => {
                             const isSelected = selectedEffectCategory === category;
                             return (
@@ -742,8 +764,6 @@ const Effects2 = () => {
                         })}
                     </div>
                 </div>
-
-                {/* Effects Grid */}
                 <div className="p-4 overflow-y-auto max-h-[60vh]">
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {filteredEffects.map((effect) => (
@@ -752,9 +772,7 @@ const Effects2 = () => {
                                     <div className="flex items-center gap-2">
                                         <span className="text-white text-sm font-medium">{effect.name}</span>
                                     </div>
-                                    {effect.subscription && (
-                                        <span className="text-xs bg-yellow-500 text-black px-2 py-1 rounded">PRO</span>
-                                    )}
+                                    {effect.subscription && ( <span className="text-xs bg-yellow-500 text-black px-2 py-1 rounded">PRO</span> )}
                                 </div>
                                 <div className="text-gray-400 text-xs">{effect.category}</div>
                             </div>

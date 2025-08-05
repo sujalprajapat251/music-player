@@ -154,6 +154,7 @@ const initialState = {
     ],
     selectedEffect: null, // Currently selected effect for detailed view
     showEffectsLibrary: false, // Controls the effects library modal
+    showEffectsOffcanvas: false, // Controls the Effects.jsx component visibility
 };
 
 const effectsSlice = createSlice({
@@ -190,6 +191,12 @@ const effectsSlice = createSlice({
         setShowEffectsLibrary: (state, action) => {
             state.showEffectsLibrary = action.payload;
         },
+        setShowEffectsOffcanvas: (state, action) => {
+            state.showEffectsOffcanvas = action.payload;
+        },
+        toggleEffectsOffcanvas: (state) => {
+            state.showEffectsOffcanvas = !state.showEffectsOffcanvas;
+        },
         clearAllEffects: (state) => {
             state.activeEffects = [];
         },
@@ -207,6 +214,8 @@ export const {
     updateEffectParameter, 
     setSelectedEffect, 
     setShowEffectsLibrary,
+    setShowEffectsOffcanvas,
+    toggleEffectsOffcanvas,
     clearAllEffects,
     reorderEffects
 } = effectsSlice.actions;
