@@ -13,6 +13,7 @@ import Drumkit from "../Images/Drumgroup.svg";
 import { useTheme } from '../Utils/ThemeContext';
 import { useDispatch, useSelector } from 'react-redux';
 import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
+import audioEffectsPlayer from '../components/AudioEffectsPlayer';
 
 // Import effect images
 // import Bitcrushar from "../Images/Bitcrushar.svg";
@@ -442,7 +443,7 @@ const Effects2 = () => {
         );
     };
 
-    const handleEffectPlayPause = (effectId) => {
+    const handleEffectPlayPause1 = (effectId) => {
         if (playingEffectId === effectId) {
             setPlayingEffectId(null);
         } else {
@@ -534,10 +535,41 @@ const Effects2 = () => {
         dispatch(toggleEffectsOffcanvas());
     };
 
+    // const handleEffectPlayPause = async (effectId) => {
+    //     const effect = effects.find(e => e.id === effectId);
+    //     if (!effect) return;
+    //     try {
+    //         if (playingEffectId === effectId) {
+    //             audioEffectsPlayer.stopEffect();
+    //             setPlayingEffectId(null);
+    //         } else {
+    //             if (playingEffectId) {
+    //                 audioEffectsPlayer.stopEffect();
+    //             }
+    //             await audioEffectsPlayer.playEffect(effect.name);
+    //             setPlayingEffectId(effectId);
+    //             setTimeout(() => {
+    //                 if (playingEffectId === effectId) {
+    //                     audioEffectsPlayer.stopEffect();
+    //                     setPlayingEffectId(null);
+    //                 }
+    //             }, 4000);
+    //         }
+    //     } catch (error) {
+    //         console.error('Error playing effect:', error);
+    //         setPlayingEffectId(null);
+    //     }
+    // };
+    useEffect(() => {
+        return () => {
+            audioEffectsPlayer.stopEffect();
+        };
+    }, []);
+
     return (
         <>
             <div
-                class="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[337px] md600:bottom-[363px] md:bottom-[450px]  lg:bottom-[483px] xl:bottom-[492px] 2xl:bottom-[516px]"
+                className="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[337px] md600:bottom-[363px] md:bottom-[450px]  lg:bottom-[483px] xl:bottom-[492px] 2xl:bottom-[516px]"
                 tabindex="-1"
                 aria-labelledby="drawer-swipe-label"
                 onDragOver={(e) => {
@@ -605,7 +637,7 @@ const Effects2 = () => {
                                             <div className=" sm:pe-3 md:pe-4 lg:pe-5 border-r border-[#FFFFFF99] sm:max-h-[200px] md:max-h-[247px] lg:max-h-[245px] xl:max-h-[252px] overflow-auto scroll">
                                                 {effects?.map((effect) => (
                                                     <div key={effect?.id} className="flex sm:gap-3 md:gap-4 lg:gap-5 mb-1 md:mb-2 sm:ps-3 md:ps-4 lg:ps-5 py-1 md:py-2 rounded-md w-[138px] md600:w-[138px] md:w-[176px] lg:w-[230px] bg-[#FFFFFF1A] hover:bg-[#FFFFFF4D]">
-                                                        <button onClick={() => handleEffectPlayPause(effect?.id)} className='flex justify-center p-1 md:p-2 bg-[#FFFFFF1A] rounded-full items-center'>
+                                                        <button onClick={() => handleEffectPlayPause1(effect?.id)} className='flex justify-center p-1 md:p-2 bg-[#FFFFFF1A] rounded-full items-center'>
                                                             {playingEffectId === effect?.id ? <MdOutlinePause className='text-black sm:text-[10px] md:text-[12px] lg:text-[10px] xl:text-[12px]' /> : <FaPlay className='text-black sm:text-[10px] md:text-[12px] lg:text-[10px] xl:text-[12px]' />}
                                                         </button>
                                                         <p className="text-white sm:text-[10px] md:text-[12px] lg:text-[14px] content-center">{effect?.name}</p>
