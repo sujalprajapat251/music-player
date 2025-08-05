@@ -1,9 +1,11 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import WaveSurfer from "wavesurfer.js";
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
-import { addTrack, updateTrack, setSoloTrackId, toggleMuteTrack } from "../Redux/Slice/studio.slice";
+import { addTrack, updateTrack, setPlaying, setCurrentTime, setAudioDuration } from "../Redux/Slice/studio.slice";
+import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler } from "../Redux/Slice/grid.slice";
+import { getGridDivisions, getGridSpacing, snapToGrid } from "../Utils/gridUtils";
 import { IMAGE_URL } from "../Utils/baseUrl";
 import magnetIcon from "../Images/magnet.svg";
 import settingIcon from "../Images/setting.svg";
@@ -16,6 +18,7 @@ import { Rnd } from "react-rnd";
 import rightSize from '../Images/right-size.svg'
 import LeftSize from '../Images/left-size.svg'
 import WaveMenu from "./WaveMenu";
+import MySection from "./MySection";
 
 // Custom Resizable Trim Handle Component
 const ResizableTrimHandle = ({ 
@@ -594,15 +597,15 @@ const LoopBar = ({
 const Timeline = () => {
   const [players, setPlayers] = useState([]);
   const [waveSurfers, setWaveSurfers] = useState([]);
-  const [audioDuration, setAudioDuration] = useState(150);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [loopStart, setLoopStart] = useState(0);
   const [loopEnd, setLoopEnd] = useState(10);
   const [isLoopEnabled, setIsLoopEnabled] = useState(false);
+  const [localCurrentTime, setLocalCurrentTime] = useState(0);
   const svgRef = useRef(null);
   const timelineContainerRef = useRef(null);
   const playbackStartRef = useRef({ systemTime: 0, audioTime: 0 });
+  const lastReduxUpdateRef = useRef(0);
+  const lastPlayerUpdateRef = useRef(0);
   const [showGridSetting, setShowGridSetting] = useState(false);
   const [showOffcanvas, setShowOffcanvas] = useState(false);
   const isDragging = useRef(false);
@@ -617,10 +620,7 @@ const Timeline = () => {
     trackId: null
   });
 
-  // Grid settings state
-  const [selectedGrid, setSelectedGrid] = useState("1/1");
-  const [selectedTime, setSelectedTime] = useState("4/4");
-  const [selectedRuler, setSelectedRuler] = useState("Beats");
+
 
   const dispatch = useDispatch();
   const tracks = useSelector((state) => state.studio?.tracks || []);
@@ -628,6 +628,17 @@ const Timeline = () => {
   const sidebarScrollOffset = useSelector((state) => state.studio?.sidebarScrollOffset || 0);
   const soloTrackId = useSelector((state) => state.studio.soloTrackId);
   const timelineWidthPerSecond = 100;
+  
+  // Get audio state from Redux
+  const isPlaying = useSelector((state) => state.studio?.isPlaying || false);
+  const currentTime = useSelector((state) => state.studio?.currentTime || 0);
+  const audioDuration = useSelector((state) => state.studio?.audioDuration || 150);
+  
+  // Grid settings from Redux
+  const { selectedGrid, selectedTime, selectedRuler } = useSelector(selectGridSettings);
+
+
+
 // Mute functionality
  
 useEffect(() => {
@@ -839,9 +850,9 @@ useEffect(() => {
             }
           }
         });
-        setIsPlaying(false);
+        dispatch(setPlaying(false));
       } else {
-        setIsPlaying(true);
+        dispatch(setPlaying(true));
         playbackStartRef.current = {
           systemTime: Date.now(),
           audioTime: currentTime,
@@ -903,7 +914,7 @@ useEffect(() => {
     };
     
     const time = snapToGrid(rawTime);
-    setCurrentTime(time);
+    dispatch(setCurrentTime(time));
 
     // Update wavesurfer visual progress
     waveSurfers.forEach((ws) => {
@@ -1017,8 +1028,8 @@ useEffect(() => {
             }
           });
         } else if (!isLoopEnabled && newTime >= audioDuration) {
-          setIsPlaying(false);
-          setCurrentTime(audioDuration);
+          dispatch(setPlaying(false));
+          dispatch(setCurrentTime(audioDuration));
           players.forEach((playerObj) => {
             if (playerObj?.player && typeof playerObj.player.stop === 'function') {
               try {
@@ -1031,47 +1042,59 @@ useEffect(() => {
           return;
         }
 
-        setCurrentTime(newTime);
+        // Update local state for smooth animation
+        setLocalCurrentTime(newTime);
         
-        // Update each player based on trim boundaries
-        players.forEach((playerObj) => {
-          if (playerObj?.player) {
-            const trackStartTime = playerObj.startTime || 0;
-            const trimStart = playerObj.trimStart || 0;
-            const trimEnd = playerObj.trimEnd || playerObj.duration;
-            
-            const trimmedTrackStart = trackStartTime;
-            const trimmedTrackEnd = trackStartTime + (trimEnd - trimStart);
-            
-            // Stop track if playhead moves beyond the trimmed end
-            if (newTime >= trimmedTrackEnd && playerObj.player.state === 'started') {
-              try {
-                playerObj.player.stop();
-              } catch (error) {
-                // Silently ignore stop errors
-              }
-            }
-            
-            // Start track if playhead enters the trimmed region
-            const previousTime = playbackStartRef.current.audioTime + ((elapsedTime - 1/60));
-            if (previousTime < trimmedTrackStart && 
-                newTime >= trimmedTrackStart && 
-                newTime < trimmedTrackEnd &&
-                playerObj.player.state !== 'started') {
-              try {
-                const offsetInTrimmedRegion = newTime - trimmedTrackStart;
-                const startOffsetInOriginalAudio = trimStart + offsetInTrimmedRegion;
-                const remainingTrimmedDuration = (trimEnd - trimStart) - offsetInTrimmedRegion;
-                
-                if (remainingTrimmedDuration > 0) {
-                  playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
+        // Throttle Redux updates to improve performance (update every 60ms instead of every frame)
+        const reduxUpdateTime = Date.now();
+        if (!lastReduxUpdateRef.current || reduxUpdateTime - lastReduxUpdateRef.current > 60) {
+          dispatch(setCurrentTime(newTime));
+          lastReduxUpdateRef.current = reduxUpdateTime;
+        }
+        
+        // Update each player based on trim boundaries (throttled to improve performance)
+        const playerUpdateTime = Date.now();
+        if (!lastPlayerUpdateRef.current || playerUpdateTime - lastPlayerUpdateRef.current > 100) {
+          players.forEach((playerObj) => {
+            if (playerObj?.player) {
+              const trackStartTime = playerObj.startTime || 0;
+              const trimStart = playerObj.trimStart || 0;
+              const trimEnd = playerObj.trimEnd || playerObj.duration;
+              
+              const trimmedTrackStart = trackStartTime;
+              const trimmedTrackEnd = trackStartTime + (trimEnd - trimStart);
+              
+              // Stop track if playhead moves beyond the trimmed end
+              if (newTime >= trimmedTrackEnd && playerObj.player.state === 'started') {
+                try {
+                  playerObj.player.stop();
+                } catch (error) {
+                  // Silently ignore stop errors
                 }
-              } catch (error) {
-                console.log("Track start error during animation:", error);
+              }
+              
+              // Start track if playhead enters the trimmed region
+              const previousTime = playbackStartRef.current.audioTime + ((elapsedTime - 1/60));
+              if (previousTime < trimmedTrackStart && 
+                  newTime >= trimmedTrackStart && 
+                  newTime < trimmedTrackEnd &&
+                  playerObj.player.state !== 'started') {
+                try {
+                  const offsetInTrimmedRegion = newTime - trimmedTrackStart;
+                  const startOffsetInOriginalAudio = trimStart + offsetInTrimmedRegion;
+                  const remainingTrimmedDuration = (trimEnd - trimStart) - offsetInTrimmedRegion;
+                  
+                  if (remainingTrimmedDuration > 0) {
+                    playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
+                  }
+                } catch (error) {
+                  console.log("Track start error during animation:", error);
+                }
               }
             }
-          }
-        });
+          });
+          lastPlayerUpdateRef.current = playerUpdateTime;
+        }
         
         localAnimationId = requestAnimationFrame(updateLoop);
       };
@@ -1086,38 +1109,7 @@ useEffect(() => {
     };
   }, [isPlaying, audioDuration, players, isLoopEnabled, loopStart, loopEnd]);
 
-  const getGridDivisions = (gridSize) => {
-    switch (gridSize) {
-      case "1/1":
-        return 1;
-      case "1/2":
-        return 2;
-      case "1/2 dotted":
-        return 2;
-      case "1/4":
-        return 4;
-      case "1/8":
-        return 8;
-      case "1/16":
-        return 16;
-      case "1/32":
-        return 32;
-      case "1/8 triplet":
-        return 12;
-      case "1/16 triplet":
-        return 24;
-      case "Automatic grid size":
-        return 4;
-      default:
-        return 4;
-    }
-  };
 
-  // Calculate grid spacing in seconds based on selected grid
-  const getGridSpacing = (gridSize) => {
-    const divisions = getGridDivisions(gridSize);
-    return 1 / divisions; // 1 second divided by number of divisions
-  };
 
   const renderRuler = useCallback(() => {
     if (!svgRef.current) return;
@@ -1202,7 +1194,72 @@ useEffect(() => {
 
   useEffect(() => {
     renderRuler();
-  }, [renderRuler]);  
+  }, [renderRuler, audioDuration, selectedGrid]);
+
+  // Sync local state with Redux state
+  useEffect(() => {
+    setLocalCurrentTime(currentTime);
+  }, [currentTime]);
+
+  // Handle Redux play/pause state changes
+  useEffect(() => {
+    const handleReduxPlayPause = async () => {
+      try {
+        await start();
+        
+        if (isPlaying) {
+          // Start playback animation
+          playbackStartRef.current = {
+            systemTime: Date.now(),
+            audioTime: currentTime,
+          };
+
+          // Start players that should be playing at current time
+          players.forEach((playerObj) => {
+            if (playerObj?.player && typeof playerObj.player.start === 'function') {
+              const trackStartTime = playerObj.startTime || 0;
+              const trimStart = playerObj.trimStart || 0;
+              const trimEnd = playerObj.trimEnd || playerObj.duration;
+              
+              // Calculate timeline positions for trimmed audio
+              const trimmedTrackStart = trackStartTime;
+              const trimmedTrackEnd = trackStartTime + (trimEnd - trimStart);
+              
+              // Only start if current time is within the trimmed region
+              if (currentTime >= trimmedTrackStart && currentTime < trimmedTrackEnd) {
+                const offsetInTrimmedRegion = currentTime - trimmedTrackStart;
+                const startOffsetInOriginalAudio = trimStart + offsetInTrimmedRegion;
+                const remainingTrimmedDuration = (trimEnd - trimStart) - offsetInTrimmedRegion;
+                
+                if (remainingTrimmedDuration > 0) {
+                  try {
+                    playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
+                  } catch (error) {
+                    console.log("Start error:", error);
+                  }
+                }
+              }
+            }
+          });
+        } else {
+          // Stop all players
+          players.forEach((playerObj) => {
+            if (playerObj?.player && typeof playerObj.player.stop === 'function') {
+              try {
+                playerObj.player.stop();
+              } catch (error) {
+                console.log("Stop error (can be ignored):", error);
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error handling Redux play/pause:", error);
+      }
+    };
+
+    handleReduxPlayPause();
+  }, [isPlaying, currentTime, players]);  
 
   // Update loop end when audio duration changes
   useEffect(() => {
@@ -1506,7 +1563,7 @@ useEffect(() => {
     const gridSpacing = 1 / gridDivisions;
     
     // Calculate the total height of all tracks
-    const totalTracksHeight = trackHeight * Math.max(tracks.length, 3);
+    const totalTracksHeight = tracks.length > 0 ? trackHeight * tracks.length : 0;
     
     for (let time = 0; time <= duration; time += gridSpacing) {
       const x = xScale(time);
@@ -1553,22 +1610,10 @@ useEffect(() => {
   };
   
 
-  {tracks.length > 0 && (
-    <div
-      style={{
-        position: "absolute",
-        top: `${-sidebarScrollOffset}px`, // Adjust for scroll offset
-        left: 0,
-        width: "100%",
-        height: `${trackHeight * Math.max(tracks.length, 3)}px`, // Cover all track lanes
-        pointerEvents: "none",
-        zIndex: 1, // Behind tracks but above track lanes
-      }}
-    >
-      {renderGridLines()}
-    </div>
-  )}
-  const playheadPosition = audioDuration > 0 ? (currentTime / audioDuration) * 100 : 0;
+  // Calculate playhead position in pixels for smoother animation
+  const playheadPosition = useMemo(() => {
+    return localCurrentTime * timelineWidthPerSecond;
+  }, [localCurrentTime, timelineWidthPerSecond]);
 
  
 
@@ -1625,18 +1670,25 @@ useEffect(() => {
               isLoopEnabled={isLoopEnabled}
             />
 
-            {/* Tracks Container - adjusted top margin to account for loop bar */}
+            {/* My Section - positioned below loop bar */}
+            <MySection
+              timelineContainerRef={timelineContainerRef}
+              audioDuration={audioDuration}
+              selectedGrid={selectedGrid}
+            />
+
+            {/* Tracks Container - adjusted top margin to account for loop bar and my section */}
             <div
               style={{
                 overflow: "visible",
                 position: "relative",
-                minHeight: `${trackHeight * Math.max(tracks.length, 1)}px`,
-                height: `${trackHeight * Math.max(tracks.length, 1)}px`,
+                minHeight: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px",
+                height: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px",
                 marginTop: "40px",
               }}
             >
-              {/* Track lanes with separators */}
-              {Array.from({ length: Math.max(tracks.length, 3) }).map((_, index) => (
+              {/* Track lanes with separators - only show when there are tracks */}
+              {tracks.length > 0 && Array.from({ length: tracks.length }).map((_, index) => (
                 <div
                   key={`lane-${index}`}
                   style={{
@@ -1696,12 +1748,14 @@ useEffect(() => {
             <div
               style={{
                 position: "absolute",
-                left: `${playheadPosition}%`,
+                left: 0,
                 top: 0,
                 height: "100%",
                 width: "2px",
                 pointerEvents: "none",
                 zIndex: 10,
+                transform: `translateX(${playheadPosition}px)`,
+                willChange: "transform",
               }}
             >
               <div
@@ -1728,7 +1782,7 @@ useEffect(() => {
               />
             </div>
 
-            {/* Grid lines */}
+            {/* Grid lines - only show when there are tracks */}
             {tracks.length > 0 && (
               <div
                 style={{
@@ -1736,7 +1790,7 @@ useEffect(() => {
                   top: `${140 - sidebarScrollOffset}px`, // Adjusted for loop bar and scroll offset
                   left: 0,
                   width: "100%",
-                  height: "calc(100% - 140px)",
+                  height: `${trackHeight * tracks.length}px`,
                   pointerEvents: "none",
                 }}
               >
@@ -1746,47 +1800,7 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* Controls - keep your existing controls */}
-        <div
-          style={{
-            position: "fixed",
-            bottom: "80px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            display: "flex",
-            gap: "10px",
-            alignItems: "center"
-          }}
-        >
-          <button
-            onClick={handlePlayPause}
-            style={{
-              color: "white",
-              background: "#333",
-              border: "none",
-              padding: "10px 20px",
-              borderRadius: "6px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              fontSize: "14px",
-              fontWeight: "500",
-              transition: "all 0.2s ease",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.background = "#444";
-              e.target.style.transform = "translateY(-1px)";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.background = "#333";
-              e.target.style.transform = "translateY(0)";
-            }}
-          >
-            {isPlaying ? "⏸️ Pause" : "▶️ Play All"}
-          </button>
-        </div>
+
 
         {/* Top right controls */}
         <div className="flex gap-2 absolute top-[60px] right-[10px] -translate-x-1/2 bg-[#141414]">
@@ -1804,9 +1818,9 @@ useEffect(() => {
                   selectedGrid={selectedGrid}
                   selectedTime={selectedTime}
                   selectedRuler={selectedRuler}
-                  onGridChange={setSelectedGrid}
-                  onTimeChange={setSelectedTime}
-                  onRulerChange={setSelectedRuler}
+                  onGridChange={(grid) => dispatch(setSelectedGrid(grid))}
+                  onTimeChange={(time) => dispatch(setSelectedTime(time))}
+                  onRulerChange={(ruler) => dispatch(setSelectedRuler(ruler))}
                 />
               </div>
             )}

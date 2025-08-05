@@ -16,8 +16,13 @@ const initialState = {
   currentTrackId: null,
   currentTrackId: '',
   soloTrackId: null,
-  sidebarScrollOffset: 0
-  
+  sidebarScrollOffset: 0,
+  // Section labels state
+  sectionLabels: [],
+  // Audio playback state
+  isPlaying: false,
+  currentTime: 0,
+  audioDuration: 150
 };
 
 const studioSlice = createSlice({
@@ -159,6 +164,41 @@ const studioSlice = createSlice({
     setSidebarScrollOffset: (state, action) => {
       state.sidebarScrollOffset = action.payload;
     },
+    // Section labels actions
+    addSectionLabel: (state, action) => {
+      const newSection = {
+        id: Date.now(),
+        ...action.payload
+      };
+      state.sectionLabels.push(newSection);
+    },
+    updateSectionLabel: (state, action) => {
+      const { id, updates } = action.payload;
+      const sectionIndex = state.sectionLabels.findIndex(section => section.id === id);
+      if (sectionIndex !== -1) {
+        state.sectionLabels[sectionIndex] = { ...state.sectionLabels[sectionIndex], ...updates };
+      }
+    },
+    removeSectionLabel: (state, action) => {
+      const sectionId = action.payload;
+      state.sectionLabels = state.sectionLabels.filter(section => section.id !== sectionId);
+    },
+    setSectionLabels: (state, action) => {
+      state.sectionLabels = action.payload;
+    },
+    // Audio playback actions
+    setPlaying: (state, action) => {
+      state.isPlaying = action.payload;
+    },
+    setCurrentTime: (state, action) => {
+      state.currentTime = action.payload;
+    },
+    setAudioDuration: (state, action) => {
+      state.audioDuration = action.payload;
+    },
+    togglePlayPause: (state) => {
+      state.isPlaying = !state.isPlaying;
+    },
   },
 });
 
@@ -182,6 +222,14 @@ export const {
   toggleMuteTrack,
   setSoloTrackId,
   setSidebarScrollOffset,
+  addSectionLabel,
+  updateSectionLabel,
+  removeSectionLabel,
+  setSectionLabels,
+  setPlaying,
+  setCurrentTime,
+  setAudioDuration,
+  togglePlayPause,
 } = studioSlice.actions;
 
 export default studioSlice.reducer;
