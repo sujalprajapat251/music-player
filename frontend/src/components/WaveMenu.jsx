@@ -1,65 +1,26 @@
-import React from 'react'
+import React, { useState } from 'react'
+import Cut from '../Images/cut.svg';
+import Copy from '../Images/copy.svg';
+import Paste from '../Images/paste.svg';
+import Delete from '../Images/delete.svg';
+import Editname from '../Images/editname.svg';
+import Split from '../Images/split.svg';
+import Mutere from '../Images/mutere.svg';
+import Pitch from '../Images/pitch.svg';
+import Vocal from '../Images/vocal.svg';
+import Voicemic from '../Images/voicemic.svg';
+import Reverse from '../Images/reverse.svg';
+import Effect from '../Images/effects.svg';
+import Prokey from '../Images/prokey.svg';
+import Music from '../Images/music.svg';
+import Sampler from '../Images/sampler.svg';
+import { MdOutlineKeyboardArrowRight } from 'react-icons/md';
 
 const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
+  const [pitchDropdownOpen, setPitchDropdownOpen] = useState(false);
+  const [voiceTransformDropdownOpen, setVoiceTransformDropdownOpen] = useState(false);
+
   if (!isOpen) return null;
-
-  const menuStyle = {
-    position: 'absolute',
-    top: position?.y || 0,
-    left: position?.x || 0,
-    backgroundColor: '#2a2a2a',
-    border: '1px solid #404040',
-    borderRadius: '6px',
-    padding: '8px 0',
-    minWidth: '220px',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-    zIndex: 1000,
-    fontFamily: 'Arial, sans-serif',
-    fontSize: '14px',
-    color: '#ffffff'
-  };
-
-  const menuItemStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '8px 16px',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s',
-    gap: '12px'
-  };
-
-  const menuItemHoverStyle = {
-    backgroundColor: '#404040'
-  };
-
-  const separatorStyle = {
-    height: '1px',
-    backgroundColor: '#404040',
-    margin: '4px 0'
-  };
-
-  const iconStyle = {
-    width: '16px',
-    height: '16px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#ffffff'
-  };
-
-  const textStyle = {
-    flex: 1
-  };
-
-  const shortcutStyle = {
-    color: '#888888',
-    fontSize: '12px'
-  };
-
-  const arrowStyle = {
-    color: '#888888',
-    fontSize: '12px'
-  };
 
   const handleItemClick = (action) => {
     if (onAction) {
@@ -68,196 +29,226 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
     onClose();
   };
 
+  const handleClose = () => {
+    setPitchDropdownOpen(false);
+    setVoiceTransformDropdownOpen(false);
+    onClose();
+  };
+
   return (
     <>
-      <div 
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 999
-        }}
-        onClick={onClose}
+      {/* Backdrop */}
+      <div
+        className="fixed top-0 left-0 right-0 bottom-0 z-[999]"
+        onClick={handleClose}
       />
-      <div style={menuStyle}>
+
+      {/* Menu Container */}
+      <div
+        className="absolute bg-[#1F1F1F] rounded-[4px] py-2 min-w-[220px] shadow-lg z-[1000] text-sm text-white"
+        style={{
+          top: position?.y || 0,
+          left: position?.x || 0,
+        }}
+      >
         {/* Section 1: Basic Editing Operations */}
-        <div 
-          style={menuItemStyle}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#404040'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('cut')}
         >
-          <div style={iconStyle}>✂️</div>
-          <span style={textStyle}>Cut</span>
-          <span style={shortcutStyle}>Ctrl+X</span>
+          <img src={Cut} className="w-4 h-4 flex items-center justify-center text-white"></img>
+          <span className="flex-1">Cut</span>
+          <span className="text-gray-400 text-xs">Ctrl+X</span>
         </div>
 
-        <div 
-          style={menuItemStyle}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#404040'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('copy')}
         >
-          <div style={iconStyle}>📄</div>
-          <span style={textStyle}>Copy</span>
-          <span style={shortcutStyle}>Ctrl+C</span>
+          <img src={Copy} className="w-4 h-4 flex items-center justify-center text-white"></img>
+          <span className="flex-1">Copy</span>
+          <span className="text-gray-400 text-xs">Ctrl+C</span>
         </div>
 
-        <div 
-          style={menuItemStyle}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#404040'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('paste')}
         >
-          <div style={iconStyle}>📋</div>
-          <span style={textStyle}>Paste</span>
-          <span style={shortcutStyle}>Ctrl+V</span>
+          <img src={Paste} className="w-4 h-4 flex items-center justify-center text-white"></img>
+          <span className="flex-1">Paste</span>
+          <span className="text-gray-400 text-xs">Ctrl+V</span>
         </div>
 
-        <div 
-          style={menuItemStyle}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#404040'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('delete')}
         >
-          <div style={iconStyle}>🗑️</div>
-          <span style={textStyle}>Delete</span>
-          <span style={shortcutStyle}>Backspace</span>
+          <img src={Delete} className="w-4 h-4 flex items-center justify-center text-white"></img>
+          <span className="flex-1">Delete</span>
+          <span className="text-gray-400 text-xs">Backspace</span>
         </div>
 
-        <div style={separatorStyle}></div>
+        {/* Separator */}
+        <div className="h-px bg-gray-600 my-1"></div>
 
         {/* Section 2: Region/Track Management */}
-        <div 
-          style={menuItemStyle}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#404040'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('editName')}
         >
-          <div style={iconStyle}>✏️</div>
-          <span style={textStyle}>Edit name</span>
+          <img src={Editname} className="w-4 h-4 flex items-center justify-center text-white"></img>
+          <span className="flex-1">Edit name</span>
         </div>
 
-        <div 
-          style={menuItemStyle}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#404040'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('splitRegion')}
         >
-          <div style={iconStyle}>➕</div>
-          <span style={textStyle}>Split Region</span>
-          <span style={shortcutStyle}>Ctrl+E</span>
+          <img src={Split} className="w-4 h-4 flex items-center justify-center text-white"></img>
+          <span className="flex-1">Split Region</span>
+          <span className="text-gray-400 text-xs">Ctrl+E</span>
         </div>
 
-        <div 
-          style={menuItemStyle}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#404040'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('muteRegion')}
         >
-          <div style={iconStyle}>🔇</div>
-          <span style={textStyle}>Mute Region</span>
-          <span style={shortcutStyle}>Ctrl+M</span>
+          <img src={Mutere} className="w-4 h-4 flex items-center justify-center text-white"></img>
+          <span className="flex-1">Mute Region</span>
+          <span className="text-gray-400 text-xs">Ctrl+M</span>
         </div>
 
-        <div style={separatorStyle}></div>
+        {/* Separator */}
+        <div className="h-px bg-gray-600 my-1"></div>
 
         {/* Section 3: Audio Processing and Transformation */}
-        <div 
-          style={menuItemStyle}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#404040'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-          onClick={() => handleItemClick('changePitch')}
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600 relative"
+          onClick={() => {
+            setPitchDropdownOpen((open) => !open);
+            setVoiceTransformDropdownOpen(false);
+          }}
         >
-          <div style={iconStyle}>🎵</div>
-          <span style={textStyle}>Change pitch</span>
-          <span style={arrowStyle}>▶</span>
+          <img src={Pitch} className="w-4 h-4 flex items-center justify-center text-white" />
+          <span className="flex-1">Change pitch</span>
+          <MdOutlineKeyboardArrowRight className="text-white text-[20px]" />
+          {/* Dropdown */}
+          {pitchDropdownOpen && (
+            <div className="absolute left-full top-0 bg-[#232323] rounded shadow-lg z-[1100] min-w-[180px]">
+              {[...Array(25)].map((_, i) => {
+                const value = 12 - i;
+                return (
+                  <div
+                    key={value}
+                    className="px-4 py-2 cursor-pointer hover:bg-gray-700"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleItemClick(value);
+                      setPitchDropdownOpen(false);
+                    }}
+                  >
+                    {value > 0 ? `+${value}` : value}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        <div 
-          style={menuItemStyle}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#404040'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('vocalCleanup')}
         >
-          <div style={iconStyle}>🎤</div>
-          <span style={textStyle}>Vocal Cleanup</span>
+          <img src={Vocal} className="w-4 h-4 flex items-center justify-center text-white"></img>
+          <span className="flex-1">Vocal Cleanup</span>
         </div>
 
-        <div 
-          style={menuItemStyle}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#404040'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('vocalTuner')}
         >
-          <div style={iconStyle}>🎵</div>
-          <span style={textStyle}>Vocal Tuner</span>
+          <img src={Vocal} className="w-4 h-4 flex items-center justify-center text-white"></img>
+          <span className="flex-1">Vocal Tuner</span>
         </div>
 
-        <div 
-          style={menuItemStyle}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#404040'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-          onClick={() => handleItemClick('voiceTransform')}
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600 relative"
+          onClick={() => {
+            setVoiceTransformDropdownOpen((open) => !open);
+            setPitchDropdownOpen(false);
+          }}
         >
-          <div style={iconStyle}>🎤</div>
-          <span style={textStyle}>Voice Transform</span>
-          <span style={arrowStyle}>▶</span>
+          <img src={Voicemic} className="w-4 h-4 flex items-center justify-center text-white"></img>
+          <span className="flex-1">Voice Transform</span>
+          <MdOutlineKeyboardArrowRight className={`text-white text-[20px] transition-transform ${voiceTransformDropdownOpen ? 'rotate-90' : ''}`} />
+          {/* Dropdown */}
+          {voiceTransformDropdownOpen && (
+            <div className="absolute left-full top-0 bg-[#232323] rounded shadow-lg z-[1100] min-w-[200px]">
+              <p className='text-[#FFFFFF99] text-sm px-2 py-2'>Pitch and Character:</p>
+              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">+Fifth</div>
+              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">+1 Octave</div>
+              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">+2 Octave</div>
+              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">-Fourth</div>
+              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">-1 Octave</div>
+              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">-2 Octave</div>
+              <div className="h-px bg-gray-600 my-1"></div>
+              <p className='text-[#FFFFFF99] text-sm px-2 py-2'>Character:</p>
+              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">A little darker</div>
+              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">Darker</div>
+              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">Very dark</div>
+              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">A little brighter</div>
+              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">Brighter</div>
+              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">Very bright</div>
+              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">Baby</div>
+              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">Robot</div>
+              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">Alien</div>
+
+            </div>
+          )}
         </div>
 
-        <div 
-          style={menuItemStyle}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#404040'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('reverse')}
         >
-          <div style={iconStyle}>🔄</div>
-          <span style={textStyle}>Reverse</span>
+          <img src={Reverse} className="w-4 h-4 flex items-center justify-center text-white"></img>
+          <span className="flex-1">Reverse</span>
         </div>
 
-        <div 
-          style={menuItemStyle}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#404040'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('effects')}
         >
-          <div style={iconStyle}>🎛️</div>
-          <span style={textStyle}>Effects</span>
+          <img src={Effect} className="w-4 h-4 flex items-center justify-center text-white"></img>
+          <span className="flex-1">Effects</span>
         </div>
 
-        <div 
-          style={menuItemStyle}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#404040'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('matchProjectKey')}
         >
-          <div style={iconStyle}>🎹</div>
-          <span style={textStyle}>Match Project Key</span>
+          <img src={Prokey} className="w-4 h-4 flex items-center justify-center text-white"></img>
+          <span className="flex-1">Match Project Key</span>
         </div>
 
-        <div style={separatorStyle}></div>
+        {/* Separator */}
+        <div className="h-px bg-gray-600 my-1"></div>
 
         {/* Section 4: Library and Sampler Integration */}
-        <div 
-          style={menuItemStyle}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#404040'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('addToLoopLibrary')}
         >
-          <div style={iconStyle}>🎶</div>
-          <span style={textStyle}>Add to loop Library..</span>
+          <img src={Music} className="w-4 h-4 flex items-center justify-center text-white"></img>
+          <span className="flex-1">Add to loop Library..</span>
         </div>
 
-        <div 
-          style={menuItemStyle}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#404040'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('openInSampler')}
         >
-          <div style={iconStyle}>🎹</div>
-          <span style={textStyle}>Open in sampler</span>
+          <img src={Sampler} className="w-4 h-4 flex items-center justify-center text-white"></img>
+          <span className="flex-1">Open in sampler</span>
         </div>
       </div>
     </>
