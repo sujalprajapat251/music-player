@@ -1,242 +1,304 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Piano } from 'lucide-react';
-import * as Tone from 'tone';
+import React, { useState, useEffect, useRef } from "react";
+import { Piano } from "lucide-react";
+import * as Tone from "tone";
 
 const SDemo = () => {
   // --- STATE MANAGEMENT ---
   const [isAudioReady, setIsAudioReady] = useState(false);
   const [isAudioStarted, setIsAudioStarted] = useState(false);
-  
-  const [activeChord, setActiveChord] = useState('Am');
+
+  const [activeChord, setActiveChord] = useState(null);
   const [activePatternKey, setActivePatternKey] = useState(null);
 
   const synths = useRef(null);
-  const loop = useRef(null);
   const effects = useRef(null);
 
   // --- DATA (CHORDS & PATTERNS) ---
   const chordNotes = {
-    'Am': ['A0', 'A2', 'A3', 'C4', 'E4'],
-    'Bdim': ['B3', 'D4', 'F4', 'B4'],
-    'C': ['C3', 'E3', 'G3', 'C4'],
-    'Dm': ['D3', 'F3', 'A3', 'D4'],
-    'E': ['E3', 'G#3', 'B3', 'E4'],
-    'F': ['F3', 'A3', 'C4', 'F4'],
-    'G': ['G3', 'B3', 'D4', 'G4'],
-    'Am7': ['A3', 'C4', 'E4', 'G4']
+    Am: ["A2", "C3", "E3", "A3"],
+    Bdim: ["B2", "D3", "F3", "B3"],
+    C: ["C3", "E3", "G3", "C4"],
+    Dm: ["D3", "F3", "A3", "D4"],
+    E: ["E3", "G#3", "B3", "E4"],
+    F: ["F3", "A3", "C4", "F4"],
+    G: ["G3", "B3", "D4", "G4"],
+    Am7: ["A2", "C3", "E3", "G3"],
   };
 
   const patternCategories = {
     basic: [
-      { name: 'Full Chord' }, { name: 'On One' },
-      { name: 'One and Three' }, { name: 'All Four' }
+        { name: "Grand Piano", synthType: "piano" },
+        { name: "Warm Stabs", synthType: "stabSynth" },
+        { name: "Dreamy Arp", synthType: "arpSynth" },
+        { name: "Fat Bass", synthType: "bassSynth" },
     ],
     stabs: [
-      { name: 'On Air' }, { name: "Eight's" }, { name: 'Soul Stabs' },
-      { name: 'Simple Stabs' }, { name: 'Latinesque' }, { name: 'Moderate Stabs' }
+        { name: "On Air", synthType: "piano" },
+        { name: "Eight's", synthType: "stabSynth" },
+        { name: "Soul Stabs", synthType: "arpSynth" },
+        { name: "Simple Stabs", synthType: "bassSynth" },
+        { name: "Latinesque", synthType: "piano" },
+        { name: "Moderate Stabs", synthType: "stabSynth" },
     ],
     arpeggiated: [
-      { name: 'Layout' }, { name: 'Storytime' }, { name: 'Rising Arp' },
-      { name: 'Dreamer' }, { name: 'Moving Arp' }, { name: 'Quick Arp' },
-      { name: 'Simple Stride' }, { name: 'Simple Rain' }
+        { name: "Layout", synthType: "arpSynth" },
+        { name: "Storytime", synthType: "bassSynth" },
+        { name: "Rising Arp", synthType: "piano" },
+        { name: "Dreamer", synthType: "stabSynth" },
+        { name: "Moving Arp", synthType: "arpSynth" },
+        { name: "Quick Arp", synthType: "bassSynth" },
+        { name: "Simple Stride", synthType: "piano" },
+        { name: "Simple Rain", synthType: "stabSynth" },
     ],
     other: [
-      { name: 'Simple Slide' }, { name: 'Simple Player' }, { name: 'Alternating Stride' }
-    ]
+        { name: "Simple Slide", synthType: "arpSynth" },
+        { name: "Simple Player", synthType: "bassSynth" },
+        { name: "Alternating Stride", synthType: "piano" },
+    ],
   };
 
-  // --- AUDIO INITIALIZATION (No changes here) ---
+  // --- AUDIO INITIALIZATION ---
   useEffect(() => {
     const initializeAudio = async () => {
       try {
-        const reverb = new Tone.Reverb({ decay: 3, wet: 0.4, preDelay: 0.01 }).toDestination();
-        const delay = new Tone.PingPongDelay({ delayTime: "8n", feedback: 0.2, wet: 0.1 }).toDestination();
-        const compressor = new Tone.Compressor({ threshold: -18, ratio: 8, attack: 0.001, release: 0.2 }).toDestination();
+        // --- Effects ---
+        const reverb = new Tone.Reverb({ decay: 4, wet: 0.3, preDelay: 0.01 }).toDestination();
+        const delay = new Tone.PingPongDelay({ delayTime: "8n.", feedback: 0.3, wet: 0.2 }).toDestination();
+        const compressor = new Tone.Compressor({ threshold: -12, ratio: 6 }).toDestination();
         effects.current = { reverb, compressor, delay };
 
-        const createPianoSynth = () => new Tone.PolySynth(Tone.FMSynth, { harmonicity: 3.01, modulationIndex: 14, oscillator: { type: 'sine' }, envelope: { attack: 0.001, decay: 0.3, sustain: 0.1, release: 1.5, }, modulation: { type: 'square' }, modulationEnvelope: { attack: 0.002, decay: 0.2, sustain: 0, release: 0.2, }, volume: -10 }).chain(compressor, delay, reverb);
-        const createStabSynth = () => new Tone.PolySynth(Tone.FMSynth, { harmonicity: 2, modulationIndex: 3, oscillator: { type: 'square' }, envelope: { attack: 0.001, decay: 0.2, sustain: 0.1, release: 0.3 }, modulation: { type: 'sine' }, modulationEnvelope: { attack: 0.002, decay: 0.3, sustain: 0, release: 0.2 }, volume: -12 }).chain(compressor, reverb);
-        const createArpSynth = () => new Tone.PolySynth(Tone.AMSynth, { harmonicity: 1.5, oscillator: { type: 'fmsine' }, envelope: { attack: 0.02, decay: 0.3, sustain: 0.2, release: 0.8 }, modulation: { type: 'square' }, modulationEnvelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.3 }, volume: -10 }).chain(compressor, delay, reverb);
-        const createBassSynth = () => new Tone.MonoSynth({ oscillator: { type: 'fatsawtooth', count: 3, spread: 40 }, envelope: { attack: 0.02, decay: 0.4, sustain: 0.6, release: 1.2 }, filterEnvelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 0.8, baseFrequency: 300, octaves: 3, exponent: 2 }, volume: -6 }).chain(compressor, reverb);
+        // --- Sampler for a realistic Piano sound ---
+        const createPianoSampler = () => {
+          return new Tone.Sampler({
+            urls: {
+              C4: "C4.mp3",
+              "D#4": "Ds4.mp3",
+              "F#4": "Fs4.mp3",
+              A4: "A4.mp3",
+            },
+            baseUrl: "https://tonejs.github.io/audio/salamander/",
+            onload: () => {
+              console.log("Piano samples loaded.");
+              setIsAudioReady(true);
+            },
+            release: 1.5,
+          }).chain(compressor, delay, reverb);
+        };
 
+        // --- A warmer, classic stab synth ---
+        const createStabSynth = () => {
+            return new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "fatsawtooth", count: 2, spread: 30 },
+                envelope: {
+                    attack: 0.01,
+                    decay: 0.4,
+                    sustain: 0.2,
+                    release: 0.8,
+                    attackCurve: "exponential",
+                },
+                filter: { type: "lowpass", rolloff: -24, Q: 1, frequency: 3000 },
+                filterEnvelope: {
+                    attack: 0.02,
+                    decay: 0.5,
+                    sustain: 0.1,
+                    release: 1,
+                    baseFrequency: 200,
+                    octaves: 4,
+                },
+                volume: -12,
+            }).chain(compressor, reverb, delay);
+        };
+        
+        // --- A dreamier, softer arp synth ---
+        const createArpSynth = () => {
+            return new Tone.PolySynth(Tone.FMSynth, {
+                harmonicity: 1.5,
+                modulationIndex: 1.2,
+                oscillator: { type: "sine" },
+                envelope: { attack: 0.02, decay: 0.3, sustain: 0.2, release: 1.2 },
+                modulation: { type: "sine" },
+                modulationEnvelope: { attack: 0.05, decay: 0.2, sustain: 0.1, release: 0.8 },
+                volume: -10,
+            }).chain(compressor, delay, reverb);
+        };
+
+        // --- A tighter, punchier bass synth ---
+        const createBassSynth = () => {
+            return new Tone.MonoSynth({
+                oscillator: { type: "fatsawtooth", count: 3, spread: 20 },
+                envelope: { attack: 0.01, decay: 0.3, sustain: 0.4, release: 1 },
+                filterEnvelope: {
+                    attack: 0.01,
+                    decay: 0.1,
+                    sustain: 0.2,
+                    release: 0.8,
+                    baseFrequency: 250,
+                    octaves: 3,
+                },
+                volume: -8,
+            }).chain(compressor, reverb);
+        };
+        
+        // Use the sampler for the 'piano' type
         synths.current = {
-          piano: createPianoSynth(),
+          piano: createPianoSampler(),
           stabSynth: createStabSynth(),
           arpSynth: createArpSynth(),
-          bassSynth: createBassSynth()
+          bassSynth: createBassSynth(),
         };
+
         Tone.Transport.bpm.value = 120;
-        setIsAudioReady(true);
+        
       } catch (error) {
         console.error("Audio initialization error:", error);
       }
     };
+
     initializeAudio();
+
     return () => {
-        try {
-            Tone.Transport.stop();
-            Tone.Transport.cancel();
-            if (loop.current) loop.current.dispose();
-            if (synths.current) Object.values(synths.current).forEach(synth => synth?.dispose());
-            if (effects.current) Object.values(effects.current).forEach(effect => effect?.dispose());
-        } catch (e) { console.error("Cleanup error", e); }
+      try {
+        Tone.Transport.stop();
+        Tone.Transport.cancel();
+        if (synths.current) {
+          Object.values(synths.current).forEach((synth) => synth?.dispose());
+        }
+        if (effects.current) {
+          Object.values(effects.current).forEach((effect) => effect?.dispose());
+        }
+      } catch (e) {
+        console.error("Cleanup error", e);
+      }
     };
   }, []);
 
   const startAudioContext = async () => {
-    if (Tone.context.state !== 'running') {
+    if (Tone.context.state !== "running") {
       await Tone.start();
+      console.log("Audio Context Started");
       setIsAudioStarted(true);
     }
   };
-  
-  const generatePatternData = (patternKey, notes) => {
-    console.log("Hello " , patternKey , notes);
-    
-    const [category, indexStr] = patternKey.split('-');
+
+  const getCurrentSynthType = () => {
+    if (!activePatternKey) return "piano"; // Default to piano
+    const [category, indexStr] = activePatternKey.split("-");
     const index = parseInt(indexStr, 10);
-    const root = notes[0], third = notes[1], fifth = notes[2] || notes[1], seventh = notes[3] || notes[2];
-    
-    switch (category) {
-      case 'basic':
-        switch(index) {
-          case 0: return { measure: '1m', synth: 'piano', volume: 0.8, data: [{ time: '0:0', note: notes, duration: '1n', velocity: 0.9 }] };
-          case 1: return { measure: '1m', synth: 'piano', volume: 0.8, data: [{ time: '0:0', note: root, duration: '2n', velocity: 0.8 }] };
-          case 2: return { measure: '1m', synth: 'piano', volume: 0.8, data: [{ time: '0:0', note: root, duration: '2n', velocity: 0.8 }, { time: '0:2', note: fifth, duration: '2n', velocity: 0.7 }] };
-          case 3: return { measure: '1m', synth: 'piano', volume: 0.8, data: notes.map((n, i) => ({ time: `0:${i}`, note: n, duration: '4n', velocity: 0.8 - (i * 0.1) })) };
-          default: return {};
-        }
-      case 'stabs':
-        switch(index) {
-          case 0: return { measure: '1m', synth: 'stabSynth', volume: 0.6, data: [{ time: '0:0:2', note: [root, third, fifth], duration: '8n', velocity: 0.7 }, { time: '0:2:2', note: [root, third, fifth], duration: '8n', velocity: 0.6 }] };
-          case 1: return { measure: '1m', synth: 'stabSynth', volume: 0.7, data: [{ time: '0:0', note: [root, fifth], duration: '8n', velocity: 0.8 }, { time: '0:0:2', note: [third, seventh], duration: '8n', velocity: 0.7 }, { time: '0:1', note: [root, fifth], duration: '8n', velocity: 0.7 }, { time: '0:1:2', note: [third, seventh], duration: '8n', velocity: 0.6 }, { time: '0:2', note: [root, fifth], duration: '8n', velocity: 0.7 }, { time: '0:2:2', note: [third, seventh], duration: '8n', velocity: 0.6 }, { time: '0:3', note: [root, fifth], duration: '8n', velocity: 0.6 }, { time: '0:3:2', note: [third, seventh], duration: '8n', velocity: 0.5 }] };
-          case 2: return { measure: '1m', synth: 'stabSynth', volume: 0.8, data: [{ time: '0:0:2', note: notes, duration: '16n', velocity: 0.9 }, { time: '0:1:2', note: notes, duration: '16n', velocity: 0.8 }, { time: '0:2:2', note: notes, duration: '16n', velocity: 0.7 }, { time: '0:3:2', note: notes, duration: '16n', velocity: 0.6 }] };
-          default: return {};
-        }
-      case 'arpeggiated':
-         switch(index) {
-          case 6: return { measure: '1m', synth: 'arpSynth', volume: 0.7, data: [{ time: '0:0', note: root, duration: '4n', velocity: 0.8 }, { time: '0:1', note: [third, fifth], duration: '8n', velocity: 0.6 }, { time: '0:2', note: root, duration: '4n', velocity: 0.7 }, { time: '0:3', note: [third, fifth], duration: '8n', velocity: 0.5 }] };
-          case 7: return { measure: '1m', synth: 'arpSynth', volume: 0.6, data: [...notes].reverse().map((n, i) => ({ time: `0:${i}:2`, note: n, duration: '8n', velocity: 0.8 - (i * 0.15) })) };
-          default: return {};
-         }
-      case 'other':
-         const bassRoot = root.replace(/\d/, '2');
-         const bassFifth = fifth.replace(/\d/, '2');
-         switch(index) {
-           case 0: return { measure: '1m', synth: 'bassSynth', volume: 0.8, data: [{ time: '0:0', note: bassRoot, duration: '4n', velocity: 0.9 }, { time: '0:1:2', note: bassFifth, duration: '8n', velocity: 0.7 }, { time: '0:2:2', note: bassRoot, duration: '4n', velocity: 0.8 }, { time: '0:3:2', note: bassFifth, duration: '8n', velocity: 0.6 }] };
-           default: return {};
-         }
-      default:
-        return {};
-    }
+    const pattern = patternCategories[category]?.[index];
+    return pattern?.synthType || "piano";
   };
 
-  const startOrUpdateLoop = (patternKey, chordName) => {
-    if (!isAudioReady || !synths.current) return;
+  const stopAllSounds = () => {
     try {
-      if (loop.current) {
-        loop.current.stop();
-        loop.current.dispose();
-      }
-  
-      const currentNotes = chordNotes[chordName];
-      const patternData = generatePatternData(patternKey, currentNotes);
-      if (!patternData.data?.length || !patternData.synth) return;
-  
-      const synthToUse = synths.current[patternData.synth];
-      if (patternData.volume) synthToUse.volume.value = Tone.gainToDb(patternData.volume);
-  
-      loop.current = new Tone.Part((time, value) => {
-        synthToUse.triggerAttackRelease(value.note, value.duration, time, value.velocity);
-      }, patternData.data).start(0);
-  
-      loop.current.loop = true;
-      loop.current.loopEnd = patternData.measure;
-  
-      if (Tone.Transport.state !== 'started') {
-        Tone.Transport.start();
+      Tone.Transport.stop();
+      if (synths.current) {
+        Object.values(synths.current).forEach((synth) => {
+          if (synth?.releaseAll) synth.releaseAll();
+        });
       }
     } catch (error) {
-      console.error("Error in startOrUpdateLoop:", error);
+      console.error("Error stopping sounds:", error);
     }
   };
-  
 
-  // --- EVENT HANDLERS (Major changes here) ---
-  const handlePatternSelect = async (key) => {
+  const handlePatternSelect = (key) => {
     if (activePatternKey === key) {
-      // Deselect pattern & stop music
       setActivePatternKey(null);
-      if (loop.current) {
-        loop.current.stop();
-        loop.current.dispose();
-        loop.current = null;
-      }
-      Tone.Transport.stop();
     } else {
-      // Set new pattern key (but don't play sound yet)
       setActivePatternKey(key);
-      // Stop any currently playing loop
-      if (loop.current) {
-        loop.current.stop();
-        loop.current.dispose();
-        loop.current = null;
-      }
-      Tone.Transport.stop();
     }
-    Tone.Transport.stop();
-
+    setActiveChord(null);
   };
-  
 
   const handleChordClick = async (chordName) => {
-    setActiveChord(chordName);
+    if (!isAudioReady) {
+        console.warn("Audio is not ready yet. Please wait.");
+        return;
+    }
     await startAudioContext();
-  
-    // If pattern is selected, generate and play loop
-    if (activePatternKey) {
-      startOrUpdateLoop(activePatternKey, chordName);
-    } else {
-      // Otherwise, just trigger plain chord sound
-      synths.current.piano.triggerAttackRelease(chordNotes[chordName], "1n", Tone.now());
+    stopAllSounds();
+    setActiveChord(chordName);
+
+    const synthType = getCurrentSynthType();
+    const currentSynth = synths.current[synthType];
+    
+    if (currentSynth) {
+      const notes = chordNotes[chordName];
+      // Play a single chord with the selected synth type
+      if (synthType === "bassSynth") {
+        // For bass synth, play only the root note in a lower octave
+        const rootNote = notes[0].replace(/\d/, "1"); // Drop to octave 1 for deep bass
+        currentSynth.triggerAttackRelease(rootNote, "1n", Tone.now());
+      } else {
+        // For sampler and polysynths, play the full chord
+        currentSynth.triggerAttackRelease(notes, "1n", Tone.now());
+      }
     }
   };
-  
-  
+
+  const getPatternDisplayName = () => {
+    if (!activePatternKey) return null;
+    const [category, indexStr] = activePatternKey.split("-");
+    const index = parseInt(indexStr, 10);
+    const pattern = patternCategories[category]?.[index];
+    return pattern?.name || null;
+  };
 
   return (
     <div className="bg-[#1F1F1F] p-4 font-sans flex flex-col gap-4 items-center min-h-screen">
-      {/* Chords Section (The Main Trigger) */}
+      {/* Chords Section */}
       <div className="w-full max-w-4xl bg-[#2a2a2a] p-3 rounded-lg">
         <div className="flex items-center gap-2 mb-3">
-          <Piano className='text-xl text-gray-300' />
-          <p className='text-white text-lg font-bold'>Chords (Click to Play)</p>
+          <Piano className="text-xl text-gray-300" />
+          <p className="text-white text-lg font-bold">
+            Chords (Click to Play)
+            {activePatternKey && (
+              <span className="text-blue-400 font-normal text-sm ml-2">
+                - Using {getPatternDisplayName()} sound
+              </span>
+            )}
+          </p>
         </div>
         <div className="grid grid-cols-4 gap-3">
           {Object.keys(chordNotes).map((name) => (
             <button
               key={name}
               onClick={() => handleChordClick(name)}
-              className={`p-3 rounded-lg transition-all duration-200 ${
-                activeChord === name && Tone.Transport.state === 'started' ? 'bg-blue-500 text-white shadow-lg scale-105' : 'bg-[#383838] text-gray-300 hover:bg-[#4a4a4a]'
-              }`}
+              disabled={!isAudioReady}
+              className={`p-3 rounded-lg transition-all duration-200 relative ${
+                activeChord === name
+                  ? "bg-blue-500 text-white shadow-lg scale-105"
+                  : "bg-[#383838] text-gray-300 hover:bg-[#4a4a4a]"
+              } ${
+                activePatternKey ? "border-2 border-blue-300" : ""
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              <p className='text-lg font-semibold text-center'>{name}</p>
+              <p className="text-lg font-semibold text-center">{name}</p>
+              {activePatternKey && (
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1F1F1F]"></div>
+              )}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Playing Sounds Section (Selector Only) */}
+      {/* Pattern Selection Section */}
       <div className="w-full max-w-4xl bg-[#2a2a2a] p-3 rounded-lg">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-xl">🎵</span>
-          <p className='text-white text-lg font-bold'>Select a Pattern</p>
+          <p className="text-white text-lg font-bold">
+            Select a Sound Type (પેટર્નનો પ્રકાર પસંદ કરો)
+          </p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {Object.entries(patternCategories).map(([category, patterns]) => (
-            <div key={category} className="bg-[#1F1F1F] p-3 rounded-lg flex flex-col gap-2">
-              <p className='text-white font-semibold capitalize text-md mb-1'>{category}</p>
+            <div
+              key={category}
+              className="bg-[#1F1F1F] p-3 rounded-lg flex flex-col gap-2"
+            >
+              <p className="text-white font-semibold capitalize text-md mb-1">
+                {category}
+              </p>
               {patterns.map((item, index) => {
                 const key = `${category}-${index}`;
                 const isSelected = activePatternKey === key;
@@ -244,9 +306,12 @@ const SDemo = () => {
                   <button
                     key={key}
                     onClick={() => handlePatternSelect(key)}
+                    disabled={!isAudioReady}
                     className={`w-full p-2 text-sm rounded-md border transition-all duration-200 relative ${
-                      isSelected ? "bg-white text-black font-semibold border-white shadow-lg" : "text-gray-300 bg-transparent border-[#444] hover:border-gray-400 hover:bg-[#333]"
-                    }`}
+                      isSelected
+                        ? "bg-white text-black font-semibold border-white shadow-lg"
+                        : "text-gray-300 bg-transparent border-[#444] hover:border-gray-400 hover:bg-[#333]"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     {isSelected && (
                       <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-[#1F1F1F]"></div>
@@ -259,23 +324,28 @@ const SDemo = () => {
           ))}
         </div>
       </div>
-      
+
       {/* Status Section */}
-      <div className="text-center p-2 text-xs">
-          {!isAudioReady && <p className="text-yellow-400 animate-pulse">Loading Instruments...</p>}
-          {isAudioReady && !isAudioStarted && <p className="text-gray-400">Click any button to start audio</p>}
-          {isAudioReady && isAudioStarted && (
-              <div className="space-y-1">
-                  {activePatternKey ? (
-                      <p className="text-green-400">Pattern '{activePatternKey.replace('-', ' - ')}' selected. Click a chord to play.</p>
-                  ) : (
-                      <p className="text-yellow-400">Please select a pattern first.</p>
-                  )}
-                  {Tone.Transport.state === 'started' && activePatternKey &&
-                    <p className="text-blue-400 animate-pulse">Playing chord: {activeChord}</p>
-                  }
-              </div>
-          )}
+      <div className="text-center p-2 text-xs h-16">
+        {!isAudioReady && (
+          <p className="text-yellow-400 animate-pulse">
+            Loading Instruments... (Please wait)
+          </p>
+        )}
+        {isAudioReady && !isAudioStarted && (
+          <p className="text-gray-400">Click any chord to start audio</p>
+        )}
+        {isAudioReady && isAudioStarted && (
+          <div className="space-y-1">
+            {activeChord && (
+              <p className="text-blue-400">
+                Last played: {activeChord} 
+                {activePatternKey && ` with ${getPatternDisplayName()} sound`}
+                {!activePatternKey && ` with Grand Piano sound`}
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
