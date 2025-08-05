@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { addSectionLabel, updateSectionLabel } from "../Redux/Slice/studio.slice";
 import { getGridSpacing } from "../Utils/gridUtils";
 
 const MySection = ({ timelineContainerRef, audioDuration, selectedGrid }) => {
+  const dispatch = useDispatch();
+  const sectionLabels = useSelector((state) => state.studio?.sectionLabels || []);
+  
   const [cursorPosition, setCursorPosition] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
+  const [selectedSection, setSelectedSection] = useState("My Section");
 
   // Grid snapping function
   const snapToGrid = (time) => {
@@ -78,11 +84,42 @@ const MySection = ({ timelineContainerRef, audioDuration, selectedGrid }) => {
     
     // Calculate absolute position relative to viewport
     const absoluteX = rect.left + cursorX;
-    const absoluteY = rect.top + 110; // Position below the "My Section" label
+    const absoluteY = rect.top + 110; // Position below the section label
     
     setDropdownPosition({ x: absoluteX, y: absoluteY });
     setDropdownOpen((open) => !open);
   }, [cursorPosition, timelineContainerRef]);
+
+  // Handle section selection
+  const handleSectionSelect = useCallback((sectionName) => {
+    if (sectionName === "Custom Name") {
+      // For custom name, you could open a prompt or input field
+      const customName = prompt("Enter custom section name:");
+      if (customName && customName.trim()) {
+        setSelectedSection(customName.trim());
+        
+        // Add to Redux state
+        const snappedTime = snapToGrid((cursorPosition / 100) * audioDuration);
+        dispatch(addSectionLabel({
+          name: customName.trim(),
+          startTime: snappedTime,
+          position: cursorPosition
+        }));
+      }
+    } else {
+      setSelectedSection(sectionName);
+      
+      // Add to Redux state
+      const snappedTime = snapToGrid((cursorPosition / 100) * audioDuration);
+      dispatch(addSectionLabel({
+        name: sectionName,
+        startTime: snappedTime,
+        position: cursorPosition
+      }));
+    }
+    
+    setDropdownOpen(false);
+  }, [cursorPosition, audioDuration, selectedGrid, dispatch]);
 
   const sectionOptions = [
     "Intro", "Verse", "Chorus", "Pre Chorus", "Bridge", "Outro",
@@ -103,7 +140,7 @@ const MySection = ({ timelineContainerRef, audioDuration, selectedGrid }) => {
           pointerEvents: "none", // Don't interfere with other interactions
         }}
       >
-        {/* My Section Label - follows cursor */}
+        {/* Section Label - follows cursor and shows selected section */}
         <div
           style={{
             position: "absolute",
@@ -127,7 +164,7 @@ const MySection = ({ timelineContainerRef, audioDuration, selectedGrid }) => {
           }}
           onClick={handleDropdownToggle}
         >
-          My Section
+          {selectedSection}
         </div>
       </div>
 
@@ -159,10 +196,7 @@ const MySection = ({ timelineContainerRef, audioDuration, selectedGrid }) => {
                 borderTop: idx === 12 ? "1px solid #333" : "none",
                 transition: "background-color 0.2s ease",
               }}
-              onClick={() => {
-                // handle selection here
-                setDropdownOpen(false);
-              }}
+              onClick={() => handleSectionSelect(item)}
               onMouseEnter={(e) => {
                 e.target.style.backgroundColor = "#3A3A3A";
               }}

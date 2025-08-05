@@ -95,12 +95,12 @@ function App() {
           <Route path='/sidebar' element={<ThemeProvider><Sidebar2 /></ThemeProvider>} >
             <Route path='timeline' element={<Timeline />} />
             <Route path='dtimeline' element={<DTimeline />} />
-            <Route path='timeline' element={<TimelineDemo />} />
             <Route path='timelinedemo' element={<TimelineDemo />} />
             <Route path='knob' element={<Knob />} />
             <Route path='loop' element={<Loops />} />
             <Route path="effects" element={<Effects />} />
             <Route path="savani" element={<SDemo />} />
+            <Route path="piano" element={<Piano />} />
 
            
 

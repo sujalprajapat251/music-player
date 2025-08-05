@@ -1,8 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { getNextTrackColor, resetColorIndex } from '../../Utils/colorUtils';
 
 const initialState = {
   tracks: [],
-  trackHeight: 80, // Standard height for each track
+  trackHeight: 70, // Standard height for each track
   timelineSettings: {
     pixelsPerSecond: 50,
     maxDuration: 10,
@@ -33,8 +34,16 @@ const studioSlice = createSlice({
       state.tracks = action.payload;
     },
     addTrack: (state, action) => {
-      // Ensure new tracks have frozen property
-      const track = { ...action.payload, frozen: false, muted: false };
+      console.log('addTrack action:', action.payload);
+      // Ensure new tracks have frozen property, audioClips array, and a unique color
+      const track = { 
+        ...action.payload, 
+        frozen: false, 
+        muted: false,
+        color: action.payload.color || getNextTrackColor(), // Assign unique color
+        audioClips: action.payload.audioClips || [] // Array to hold multiple audio clips
+      };
+      console.log('Adding track to state:', track);
       state.tracks.push(track);
     },
     updateTrack: (state, action) => {
@@ -42,6 +51,51 @@ const studioSlice = createSlice({
       const trackIndex = state.tracks.findIndex(track => track.id === id);
       if (trackIndex !== -1) {
         state.tracks[trackIndex] = { ...state.tracks[trackIndex], ...updates };
+      }
+    },
+    // New action to add audio clip to existing track
+    addAudioClipToTrack: (state, action) => {
+      console.log('addAudioClipToTrack action:', action.payload);
+      const { trackId, audioClip } = action.payload;
+      console.log('Current tracks:', state.tracks.map(t => ({ id: t.id, type: typeof t.id })));
+      console.log('Looking for trackId:', trackId, 'type:', typeof trackId);
+      const trackIndex = state.tracks.findIndex(track => track.id == trackId); // Use == for type coercion
+      console.log('Found track index:', trackIndex, 'for trackId:', trackId);
+      if (trackIndex !== -1) {
+        if (!state.tracks[trackIndex].audioClips) {
+          state.tracks[trackIndex].audioClips = [];
+        }
+        const newClip = {
+          id: Date.now() + Math.random(), // Unique ID for the clip
+          color: audioClip.color || state.tracks[trackIndex].color || '#FFB6C1', // Use track's color as fallback
+          ...audioClip
+        };
+        console.log('Adding clip to track:', newClip);
+        state.tracks[trackIndex].audioClips.push(newClip);
+      }
+    },
+    // New action to update specific audio clip in a track
+    updateAudioClip: (state, action) => {
+      const { trackId, clipId, updates } = action.payload;
+      const trackIndex = state.tracks.findIndex(track => track.id === trackId);
+      if (trackIndex !== -1 && state.tracks[trackIndex].audioClips) {
+        const clipIndex = state.tracks[trackIndex].audioClips.findIndex(clip => clip.id === clipId);
+        if (clipIndex !== -1) {
+          state.tracks[trackIndex].audioClips[clipIndex] = {
+            ...state.tracks[trackIndex].audioClips[clipIndex],
+            ...updates
+          };
+        }
+      }
+    },
+    // New action to remove audio clip from track
+    removeAudioClip: (state, action) => {
+      const { trackId, clipId } = action.payload;
+      const trackIndex = state.tracks.findIndex(track => track.id === trackId);
+      if (trackIndex !== -1 && state.tracks[trackIndex].audioClips) {
+        state.tracks[trackIndex].audioClips = state.tracks[trackIndex].audioClips.filter(
+          clip => clip.id !== clipId
+        );
       }
     },
     removeTrack: (state, action) => {
@@ -63,38 +117,23 @@ const studioSlice = createSlice({
     },
     updateTrackStartTime: (state, action) => {
       const { trackId, newStartTime } = action.payload;
-      const track = state.tracks.find(t => t.id === trackId);
-      if (track) {
-        track.startTime = newStartTime;
+      const trackIndex = state.tracks.findIndex(track => track.id === trackId);
+      if (trackIndex !== -1) {
+        state.tracks[trackIndex].startTime = newStartTime;
       }
     },
     renameTrack: (state, action) => {
-      const { id, newName } = action.payload;
-      const track = state.tracks.find(track => track.id === id);
-      if (track) {
-        track.name = newName;
+      const { trackId, newName } = action.payload;
+      const trackIndex = state.tracks.findIndex(track => track.id === trackId);
+      if (trackIndex !== -1) {
+        state.tracks[trackIndex].name = newName;
       }
     },
     freezeTrack: (state, action) => {
       const trackId = action.payload;
-      const track = state.tracks.find(track => track.id === trackId);
-      if (track) {
-        track.frozen = !track.frozen; // Toggle freeze state
-        
-        // If freezing, store current effects state
-        if (track.frozen) {
-          state.frozenTrackData[trackId] = {
-            effects: state.trackEffects[trackId] || {},
-            frozenAt: Date.now(),
-            originalTrackData: { ...track }
-          };
-        } else {
-          // If unfreezing, restore effects state
-          const frozenData = state.frozenTrackData[trackId];
-          if (frozenData) {
-            state.trackEffects[trackId] = frozenData.effects;
-          }
-        }
+      const trackIndex = state.tracks.findIndex(track => track.id === trackId);
+      if (trackIndex !== -1) {
+        state.tracks[trackIndex].frozen = !state.tracks[trackIndex].frozen;
       }
     },
     duplicateTrack: (state, action) => {
@@ -107,7 +146,9 @@ const studioSlice = createSlice({
           id: Date.now().toString(), // Generate unique ID
           name: `${originalTrack.name}`,
           startTime: originalTrack.startTime || 0,
-          frozen: false // Reset frozen state for the copy
+          frozen: false, // Reset frozen state for the copy
+          color: getNextTrackColor(), // Assign new unique color
+          audioClips: originalTrack.audioClips ? [...originalTrack.audioClips] : [] // Copy audio clips
         };
         
         // Add the duplicated track to the tracks array
@@ -123,15 +164,25 @@ const studioSlice = createSlice({
       const { trackId, audioData } = action.payload;
       const track = state.tracks.find(track => track.id === trackId);
       if (track) {
-        // Update track with audio data
-        track.url = audioData.url;
-        track.name = audioData.name || track.name;
-        track.duration = audioData.duration;
-        track.trimStart = audioData.trimStart || 0;
-        track.trimEnd = audioData.duration || audioData.trimEnd;
-        track.soundData = audioData.soundData || null;
-        track.color = audioData.color || null;
-        track.frozen = audioData.frozen || false;
+        // Update track with audio data - now adds to audioClips array
+        if (!track.audioClips) {
+          track.audioClips = [];
+        }
+        
+        const newClip = {
+          id: Date.now() + Math.random(),
+          url: audioData.url,
+          name: audioData.name || 'New Clip',
+          duration: audioData.duration,
+          trimStart: audioData.trimStart || 0,
+          trimEnd: audioData.duration || audioData.trimEnd,
+          soundData: audioData.soundData || null,
+          color: audioData.color || track.color || '#FFB6C1', // Use track's color as fallback
+          startTime: audioData.startTime || 0,
+          frozen: audioData.frozen || false
+        };
+        
+        track.audioClips.push(newClip);
       }
     },
     setRecordingAudio: (state, action) => {
@@ -199,6 +250,10 @@ const studioSlice = createSlice({
     togglePlayPause: (state) => {
       state.isPlaying = !state.isPlaying;
     },
+    resetTrackColors: (state) => {
+      // Reset the color index to start from the beginning
+      resetColorIndex();
+    },
   },
 });
 
@@ -206,6 +261,9 @@ export const {
   setTracks, 
   addTrack, 
   updateTrack, 
+  addAudioClipToTrack,
+  updateAudioClip,
+  removeAudioClip,
   removeTrack, 
   setTrackHeight,
   updateTimelineSettings,
@@ -230,6 +288,7 @@ export const {
   setCurrentTime,
   setAudioDuration,
   togglePlayPause,
+  resetTrackColors,
 } = studioSlice.actions;
 
 export default studioSlice.reducer;

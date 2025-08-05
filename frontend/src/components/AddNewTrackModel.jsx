@@ -11,6 +11,7 @@ import { ReactComponent as ImpIcon } from '../Images/import.svg'
 import { ReactComponent as Loop } from '../Images/loop.svg'
 import { useDispatch } from "react-redux";
 import { addTrack, setTrackType } from "../Redux/Slice/studio.slice";
+import { getNextTrackColor } from "../Utils/colorUtils";
 
 const instrumentOptions = [
   {
@@ -83,7 +84,7 @@ const AddNewTrackModel = ({ onClose }) => {
       id: Date.now(),
       name: file.name,
       url: URL.createObjectURL(file),
-      color: '#FFB6C1',
+      color: getNextTrackColor(), // Use unique color for each new track
       height: trackHeight,
     };
     dispatch(addTrack(newTrack));
