@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FaPowerOff } from 'react-icons/fa6';
 import { IoClose } from 'react-icons/io5';
-
+import { useDispatch, useSelector } from 'react-redux';
+import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect } from '../Redux/Slice/effects.slice';
 
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
@@ -335,7 +336,7 @@ function Knob2({ label = "Bite", min = -135, max = 135, defaultAngle }) {
                         transform: `translateX(-50%) rotate(${angle}deg)`,
                     }}
                 />
-                    <BadgeTooltip value={angle} visible={showTooltip} />    
+                <BadgeTooltip value={angle} visible={showTooltip} />
             </div>
             <div className='text-[8px] md600:text-[10px] md:text-[12px] 2xl:text-[16px] mt-1 items-center text-[#aaa]'
                 style={{
@@ -350,14 +351,27 @@ function Knob2({ label = "Bite", min = -135, max = 135, defaultAngle }) {
 
 
 const JuicyDistrotion = () => {
+
+
+    const dispatch = useDispatch();
+    const { activeEffects } = useSelector((state) => state.effects);
+
+    const handleRemoveEffect = (instanceId) => {
+        dispatch(removeEffect(instanceId));
+    };
+
+    // Get the current effect's instanceId from activeEffects
+    const currentEffect = activeEffects.find(effect => effect.name === "Juicy Distrotion");
+    const currentInstanceId = currentEffect?.instanceId;
+
     return (
         <div className='bg-[#141414]'>
-            <div className='flex justify-between items-center w-[256px] h-[52px] rounded-t-lg bg-[#8F7CFD99] px-3'>
+            <div className='flex justify-between items-center w-[256px] h-[64px] rounded-t-lg bg-[#8F7CFD99] px-3'>
                 <FaPowerOff className='text-white text-[20px]' />
                 <p className='text-white text-[16px]'>Juicy Distrotion</p>
-                <IoClose className='text-white text-[20px]' />
+                <IoClose className='text-white text-[20px] hover:text-[#ff0000]'  onClick={() => handleRemoveEffect(currentInstanceId)} />
             </div>
-            <div className='w-[256px] h-[268px] bg-[#302f2f] p-8'>
+            <div className='w-[256px] h-[300px] bg-[#302f2f] p-8'>
                 <div className="flex justify-between">
                     <div className="">
                         <Knob1 label="Dist" min={-135} max={135} defaultAngle={0} />

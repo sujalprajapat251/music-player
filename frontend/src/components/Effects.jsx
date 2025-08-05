@@ -14,45 +14,59 @@ import subscription from "../Images/subscription.svg";
 import { MdOutlinePause } from "react-icons/md";
 import { FaPlay } from "react-icons/fa6";
 import Bitcrushar from "../Images/Bitcrushar.svg";
-import ClassicDist from "../Images/ClassicDist.svg";
-import Clipper from "../Images/Clipper.svg";
-import Crusher from "../Images/Crusher.svg";
-import Fuzz from "../Images/Fuzz.svg";
-import JuicyDistrotion from "../Images/Juicy Distrotion.svg";
-import Overdrive from "../Images/Overdrive.svg";
-import AutoPan from "../Images/Auto Pan.svg";
-import AutoWah from "../Images/Auto-Wah.svg";
-import Chorus from "../Images/Chorus.svg";
-import Flanger from "../Images/Flanger.svg";
+import ClassicDist1 from "../Images/ClassicDist.svg";
+import ClassicDist from "./ClassicDist";
+import Clipper1 from "../Images/Clipper.svg";
+import Clipper from './Clipper';
+import Crusher1 from "../Images/Crusher.svg";
+import Crusher from "./Crusher";
+import Fuzz1 from "../Images/Fuzz.svg";
+import Fuzz from "./Fuzz";
+import JuicyDistrotion1 from "../Images/Juicy Distrotion.svg";
+import JuicyDistrotion from './JuicyDistrotion';
+import Overdrive1 from "../Images/Overdrive.svg";
+import Overdrive from './Overdrive';
+import AutoPan1 from "../Images/Auto Pan.svg";
+import AutoPan from './AutoPan';
+import AutoWah1 from "../Images/Auto-Wah.svg";
+import AutoWah from './AutoWah';
+import Chorus1 from "../Images/Chorus.svg";
+import Chorus from './Chorus';
+import Flanger1 from "../Images/Flanger.svg";
+import Flanger from './Flanger';
 import InstantSidechain from "../Images/Instant Sidechain.svg";
-import Phaser from "../Images/Phaser.svg";
+import Phaser1 from "../Images/Phaser.svg";
+import Phaser from './Phaser';
 import PitchShifter from "../Images/PitchShifter.svg";
-import Rotary from "../Images/Rotary.svg";
+import Rotary1 from "../Images/Rotary.svg";
+import Rotary from './Rotary';
 import RotaryPro from "../Images/Rotary Pro.svg";
-import StereoChorus from "../Images/Stereo Chorus.svg";
-import TapeWobble from "../Images/Tape Wobble.svg";
+import StereoChorus1 from "../Images/Stereo Chorus.svg";
+import StereoChorus from './StereoChorus';
+import TapeWobble1 from "../Images/Tape Wobble.svg";
+import TapeWobble from './TapeWobble';
 import Pianodemo from './Piano';
 import Effects2 from './Effects2';
 
 const effects = [
     { id: 1, name: "Bitcrushar", subscription: true, image: Bitcrushar, color: "#8F7CFD" },
-    { id: 2, name: "Classic Dist", subscription: false, image: ClassicDist, color: "#8F7CFD" },
-    { id: 3, name: "Clipper", subscription: true, image: Clipper, color: "#8F7CFD" },
-    { id: 4, name: "Crusher", subscription: true, image: Crusher, color: "#8F7CFD" },
-    { id: 5, name: "Fuzz", subscription: false, image: Fuzz, color: "#8F7CFD" },
-    { id: 6, name: "Juicy Distrotion", subscription: true, image: JuicyDistrotion, color: "#8F7CFD" },
-    { id: 7, name: "Overdrive", subscription: false, image: Overdrive, color: "#8F7CFD" },
-    { id: 8, name: "Auto Pan", subscription: false, image: AutoPan, color: "#409C9F" },
-    { id: 9, name: "Auto-Wah", subscription: false, image: AutoWah, color: "#409C9F" },
-    { id: 10, name: "Chorus", subscription: false, image: Chorus, color: "#409C9F" },
-    { id: 11, name: "Flanger", subscription: false, image: Flanger, color: "#409C9F" },
+    { id: 2, name: "Classic Dist", subscription: false, image: ClassicDist1, color: "#8F7CFD", component: ClassicDist },
+    { id: 3, name: "Clipper", subscription: true, image: Clipper1, color: "#8F7CFD", component: Clipper },
+    { id: 4, name: "Crusher", subscription: true, image: Crusher1, color: "#8F7CFD", component: Crusher },
+    { id: 5, name: "Fuzz", subscription: false, image: Fuzz1, color: "#8F7CFD", component: Fuzz },
+    { id: 6, name: "Juicy Distrotion", subscription: true, image: JuicyDistrotion1, color: "#8F7CFD", component: JuicyDistrotion },
+    { id: 7, name: "Overdrive", subscription: false, image: Overdrive1, color: "#8F7CFD", component: Overdrive },
+    { id: 8, name: "Auto Pan", subscription: false, image: AutoPan1, color: "#409C9F", component: AutoPan },
+    { id: 9, name: "Auto-Wah", subscription: false, image: AutoWah1, color: "#409C9F", component: AutoWah },
+    { id: 10, name: "Chorus", subscription: false, image: Chorus1, color: "#409C9F", component : Chorus },
+    { id: 11, name: "Flanger", subscription: false, image: Flanger1, color: "#409C9F", component: Flanger },
     { id: 12, name: "Instant Sidechain", subscription: true, image: InstantSidechain, color: "#409C9F" },
-    { id: 13, name: "Phaser", subscription: false, image: Phaser, color: "#409C9F" },
+    { id: 13, name: "Phaser", subscription: false, image: Phaser1, color: "#409C9F", component: Phaser },
     { id: 14, name: "Pitch Shifter", subscription: true, image: PitchShifter, color: "#409C9F" },
-    { id: 15, name: "Rotary", subscription: false, image: Rotary, color: "#409C9F" },
+    { id: 15, name: "Rotary", subscription: false, image: Rotary1, color: "#409C9F", component : Rotary },
     { id: 16, name: "Rotary Pro", subscription: true, image: RotaryPro, color: "#409C9F" },
-    { id: 17, name: "Stereo Chorus", subscription: false, image: StereoChorus, color: "#409C9F" },
-    { id: 18, name: "Tape Wobble", subscription: true, image: TapeWobble, color: "#409C9F" },
+    { id: 17, name: "Stereo Chorus", subscription: false, image: StereoChorus1, color: "#409C9F", component: StereoChorus },
+    { id: 18, name: "Tape Wobble", subscription: true, image: TapeWobble1, color: "#409C9F", component: TapeWobble },
 ];
 
 const Loops = () => {
@@ -155,7 +169,7 @@ const Loops = () => {
                         </div>
                     </div>
                     
-                    {/* Active Effects Summary */}
+                    {/* Active Effects Summary
                     {activeEffects.length > 0 && (
                         <div className="bg-[#1F1F1F] w-full py-2 md600:py-3 md:my-4 lg:py-5 lg:my-3 3xl:py-7">
                             <p className="text-white text-[8px] sm:text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px] text-center mb-2">Active Effects ({activeEffects.length}/4)</p>
@@ -167,7 +181,7 @@ const Loops = () => {
                                 ))}
                             </div>
                         </div>
-                    )}
+                    )} */}
                     
                     <div className="bg-[#1F1F1F] w-full py-2 md600:py-3 md:my-4 lg:py-5 lg:my-3 3xl:py-7 hidden">
                         <p className="text-white text-[8px] sm:text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px] text-center">Add a track to apply effects</p>

@@ -1,5 +1,21 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+// Import effect components
+import Fuzz from "../../components/Fuzz";
+import Clipper from '../../components/Clipper';
+import ClassicDist from '../../components/ClassicDist';
+import Chorus from '../../components/Chorus';
+import Crusher from '../../components/Crusher';
+import JuicyDistrotion from '../../components/JuicyDistrotion';
+import Overdrive from '../../components/Overdrive';
+import AutoPan from '../../components/AutoPan';
+import AutoWah from '../../components/AutoWah';
+import Flanger from '../../components/Flanger';
+import Phaser from '../../components/Phaser';
+import Rotary from '../../components/Rotary';
+import StereoChorus from '../../components/StereoChorus';
+import TapeWobble from '../../components/TapeWobble';
+
 // Effect configuration with parameters
 const EFFECT_CONFIGS = {
     "Classic Dist": {
@@ -130,6 +146,27 @@ const EFFECT_CONFIGS = {
     }
 };
 
+// Component mapping for effects
+const EFFECT_COMPONENTS = {
+    "Fuzz": Fuzz,
+    "Clipper" : Clipper,
+    "ClassicDist" : ClassicDist,
+    "Chorus" : Chorus,
+    "Crusher" : Crusher,
+    "JuicyDistrotion" : JuicyDistrotion,
+    "Overdrive" : Overdrive,
+    "AutoPan" : AutoPan,
+    "AutoWah" : AutoWah,
+    "Flanger" : Flanger,
+    "Phaser" : Phaser,
+    "Rotary" : Rotary,
+    "StereoChorus" : StereoChorus,
+    "TapeWobble" : TapeWobble
+    // "Classic Dist": ClassicDist,
+    // "Bitcrushar": Bitcrushar,
+    // etc.
+};
+
 const initialState = {
     activeEffects: [], // Array of active effects with their parameters
     effectsLibrary: [
@@ -137,7 +174,7 @@ const initialState = {
         { id: 2, name: "Classic Dist", subscription: false, color: "#8F7CFD", category: "Distortion" },
         { id: 3, name: "Clipper", subscription: true, color: "#8F7CFD", category: "Distortion" },
         { id: 4, name: "Crusher", subscription: true, color: "#8F7CFD", category: "Distortion" },
-        { id: 5, name: "Fuzz", subscription: false, color: "#8F7CFD", category: "Distortion" },
+        { id: 5, name: "Fuzz", subscription: false, color: "#8F7CFD", category: "Distortion", component: Fuzz },
         { id: 6, name: "Juicy Distrotion", subscription: true, color: "#8F7CFD", category: "Distortion" },
         { id: 7, name: "Overdrive", subscription: false, color: "#8F7CFD", category: "Distortion" },
         { id: 8, name: "Auto Pan", subscription: false, color: "#409C9F", category: "Modulation" },
@@ -172,6 +209,9 @@ const effectsSlice = createSlice({
                     { name: "Parameter 3", min: -135, max: 135, defaultAngle: 90 }
                 ]
             };
+            console.log('====================================');
+            console.log("newEffect :::>",newEffect);
+            console.log('====================================');
             state.activeEffects.push(newEffect);
         },
         removeEffect: (state, action) => {

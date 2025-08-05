@@ -24,6 +24,7 @@ function describeArc(cx, cy, r, startAngle, endAngle) {
 }
 
 
+
 function BadgeTooltip({ value, visible }) {
     if (!visible) return null;
 
@@ -76,7 +77,7 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const getResponsiveStroke = () => {
         if (typeof window !== 'undefined') {
             if (window.innerWidth >= 768) return 3;
-            if (window.innerWidth >= 768) return 3;  // md
+            if (window.innerWidth >= 320) return 2;  // md
             // if (window.innerWidth >= 640) return 40;  // sm
             return 2; // xs (mobile)
         }
@@ -334,7 +335,6 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
                 {/* Indicator line */}
                 <div
                     className={`absolute top-1.5 left-1/2 w-0.5 h-2 md600:h-2 lg:h-3 bg-gray-400 rounded-sm -translate-x-1/2 origin-bottom`}
-
                     style={{
                         transform: `translateX(-50%) rotate(${angle}deg)`,
                     }}
@@ -352,8 +352,7 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     );
 }
 
-const Overdrive = () => {
-
+const ClassicDist = () => {
 
     const dispatch = useDispatch();
     const { activeEffects } = useSelector((state) => state.effects);
@@ -363,14 +362,14 @@ const Overdrive = () => {
     };
 
     // Get the current effect's instanceId from activeEffects
-    const currentEffect = activeEffects.find(effect => effect.name === "Overdrive");
+    const currentEffect = activeEffects.find(effect => effect.name === "Classic Dist");
     const currentInstanceId = currentEffect?.instanceId;
 
     return (
         <div className='bg-[#141414]'>
             <div className='flex justify-between items-center w-[150px] h-[40px] sm:w-[190px] sm:h-[50px] md600:w-[220px] md:w-[230px] md:h-[55px] lg:w-[240px] xl:h-[60px]  2xl:w-[256px] 2xl:h-[64px] rounded-t-lg bg-[#8F7CFD99] px-2 md:px-3'>
                 <FaPowerOff className='text-white text-[16px] md600:text-[20px]' />
-                <p className='text-white text-[12px] md600:text-[16px]'>Overdrive</p>
+                <p className='text-white text-[12px] md600:text-[16px]'>Classic Dist</p>
                 <IoClose className='text-white text-[16px]  md600:text-[20px] hover:text-[#ff0000]' onClick={() => handleRemoveEffect(currentInstanceId)} />
             </div>
             <div className='w-[150px] h-[140px] sm:w-[190px] sm:h-[180px] md600:w-[220px] md600:h-[210px] md:w-[230px] md:h-[265px] lg:w-[240px] lg:h-[282px] xl:w-[240px] xl:h-[285px] 2xl:w-[256px] 2xl:h-[300px] bg-[#302f2f] relative'>
@@ -385,7 +384,7 @@ const Overdrive = () => {
                 </div>
 
                 {/* Low cut Knob - Bottom Center */}
-                <div className="absolute bottom-[15px] left-[30px] sm:bottom-[25px] sm:left-[40px] md600:left-[40px] md600:bottom-[45px] md:left-[40px] md:bottom-[45px] ">
+                <div className="absolute bottom-[15px] left-[30px] sm:bottom-[25px] sm:left-[40px] md600:left-[40px] md600:bottom-[45px] md:left-[40px] md:bottom-[45px]">
                     <Knob1 label="Makeup" min={-135} max={135} defaultAngle={90} />
                 </div>
             </div>
@@ -393,4 +392,4 @@ const Overdrive = () => {
     )
 }
 
-export default Overdrive
+export default ClassicDist
