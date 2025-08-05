@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { FaPowerOff } from 'react-icons/fa6';
 import { IoClose } from 'react-icons/io5';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect } from '../Redux/Slice/effects.slice';
+import { removeEffect} from '../Redux/Slice/effects.slice';
 
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
@@ -54,16 +54,14 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     // Tailwind-consistent responsive sizes
     const getResponsiveSize = () => {
         if (typeof window !== 'undefined') {
-            if (window.innerWidth >= 1440) return 50; // 2xl
-            if (window.innerWidth >= 1280) return 40; // xl  
-            if (window.innerWidth >= 1024) return 36; // lg
-            if (window.innerWidth >= 768) return 32;  // md
-            if (window.innerWidth >= 640) return 28;  // sm
-            return 20; // xs (mobile)
+            if (window.innerWidth >= 1280) return 50; // xl  
+            // md
+            if (window.innerWidth >= 601) return 44;  // sm
+            if (window.innerWidth >= 425) return 36;  // sm
+            return 30; // xs (mobile)
         }
         return 56;
     };
-
     const [size, setSize] = useState(getResponsiveSize());
 
     useEffect(() => {
@@ -77,7 +75,7 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const getResponsiveStroke = () => {
         if (typeof window !== 'undefined') {
             if (window.innerWidth >= 1440) return 3;
-            if (window.innerWidth >= 768) return 3;  // md
+            if (window.innerWidth >= 768) return 2;  // md
             // if (window.innerWidth >= 640) return 40;  // sm
             return 2; // xs (mobile)
         }
@@ -179,7 +177,7 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
                 </svg>
                 {/* Indicator line */}
                 <div
-                    className={`absolute top-1.5 left-1/2 w-0.5 h-2 md600:h-3 lg:h-4 bg-gray-400 rounded-sm -translate-x-1/2 origin-bottom`}
+                    className={`absolute top-1.5 left-1/2 w-0.5 h-2 md600:h-3  bg-gray-400 rounded-sm -translate-x-1/2 origin-bottom`}
                     style={{
                         transform: `translateX(-50%) rotate(${angle}deg)`,
                     }}
@@ -213,13 +211,13 @@ const Crusher = () => {
 
     return (
         <div className='bg-[#141414]'>
-            <div className='flex justify-between items-center w-[256px] h-[64px] rounded-t-lg bg-[#8F7CFD99] px-3'>
-                <FaPowerOff className='text-white text-[20px]' />
-                <p className='text-white text-[16px]'>Crusher</p>
-                <IoClose className='text-white text-[20px] hover:text-[#ff0000]'  onClick={() => handleRemoveEffect(currentInstanceId)} />
+            <div className='flex justify-between items-center w-[150px] h-[40px] sm:w-[190px] sm:h-[50px] md600:w-[220px] md:w-[230px] md:h-[55px] lg:w-[240px] xl:h-[60px]  2xl:w-[256px] 2xl:h-[64px] rounded-t-lg bg-[#8F7CFD99] px-3'>
+                <FaPowerOff className='text-white text-[16px] md600:text-[20px]' />
+                <p className='text-white text-[12px] md600:text-[16px]'>Crusher</p>
+                <IoClose className='text-white text-[16px]  md600:text-[20px] hover:text-[#ff0000]'  onClick={() => handleRemoveEffect(currentInstanceId)} />
             </div>
-            <div className='w-[256px] h-[300px] bg-[#302f2f] p-8'>
-                <div className="grid grid-cols-2 gap-10 items-center justify-center">
+            <div className='items-center p-5 sm:p-6 md600:p-7 md:p-6 xl:p-8 2xl:p-10 w-[150px] h-[140px] sm:w-[190px] sm:h-[180px] md600:w-[220px] md600:h-[210px] md:w-[230px] md:h-[265px] lg:w-[240px] lg:h-[282px] xl:w-[240px] xl:h-[285px] 2xl:w-[256px] 2xl:h-[300px] bg-[#302f2f] '>
+                <div className="grid grid-cols-2 gap-5 sm:gap-6 md600:gap-5 md:gap-6  lg:gap-8 2xl:gap-10 items-center justify-center self-center">
                     <div className="">
                         <Knob1 label="Low cut" min={-135} max={135} defaultAngle={0} />
                     </div>

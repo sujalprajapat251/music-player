@@ -54,11 +54,9 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const getResponsiveSize = () => {
         if (typeof window !== 'undefined') {
             if (window.innerWidth >= 1440) return 50; // 2xl
-            if (window.innerWidth >= 1280) return 40; // xl  
-            if (window.innerWidth >= 1024) return 36; // lg
-            if (window.innerWidth >= 768) return 32;  // md
-            if (window.innerWidth >= 640) return 28;  // sm
-            return 20; // xs (mobile)
+            if (window.innerWidth >= 601) return 44;  // sm
+            if (window.innerWidth >= 425) return 34
+            return 30; // xs (mobile)
         }
         return 56;
     };
@@ -76,7 +74,7 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const getResponsiveStroke = () => {
         if (typeof window !== 'undefined') {
             if (window.innerWidth >= 1440) return 3;
-            if (window.innerWidth >= 768) return 3;  // md
+            if (window.innerWidth >= 768) return 2;  // md
             // if (window.innerWidth >= 640) return 40;  // sm
             return 2; // xs (mobile)
         }
@@ -207,12 +205,10 @@ function Knob2({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     // Tailwind-consistent responsive sizes
     const getResponsiveSize = () => {
         if (typeof window !== 'undefined') {
-            if (window.innerWidth >= 1440) return 36; // 2xl
-            if (window.innerWidth >= 1280) return 32; // xl  
-            if (window.innerWidth >= 1024) return 28; // lg
-            if (window.innerWidth >= 768) return 24;  // md
-            if (window.innerWidth >= 640) return 20;  // sm
-            return 16; // xs (mobile)
+
+            if (window.innerWidth >= 601) return 36;  // sm
+            if (window.innerWidth >= 425) return 28;
+            return 26; // xs (mobile)
         }
         return 56;
     };
@@ -229,8 +225,8 @@ function Knob2({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     // Tailwind-consistent responsive sizes
     const getResponsiveStroke = () => {
         if (typeof window !== 'undefined') {
-            if (window.innerWidth >= 1440) return 2;
-            if (window.innerWidth >= 768) return 3;  // md
+            if (window.innerWidth >= 1440) return 3;
+            if (window.innerWidth >= 768) return 2;  // md
             // if (window.innerWidth >= 640) return 40;  // sm
             return 2; // xs (mobile)
         }
@@ -331,7 +327,7 @@ function Knob2({ label = "Bite", min = -135, max = 135, defaultAngle }) {
                 </svg>
                 {/* Indicator line */}
                 <div
-                    className={`absolute top-1.5 left-1/2 w-0.5 h-2 md600:h-3 lg:h-3 bg-gray-400 rounded-sm -translate-x-1/2 origin-bottom`}
+                    className={`absolute top-1.5 left-1/2 w-0.5 h-2 md600:h-3  bg-gray-400 rounded-sm -translate-x-1/2 origin-bottom`}
                     style={{
                         transform: `translateX(-50%) rotate(${angle}deg)`,
                     }}
@@ -366,12 +362,12 @@ const JuicyDistrotion = () => {
 
     return (
         <div className='bg-[#141414]'>
-            <div className='flex justify-between items-center w-[256px] h-[64px] rounded-t-lg bg-[#8F7CFD99] px-3'>
-                <FaPowerOff className='text-white text-[20px]' />
-                <p className='text-white text-[16px]'>Juicy Distrotion</p>
-                <IoClose className='text-white text-[20px] hover:text-[#ff0000]'  onClick={() => handleRemoveEffect(currentInstanceId)} />
+            <div className='flex justify-between items-center w-[150px] h-[40px] sm:w-[190px] sm:h-[50px] md600:w-[220px] md:w-[230px] md:h-[55px] lg:w-[240px] xl:h-[60px]  2xl:w-[256px] 2xl:h-[64px] rounded-t-lg bg-[#8F7CFD99] px-3'>
+                <FaPowerOff className='text-white text-[16px] md600:text-[20px]' />
+                <p className='text-white text-[12px] md600:text-[16px]'>Juicy Distrotion</p>
+                <IoClose className='text-white text-[16px]  md600:text-[20px] hover:text-[#ff0000]' onClick={() => handleRemoveEffect(currentInstanceId)} />
             </div>
-            <div className='w-[256px] h-[300px] bg-[#302f2f] p-8'>
+            <div className='w-[150px] h-[140px] sm:w-[190px] sm:h-[180px] md600:w-[220px] md600:h-[210px] md:w-[230px] md:h-[265px] lg:w-[240px] lg:h-[282px] xl:w-[240px] xl:h-[285px] 2xl:w-[256px] 2xl:h-[300px] bg-[#302f2f] p-4 md:p-6 2xl:p-8'>
                 <div className="flex justify-between">
                     <div className="">
                         <Knob1 label="Dist" min={-135} max={135} defaultAngle={0} />
@@ -381,7 +377,7 @@ const JuicyDistrotion = () => {
                         <Knob1 label="Volume" min={-135} max={135} defaultAngle={90} />
                     </div>
                 </div>
-                <div className='flex justify-between mt-5'>
+                <div className='flex justify-between mt-3 sm:mt-4 md:mt-6 2xl:mt-8'>
                     <div className="">
                         <Knob2 label="Tone" min={-135} max={135} defaultAngle={0} />
                     </div>

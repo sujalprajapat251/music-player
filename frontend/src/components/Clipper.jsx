@@ -231,7 +231,7 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const getResponsiveStroke = () => {
         if (typeof window !== 'undefined') {
             if (window.innerWidth >= 1440) return 3;
-            if (window.innerWidth >= 768) return 3;  // md
+            if (window.innerWidth >= 768) return 2;  // md
             // if (window.innerWidth >= 640) return 40;  // sm
             return 2; // xs (mobile)
         }
