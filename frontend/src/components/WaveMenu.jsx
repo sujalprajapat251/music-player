@@ -45,7 +45,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
 
       {/* Menu Container */}
       <div
-        className="absolute bg-[#1F1F1F] rounded-[4px] py-2 min-w-[220px] shadow-lg z-[1000] text-sm text-white"
+        className="absolute bg-[#1F1F1F] rounded-[4px] py-2 min-w-[220px] shadow-lg z-[1000] text-sm text-white max-h-[400px] overflow-y-auto"
         style={{
           top: position?.y || 0,
           left: position?.x || 0,
@@ -185,23 +185,158 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
           {voiceTransformDropdownOpen && (
             <div className="absolute left-full top-0 bg-[#232323] rounded shadow-lg z-[1100] min-w-[200px]">
               <p className='text-[#FFFFFF99] text-sm px-2 py-2'>Pitch and Character:</p>
-              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">+Fifth</div>
-              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">+1 Octave</div>
-              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">+2 Octave</div>
-              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">-Fourth</div>
-              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">-1 Octave</div>
-              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">-2 Octave</div>
+              <div 
+                className="px-4 py-2 cursor-pointer hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleItemClick('+Fifth');
+                  setVoiceTransformDropdownOpen(false);
+                }}
+              >
+                +Fifth
+              </div>
+              <div 
+                className="px-4 py-2 cursor-pointer hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleItemClick('+1 Octave');
+                  setVoiceTransformDropdownOpen(false);
+                }}
+              >
+                +1 Octave
+              </div>
+              <div 
+                className="px-4 py-2 cursor-pointer hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleItemClick('+2 Octave');
+                  setVoiceTransformDropdownOpen(false);
+                }}
+              >
+                +2 Octave
+              </div>
+              <div 
+                className="px-4 py-2 cursor-pointer hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleItemClick('-Fourth');
+                  setVoiceTransformDropdownOpen(false);
+                }}
+              >
+                -Fourth
+              </div>
+              <div 
+                className="px-4 py-2 cursor-pointer hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleItemClick('-1 Octave');
+                  setVoiceTransformDropdownOpen(false);
+                }}
+              >
+                -1 Octave
+              </div>
+              <div 
+                className="px-4 py-2 cursor-pointer hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleItemClick('-2 Octave');
+                  setVoiceTransformDropdownOpen(false);
+                }}
+              >
+                -2 Octave
+              </div>
               <div className="h-px bg-gray-600 my-1"></div>
               <p className='text-[#FFFFFF99] text-sm px-2 py-2'>Character:</p>
-              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">A little darker</div>
-              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">Darker</div>
-              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">Very dark</div>
-              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">A little brighter</div>
-              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">Brighter</div>
-              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">Very bright</div>
-              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">Baby</div>
-              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">Robot</div>
-              <div className="px-4 py-2 cursor-pointer hover:bg-gray-700">Alien</div>
+              <div 
+                className="px-4 py-2 cursor-pointer hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleItemClick('A little darker');
+                  setVoiceTransformDropdownOpen(false);
+                }}
+              >
+                A little darker
+              </div>
+              <div 
+                className="px-4 py-2 cursor-pointer hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleItemClick('Darker');
+                  setVoiceTransformDropdownOpen(false);
+                }}
+              >
+                Darker
+              </div>
+              <div 
+                className="px-4 py-2 cursor-pointer hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleItemClick('Very dark');
+                  setVoiceTransformDropdownOpen(false);
+                }}
+              >
+                Very dark
+              </div>
+              <div 
+                className="px-4 py-2 cursor-pointer hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleItemClick('A little brighter');
+                  setVoiceTransformDropdownOpen(false);
+                }}
+              >
+                A little brighter
+              </div>
+              <div 
+                className="px-4 py-2 cursor-pointer hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleItemClick('Brighter');
+                  setVoiceTransformDropdownOpen(false);
+                }}
+              >
+                Brighter
+              </div>
+              <div 
+                className="px-4 py-2 cursor-pointer hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleItemClick('Very bright');
+                  setVoiceTransformDropdownOpen(false);
+                }}
+              >
+                Very bright
+              </div>
+              <div 
+                className="px-4 py-2 cursor-pointer hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleItemClick('Baby');
+                  setVoiceTransformDropdownOpen(false);
+                }}
+              >
+                Baby
+              </div>
+              <div 
+                className="px-4 py-2 cursor-pointer hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleItemClick('Robot');
+                  setVoiceTransformDropdownOpen(false);
+                }}
+              >
+                Robot
+              </div>
+              <div 
+                className="px-4 py-2 cursor-pointer hover:bg-gray-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleItemClick('Alien');
+                  setVoiceTransformDropdownOpen(false);
+                }}
+              >
+                Alien
+              </div>
 
             </div>
           )}

@@ -177,7 +177,8 @@ const TopHeader = () => {
 
     const [showSubmenu, setShowSubmenu] = useState({
         import: false,
-        navigator: false
+        navigator: false,
+        effects: false
     });
 
     // New function to handle submenu visibility
@@ -194,7 +195,8 @@ const TopHeader = () => {
         // Close all submenus
         setShowSubmenu({
             import: false,
-            navigator: false
+            navigator: false,
+            effects: false
         });
         // Reset active menu to close the main menu
         setIsActiveMenu("");
@@ -395,9 +397,28 @@ const TopHeader = () => {
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 border-t border-[#1414141A] dark:border-[#FFFFFF1A] cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
-                                            <Effect className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Effects</span>
-                                        </p>
+                                        <div
+                                            className="relative"
+                                            onMouseEnter={() => handleSubmenuToggle('effects', true)}
+                                            onMouseLeave={() => handleSubmenuToggle('effects', false)}
+                                        >
+                                            <p className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 border-t border-[#1414141A] dark:border-[#FFFFFF1A] cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
+                                                <Effect className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
+                                                <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Effects</span>
+                                                <MdOutlineKeyboardArrowRight className="text-secondary-light dark:text-secondary-dark text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
+                                            </p>
+
+                                            {showSubmenu.effects && (
+                                                <div className="absolute flex left-full px-2 py-2 gap-2 md600:px-3 lg:px-4 md:py-2 top-0 z-50 w-40 md600:w-48 lg:w-56 lg:mt-0 bg-primary-light dark:bg-primary-dark shadow-lg outline-none text-nowrap">
+                                                    <Link to="/sidebar/voice-transform" className="block text-secondary-light dark:text-secondary-dark cursor-pointer text-[10px] md600:text-[12px] lg:text-[14px] hover:bg-[#E5E5E5] dark:hover:bg-[#262529] px-2 py-1 rounded">
+                                                        Voice Transform
+                                                    </Link>
+                                                    <Link to="/sidebar/advanced-voice-transform" className="block text-secondary-light dark:text-secondary-dark cursor-pointer text-[10px] md600:text-[12px] lg:text-[14px] hover:bg-[#E5E5E5] dark:hover:bg-[#262529] px-2 py-1 rounded">
+                                                        Advanced Voice Transform
+                                                    </Link>
+                                                </div>
+                                            )}
+                                        </div>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>

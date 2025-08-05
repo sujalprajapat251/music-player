@@ -69,7 +69,6 @@ const Sidebar2 = () => {
           <div style={{
             maxHeight: 'calc(100vh - 240px)',
             marginTop: "40px",
-            overflowY: 'auto',
             scrollbarWidth: 'none', /* Firefox */
             msOverflowStyle: 'none', /* Internet Explorer 10+ */
           }}
