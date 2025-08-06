@@ -47,8 +47,46 @@ import SDemo from './components/SDemo';
 import JuicyDistrotion from './components/JuicyDistrotion';
 import TapeWobble from './components/TapeWobble';
 import VoiceTransformer from './components/VoiceTransfrom';
+import React, { useEffect } from "react";
 
 function App() {
+  useEffect(() => {
+    // Prevent zoom with Ctrl + wheel
+    const handleWheel = (e) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+      }
+    };
+
+    // Prevent zoom with keyboard
+    const handleKeyDown = (e) => {
+      // Ctrl or Cmd + (+, -, 0)
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === "+" || e.key === "-" || e.key === "=" || e.key === "0")
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    // Prevent pinch zoom on touch devices
+    const handleTouchMove = (e) => {
+      if (e.touches && e.touches.length > 1) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("keydown", handleKeyDown, { passive: false });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, []);
+
   const { store, persistor } = configureStore();
   return (
     <Provider store={store}>
