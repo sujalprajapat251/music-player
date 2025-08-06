@@ -4,8 +4,8 @@ import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
 import { addTrack, updateTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack } from "../Redux/Slice/studio.slice";
-import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler } from "../Redux/Slice/grid.slice";
-import { getGridDivisions, getGridSpacing, snapToGrid } from "../Utils/gridUtils";
+import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM } from "../Redux/Slice/grid.slice";
+import { getGridDivisions, getGridSpacing, snapToGrid, formatTime, getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
 import { IMAGE_URL } from "../Utils/baseUrl";
 import { getNextTrackColor } from "../Utils/colorUtils";
 import magnetIcon from "../Images/magnet.svg";
@@ -734,7 +734,7 @@ useEffect(() => {
 }, [tracks, players, soloTrackId]);
   // Loop change handler
   const handleLoopChange = useCallback((newStart, newEnd) => {
-    const gridSpacing = getGridSpacing(selectedGrid);
+    const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
     const snapToGrid = (time) => {
       if (!gridSpacing || gridSpacing <= 0) return time;
       const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
@@ -746,12 +746,12 @@ useEffect(() => {
     
     setLoopStart(snappedStart);
     setLoopEnd(snappedEnd);
-  }, [audioDuration, selectedGrid]);
+  }, [audioDuration, selectedGrid, selectedTime]);
 
   // Handle clip position changes (drag) with grid snapping
   const handleTrackPositionChange = useCallback((trackId, clipId, newStartTime) => {
     // Grid snapping for clip position
-    const gridSpacing = getGridSpacing(selectedGrid);
+    const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
     const snapToGrid = (time) => {
       if (!gridSpacing || gridSpacing <= 0) return time;
       const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
@@ -778,7 +778,7 @@ useEffect(() => {
         return playerObj;
       });
     });
-  }, [dispatch, selectedGrid]);
+  }, [dispatch, selectedGrid, selectedTime]);
 
   // Updated trim change handler to support position changes from left trim
   const handleTrimChange = useCallback((trackId, clipId, trimData) => {
@@ -790,7 +790,7 @@ useEffect(() => {
     if (!track || !clip || !clip.duration) return;
     
     // Grid snapping for validation
-    const gridSpacing = getGridSpacing(selectedGrid);
+    const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
     const snapToGrid = (time) => {
       if (!gridSpacing || gridSpacing <= 0) return time;
       const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
@@ -838,7 +838,7 @@ useEffect(() => {
         return playerObj;
       });
     });
-  }, [dispatch, tracks, selectedGrid]);
+  }, [dispatch, tracks, selectedGrid, selectedTime]);
 
   const handleReady = useCallback(async (wavesurfer, clip) => {
     if (!clip || !clip.url) return;
@@ -990,7 +990,7 @@ useEffect(() => {
     rawTime = Math.max(0, Math.min(duration, rawTime));
     
     // Grid snapping for playhead
-    const gridSpacing = getGridSpacing(selectedGrid);
+    const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
     const snapToGrid = (time) => {
       if (!gridSpacing || gridSpacing <= 0) return time;
       const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
@@ -1209,36 +1209,69 @@ useEffect(() => {
     if (width <= 0 || duration <= 0) return;
 
     const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
-    const labelInterval = 1;
-
-    const gridDivisions = getGridDivisions(selectedGrid);
-    const gridSpacing = 1 / gridDivisions;
+    
+    // Use time signature-aware grid spacing
+    const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
     const gridColor = "#FFFFFF";
+
+    // Calculate label interval based on ruler type
+    let labelInterval;
+    if (selectedRuler === "Beats") {
+      // For beats ruler, show labels every bar
+      const { beats } = parseTimeSignature(selectedTime);
+      const secondsPerBeat = 0.5; // Fixed at 120 BPM equivalent
+      labelInterval = beats * secondsPerBeat;
+    } else {
+      // For time ruler, show labels every second
+      labelInterval = 1;
+    }
+
+    // Create a set to track which labels have been added to avoid duplicates
+    const addedLabels = new Set();
 
     for (let time = 0; time <= duration; time += gridSpacing) {
       const x = xScale(time);
-      const isMainBeat = Math.abs(time - Math.round(time)) < 0.01;
-      const isHalfBeat = Math.abs(time - Math.round(time * 2) / 2) < 0.01;
-      const isQuarterBeat = Math.abs(time - Math.round(time * 4) / 4) < 0.01;
-      const sec = Math.round(time);
-      const isLabeled = sec % labelInterval === 0 && isMainBeat;
+      
+      // Determine tick importance based on time signature
+      const secondsPerBeat = 0.5; // Fixed at 120 BPM equivalent
+      const { beats } = parseTimeSignature(selectedTime);
+      const secondsPerBar = secondsPerBeat * beats;
+      
+      const isMainBeat = Math.abs(time % secondsPerBeat) < 0.01;
+      const isBarStart = Math.abs(time % secondsPerBar) < 0.01;
+      const isHalfBeat = Math.abs(time % (secondsPerBeat / 2)) < 0.01;
+      const isQuarterBeat = Math.abs(time % (secondsPerBeat / 4)) < 0.01;
+      
+      // Improved label logic to prevent duplicates
+      let isLabeled = false;
+      if (selectedRuler === "Beats") {
+        isLabeled = isBarStart;
+      } else {
+        // For time ruler, only show labels at whole seconds
+        const roundedTime = Math.round(time);
+        isLabeled = Math.abs(time - roundedTime) < 0.01 && roundedTime % Math.max(1, Math.round(labelInterval)) === 0;
+      }
 
       let tickHeight = 4;
       let strokeWidth = 0.5;
       let opacity = 0.6;
 
-      if (isMainBeat) {
+      if (isBarStart) {
         tickHeight = 20;
         strokeWidth = 1.5;
         opacity = 1;
+      } else if (isMainBeat) {
+        tickHeight = 16;
+        strokeWidth = 1.2;
+        opacity = 0.9;
       } else if (isHalfBeat) {
-        tickHeight = 14;
+        tickHeight = 12;
         strokeWidth = 1;
-        opacity = 0.8;
-      } else if (isQuarterBeat) {
-        tickHeight = 10;
-        strokeWidth = 0.8;
         opacity = 0.7;
+      } else if (isQuarterBeat) {
+        tickHeight = 8;
+        strokeWidth = 0.8;
+        opacity = 0.6;
       }
 
       svg
@@ -1252,17 +1285,30 @@ useEffect(() => {
         .attr("opacity", opacity);
 
       if (isLabeled) {
-        const minutes = Math.floor(time / 60);
-        const seconds = Math.floor(time % 60);
-        const label = `${minutes}:${seconds.toString().padStart(2, "0")}`;
-        svg
-          .append("text")
-          .attr("x", x + 4)
-          .attr("y", axisY - tickHeight - 5)
-          .attr("fill", "white")
-          .attr("font-size", 12)
-          .attr("text-anchor", "start")
-          .text(label);
+        let label;
+        if (selectedRuler === "Beats") {
+          // Show musical notation (bars:beats)
+          const barNumber = Math.floor(time / secondsPerBar) + 1;
+          label = `${barNumber}`;
+        } else {
+          // Show time notation (minutes:seconds)
+          const minutes = Math.floor(time / 60);
+          const seconds = Math.floor(time % 60);
+          label = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+        }
+        
+        // Only add label if it hasn't been added before
+        if (!addedLabels.has(label)) {
+          svg
+            .append("text")
+            .attr("x", x + 4)
+            .attr("y", axisY - tickHeight - 5)
+            .attr("fill", "white")
+            .attr("font-size", 12)
+            .attr("text-anchor", "start")
+            .text(label);
+          addedLabels.add(label);
+        }
       }
     }
 
@@ -1274,11 +1320,11 @@ useEffect(() => {
       .attr("y2", axisY)
       .attr("stroke", "white")
       .attr("stroke-width", 1);
-  }, [audioDuration, selectedGrid]);
+  }, [audioDuration, selectedGrid, selectedTime, selectedRuler]);
 
   useEffect(() => {
     renderRuler();
-  }, [renderRuler, audioDuration, selectedGrid]);
+  }, [renderRuler, audioDuration, selectedGrid, selectedTime, selectedRuler]);
 
   // Sync local state with Redux state
   useEffect(() => {
@@ -1434,7 +1480,7 @@ useEffect(() => {
         console.log('Drop coordinates:', { x, width, duration, rawDropTime });
         
         // Grid snapping for drop position
-        const gridSpacing = getGridSpacing(selectedGrid);
+        const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
         const snapToGrid = (time) => {
           if (!gridSpacing || gridSpacing <= 0) return time;
           const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
@@ -1531,7 +1577,7 @@ useEffect(() => {
     } catch (error) {
       console.error('Error processing dropped item:', error);
     }
-  }, [audioDuration, dispatch, trackHeight, selectedGrid]);
+  }, [audioDuration, dispatch, trackHeight, selectedGrid, selectedTime]);
 
   // Context menu handlers
   const handleContextMenu = useCallback((e, trackId) => {
@@ -1696,23 +1742,33 @@ useEffect(() => {
     if (width <= 0 || duration <= 0) return gridLines;
     
     const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
-    const gridDivisions = getGridDivisions(selectedGrid);
-    const gridSpacing = 1 / gridDivisions;
+    const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
     
     // Calculate the total height of all tracks
     const totalTracksHeight = tracks.length > 0 ? trackHeight * tracks.length : 0;
     
     for (let time = 0; time <= duration; time += gridSpacing) {
       const x = xScale(time);
-      const isMainBeat = Math.abs(time - Math.round(time)) < 0.01;
-      const isHalfBeat = Math.abs(time - Math.round(time * 2) / 2) < 0.01;
-      const isQuarterBeat = Math.abs(time - Math.round(time * 4) / 4) < 0.01;
+      
+      // Determine line importance based on time signature
+      const secondsPerBeat = 0.5; // Fixed at 120 BPM equivalent
+      const { beats } = parseTimeSignature(selectedTime);
+      const secondsPerBar = secondsPerBeat * beats;
+      
+      const isBarStart = Math.abs(time % secondsPerBar) < 0.01;
+      const isMainBeat = Math.abs(time % secondsPerBeat) < 0.01;
+      const isHalfBeat = Math.abs(time % (secondsPerBeat / 2)) < 0.01;
+      const isQuarterBeat = Math.abs(time % (secondsPerBeat / 4)) < 0.01;
       
       let lineColor = "#FFFFFF1A";
       let lineWidth = 1;
       let lineOpacity = 0.3;
       
-      if (isMainBeat) {
+      if (isBarStart) {
+        lineColor = "#FFFFFF50";
+        lineWidth = 2;
+        lineOpacity = 0.8;
+      } else if (isMainBeat) {
         lineColor = "#FFFFFF40";
         lineWidth = 1.5;
         lineOpacity = 0.6;
@@ -1818,7 +1874,7 @@ useEffect(() => {
               loopEnd={loopEnd}
               onLoopChange={handleLoopChange}
               timelineWidthPerSecond={timelineWidthPerSecond}
-              gridSpacing={getGridSpacing(selectedGrid)}
+              gridSpacing={getGridSpacingWithTimeSignature(selectedGrid, selectedTime)}
               currentTime={currentTime}
               isLoopEnabled={isLoopEnabled}
             />
@@ -1937,7 +1993,7 @@ useEffect(() => {
                       }))}
                       timelineWidthPerSecond={timelineWidthPerSecond}
                       frozen={track.frozen}
-                      gridSpacing={getGridSpacing(selectedGrid)}
+                      gridSpacing={getGridSpacingWithTimeSignature(selectedGrid, selectedTime)}
                     />
                   </div>
                 );
