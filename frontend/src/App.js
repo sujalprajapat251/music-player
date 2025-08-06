@@ -46,6 +46,7 @@ import TimelineDemo from './components/TimelineDemo';
 import SDemo from './components/SDemo';
 import JuicyDistrotion from './components/JuicyDistrotion';
 import TapeWobble from './components/TapeWobble';
+import VoiceTransformer from './components/VoiceTransfrom';
 
 function App() {
   const { store, persistor } = configureStore();
@@ -101,6 +102,7 @@ function App() {
             <Route path="effects" element={<Effects />} />
             <Route path="savani" element={<SDemo />} />
             <Route path="piano" element={<Piano />} />
+            <Route path="voice" element={<VoiceTransformer />} />
 
            
 
