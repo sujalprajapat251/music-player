@@ -630,7 +630,7 @@ const Effects2 = () => {
                     <div className=''>
                         {activeTab === 'Instruments' && (
                             <>
-                                <div className=" bg-[#1F1F1F] flex items-center justify-between sm:justify-center  pb-1 px-1  md600:px-2 pt-2 pb-2 sm:gap-4 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
+                                <div className=" bg-[#1F1F1F] flex items-center justify-between sm:justify-center px-1  md600:px-2 pt-2 pb-2 sm:gap-4 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
                                     {/* Instrument Selector */}
                                     <div className="bg-[#353535] p-1 md600:p-2 lg:p-3 rounded-lg">
                                         <div className="flex items-center justify-between">
