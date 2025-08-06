@@ -345,13 +345,13 @@ const AudioClip = ({
       style={{
         background: clip.color || "transparent",
         borderRadius: '8px',
-        border: isSelected 
-          ? "2px solid #AD00FF" 
-          : isDraggingTrim 
-            ? "2px solid #AD00FF" 
+        border: isSelected
+          ? "2px solid #AD00FF"
+          : isDraggingTrim
+            ? "2px solid #AD00FF"
             : "1px solid rgba(255,255,255,0.1)",
-        boxShadow: isSelected || isDraggingTrim 
-          ? "0 4px 20px rgba(173,0,255,0.3)" 
+        boxShadow: isSelected || isDraggingTrim
+          ? "0 4px 20px rgba(173,0,255,0.3)"
           : "none",
         transition: isDraggingTrim ? "none" : "all 0.2s ease",
         overflow: "hidden",
@@ -1251,7 +1251,7 @@ const Timeline = () => {
     if (width <= 0 || duration <= 0) return;
 
     const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
-    
+
     // Use time signature-aware grid spacing
     const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
     const gridColor = "#FFFFFF";
@@ -1273,17 +1273,17 @@ const Timeline = () => {
 
     for (let time = 0; time <= duration; time += gridSpacing) {
       const x = xScale(time);
-      
+
       // Determine tick importance based on time signature
       const secondsPerBeat = 0.5; // Fixed at 120 BPM equivalent
       const { beats } = parseTimeSignature(selectedTime);
       const secondsPerBar = secondsPerBeat * beats;
-      
+
       const isMainBeat = Math.abs(time % secondsPerBeat) < 0.01;
       const isBarStart = Math.abs(time % secondsPerBar) < 0.01;
       const isHalfBeat = Math.abs(time % (secondsPerBeat / 2)) < 0.01;
       const isQuarterBeat = Math.abs(time % (secondsPerBeat / 4)) < 0.01;
-      
+
       // Improved label logic to prevent duplicates
       let isLabeled = false;
       if (selectedRuler === "Beats") {
@@ -1338,7 +1338,7 @@ const Timeline = () => {
           const seconds = Math.floor(time % 60);
           label = `${minutes}:${seconds.toString().padStart(2, "0")}`;
         }
-        
+
         // Only add label if it hasn't been added before
         if (!addedLabels.has(label)) {
           svg
@@ -1646,16 +1646,17 @@ const Timeline = () => {
   const handleContextMenuAction = useCallback((action, overrideTrackId, overrideClipId) => {
     const trackId = overrideTrackId ?? contextMenu.trackId;
     const clipId = overrideClipId ?? contextMenu.clipId;
-    
+
     if (!trackId) return;
 
     const track = tracks.find(t => t.id === trackId);
     if (!track) return;
 
-    // If a specific clip is selected, operate on that clip
-    if (clipId) {
-      const clip = track.audioClips?.find(c => c.id === clipId);
-      if (!clip) return;
+    // Always find the clip if clipId is provided
+    const clip = clipId ? track.audioClips?.find(c => c.id === clipId) : undefined;
+
+    // Clip-level actions (cut/copy/delete always operate on the selected clip)
+    if (clipId && clip) {
       switch (action) {
         case 'cut':
           setClipboard({ type: 'clip', clip: { ...clip }, trackId });
@@ -1678,63 +1679,33 @@ const Timeline = () => {
           dispatch(removeAudioClip({ trackId, clipId }));
           break;
         default:
-          // Fallback to track-level actions for other cases
+          
           break;
       }
       return;
     }
 
-    // If no specific clip is selected, operate on the entire track (existing behavior)
+    // Track-level actions (paste works even if no clip is selected)
     switch (action) {
-      case 'cut':
-        if (track.audioClips && track.audioClips.length > 0) {
-          setClipboard({ 
-            type: 'clips',
-            clips: [...track.audioClips],
-            trackId: trackId 
-          });
-          // Remove all clips from the track
-          track.audioClips.forEach(clip => {
-            dispatch(removeAudioClip({
-              trackId: trackId,
-              clipId: clip.id
-            }));
-          });
-        }
-        break;
-      case 'copy':
-        if (track.audioClips && track.audioClips.length > 0) {
-          setClipboard({ 
-            type: 'clips',
-            clips: [...track.audioClips],
-            trackId: trackId 
-          });
-        }
-        break;
       case 'paste':
-        if (clipboard && clipboard.type === 'clips' && clipboard.clips) {
-          clipboard.clips.forEach(clip => {
-            const newClip = {
-              ...clip,
-              id: Date.now() + Math.random(), // Generate new unique ID
-              startTime: (clip.startTime || 0) + 1 // Offset slightly to avoid overlap
-            };
-            dispatch(addAudioClipToTrack({
-              trackId: trackId,
-              audioClip: newClip
-            }));
-          });
+        if (clipboard && clipboard.type === 'clip' && clipboard.clip) {
+          let newStartTime = 0;
+          if (track.audioClips && track.audioClips.length > 0) {
+            // Paste after the last clip in the track
+            const lastClip = track.audioClips[track.audioClips.length - 1];
+            newStartTime = (lastClip.startTime || 0) + (lastClip.duration || 1);
+          }
+          // If the track is empty, newStartTime remains 0
+          const newClip = {
+            ...clipboard.clip,
+            id: Date.now() + Math.random(),
+            startTime: newStartTime
+          };
+          dispatch(addAudioClipToTrack({ trackId, audioClip: newClip }));
         }
         break;
       case 'delete':
-        if (track.audioClips && track.audioClips.length > 0) {
-          track.audioClips.forEach(clip => {
-            dispatch(removeAudioClip({
-              trackId: trackId,
-              clipId: clip.id
-            }));
-          });
-        }
+        dispatch(removeAudioClip({ trackId, clipId }));
         break;
       case 'editName':
         // Implement edit name functionality
@@ -1855,27 +1826,27 @@ const Timeline = () => {
 
     const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
     const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
-    
+
     // Calculate the total height of all tracks
     const totalTracksHeight = tracks.length > 0 ? trackHeight * tracks.length : 0;
 
     for (let time = 0; time <= duration; time += gridSpacing) {
       const x = xScale(time);
-      
+
       // Determine line importance based on time signature
       const secondsPerBeat = 0.5; // Fixed at 120 BPM equivalent
       const { beats } = parseTimeSignature(selectedTime);
       const secondsPerBar = secondsPerBeat * beats;
-      
+
       const isBarStart = Math.abs(time % secondsPerBar) < 0.01;
       const isMainBeat = Math.abs(time % secondsPerBeat) < 0.01;
       const isHalfBeat = Math.abs(time % (secondsPerBeat / 2)) < 0.01;
       const isQuarterBeat = Math.abs(time % (secondsPerBeat / 4)) < 0.01;
-      
+
       let lineColor = "#FFFFFF1A";
       let lineWidth = 1;
       let lineOpacity = 0.3;
-      
+
       if (isBarStart) {
         lineColor = "#FFFFFF50";
         lineWidth = 2;
@@ -1939,7 +1910,7 @@ const Timeline = () => {
   //     // Clear selection if clicking outside of tracks and clips
   //     const isTrackClick = e.target.closest('[data-track-id]');
   //     const isClipClick = e.target.closest('[data-rnd]');
-      
+
   //     if (!isTrackClick && !isClipClick) {
   //       setSelectedTrackId(null);
   //       setSelectedClipId(null);
