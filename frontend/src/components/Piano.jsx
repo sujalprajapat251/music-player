@@ -381,37 +381,71 @@ const Pianodemo = ({ onClose }) => {
 
     const firstNote = MidiNumbers.fromNote('C0');
     const lastNote = MidiNumbers.fromNote('C5');
-    const keyboardShortcuts = KeyboardShortcuts.create({
-        firstNote: firstNote,
-        lastNote: lastNote,
-        keyboardConfig: [
-            // First Octave (Lower Keys)
-            { natural: 'z', flat: 's', sharp: 's' },
-            { natural: 'x', flat: 'd', sharp: 'd' },
-            { natural: 'c', flat: 'f', sharp: 'f' },
-            { natural: 'v', flat: 'g', sharp: 'g' },
-            { natural: 'b', flat: 'h', sharp: 'h' },
-            { natural: 'n', flat: 'j', sharp: 'j' },
-            { natural: 'm', flat: 'k', sharp: 'k' },
+    // const keyboardShortcuts = KeyboardShortcuts.create({
+    //     firstNote: firstNote,
+    //     lastNote: lastNote,
+    //     keyboardConfig: [
+    //         // First Octave (Lower Keys)
+    //         { natural: 'z', flat: 's', sharp: 's' },
+    //         { natural: 'x', flat: 'd', sharp: 'd' },
+    //         { natural: 'c', flat: 'f', sharp: 'f' },
+    //         { natural: 'v', flat: 'g', sharp: 'g' },
+    //         { natural: 'b', flat: 'h', sharp: 'h' },
+    //         { natural: 'n', flat: 'j', sharp: 'j' },
+    //         { natural: 'm', flat: 'k', sharp: 'k' },
 
-            { natural: ',', flat: 'l', sharp: 'l' },
-            { natural: '.', flat: ';', sharp: ';' },
+    //         { natural: ',', flat: 'l', sharp: 'l' },
+    //         { natural: '.', flat: ';', sharp: ';' },
 
-            // Second Octave (Middle Keys)
-            { natural: 'q', flat: '1', sharp: '1' },
-            { natural: 'w', flat: '2', sharp: '2' },
-            { natural: 'e', flat: '3', sharp: '3' },
-            { natural: 'r', flat: '4', sharp: '4' },
-            { natural: 't', flat: '5', sharp: '5' },
-            { natural: 'y', flat: '6', sharp: '6' },
-            { natural: 'u', flat: '7', sharp: '7' },
+    //         // Second Octave (Middle Keys)
+    //         { natural: 'q', flat: '1', sharp: '1' },
+    //         { natural: 'w', flat: '2', sharp: '2' },
+    //         { natural: 'e', flat: '3', sharp: '3' },
+    //         { natural: 'r', flat: '4', sharp: '4' },
+    //         { natural: 't', flat: '5', sharp: '5' },
+    //         { natural: 'y', flat: '6', sharp: '6' },
+    //         { natural: 'u', flat: '7', sharp: '7' },
 
-            // Third Octave (Higher Keys)
-            { natural: 'i', flat: '8', sharp: '8' },
-            { natural: 'o', flat: '9', sharp: '9' },
-            { natural: 'p', flat: '0', sharp: '0' },
-        ],
-    });
+    //         // Third Octave (Higher Keys)
+    //         { natural: 'i', flat: '8', sharp: '8' },
+    //         { natural: 'o', flat: '9', sharp: '9' },
+    //         { natural: 'p', flat: '0', sharp: '0' },
+    //     ],
+    // });
+
+    const getKeyboardShortcutsForSection = (sectionIndex) => {
+        const section = pianoSections[sectionIndex];
+        return KeyboardShortcuts.create({
+            firstNote: section.first,
+            lastNote: section.last,
+            keyboardConfig: [
+                // First Octave (Lower Keys)
+                { natural: 'z', flat: 's', sharp: 's' },
+                { natural: 'x', flat: 'd', sharp: 'd' },
+                { natural: 'c', flat: 'f', sharp: 'f' },
+                { natural: 'v', flat: 'g', sharp: 'g' },
+                { natural: 'b', flat: 'h', sharp: 'h' },
+                { natural: 'n', flat: 'j', sharp: 'j' },
+                { natural: 'm', flat: 'k', sharp: 'k' },
+                { natural: ',', flat: 'l', sharp: 'l' },
+                { natural: '.', flat: ';', sharp: ';' },
+
+                // Second Octave (Middle Keys)
+                { natural: 'q', flat: '1', sharp: '1' },
+                { natural: 'w', flat: '2', sharp: '2' },
+                { natural: 'e', flat: '3', sharp: '3' },
+                { natural: 'r', flat: '4', sharp: '4' },
+                { natural: 't', flat: '5', sharp: '5' },
+                { natural: 'y', flat: '6', sharp: '6' },
+                { natural: 'u', flat: '7', sharp: '7' },
+
+                // Third Octave (Higher Keys)
+                { natural: 'i', flat: '8', sharp: '8' },
+                { natural: 'o', flat: '9', sharp: '9' },
+                { natural: 'p', flat: '0', sharp: '0' },
+            ],
+        });
+    };
 
     const pianoSections = [
         { first: MidiNumbers.fromNote('C0'), last: MidiNumbers.fromNote('B2') },
@@ -740,7 +774,7 @@ const Pianodemo = ({ onClose }) => {
                                                                         noteRange={{ first: section.first, last: section.last }}
                                                                         playNote={playNote}
                                                                         stopNote={stopNote}
-                                                                        keyboardShortcuts={keyboardShortcuts}
+                                                                        keyboardShortcuts={index === activePianoSection ? getKeyboardShortcutsForSection(index) : []}
                                                                     />
                                                                 </div>
                                                             ))}
