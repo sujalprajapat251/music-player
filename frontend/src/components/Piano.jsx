@@ -338,7 +338,7 @@ const other = [
 ];
 
 
-const Pianodemo = () => {
+const Pianodemo = ({ onClose }) => {
     const dispatch = useDispatch();
     const [showOffcanvas1, setShowOffcanvas1] = useState(true);
     const [autoChords, setAutoChords] = useState(false);
@@ -552,7 +552,10 @@ const Pianodemo = () => {
                             <div className=" bg-[#1F1F1F] flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                                 {/* Close Button */}
                                 <div>
-                                    <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => setShowOffcanvas1(false)} />
+                                    <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => {
+                                        setShowOffcanvas1(false);
+                                        onClose && onClose();
+                                    }} />
                                 </div>
                             </div>
                             {/* Tabs */}
