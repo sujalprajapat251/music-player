@@ -33,7 +33,7 @@ const gridSlice = createSlice({
 export const { 
   setSelectedGrid, 
   setSelectedTime, 
-  setSelectedRuler, 
+  setSelectedRuler,
   updateGridSettings 
 } = gridSlice.actions;
 

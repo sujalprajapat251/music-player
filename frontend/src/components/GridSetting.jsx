@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { gridSizes, timeSignatures, rulers } from "../Utils/gridUtils";
 
 const sectionLabelStyle = {
@@ -47,7 +47,7 @@ const containerStyle = {
 };
 
 const GridSetting = ({
-  selectedGrid = "1/1",
+  selectedGrid = "1/4",
   selectedTime = "4/4",
   selectedRuler = "Beats",
   onGridChange,
