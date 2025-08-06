@@ -744,7 +744,7 @@ const Effects2 = () => {
                                                                     >
                                                                         {/* Toggle Circle */}
                                                                         <div
-                                                                            className={`absolute top-0.5 w-2 h-2 sm:w-3 sm:h-3  rounded-full transition-transform duration-300 ${toggles[index] ? ' translate-x-3 bg-black' : 'translate-x-1 bg-white'
+                                                                            className={`absolute top-0.5 w-2 h-2 sm:w-3 sm:h-3  rounded-full transition-transform duration-300 ${toggles[index] ? ' translate-x-4 bg-black' : 'translate-x-1 bg-white'
                                                                                 }`}
                                                                         />
                                                                     </div>
@@ -824,7 +824,7 @@ const Effects2 = () => {
                                                         >
                                                             {/* Toggle Circle */}
                                                             <div
-                                                                className={`absolute top-0.5 w-2 h-2 sm:w-3 sm:h-3  rounded-full transition-transform duration-300 ${humanizeToggle ? ' translate-x-3 bg-black' : 'translate-x-1 bg-white'
+                                                                className={`absolute top-0.5 w-2 h-2 sm:w-3 sm:h-3  rounded-full transition-transform duration-300 ${humanizeToggle ? ' translate-x-4 bg-black' : 'translate-x-1 bg-white'
                                                                     }`}
                                                             />
                                                         </div>
