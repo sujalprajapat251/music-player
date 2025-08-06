@@ -47,6 +47,7 @@ import TapeWobble1 from "../Images/Tape Wobble.svg";
 import TapeWobble from './TapeWobble';
 import Pianodemo from './Piano';
 import Effects2 from './Effects2';
+import audioEffectsPlayer from  '../components/AudioEffectsPlayer'
 
 const effects = [
     { id: 1, name: "Bitcrushar", subscription: true, image: Bitcrushar, color: "#8F7CFD" },
@@ -78,13 +79,21 @@ const Loops = () => {
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [isDragging, setIsDragging] = useState(false);
+    const [isPlaying, setIsPlaying] = useState(false);
     const category = useSelector((state) => state.category?.category || []);
 
     const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas } = useSelector((state) => state.effects);
+    console.log( activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas );    
 
     useEffect(() => {
         dispatch(getAllCategory());
     }, [dispatch])
+
+    useEffect(() => {
+        return () => {
+            audioEffectsPlayer.stopEffect();
+        };
+    }, []);
 
     const handleCategoryClick = (categoryName) => {
         if (selectedCategory === categoryName) {
@@ -103,11 +112,34 @@ const Loops = () => {
         }
     };
 
-    const handleEffectPlayPause = (effectId) => {
-        if (playingEffectId === effectId) {
+    const handleEffectPlayPause = async (effectId) => {
+        const effect = effects.find(e => e.id === effectId);
+        if (!effect) return;
+        try {
+            if (playingEffectId === effectId && isPlaying) {
+                audioEffectsPlayer.stopEffect();
+                setPlayingEffectId(null);
+                setIsPlaying(false);
+            } else {
+                if (isPlaying) {
+                    audioEffectsPlayer.stopEffect();
+                }
+                await audioEffectsPlayer.playEffect(effect.name);
+                setPlayingEffectId(effectId);
+                setIsPlaying(true);
+
+                setTimeout(() => {
+                    if (playingEffectId === effectId) {
+                        audioEffectsPlayer.stopEffect();
+                        setPlayingEffectId(null);
+                        setIsPlaying(false);
+                    }
+                }, 4000);
+            }
+        } catch (error) {
+            console.error('Error playing effect:', error);
             setPlayingEffectId(null);
-        } else {
-            setPlayingEffectId(effectId);
+            setIsPlaying(false);
         }
     };
 
@@ -137,6 +169,19 @@ const Loops = () => {
     const handleOpenEffectsLibrary = () => {
         dispatch(setShowEffectsLibrary(true));
     };
+
+    // Filter effects based on searchTerm and selectedCategory
+    const filteredEffects = effects.filter(effect => {
+        let matchesCategory = true;
+        if (selectedCategory) {
+            matchesCategory = effect.name.toLowerCase().includes(selectedCategory.toLowerCase());
+        }
+        let matchesSearch = true;
+        if (searchTerm) {
+            matchesSearch = effect.name.toLowerCase().includes(searchTerm.toLowerCase());
+        }
+        return matchesCategory && matchesSearch;
+    });
 
     return (
     <>
@@ -192,10 +237,10 @@ const Loops = () => {
                     </div>
                     <div className="mt-2 sm:mt-3 md600:mt-4 md:mt-3 lg:mt-4 3xl:mt-5">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 md600:grid-cols-1 md600:gap-3 md:grid-cols-2 md:gap-2 lg:grid-cols-3 lg:gap-2">
-                            {effects.map((effect) => (
+                            {filteredEffects.map((effect) => (
                                 <div 
                                     key={effect.id} 
-                                    className='cursor-grab active:cursor-grabbing transition-all duration-200 hover:scale-105'
+                                    className='cursor-pointer active:cursor-grabbing transition-all duration-200'
                                     draggable
                                     onDragStart={(e) => handleDragStart(e, effect)}
                                     onDragEnd={handleDragEnd}
@@ -229,21 +274,15 @@ const Loops = () => {
                                                     e.target.style.transform = 'scale(1)';
                                                 }, 150);
                                             }
-                                        }}  
-                                        src={effect.image} 
-                                        alt={effect.name} 
-                                        className="w-full transition-transform duration-150" 
+                                        }} src={effect.image}alt={effect.name}className="w-full transition-transform duration-150" 
                                     />
                                     <div className="flex gap-1 justify-center my-2">
-                                        <button 
-                                            onClick={() => handleEffectPlayPause(effect.id)} 
-                                            className='flex justify-center p-2 bg-[#FFFFFF1A] rounded-full items-center'
-                                            draggable={false}
-                                        >
-                                            {playingEffectId === effect.id ?
-                                                <MdOutlinePause className='text-white text-[12px] lg:text-[10px] xl:text-[12px]' /> :
-                                                <FaPlay className='text-white text-[12px] lg:text-[10px] xl:text-[12px]' />
-                                            }
+                                        <button onClick={() => handleEffectPlayPause(effect.id)} 
+                                            className={`flex justify-center p-2 rounded-full items-center transition-all duration-200 ${
+                                                playingEffectId === effect.id && isPlaying ? 'bg-[#FFFFFF1A] hover:bg-[#FFFFFF33]' : 'bg-[#FFFFFF1A] hover:bg-[#FFFFFF33]'
+                                            }`}
+                                            draggable={false} disabled={isPlaying && playingEffectId !== effect.id} title={`${playingEffectId === effect.id && isPlaying ? 'Stop' : 'Play'} ${effect.name} demo`}>
+                                            {playingEffectId === effect.id && isPlaying ? <MdOutlinePause className='text-white text-[12px] lg:text-[10px] xl:text-[12px]' /> : <FaPlay className='text-white text-[12px] lg:text-[10px] xl:text-[12px]' />}
                                         </button>
                                     </div>
                                 </div>

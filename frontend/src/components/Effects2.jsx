@@ -13,6 +13,7 @@ import Drumkit from "../Images/Drumgroup.svg";
 import { useTheme } from '../Utils/ThemeContext';
 import { useDispatch, useSelector } from 'react-redux';
 import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
+import audioEffectsPlayer from '../components/AudioEffectsPlayer';
 
 // Import effect images
 // import Bitcrushar from "../Images/Bitcrushar.svg";
@@ -443,7 +444,7 @@ const Effects2 = () => {
         );
     };
 
-    const handleEffectPlayPause = (effectId) => {
+    const handleEffectPlayPause1 = (effectId) => {
         if (playingEffectId === effectId) {
             setPlayingEffectId(null);
         } else {
@@ -549,13 +550,79 @@ const Effects2 = () => {
         dispatch(toggleEffectsOffcanvas());
     };
 
+    // const handleEffectPlayPause = async (effectId) => {
+    //     const effect = effects.find(e => e.id === effectId);
+    //     if (!effect) return;
+    //     try {
+    //         if (playingEffectId === effectId) {
+    //             audioEffectsPlayer.stopEffect();
+    //             setPlayingEffectId(null);
+    //         } else {
+    //             if (playingEffectId) {
+    //                 audioEffectsPlayer.stopEffect();
+    //             }
+    //             await audioEffectsPlayer.playEffect(effect.name);
+    //             setPlayingEffectId(effectId);
+    //             setTimeout(() => {
+    //                 if (playingEffectId === effectId) {
+    //                     audioEffectsPlayer.stopEffect();
+    //                     setPlayingEffectId(null);
+    //                 }
+    //             }, 4000);
+    //         }
+    //     } catch (error) {
+    //         console.error('Error playing effect:', error);
+    //         setPlayingEffectId(null);
+    //     }
+    // };
+    useEffect(() => {
+        return () => {
+            audioEffectsPlayer.stopEffect();
+        };
+    }, []);
+
     return (
         <>
-            <button className='p-2 bg-white text-black' onClick={() => setShowOffcanvas(prev => !prev)}>
-                on/off
-            </button>
-            {showOffcanvas === true && (
-                <>
+            <div
+                className="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[337px] md600:bottom-[363px] md:bottom-[450px]  lg:bottom-[483px] xl:bottom-[492px] 2xl:bottom-[516px]"
+                tabindex="-1"
+                aria-labelledby="drawer-swipe-label"
+                onDragOver={(e) => {
+                    e.preventDefault(); e.dataTransfer.dropEffect = 'copy';
+                    if (activeTab === 'Effects') {
+                        setIsDragOver(true);
+                    }
+                }}
+                onDragLeave={(e) => {
+                    if (!e.currentTarget.contains(e.relatedTarget)) {
+                        setIsDragOver(false);
+                    }
+                }}
+                onDrop={(e) => {
+                    e.preventDefault(); setIsDragOver(false);
+                    if (activeTab === 'Effects') {
+                        try {
+                            const effectData = JSON.parse(e.dataTransfer.getData('application/json'));
+                            handleAddEffectFromLibrary(effectData);
+                        } catch (error) {
+                            console.error('Error parsing dropped effect data:', error);
+                        }
+                    }
+                }}
+            >
+                <div className="  border-b border-[#FFFFFF1A] h-full">
+                    <div className=" bg-[#1F1F1F] flex items-center px-1md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
+                        <div>
+                            <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => setShowOffcanvas(false)} />
+                        </div>
+                    </div>
+                    <div className=" bg-[#1F1F1F] flex space-x-2 pb-3 sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3">
+                        {['Instruments', 'Effects'].map((tab) => (
+                            <button key={tab} onClick={() => setActiveTab(tab)} className={`text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white' : 'text-gray-400 hover:text-white'} ${tab === 'Effects' && isDragOver ? 'bg-[#409C9F] bg-opacity-20 rounded-t-lg px-2 border-2 border-[#409C9F]' : ''}`}>
+                                {tab}
+                            </button>
+                        ))}
+                    </div>
 
                     <div
                         class="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[270px] sm:bottom-[337px] md600:bottom-[363px] md:bottom-[450px]  lg:bottom-[483px] xl:bottom-[492px] 2xl:bottom-[516px]"
@@ -981,10 +1048,8 @@ const Effects2 = () => {
                         </div>
                     )
                     }
-                </>
-            )
-            }
-
+                </div>
+            </div>
         </>
     )
 }
