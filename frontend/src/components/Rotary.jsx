@@ -55,11 +55,8 @@ function Knob3({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const getResponsiveSize = () => {
         if (typeof window !== 'undefined') {
             if (window.innerWidth >= 1440) return 100; // 2xl
-            if (window.innerWidth >= 1280) return 80; // xl  
-            if (window.innerWidth >= 1024) return 60; // lg
-            if (window.innerWidth >= 768) return 40;  // md
-            if (window.innerWidth >= 640) return 28;  // sm
-            return 20; // xs (mobile)
+ 
+            return 80; // xs (mobile)
         }
         return 56;
     };
@@ -179,14 +176,14 @@ function Knob3({ label = "Bite", min = -135, max = 135, defaultAngle }) {
                 </svg>
                 {/* Indicator line */}
                 <div
-                    className={`absolute top-1.5 left-1/2 w-0.5 h-2 md600:h-3 lg:h-4 bg-gray-400 rounded-sm -translate-x-1/2 origin-bottom`}
+                    className={`absolute top-1.5 left-1/2 w-0.5 h-4 bg-gray-400 rounded-sm -translate-x-1/2 origin-bottom`}
                     style={{
                         transform: `translateX(-50%) rotate(${angle}deg)`,
                     }}
                 />
                     <BadgeTooltip value={angle} visible={showTooltip} />
             </div>
-            <div className='text-[8px] md600:text-[10px] md:text-[12px] 2xl:text-[16px] mt-1 items-center text-[#aaa]'
+            <div className='text-[12px]  2xl:text-[16px] mt-1 items-center text-[#aaa]'
                 style={{
                     fontFamily: "sans-serif"
                 }}
@@ -214,12 +211,12 @@ const Rotary = () => {
 
     return (
         <div className='bg-[#141414]'>
-            <div className='flex justify-between items-center w-[256px] h-[64px] rounded-t-lg bg-[#409C9F] px-3'>
-                <FaPowerOff className='text-white text-[20px]' />
-                <p className='text-white text-[16px]'>Rotary</p>
-                <IoClose className='text-white text-[20px] hover:text-[#ff0000]' onClick={() => handleRemoveEffect(currentInstanceId)} />
+           <div className='flex justify-between items-center w-[150px] h-[40px] sm:w-[190px] sm:h-[50px] md600:w-[220px] md:w-[230px] md:h-[55px] lg:w-[240px] xl:h-[60px]  2xl:w-[256px] 2xl:h-[64px] rounded-t-lg bg-[#409C9F] px-3'>
+           <FaPowerOff className='text-white text-[16px] md600:text-[20px]' />
+                <p className='text-white text-[12px] md600:text-[16px]'>Rotary</p>
+                <IoClose className='text-white text-[16px]  md600:text-[20px] hover:text-[#ff0000]' onClick={() => handleRemoveEffect(currentInstanceId)} />
             </div>
-            <div className='w-[256px] h-[300px] bg-[#302f2f] flex items-center justify-center'>
+            <div className='w-[150px] h-[140px] sm:w-[190px] sm:h-[180px] md600:w-[220px] md600:h-[210px] md:w-[230px] md:h-[265px] lg:w-[240px] lg:h-[282px] xl:w-[240px] xl:h-[285px] 2xl:w-[256px] 2xl:h-[300px]  bg-[#302f2f] flex items-center justify-center'>
                 {/* Tone Knob - Top Right */}
                 <div className="">
                     <Knob3 label="Rate" min={-135} max={135} defaultAngle={0} />

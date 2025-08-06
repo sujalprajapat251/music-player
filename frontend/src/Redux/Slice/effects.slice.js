@@ -200,9 +200,24 @@ const effectsSlice = createSlice({
     reducers: {
         addEffect: (state, action) => {
             const effect = action.payload;
+            
+            // Map effect names to component keys
+            const componentMapping = {
+                "Classic Dist": "ClassicDist",
+                "Juicy Distrotion": "JuicyDistrotion", 
+                "Auto Pan": "AutoPan",
+                "Auto-Wah": "AutoWah",
+                "Stereo Chorus": "StereoChorus",
+                "Tape Wobble": "TapeWobble"
+            };
+            
+            const componentKey = componentMapping[effect.name] || effect.name;
+            const component = EFFECT_COMPONENTS[componentKey];
+            
             const newEffect = {
                 ...effect,
                 instanceId: Date.now(),
+                component: component, // Add the component to the effect
                 parameters: EFFECT_CONFIGS[effect.name]?.parameters || [
                     { name: "Parameter 1", min: -135, max: 135, defaultAngle: 0 },
                     { name: "Parameter 2", min: -135, max: 135, defaultAngle: 45 },

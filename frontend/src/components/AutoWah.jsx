@@ -54,11 +54,9 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const getResponsiveSize = () => {
         if (typeof window !== 'undefined') {
             if (window.innerWidth >= 1440) return 50; // 2xl
-            if (window.innerWidth >= 1280) return 40; // xl  
-            if (window.innerWidth >= 1024) return 36; // lg
-            if (window.innerWidth >= 768) return 32;  // md
-            if (window.innerWidth >= 640) return 28;  // sm
-            return 20; // xs (mobile)
+            if (window.innerWidth >= 601) return 44;  // sm
+            if (window.innerWidth >= 425) return 34
+            return 30; // xs (mobile)
         }
         return 56;
     };
@@ -76,7 +74,7 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const getResponsiveStroke = () => {
         if (typeof window !== 'undefined') {
             if (window.innerWidth >= 1440) return 3;
-            if (window.innerWidth >= 768) return 3;  // md
+            if (window.innerWidth >= 768) return 2;  // md
             // if (window.innerWidth >= 640) return 40;  // sm
             return 2; // xs (mobile)
         }
@@ -183,7 +181,7 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
                         transform: `translateX(-50%) rotate(${angle}deg)`,
                     }}
                 />
-                 <BadgeTooltip value={angle} visible={showTooltip} />
+                <BadgeTooltip value={angle} visible={showTooltip} />
             </div>
             <div className='text-[8px] md600:text-[10px] md:text-[12px] 2xl:text-[16px] mt-1 items-center text-[#aaa]'
                 style={{
@@ -195,6 +193,7 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         </div>
     );
 }
+
 
 const AutoWah = () => {
 
@@ -211,19 +210,19 @@ const AutoWah = () => {
 
     return (
         <div className='bg-[#141414]'>
-            <div className='flex justify-between items-center w-[256px] h-[64px] rounded-t-lg bg-[#409C9F] px-3'>
-                <FaPowerOff className='text-white text-[20px]' />
-                <p className='text-white text-[16px]'>Auto-Wah</p>
-                <IoClose className='text-white text-[20px] hover:text-[#ff0000]' onClick={() => handleRemoveEffect(currentInstanceId)} />
+            <div className='flex justify-between items-center w-[150px] h-[40px] sm:w-[190px] sm:h-[50px] md600:w-[220px] md:w-[230px] md:h-[55px] lg:w-[240px] xl:h-[60px]  2xl:w-[256px] 2xl:h-[64px] rounded-t-lg bg-[#409C9F] px-3'>
+                <FaPowerOff className='text-white text-[16px] md600:text-[20px]' />
+                <p className='text-white text-[12px] md600:text-[16px]'>Auto-Wah</p>
+                <IoClose className='text-white text-[16px] md600:text-[20px] hover:text-[#ff0000]' onClick={() => handleRemoveEffect(currentInstanceId)} />
             </div>
-            <div className='w-[256px] h-[300px] bg-[#302f2f] relative'>
+            <div className='w-[150px] h-[140px] sm:w-[190px] sm:h-[180px] md600:w-[220px] md600:h-[210px] md:w-[230px] md:h-[265px] lg:w-[240px] lg:h-[282px] xl:w-[240px] xl:h-[285px] 2xl:w-[256px] 2xl:h-[300px] bg-[#302f2f] relative'>
                 {/* Tone Knob - Top Right */}
-                <div className="absolute top-[50px] right-[30px]">
+                <div className="absolute top-[50px] right-[30px] sm:top-[50px] sm:right-[35px] md600:top-[50px] md600:right-[50px] md:top-[60px] md:right-[50px]  xl:top-[50px] xl:right-[50px]">
                     <Knob1 label="Rate" min={-135} max={135} defaultAngle={0} />
                 </div>
 
                 {/* Low cut Knob - Bottom Center */}
-                <div className="absolute top-[50px] left-[60px] left-1/2 transform -translate-x-1/2">
+                <div className="absolute top-[50px] left-[30px] sm:top-[50px] sm:left-[35px] md600:top-[50px] md600:left-[50px] md:top-[60px] md:left-[50px] xl:top-[50px] xl:left-[60px]">
                     <Knob1 label="Depth" min={-135} max={135} defaultAngle={90} />
                 </div>
             </div>
