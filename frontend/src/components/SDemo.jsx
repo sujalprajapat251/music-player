@@ -15,8 +15,8 @@ const SDemo = () => {
 
   // --- DATA (CHORDS & PATTERNS) ---
   const chordNotes = {
-    Am: ["A2", "C3", "E3", "A3"],
-    Bdim: ["B2", "D3", "F3", "B3"],
+    Am: ['A2', 'C4', 'E4'],
+    Bdim: ["B2", "D4", "F4"],
     C: ["C3", "E3", "G3", "C4"],
     Dm: ["D3", "F3", "A3", "D4"],
     E: ["E3", "G#3", "B3", "E4"],
@@ -61,85 +61,61 @@ const SDemo = () => {
   useEffect(() => {
     const initializeAudio = async () => {
       try {
-        // --- Effects ---
-        const reverb = new Tone.Reverb({ decay: 4, wet: 0.3, preDelay: 0.01 }).toDestination();
-        const delay = new Tone.PingPongDelay({ delayTime: "8n.", feedback: 0.3, wet: 0.2 }).toDestination();
+        // --- Effects (with a new Chorus) ---
+        const reverb = new Tone.Reverb({ decay: 2.5, wet: 0.4, preDelay: 0.01 }).toDestination();
+        const delay = new Tone.PingPongDelay({ delayTime: "8n.", feedback: 0.3, wet: 0.25 }).toDestination();
+        const chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.7, feedback: 0.1, wet: 0.3 }).toDestination();
         const compressor = new Tone.Compressor({ threshold: -12, ratio: 6 }).toDestination();
-        effects.current = { reverb, compressor, delay };
+        // Chain the chorus to the main effects bus for synths
+        chorus.connect(delay);
+        chorus.connect(reverb);
+        effects.current = { reverb, compressor, delay, chorus };
 
-        // --- Sampler for a realistic Piano sound ---
+        // --- Sampler for a realistic Piano sound (UPGRADED) ---
         const createPianoSampler = () => {
           return new Tone.Sampler({
-            urls: {
-              C4: "C4.mp3",
-              "D#4": "Ds4.mp3",
-              "F#4": "Fs4.mp3",
-              A4: "A4.mp3",
-            },
+            urls: { A0: "A0.mp3", C1: "C1.mp3", "D#1": "Ds1.mp3", "F#1": "Fs1.mp3", A1: "A1.mp3", C2: "C2.mp3", "D#2": "Ds2.mp3", "F#2": "Fs2.mp3", A2: "A2.mp3", C3: "C3.mp3", "D#3": "Ds3.mp3", "F#3": "Fs3.mp3", A3: "A3.mp3", C4: "C4.mp3", "D#4": "Ds4.mp3", "F#4": "Fs4.mp3", A4: "A4.mp3", C5: "C5.mp3", "D#5": "Ds5.mp3", "F#5": "Fs5.mp3", A5: "A5.mp3", C6: "C6.mp3" },
             baseUrl: "https://tonejs.github.io/audio/salamander/",
+            release: 1,
             onload: () => {
-              console.log("Piano samples loaded.");
+              console.log("High-quality piano samples loaded.");
               setIsAudioReady(true);
             },
-            release: 1.5,
-          }).chain(compressor, delay, reverb);
-        };
-
-        // --- A warmer, classic stab synth ---
-        const createStabSynth = () => {
-            return new Tone.PolySynth(Tone.Synth, {
-                oscillator: { type: "fatsawtooth", count: 2, spread: 30 },
-                envelope: {
-                    attack: 0.01,
-                    decay: 0.4,
-                    sustain: 0.2,
-                    release: 0.8,
-                    attackCurve: "exponential",
-                },
-                filter: { type: "lowpass", rolloff: -24, Q: 1, frequency: 3000 },
-                filterEnvelope: {
-                    attack: 0.02,
-                    decay: 0.5,
-                    sustain: 0.1,
-                    release: 1,
-                    baseFrequency: 200,
-                    octaves: 4,
-                },
-                volume: -12,
-            }).chain(compressor, reverb, delay);
+          }).chain(compressor, reverb, delay);
         };
         
-        // --- A dreamier, softer arp synth ---
+        // --- A warmer, classic stab synth (ENHANCED) ---
+        const createStabSynth = () => {
+            return new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "fatsawtooth", count: 3, spread: 20 },
+                envelope: { attack: 0.01, decay: 0.5, sustain: 0.2, release: 0.8, attackCurve: "exponential" },
+                volume: -10,
+            }).chain(effects.current.chorus, compressor);
+        };
+        
+        // --- A dreamier, softer arp synth (ENHANCED) ---
         const createArpSynth = () => {
             return new Tone.PolySynth(Tone.FMSynth, {
                 harmonicity: 1.5,
                 modulationIndex: 1.2,
                 oscillator: { type: "sine" },
-                envelope: { attack: 0.02, decay: 0.3, sustain: 0.2, release: 1.2 },
+                envelope: { attack: 0.05, decay: 0.3, sustain: 0.2, release: 1.2 },
                 modulation: { type: "sine" },
-                modulationEnvelope: { attack: 0.05, decay: 0.2, sustain: 0.1, release: 0.8 },
+                modulationEnvelope: { attack: 0.1, decay: 0.2, sustain: 0.1, release: 0.8 },
                 volume: -10,
-            }).chain(compressor, delay, reverb);
+            }).chain(effects.current.chorus, compressor);
         };
 
         // --- A tighter, punchier bass synth ---
         const createBassSynth = () => {
             return new Tone.MonoSynth({
-                oscillator: { type: "fatsawtooth", count: 3, spread: 20 },
-                envelope: { attack: 0.01, decay: 0.3, sustain: 0.4, release: 1 },
-                filterEnvelope: {
-                    attack: 0.01,
-                    decay: 0.1,
-                    sustain: 0.2,
-                    release: 0.8,
-                    baseFrequency: 250,
-                    octaves: 3,
-                },
+                oscillator: { type: "fmsquare", modulationType: 'sawtooth', modulationIndex: 0.5, harmonicity: 1.01 },
+                envelope: { attack: 0.01, decay: 0.3, sustain: 0.4, release: 0.8 },
+                filterEnvelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.8, baseFrequency: 300, octaves: 4 },
                 volume: -8,
             }).chain(compressor, reverb);
         };
         
-        // Use the sampler for the 'piano' type
         synths.current = {
           piano: createPianoSampler(),
           stabSynth: createStabSynth(),
@@ -181,7 +157,7 @@ const SDemo = () => {
   };
 
   const getCurrentSynthType = () => {
-    if (!activePatternKey) return "piano"; // Default to piano
+    if (!activePatternKey) return "piano";
     const [category, indexStr] = activePatternKey.split("-");
     const index = parseInt(indexStr, 10);
     const pattern = patternCategories[category]?.[index];
@@ -212,8 +188,8 @@ const SDemo = () => {
 
   const handleChordClick = async (chordName) => {
     if (!isAudioReady) {
-        console.warn("Audio is not ready yet. Please wait.");
-        return;
+      console.warn("Audio is not ready yet. Please wait.");
+      return;
     }
     await startAudioContext();
     stopAllSounds();
@@ -224,14 +200,13 @@ const SDemo = () => {
     
     if (currentSynth) {
       const notes = chordNotes[chordName];
-      // Play a single chord with the selected synth type
+      const now = Tone.now();
+      
       if (synthType === "bassSynth") {
-        // For bass synth, play only the root note in a lower octave
-        const rootNote = notes[0].replace(/\d/, "1"); // Drop to octave 1 for deep bass
-        currentSynth.triggerAttackRelease(rootNote, "1n", Tone.now());
+        const rootNote = notes[0]?.replace(/\d/, "1"); 
+        currentSynth.triggerAttackRelease(rootNote, "1n", now);
       } else {
-        // For sampler and polysynths, play the full chord
-        currentSynth.triggerAttackRelease(notes, "1n", Tone.now());
+        currentSynth.triggerAttackRelease(notes, "1n", now);
       }
     }
   };
