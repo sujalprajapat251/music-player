@@ -41,7 +41,7 @@ function describeArc(cx, cy, r, startAngle, endAngle) {
     ].join(" ");
 }
 
-function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
+function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange }) {
     const [angle, setAngle] = useState(defaultAngle ?? min);
     const knobRef = useRef(null);
     const dragging = useRef(false);
@@ -88,6 +88,13 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         return () => window.removeEventListener('resize', handleResizeStroke);
     }, []);
 
+    // Update angle when defaultAngle prop changes
+    useEffect(() => {
+        if (defaultAngle !== undefined) {
+            setAngle(defaultAngle);
+        }
+    }, [defaultAngle]);
+
 
     const radius = (size - stroke) / 2;
     const center = size / 2;
@@ -105,6 +112,12 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         setAngle((prev) => {
             let next = prev + deltaY * 1.5; // adjust sensitivity as needed
             next = Math.max(min, Math.min(max, next));
+
+            // Call onChange callback if provided
+            if (onChange) {
+                onChange(next);
+            }
+
             return next;
         });
     };
@@ -352,13 +365,35 @@ const Pianodemo = ({ onClose }) => {
     const [activeTab, setActiveTab] = useState('Instruments');
     const [activePianoSection, setActivePianoSection] = useState(0); // 0: Low, 1: Middle, 2: High
     const [strumValue, setStrumValue] = useState(0);
+    const [volume, setVolume] = useState(90); // Add volume state
+    const [reverb, setReverb] = useState(-90); // Add reverb state
+    const [pan, setPan] = useState(0); // Add pan state
 
     // const audioContextRef = useRef(null);
+    const panNodeRef = useRef(null);
     const pianoRef = useRef(null);
+    const reverbGainNodeRef = useRef(null);
+    const dryGainNodeRef = useRef(null);
+    const convolverNodeRef = useRef(null);
     const activeAudioNodes = useRef({});
     const selectedInstrument = INSTRUMENTS[currentInstrumentIndex].id;
 
     const getIsRecording = useSelector((state) => state.studio.isRecording);
+
+    // / Add this function to create reverb impulse response (add before the Pianodemo component)
+    const createImpulseResponse = (audioContext, duration, decay, reverse = false) => {
+        const length = audioContext.sampleRate * duration;
+        const impulse = audioContext.createBuffer(2, length, audioContext.sampleRate);
+        const left = impulse.getChannelData(0);
+        const right = impulse.getChannelData(1);
+
+        for (let i = 0; i < length; i++) {
+            const n = reverse ? length - i : i;
+            left[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+            right[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+        }
+        return impulse;
+    };
 
     useEffect(() => {
         if (getIsRecording) {
@@ -367,6 +402,30 @@ const Pianodemo = ({ onClose }) => {
             hendleStopRecord();  // stop recording
         }
     }, [getIsRecording]);
+
+    // Update volume when knob changes
+    useEffect(() => {
+        if (gainNodeRef.current) {
+            const volumeValue = (volume + 135) / 270; // Convert from -135 to 135 range to 0-1
+            gainNodeRef.current.gain.value = volumeValue;
+        }
+    }, [volume]);
+
+    // Update reverb when knob changes
+    useEffect(() => {
+        if (audioContextRef.current) {
+            const reverbValue = (reverb + 135) / 270; // Convert from -135 to 135 range to 0-1
+            // You can add reverb effect implementation here
+        }
+    }, [reverb]);
+
+    // Update pan when knob changes
+    useEffect(() => {
+        if (audioContextRef.current) {
+            const panValue = (pan + 135) / 270 * 2 - 1; // Convert from -135 to 135 range to -1 to 1
+            // You can add pan effect implementation here
+        }
+    }, [pan]);
 
 
     // useEffect(() => {
@@ -459,20 +518,49 @@ const Pianodemo = ({ onClose }) => {
     const mediaRecorderRef = useRef(null);
     const recordedChunksRef = useRef([]);
     const destinationRef = useRef(null);
+    const gainNodeRef = useRef(null); // Add gain node ref
 
     useEffect(() => {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const destination = audioContext.createMediaStreamDestination();
-        const gainNode = audioContext.createGain(); // controls volume, optional
 
-        gainNode.connect(audioContext.destination);      // to speakers
-        gainNode.connect(destination);                   // to MediaRecorder
+        // Create audio nodes
+        const gainNode = audioContext.createGain(); // Main volume control
+        const panNode = audioContext.createStereoPanner(); // Pan control
+        const dryGainNode = audioContext.createGain(); // Dry signal control
+        const reverbGainNode = audioContext.createGain(); // Wet signal control
+        const convolverNode = audioContext.createConvolver(); // Reverb effect
 
+        // Create impulse response for reverb
+        const impulseResponse = createImpulseResponse(audioContext, 2.5, 2);
+        convolverNode.buffer = impulseResponse;
+
+        // Set up audio routing:
+        // Piano -> gainNode (volume) -> split to dry and wet paths
+        // Dry path: dryGainNode -> panNode -> speakers/recording
+        // Wet path: reverbGainNode -> convolverNode -> panNode -> speakers/recording
+        gainNode.connect(dryGainNode);
+        gainNode.connect(reverbGainNode);
+        reverbGainNode.connect(convolverNode);
+
+        dryGainNode.connect(panNode);
+        convolverNode.connect(panNode);
+
+        panNode.connect(audioContext.destination);
+        panNode.connect(destination);
+
+        // Store references
         audioContextRef.current = audioContext;
         destinationRef.current = destination;
+        gainNodeRef.current = gainNode;
+        panNodeRef.current = panNode;
+        reverbGainNodeRef.current = reverbGainNode;
+        dryGainNodeRef.current = dryGainNode;
+        convolverNodeRef.current = convolverNode;
 
+        // Load instrument and connect to our gain node
         Soundfont.instrument(audioContext, selectedInstrument, {
-            destination: gainNode, // sends to both speakers and recording
+            destination: gainNode, // Connect instrument to our audio chain
         }).then((piano) => {
             pianoRef.current = piano;
         });
@@ -481,6 +569,53 @@ const Pianodemo = ({ onClose }) => {
             audioContext && audioContext.close();
         };
     }, [selectedInstrument]);
+
+    useEffect(() => {
+        if (reverbGainNodeRef.current && dryGainNodeRef.current && convolverNodeRef.current && audioContextRef.current) {
+            // Convert reverb knob value (-135 to 135) to reverb parameters
+            const reverbAmount = (reverb + 135) / 270; // Convert to 0-1 range
+
+            // Set reverb wet signal level (0 to 0.6 for natural sound)
+            const wetLevel = reverbAmount * 0.6;
+            reverbGainNodeRef.current.gain.setValueAtTime(wetLevel, audioContextRef.current.currentTime);
+
+            // Set dry signal level (inverse relationship for natural mixing)
+            const dryLevel = Math.max(0.3, 1 - (reverbAmount * 0.4));
+            dryGainNodeRef.current.gain.setValueAtTime(dryLevel, audioContextRef.current.currentTime);
+
+            // Create new impulse response based on reverb amount for different room characteristics
+            if (reverbAmount > 0.1) {
+                // Adjust room size and decay based on reverb amount
+                const roomSize = 1 + (reverbAmount * 3); // 1 to 4 seconds
+                const decay = 1.5 + (reverbAmount * 2); // 1.5 to 3.5 decay factor
+
+                const newImpulse = createImpulseResponse(audioContextRef.current, roomSize, decay);
+                convolverNodeRef.current.buffer = newImpulse;
+            }
+
+            console.log(`Reverb: ${reverb} -> Wet: ${wetLevel.toFixed(2)}, Dry: ${dryLevel.toFixed(2)}`);
+        }
+    }, [reverb]);
+
+
+    // Update your pan useEffect
+    useEffect(() => {
+        if (panNodeRef.current) {
+            // Convert from -135 to 135 range to -1 to 1
+            const panValue = pan / 135; // This gives us -1 to 1 range
+
+            // Clamp the value to ensure it stays within valid range
+            const clampedPanValue = Math.max(-1, Math.min(1, panValue));
+
+            panNodeRef.current.pan.value = clampedPanValue;
+
+            console.log(`Pan value: ${pan} -> Stereo pan: ${clampedPanValue}`);
+            // When panValue is:
+            // -1: Full left channel
+            // 0: Center (both channels equally)
+            // 1: Full right channel
+        }
+    }, [pan]);
 
 
 
@@ -491,7 +626,6 @@ const Pianodemo = ({ onClose }) => {
         ]);
         if (pianoRef.current) {
             const audioNode = pianoRef.current.play(midiNumber);
-            // audioNode.connect(destination.current);
             activeAudioNodes.current[midiNumber] = audioNode;
         }
     };
@@ -663,17 +797,17 @@ const Pianodemo = ({ onClose }) => {
                                             <div className="flex space-x-1 md600:space-x-2 lg:space-x-4 2xl:space-x-6">
                                                 {/* Reverb Knob */}
                                                 <div className="flex flex-col items-center">
-                                                    <Knob label="Reverb" min={-135} max={135} defaultAngle={-90} />
+                                                    <Knob label="Reverb" min={-135} max={135} defaultAngle={reverb} onChange={(value) => setReverb(value)} />
                                                 </div>
 
                                                 {/* Pan Knob */}
                                                 <div className="flex flex-col items-center">
-                                                    <Knob label="Pan" min={-135} max={135} defaultAngle={0} />
+                                                    <Knob label="Pan" min={-135} max={135} defaultAngle={pan} onChange={(value) => setPan(value)} />
                                                 </div>
 
                                                 {/* Volume Knob */}
                                                 <div className="flex flex-col items-center">
-                                                    <Knob label="Volume" min={-135} max={135} defaultAngle={90} />
+                                                    <Knob label="Volume" min={-135} max={135} defaultAngle={volume} onChange={(value) => setVolume(value)} />
                                                 </div>
                                             </div>
                                         </div>
@@ -716,8 +850,8 @@ const Pianodemo = ({ onClose }) => {
                                                             <FaChevronRight className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                                                         </button>
                                                     </div>
-                                                    <div className='border rounded-3xl border-[#FFFFFF1A]' onClick={() => setAutoChords(prev => !prev)} >
-                                                        <p className={`${autoChords === true ? 'bg-white text-black rounded-3xl' : 'text-[#FFFFFF99] bg-[1F1F1F]'} text-[8px] md600:text-[10px] lg:text-[12px] px-1 sm:px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1`}>Auto Chords</p>
+                                                    <div className='border rounded-lg border-[#FFFFFF1A] ms-auto me-1 md600:me-2 lg:me-3'>
+                                                        <p className="text-[#FFFFFF] text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
                                                     </div>
                                                 </div>
                                                 <div className='border rounded-lg border-[#FFFFFF1A] ms-auto me-1 md600:me-2 lg:me-3'>
@@ -882,7 +1016,7 @@ const Pianodemo = ({ onClose }) => {
                                 )}
 
                                 {activeTab === 'Piano Roll' && (
-                                   <PianoRolls />
+                                    <PianoRolls />
                                 )}
 
                                 {activeTab === 'Effects' && (

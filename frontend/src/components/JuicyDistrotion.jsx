@@ -348,6 +348,11 @@ function Knob2({ label = "Bite", min = -135, max = 135, defaultAngle }) {
 
 const JuicyDistrotion = () => {
 
+    const [isPoweredOn, setIsPoweredOn] = useState(true);
+
+    const handlePowerToggle = () => {
+        setIsPoweredOn(!isPoweredOn);
+    };
 
     const dispatch = useDispatch();
     const { activeEffects } = useSelector((state) => state.effects);
@@ -362,12 +367,23 @@ const JuicyDistrotion = () => {
 
     return (
         <div className='bg-[#141414]'>
-            <div className='flex justify-between items-center w-[150px] h-[40px] sm:w-[190px] sm:h-[50px] md600:w-[220px] md:w-[230px] md:h-[55px] lg:w-[240px] xl:h-[60px]  2xl:w-[256px] 2xl:h-[64px] rounded-t-lg bg-[#8F7CFD99] px-3'>
-                <FaPowerOff className='text-white text-[16px] md600:text-[20px]' />
+            <div className={`flex justify-between items-center w-[150px] h-[40px] sm:w-[190px] sm:h-[50px] md600:w-[220px] md:w-[230px] md:h-[55px] lg:w-[240px] xl:h-[60px] 2xl:w-[256px] 2xl:h-[64px] rounded-t-lg px-2 md:px-3 transition-colors duration-300 ${isPoweredOn ? 'bg-[#8F7CFD]' : 'bg-gray-600'
+                }`}>
+                <FaPowerOff
+                    className={`text-[16px] md600:text-[20px] cursor-pointer transition-colors duration-200 ${isPoweredOn ? 'text-white hover:text-green-400' : 'text-red-500 hover:text-red-400'
+                        }`}
+                    onClick={handlePowerToggle}
+                />
                 <p className='text-white text-[12px] md600:text-[16px]'>Juicy Distrotion</p>
-                <IoClose className='text-white text-[16px]  md600:text-[20px] hover:text-[#ff0000]' onClick={() => handleRemoveEffect(currentInstanceId)} />
+                <IoClose
+                    className={`text-[16px] md600:text-[20px] ${isPoweredOn
+                        ? 'text-white hover:text-green-400'
+                        : 'text-white hover:text-red-500'
+                        }`}
+                    onClick={() => handleRemoveEffect(currentInstanceId)}
+                />
             </div>
-            <div className='w-[150px] h-[140px] sm:w-[190px] sm:h-[180px] md600:w-[220px] md600:h-[210px] md:w-[230px] md:h-[265px] lg:w-[240px] lg:h-[282px] xl:w-[240px] xl:h-[285px] 2xl:w-[256px] 2xl:h-[300px] bg-[#302f2f] p-4 md:p-6 2xl:p-8'>
+            <div className={`w-[150px] h-[140px] sm:w-[190px] sm:h-[180px] md600:w-[220px] md600:h-[210px] md:w-[230px] md:h-[265px] lg:w-[240px] lg:h-[282px] xl:w-[240px] xl:h-[285px] 2xl:w-[256px] 2xl:h-[300px] bg-[#302f2f] p-4 md:p-6 2xl:p-8 ${!isPoweredOn ? 'opacity-50 pointer-events-none' : '' }`}>
                 <div className="flex justify-between">
                     <div className="">
                         <Knob1 label="Dist" min={-135} max={135} defaultAngle={0} />

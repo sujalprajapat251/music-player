@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { FaPowerOff } from 'react-icons/fa6';
 import { IoClose } from 'react-icons/io5';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeEffect} from '../Redux/Slice/effects.slice';
+import { removeEffect } from '../Redux/Slice/effects.slice';
 
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
@@ -207,7 +207,7 @@ function Knob2({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         if (typeof window !== 'undefined') {
 
             if (window.innerWidth >= 601) return 36;  // sm
-            if (window.innerWidth >= 425) return 28;  
+            if (window.innerWidth >= 425) return 28;
             return 26; // xs (mobile)
         }
         return 56;
@@ -332,7 +332,7 @@ function Knob2({ label = "Bite", min = -135, max = 135, defaultAngle }) {
                         transform: `translateX(-50%) rotate(${angle}deg)`,
                     }}
                 />
-                    <BadgeTooltip value={angle} visible={showTooltip} />    
+                <BadgeTooltip value={angle} visible={showTooltip} />
             </div>
             <div className='text-[8px] md600:text-[10px] md:text-[12px] 2xl:text-[16px] mt-1 items-center text-[#aaa]'
                 style={{
@@ -347,9 +347,15 @@ function Knob2({ label = "Bite", min = -135, max = 135, defaultAngle }) {
 
 const Phaser = () => {
 
+    const [isPoweredOn, setIsPoweredOn] = useState(true);
+
+    const handlePowerToggle = () => {
+        setIsPoweredOn(!isPoweredOn);
+    };
+
     const dispatch = useDispatch();
-    const { activeEffects} = useSelector((state) => state.effects);
-    
+    const { activeEffects } = useSelector((state) => state.effects);
+
     const handleRemoveEffect = (instanceId) => {
         dispatch(removeEffect(instanceId));
     };
@@ -361,12 +367,23 @@ const Phaser = () => {
 
     return (
         <div className='bg-[#141414]'>
-            <div className='flex justify-between items-center w-[150px] h-[40px] sm:w-[190px] sm:h-[50px] md600:w-[220px] md:w-[230px] md:h-[55px] lg:w-[240px] xl:h-[60px]  2xl:w-[256px] 2xl:h-[64px] rounded-t-lg bg-[#409C9F] px-3'>
-                <FaPowerOff className='text-white text-[16px] md600:text-[20px]' />
+            <div className={`flex justify-between items-center w-[150px] h-[40px] sm:w-[190px] sm:h-[50px] md600:w-[220px] md:w-[230px] md:h-[55px] lg:w-[240px] xl:h-[60px] 2xl:w-[256px] 2xl:h-[64px] rounded-t-lg px-2 md:px-3 transition-colors duration-300 ${isPoweredOn ? 'bg-[#409C9F]' : 'bg-gray-600'
+                }`}>
+                <FaPowerOff
+                    className={`text-[16px] md600:text-[20px] cursor-pointer transition-colors duration-200 ${isPoweredOn ? 'text-white hover:text-purple-400' : 'text-red-500 hover:text-red-400'
+                        }`}
+                    onClick={handlePowerToggle}
+                />
                 <p className='text-white text-[12px] md600:text-[16px]'>Phaser</p>
-                <IoClose className='text-white text-[16px]  md600:text-[20px] hover:text-[#ff0000]' onClick={() => handleRemoveEffect(currentInstanceId)}/>
+                <IoClose
+                    className={`text-[16px] md600:text-[20px] ${isPoweredOn
+                        ? 'text-white hover:text-purple-400'
+                        : 'text-white hover:text-red-500'
+                        }`}
+                    onClick={() => handleRemoveEffect(currentInstanceId)}
+                />
             </div>
-            <div className='w-[150px] h-[140px]  sm:w-[190px] sm:h-[180px] md600:w-[220px] md600:h-[210px] md:w-[230px] md:h-[265px] lg:w-[240px] lg:h-[282px] xl:w-[240px] xl:h-[285px] 2xl:w-[256px] 2xl:h-[300px] bg-[#302f2f] relative'>
+            <div className={`w-[150px] h-[140px] sm:w-[190px] sm:h-[180px] md600:w-[220px] md600:h-[210px] md:w-[230px] md:h-[265px] lg:w-[240px] lg:h-[282px] xl:w-[240px] xl:h-[285px] 2xl:w-[256px] 2xl:h-[300px] bg-[#302f2f] relative ${!isPoweredOn ? 'opacity-50 pointer-events-none' : ''}`}>
                 {/* Tone Knob - Top Right */}
                 <div className="absolute top-[20px] left-[20px] sm:top-[25px] sm:left-[30px] md600:top-[25px] md600:left-[40px] lg:top-[55px] lg:left-[40px] xl:top-[45px] xl:left-[55px] xl:top-[35px] xl:left-[50px]">
                     <Knob1 label="Rate" min={-135} max={135} defaultAngle={0} />
