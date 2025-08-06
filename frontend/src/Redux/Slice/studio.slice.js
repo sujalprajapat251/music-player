@@ -15,7 +15,6 @@ const initialState = {
   isRecording: false,
   newtrackType: '',
   currentTrackId: null,
-  currentTrackId: '',
   soloTrackId: null,
   sidebarScrollOffset: 0,
   // Section labels state
@@ -23,7 +22,8 @@ const initialState = {
   // Audio playback state
   isPlaying: false,
   currentTime: 0,
-  audioDuration: 150
+  audioDuration: 150,
+  masterVolume: 80 // Master volume control
 };
 
 const studioSlice = createSlice({
@@ -40,6 +40,7 @@ const studioSlice = createSlice({
         ...action.payload, 
         frozen: false, 
         muted: false,
+        volume: state.masterVolume, // Set volume from global volume
         color: action.payload.color || getNextTrackColor(), // Assign unique color
         audioClips: action.payload.audioClips || [] // Array to hold multiple audio clips
       };
@@ -254,6 +255,11 @@ const studioSlice = createSlice({
       // Reset the color index to start from the beginning
       resetColorIndex();
     },
+    // Volume management actions
+    setMasterVolume: (state, action) => {
+      state.masterVolume = action.payload;
+    },
+    
   },
 });
 
@@ -289,6 +295,7 @@ export const {
   setAudioDuration,
   togglePlayPause,
   resetTrackColors,
+  setMasterVolume,
 } = studioSlice.actions;
 
 export default studioSlice.reducer;

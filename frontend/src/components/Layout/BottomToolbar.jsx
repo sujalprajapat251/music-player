@@ -15,10 +15,9 @@ import { ReactComponent as Tempobutton } from "../../Images/Tempobutton.svg";
 import { ReactComponent as Tick } from "../../Images/Tick.svg";
 import { FaStop } from 'react-icons/fa6';
 import { useDispatch, useSelector } from 'react-redux';
-import { setRecording, togglePlayPause, setCurrentTime } from '../../Redux/Slice/studio.slice';
+import { setRecording, togglePlayPause, setCurrentTime, setGlobalVolume, setAllTracksVolume, setMasterVolume } from '../../Redux/Slice/studio.slice';
 
 const BottomToolbar = () => {
-    const [volume, setVolume] = useState(50);
     const [volume1, setVolume1] = useState(50);
     const [isIconDropdownOpen, setIsIconDropdownOpen] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
@@ -34,6 +33,7 @@ const BottomToolbar = () => {
     const [appliedTempo, setAppliedTempo] = useState(0);
     const [selectedMenuitems, setSelectedMenuitems] = useState('Click');
     const [selectedCountIn, setSelectedCountIn] = useState('2 bars');
+    const [isVolumeChanging, setIsVolumeChanging] = useState(false);
 
     const dispatch = useDispatch();
     
@@ -41,7 +41,21 @@ const BottomToolbar = () => {
     const isPlaying = useSelector((state) => state.studio?.isPlaying || false);
     const currentTime = useSelector((state) => state.studio?.currentTime || 0);
     const audioDuration = useSelector((state) => state.studio?.audioDuration || 150);
+    const masterVolume = useSelector((state) => state.studio?.masterVolume || 80);
+    const tracks = useSelector((state) => state.studio?.tracks || []);
     
+    // Handle volume change for all tracks (wise volume)
+    const handleVolumeChange = (newVolume) => {
+        setIsVolumeChanging(true);
+        dispatch(setMasterVolume(parseInt(newVolume)));
+        // dispatch(setAllTracksVolume(parseInt(newVolume)));
+        
+        // Reset the visual feedback after a short delay
+        setTimeout(() => {
+            setIsVolumeChanging(false);
+        }, 500);
+    };
+
     // Format time for display
     const formatTime = (timeInSeconds) => {
         const minutes = Math.floor(timeInSeconds / 60);
@@ -64,6 +78,11 @@ const BottomToolbar = () => {
     // Handle move one second behind
     const handleMoveBackward = () => {
         const newTime = Math.max(currentTime - 1, 0);
+        dispatch(setCurrentTime(newTime));
+    };
+
+    const handleMoveStart = () => {
+        const newTime = 0;
         dispatch(setCurrentTime(newTime));
     };
 
@@ -217,25 +236,31 @@ const BottomToolbar = () => {
         <>
             <div className=" w-full flex justify-center md600:justify-between bg-primary-light dark:bg-primary-dark border-t border-[#1414141A] dark:border-[#FFFFFF1A] px-2 py-2 sm:px-3 sm:py-1 md:px-5 md:py-2 xl:px-7 absolute z-[99999999]">
                 <div className='flex gap-2 sm:gap-3 md:gap-3 lg:gap-5 2xl:gap-7 items-center'>
-                    <HiOutlineSpeakerWave className='text-secondary-light dark:text-secondary-dark text-[16px] md:text-[20px] lg:text-[24px]' />
-                    <div className=" md:w-32 lg:w-40 2xl:w-48  pb-1 hidden md:block">
+                    <div className="flex items-center gap-1">
+                        <HiOutlineSpeakerWave className={`text-secondary-light dark:text-secondary-dark text-[16px] md:text-[20px] lg:text-[24px] transition-colors ${isVolumeChanging ? 'text-blue-500' : ''}`} />
+
+                    </div>
+                    <div className=" md:w-32 lg:w-40 2xl:w-48  pb-1 hidden md:block relative">
                         <input
                             type="range"
                             min="0"
                             max="100"
-                            value={volume}
-                            onChange={(e) => setVolume(e.target.value)}
+                            value={masterVolume}
+                            onChange={(e) => handleVolumeChange(e.target.value)}
                             className="w-full h-1 lg:h-2 bg-[#2B2B2B]  rounded-lg appearance-none cursor-pointer slider outline-none focus:outline-none"
                             style={{
                                 background: isDark
-                                    ? `linear-gradient(to right, #ffffff 0%, #ffffff ${volume}%, #2B2B2B ${volume}%, #2B2B2B 100%)`
-                                    : `linear-gradient(to right, #141414 0%, #141414 ${volume}%, #1414141A ${volume}%, #1414141A 100%)`
+                                    ? `linear-gradient(to right, #ffffff 0%, #ffffff ${masterVolume}%, #2B2B2B ${masterVolume}%, #2B2B2B 100%)`
+                                    : `linear-gradient(to right, #141414 0%, #141414 ${masterVolume}%, #1414141A ${masterVolume}%, #1414141A 100%)`
                             }}
                         />
                     </div>
-                    <p className="text-secondary-light dark:text-secondary-dark sm:text-[10px] md:text-[16px] lg:text-[18px] self-center hidden sm:block">{formatTime(currentTime)}</p>
+                    <p className="text-secondary-light dark:text-secondary-dark sm:text-[10px] md:text-[16px] lg:text-[18px] self-center hidden sm:block w-[60px]">{formatTime(currentTime)}</p>
                     {isRecording ? (<button onClick={hendleStopRecord} className="cursor-pointer">
-                        <FaStop />
+                        
+                        <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
+                                <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[16px]"><FaStop /></p>
+                            </div>
                     </button>
                     ) :
                         (<button onClick={hendleRecord} className="cursor-pointer">
@@ -246,7 +271,7 @@ const BottomToolbar = () => {
                         </button>)
                     }
                     <div className="flex gap-1 sm:gap-2 lg:gap-3">
-                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2">
+                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2" onClick={handleMoveStart}>
                             <img src={media1} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </div>
                         <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2"  onClick={handleMoveBackward}>
