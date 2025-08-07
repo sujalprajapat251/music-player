@@ -15,7 +15,7 @@ import { ReactComponent as Tempobutton } from "../../Images/Tempobutton.svg";
 import { ReactComponent as Tick } from "../../Images/Tick.svg";
 import { FaStop } from 'react-icons/fa6';
 import { useDispatch, useSelector } from 'react-redux';
-import { setRecording, togglePlayPause, setCurrentTime, setGlobalVolume, setAllTracksVolume, setMasterVolume } from '../../Redux/Slice/studio.slice';
+import { setRecording, togglePlayPause, setCurrentTime, setGlobalVolume, setAllTracksVolume, setMasterVolume, setRecordedData } from '../../Redux/Slice/studio.slice';
 
 const BottomToolbar = () => {
     const [volume1, setVolume1] = useState(50);
@@ -43,7 +43,10 @@ const BottomToolbar = () => {
     const audioDuration = useSelector((state) => state.studio?.audioDuration || 150);
     const masterVolume = useSelector((state) => state.studio?.masterVolume || 80);
     const tracks = useSelector((state) => state.studio?.tracks || []);
-    
+    const isRecording = useSelector((state) => state.studio?.isRecording || false);
+    const recordedData = useSelector((state) => state.studio?.recordedData || []);
+    const pianoRecord = useSelector((state) => state.studio?.pianoRecord || []);
+
     // Handle volume change for all tracks (wise volume)
     const handleVolumeChange = (newVolume) => {
         setIsVolumeChanging(true);
@@ -220,17 +223,53 @@ const BottomToolbar = () => {
 
     const { isDark } = useTheme();
 
-    const [isRecording, setIsRecording] = useState(false);
+    const [recordingStartTime, setRecordingStartTime] = useState(null);
 
-    const hendleRecord = () => {
-        setIsRecording(true);
+    // Start recording
+    const handleStartRecord = () => {
         dispatch(setRecording(true));
-    }
+        dispatch(setRecordedData([])); // Clear previous recorded data
+        setRecordingStartTime(Date.now());
+        console.log("Recording started at:", new Date().toLocaleTimeString());
+    };
 
-    const hendleStopRecord = () => {
-        setIsRecording(false);
+    // Stop recording
+    const handleStopRecord = () => {
         dispatch(setRecording(false));
-    }
+        console.log("Recording stopped at:", new Date().toLocaleTimeString());
+        console.log("Total recorded data:", recordedData);
+        console.log("Piano record data:", pianoRecord);
+    };
+
+    // Collect data while recording
+    useEffect(() => {
+        let interval;
+        if (isRecording && recordingStartTime) {
+            interval = setInterval(() => {
+                const currentData = {
+                    timestamp: Date.now() - recordingStartTime,
+                    currentTime: currentTime,
+                    volume: masterVolume,
+                    isPlaying: isPlaying
+                };
+                
+                // Update recorded data in Redux
+                const updatedData = [...(Array.isArray(recordedData) ? recordedData : []), currentData];
+                dispatch(setRecordedData(updatedData));
+            }, 1000); // Collect data every 1 second
+        }
+        return () => {
+            if (interval) {
+                clearInterval(interval);
+            }
+        };
+    }, [isRecording, recordingStartTime, currentTime, masterVolume, isPlaying, recordedData, dispatch]);
+
+    useEffect(() => {
+        if (!isRecording && recordedData.length > 0) {
+            console.log("Total recorded data:", recordedData);
+        }
+    }, [isRecording, recordedData]);
 
     return (
         <>
@@ -256,14 +295,14 @@ const BottomToolbar = () => {
                         />
                     </div>
                     <p className="text-secondary-light dark:text-secondary-dark sm:text-[10px] md:text-[16px] lg:text-[18px] self-center hidden sm:block w-[60px]">{formatTime(currentTime)}</p>
-                    {isRecording ? (<button onClick={hendleStopRecord} className="cursor-pointer">
+                    {isRecording ? (<button onClick={handleStopRecord} className="cursor-pointer">
                         
                         <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
                                 <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[16px]"><FaStop /></p>
                             </div>
                     </button>
                     ) :
-                        (<button onClick={hendleRecord} className="cursor-pointer">
+                        (<button onClick={handleStartRecord} className="cursor-pointer">
                             <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
                                 <p className="rounded-full p-[3px] sm:p-[3px] lg:p-2 bg-[#FF6767]"></p>
                                 <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px]">Rec</p>
