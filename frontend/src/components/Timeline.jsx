@@ -3,9 +3,9 @@ import WaveSurfer from "wavesurfer.js";
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
-import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack } from "../Redux/Slice/studio.slice";
+import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume } from "../Redux/Slice/studio.slice";
 import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM } from "../Redux/Slice/grid.slice";
-import { getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
+import { getGridSpacing, getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
 import { IMAGE_URL } from "../Utils/baseUrl";
 import { getNextTrackColor } from "../Utils/colorUtils";
 import magnetIcon from "../Images/magnet.svg";
@@ -24,6 +24,170 @@ import TimelineActionBoxes from "./TimelineActionBoxes";
 import AddNewTrackModel from "./AddNewTrackModel";
 import Piano from "./Piano";
 import WavEncoder from 'wav-encoder';
+import SectionContextMenu from "./SectionContextMenu";
+import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
+import close from '../Images/close.svg';
+
+// Resizable Section Label Component
+const ResizableSectionLabel = ({ section, audioDuration, selectedGrid, timelineContainerRef, onResize, onContextMenu }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(null); // 'start' or 'end'
+  const dragStartRef = useRef({ startX: 0, startPosition: 0, startWidth: 0 });
+  const { selectedTime } = useSelector(selectGridSettings);
+
+  // Grid snapping function - fixed to use proper grid utility
+  const snapToGrid = useCallback((time) => {
+    // Use the same grid utility as MySection component
+    const gridSpacing = getGridSpacing(selectedGrid);
+    if (!gridSpacing || gridSpacing <= 0) return time;
+    const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+    return Math.max(0, Math.min(audioDuration, gridPosition));
+  }, [selectedGrid, audioDuration]);
+
+  const handleMouseDown = useCallback((e, type) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const timelineContainer = timelineContainerRef.current;
+    if (!timelineContainer) return;
+
+    const rect = timelineContainer.getBoundingClientRect();
+    const timelineWidth = rect.width;
+
+    if (type === 'drag') {
+      setIsDragging(true);
+      dragStartRef.current = {
+        startX: e.clientX,
+        startPosition: section.startTime || 0,
+        startWidth: section.width || 100,
+        timelineWidth: timelineWidth
+      };
+    } else if (type === 'resize-start' || type === 'resize-end') {
+      setIsResizing(type);
+      dragStartRef.current = {
+        startX: e.clientX,
+        startPosition: section.startTime || 0,
+        startWidth: section.width || 100,
+        timelineWidth: timelineWidth
+      };
+    }
+
+    const handleMouseMove = (moveEvent) => {
+      const deltaX = moveEvent.clientX - dragStartRef.current.startX;
+      const pixelsPerSecond = dragStartRef.current.timelineWidth / audioDuration;
+      const deltaTime = deltaX / pixelsPerSecond;
+
+      if (isDragging || type === 'drag') {
+        // Handle dragging (moving the entire section)
+        const sectionDuration = section.endTime - section.startTime;
+        const newStartTime = Math.max(0, Math.min(audioDuration - sectionDuration, 
+          dragStartRef.current.startPosition + deltaTime));
+        const snappedStartTime = snapToGrid(newStartTime);
+        const newEndTime = Math.min(audioDuration, snappedStartTime + sectionDuration);
+        
+        // Calculate new width and position
+        const newWidth = ((newEndTime - snappedStartTime) / audioDuration) * dragStartRef.current.timelineWidth;
+        const newPosition = (snappedStartTime / audioDuration) * 100;
+        
+        onResize(section.id, newWidth, snappedStartTime, newEndTime, newPosition);
+      } else if (isResizing || type.startsWith('resize')) {
+        // Handle resizing
+        if (isResizing === 'resize-start' || type === 'resize-start') {
+          const newStartTime = Math.max(0, Math.min(section.endTime - 0.1, 
+            dragStartRef.current.startPosition + deltaTime));
+          const snappedStartTime = snapToGrid(newStartTime);
+          const newWidth = ((section.endTime - snappedStartTime) / audioDuration) * dragStartRef.current.timelineWidth;
+          const newPosition = (snappedStartTime / audioDuration) * 100;
+          
+          onResize(section.id, newWidth, snappedStartTime, section.endTime, newPosition);
+        } else if (isResizing === 'resize-end' || type === 'resize-end') {
+          const newEndTime = Math.max(section.startTime + 0.1, Math.min(audioDuration, 
+            section.endTime + deltaTime));
+          const snappedEndTime = snapToGrid(newEndTime);
+          const newWidth = ((snappedEndTime - section.startTime) / audioDuration) * dragStartRef.current.timelineWidth;
+          
+          onResize(section.id, newWidth, section.startTime, snappedEndTime, section.position);
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      setIsResizing(null);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [section, audioDuration, onResize, snapToGrid, isDragging, isResizing]);
+
+  // Calculate position based on startTime instead of stored position
+  const sectionPosition = ((section.startTime || 0) / audioDuration) * 100;
+  const sectionWidth = section.width || 100;
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: "110px",
+        left: `${sectionPosition}%`,
+        width: `${sectionWidth}px`,
+        height: "25px",
+        background: "#2A2A2A",
+        borderRadius: "4px",
+        padding: "3px 4px 0 4px",
+        color: "white",
+        fontSize: "12px",
+        fontWeight: "600",
+        border: "1px solid #444",
+        textAlign: "center",
+        transform: "translateX(-50%)",
+        zIndex: 8,
+        cursor: isDragging ? "grabbing" : "grab",
+        animation: "sectionLabelAppear 0.3s ease-out",
+        userSelect: "none",
+      }}
+      onMouseDown={(e) => handleMouseDown(e, 'drag')}
+      onContextMenu={(e) => onContextMenu && onContextMenu(e, section.id)}
+    >
+      <div className="flex justify-between items-center h-full">
+        {/* Left resize handle */}
+        <div
+          style={{
+            width: "12px",
+            height: "100%",
+            cursor: "ew-resize",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onMouseDown={(e) => handleMouseDown(e, 'resize-start')}
+        >
+          <img src={LeftSize} alt="" />
+        </div>
+        
+        {/* Section name */}
+        <span style={{ flex: 1, textAlign: "center" }}>{section.name}</span>
+        
+        {/* Right resize handle */}
+        <div
+          style={{
+            width: "12px",
+            height: "100%",
+            cursor: "ew-resize",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onMouseDown={(e) => handleMouseDown(e, 'resize-end')}
+        >
+          <img src={rightSize} alt="" />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Custom Resizable Trim Handle Component
 const ResizableTrimHandle = ({
@@ -680,27 +844,35 @@ const LoopBar = ({
 };
 
 const Timeline = () => {
+  const svgRef = useRef(null);
+  const lastReduxUpdateRef = useRef(0);
+  const lastPlayerUpdateRef = useRef(0);
+  const fileInputRef = useRef(null);
+  const timelineContainerRef = useRef(null);
+  const isDragging = useRef(false);
+  const animationFrameId = useRef(null);
+  const playbackStartRef = useRef({ systemTime: 0, audioTime: 0 });
+  
   const [players, setPlayers] = useState([]);
   const [waveSurfers, setWaveSurfers] = useState([]);
   const [loopStart, setLoopStart] = useState(0);
   const [loopEnd, setLoopEnd] = useState(10);
   const [isLoopEnabled, setIsLoopEnabled] = useState(false);
   const [localCurrentTime, setLocalCurrentTime] = useState(0);
-  const svgRef = useRef(null);
-  const timelineContainerRef = useRef(null);
-  const playbackStartRef = useRef({ systemTime: 0, audioTime: 0 });
-  const lastReduxUpdateRef = useRef(0);
-  const lastPlayerUpdateRef = useRef(0);
   const [showGridSetting, setShowGridSetting] = useState(false);
   const [showOffcanvas, setShowOffcanvas] = useState(false);
-  const isDragging = useRef(false);
-  const animationFrameId = useRef(null);
   const [clipboard, setClipboard] = useState(null);
   const [selectedTrackId, setSelectedTrackId] = useState(null);
   const [selectedClipId, setSelectedClipId] = useState(null);
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
-  const fileInputRef = useRef(null);
   const [showPiano, setShowPiano] = useState(false);
+  const [renameSectionId, setRenameSectionId] = useState(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [renameModal, setRenameModal] = useState(false);
+  const [resizeSectionId, setResizeSectionId] = useState(null);
+  const [resizeValue, setResizeValue] = useState("");
+  const [resizeModal, setResizeModal] = useState(false);
+  const [volumeIndicator, setVolumeIndicator] = useState({ show: false, volume: 0, trackName: '' });
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState({
@@ -708,6 +880,13 @@ const Timeline = () => {
     position: { x: 0, y: 0 },
     trackId: null,
     clipId: null
+  });
+
+  // Section label context menu state
+  const [sectionContextMenu, setSectionContextMenu] = useState({
+    isOpen: false,
+    position: { x: 0, y: 0 },
+    sectionId: null
   });
 
 
@@ -747,10 +926,18 @@ const Timeline = () => {
         ? soloTrackId !== track.id
         : track.muted;
       if (playerObj.player && track) {
-        playerObj.player.volume.value = isMuted ? -Infinity : 0;
+        if (isMuted) {
+          playerObj.player.volume.value = -Infinity;
+        } else {
+          // Calculate combined volume: master volume + track volume
+          const masterVolumeDb = (masterVolume - 100) * 0.6;
+          const trackVolumeDb = (track.volume - 100) * 0.6;
+          const combinedVolumeDb = masterVolumeDb + trackVolumeDb;
+          playerObj.player.volume.value = combinedVolumeDb;
+        }
       }
     });
-  }, [tracks, players, soloTrackId]);
+  }, [tracks, players, soloTrackId, masterVolume]);
 
   // After the mute functionality useEffect (line ~758), add a new useEffect for masterVolume
   useEffect(() => {
@@ -762,6 +949,22 @@ const Timeline = () => {
       }
     });
   }, [masterVolume, players]);
+
+  // Individual track volume control
+  useEffect(() => {
+    players.forEach(playerObj => {
+      const track = tracks.find(t => t.id === playerObj.trackId);
+      if (playerObj.player && track && typeof playerObj.player.volume === 'object') {
+        // Calculate combined volume: master volume + track volume
+        const masterVolumeDb = (masterVolume - 100) * 0.6;
+        const trackVolumeDb = (track.volume - 100) * 0.6;
+        const combinedVolumeDb = masterVolumeDb + trackVolumeDb;
+        
+        // Apply the combined volume
+        playerObj.player.volume.value = combinedVolumeDb;
+      }
+    });
+  }, [tracks, players, masterVolume]);
 
   // Loop change handler
   const handleLoopChange = useCallback((newStart, newEnd) => {
@@ -899,9 +1102,18 @@ const Timeline = () => {
       if (isCancelled) return;
 
       const player = new Player(audioBuffer).toDestination();
-      // Set player volume to masterVolume
-      const volumeDb = (masterVolume - 100) * 0.6;
-      player.volume.value = volumeDb;
+      
+      // Find the track to get its volume
+      const track = tracks.find(t => t.id === clip.trackId);
+      const trackVolume = track?.volume || 80;
+      
+      // Calculate combined volume: master volume + track volume
+      const masterVolumeDb = (masterVolume - 100) * 0.6;
+      const trackVolumeDb = (trackVolume - 100) * 0.6;
+      const combinedVolumeDb = masterVolumeDb + trackVolumeDb;
+      
+      // Set player volume to combined volume
+      player.volume.value = combinedVolumeDb;
 
       // Get the actual duration from the clip data or audio buffer
       const clipDuration = clip.duration || audioBuffer.duration;
@@ -910,6 +1122,10 @@ const Timeline = () => {
 
       setPlayers((prev) => {
         const existingIndex = prev.findIndex(p => p.trackId === clip.trackId && p.clipId === clip.id);
+        if (existingIndex !== -1) {
+          // If player already exists for this clip, do not recreate
+          return prev;
+        }
         const playerData = {
           player,
           trackId: clip.trackId,
@@ -920,14 +1136,7 @@ const Timeline = () => {
           trimEnd: trimEnd,
           originalDuration: audioBuffer.duration
         };
-
-        if (existingIndex !== -1) {
-          const newPlayers = [...prev];
-          newPlayers[existingIndex] = playerData;
-          return newPlayers;
-        } else {
-          return [...prev, playerData];
-        }
+        return [...prev, playerData];
       });
 
       setWaveSurfers((prev) => {
@@ -965,29 +1174,33 @@ const Timeline = () => {
         });
         dispatch(setPlaying(false));
       } else {
+        // Stop all players before starting
+        players.forEach((playerObj) => {
+          if (playerObj?.player && typeof playerObj.player.stop === 'function') {
+            try {
+              playerObj.player.stop();
+            } catch (error) {
+              // ignore
+            }
+          }
+        });
         dispatch(setPlaying(true));
         playbackStartRef.current = {
           systemTime: Date.now(),
           audioTime: currentTime,
         };
-
-        // Start players that should be playing at current time
+        // Start only those players that should play at the current time
         players.forEach((playerObj) => {
           if (playerObj?.player && typeof playerObj.player.start === 'function') {
             const clipStartTime = playerObj.startTime || 0;
             const trimStart = playerObj.trimStart || 0;
             const trimEnd = playerObj.trimEnd || playerObj.duration;
-
-            // Calculate timeline positions for trimmed audio
             const trimmedClipStart = clipStartTime;
             const trimmedClipEnd = clipStartTime + (trimEnd - trimStart);
-
-            // Only start if current time is within the trimmed region
             if (currentTime >= trimmedClipStart && currentTime < trimmedClipEnd) {
               const offsetInTrimmedRegion = currentTime - trimmedClipStart;
               const startOffsetInOriginalAudio = trimStart + offsetInTrimmedRegion;
               const remainingTrimmedDuration = (trimEnd - trimStart) - offsetInTrimmedRegion;
-
               if (remainingTrimmedDuration > 0) {
                 try {
                   playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
@@ -1158,9 +1371,9 @@ const Timeline = () => {
         // Update local state for smooth animation
         setLocalCurrentTime(newTime);
 
-        // Throttle Redux updates to improve performance (update every 60ms instead of every frame)
+        // Throttle Redux updates to improve performance (update every 120ms instead of every frame)
         const reduxUpdateTime = Date.now();
-        if (!lastReduxUpdateRef.current || reduxUpdateTime - lastReduxUpdateRef.current > 60) {
+        if (!lastReduxUpdateRef.current || reduxUpdateTime - lastReduxUpdateRef.current > 120) {
           dispatch(setCurrentTime(newTime));
           lastReduxUpdateRef.current = reduxUpdateTime;
         }
@@ -1621,6 +1834,26 @@ const Timeline = () => {
     });
   }, []);
 
+  // Section label context menu handlers
+  const handleSectionContextMenu = useCallback((e, sectionId) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    setSectionContextMenu({
+      isOpen: true,
+      position: { x: e.clientX, y: e.clientY },
+      sectionId: sectionId
+    });
+  }, []);
+
+  const handleSectionContextMenuClose = useCallback(() => {
+    setSectionContextMenu({
+      isOpen: false,
+      position: { x: 0, y: 0 },
+      sectionId: null
+    });
+  }, []);
+
   const handleContextMenuClose = useCallback(() => {
     setContextMenu({
       isOpen: false,
@@ -1723,6 +1956,25 @@ const Timeline = () => {
         // Implement voice transform functionality
         console.log('Voice transform for track:', trackId);
         break;
+      case 'volumeUp':
+        const currentVolumeUp = track.volume || 80;
+        const newVolumeUp = Math.min(100, currentVolumeUp + 10);
+        dispatch(setTrackVolume({ trackId, volume: newVolumeUp }));
+        setVolumeIndicator({ show: true, volume: newVolumeUp, trackName: track.name || 'Track' });
+        setTimeout(() => setVolumeIndicator({ show: false, volume: 0, trackName: '' }), 2000);
+        break;
+      case 'volumeDown':
+        const currentVolumeDown = track.volume || 80;
+        const newVolumeDown = Math.max(0, currentVolumeDown - 10);
+        dispatch(setTrackVolume({ trackId, volume: newVolumeDown }));
+        setVolumeIndicator({ show: true, volume: newVolumeDown, trackName: track.name || 'Track' });
+        setTimeout(() => setVolumeIndicator({ show: false, volume: 0, trackName: '' }), 2000);
+        break;
+      case 'volumeReset':
+        dispatch(setTrackVolume({ trackId, volume: 80 }));
+        setVolumeIndicator({ show: true, volume: 80, trackName: track.name || 'Track' });
+        setTimeout(() => setVolumeIndicator({ show: false, volume: 0, trackName: '' }), 2000);
+        break;
       case 'reverse':
         (async () => {
           if (!track.audioClips || track.audioClips.length === 0) return;
@@ -1776,6 +2028,51 @@ const Timeline = () => {
     }
   }, [contextMenu, tracks, clipboard, dispatch, currentTime]);
 
+  // Section label context menu action handler
+  const handleSectionContextMenuAction = useCallback((action) => {
+    const sectionId = sectionContextMenu.sectionId;
+    if (!sectionId) return;
+
+    const section = sectionLabels.find(s => s.id === sectionId);
+    if (!section) return;
+
+    switch (action) {
+      case 'rename':
+        setRenameSectionId(sectionId);
+        setRenameValue(section.name);
+        setRenameModal(true);
+        break;
+      case 'resize':
+        setResizeSectionId(sectionId);
+        setResizeValue(section.width ? String(Math.round(section.width)) : "");
+        setResizeModal(true);
+        break;
+      case 'delete':
+        dispatch(removeSectionLabel(sectionId));
+        break;
+      case 'copy':
+        setClipboard({ type: 'section', section: { ...section } });
+        break;
+      case 'loop':
+        setLoopStart(section.startTime);
+        setLoopEnd(section.endTime);
+        break;
+      case 'createSectionAfter':
+        const newSection = {
+          id: Date.now() + Math.random(),
+          name: 'New Section',
+          startTime: section.endTime,
+          endTime: Math.min(audioDuration, section.endTime + (section.endTime - section.startTime)),
+          position: (section.endTime / audioDuration) * 100,
+          width: section.width
+        };
+        dispatch(addSectionLabel(newSection));
+        break;
+      default:
+        console.log('Unknown section action:', action);
+    }
+  }, [sectionContextMenu, sectionLabels, dispatch, audioDuration]);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!selectedTrackId) return;
@@ -1797,12 +2094,32 @@ const Timeline = () => {
         e.preventDefault();
         handleContextMenuAction('muteRegion', selectedTrackId, selectedClipId);
       }
+      // Volume control shortcuts
+      else if (e.key === 'ArrowUp' && (e.ctrlKey || e.altKey)) {
+        e.preventDefault();
+        const selectedTrack = tracks.find(t => t.id === selectedTrackId);
+        if (selectedTrack) {
+          const newVolume = Math.min(100, (selectedTrack.volume || 80) + 5);
+          dispatch(setTrackVolume({ trackId: selectedTrackId, volume: newVolume }));
+          setVolumeIndicator({ show: true, volume: newVolume, trackName: selectedTrack.name || 'Track' });
+          setTimeout(() => setVolumeIndicator({ show: false, volume: 0, trackName: '' }), 2000);
+        }
+      } else if (e.key === 'ArrowDown' && (e.ctrlKey || e.altKey)) {
+        e.preventDefault();
+        const selectedTrack = tracks.find(t => t.id === selectedTrackId);
+        if (selectedTrack) {
+          const newVolume = Math.max(0, (selectedTrack.volume || 80) - 5);
+          dispatch(setTrackVolume({ trackId: selectedTrackId, volume: newVolume }));
+          setVolumeIndicator({ show: true, volume: newVolume, trackName: selectedTrack.name || 'Track' });
+          setTimeout(() => setVolumeIndicator({ show: false, volume: 0, trackName: '' }), 2000);
+        }
+      }
       // Add more shortcuts as needed
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedTrackId, selectedClipId, handleContextMenuAction]);
+  }, [selectedTrackId, selectedClipId, handleContextMenuAction, tracks, dispatch]);
 
   const renderGridLines = () => {
     const gridLines = [];
@@ -1908,6 +2225,33 @@ const Timeline = () => {
   //   return () => document.removeEventListener('click', handleGlobalClick);
   // }, []);
 
+  // Rename submit handler
+  const handleRenameSubmit = () => {
+    if (renameSectionId && renameValue.trim()) {
+      dispatch(updateSectionLabel({
+        id: renameSectionId,
+        updates: { name: renameValue.trim() }
+      }));
+      setRenameModal(false);
+      setRenameSectionId(null);
+      setRenameValue("");
+    }
+  };
+
+  // Resize submit handler
+  const handleResizeSubmit = () => {
+    const widthNum = parseInt(resizeValue, 10);
+    if (resizeSectionId && widthNum > 0) {
+      dispatch(updateSectionLabel({
+        id: resizeSectionId,
+        updates: { width: widthNum }
+      }));
+      setResizeModal(false);
+      setResizeSectionId(null);
+      setResizeValue("");
+    }
+  };
+
   return (
     <>
       <div
@@ -1971,31 +2315,25 @@ const Timeline = () => {
 
             {/* Section Labels - display all saved section labels */}
             {sectionLabels.map((section) => (
-              <div
+              <ResizableSectionLabel
                 key={section.id}
-                style={{
-                  position: "absolute",
-                  top: "120px", // Position below MySection label (75px + 35px + 10px gap)
-                  left: `${section.position}%`,
-                  width: "100px",
-                  height: "25px",
-                  background: "linear-gradient(90deg, #FF8C00 0%, #FF6B35 100%)",
-                  borderRadius: "4px",
-                  padding: "3px 10px 0 10px",
-                  color: "white",
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  border: "1px solid #FF6B35",
-                  textAlign: "center",
-                  transform: "translateX(-50%)",
-                  zIndex: 8,
-                  pointerEvents: "none",
-                  boxShadow: "0 2px 8px rgba(255, 140, 0, 0.4)",
-                  animation: "sectionLabelAppear 0.3s ease-out",
+                section={section}
+                audioDuration={audioDuration}
+                selectedGrid={selectedGrid}
+                timelineContainerRef={timelineContainerRef}
+                onResize={(sectionId, newWidth, newStartTime, newEndTime, newPosition) => {
+                  dispatch(updateSectionLabel({
+                    id: sectionId,
+                    updates: {
+                      width: newWidth,
+                      startTime: newStartTime,
+                      endTime: newEndTime,
+                      position: newPosition || (newStartTime / audioDuration) * 100
+                    }
+                  }));
                 }}
-              >
-                {section.name}
-              </div>
+                onContextMenu={handleSectionContextMenu}
+              />
             ))}
 
             <style>
@@ -2195,6 +2533,17 @@ const Timeline = () => {
           </div>
         </div>
 
+        {/* Volume Indicator */}
+        {volumeIndicator.show && (
+          <div className="absolute top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2 z-50 bg-[#1F1F1F] border border-[#444] rounded-lg px-4 py-3 shadow-lg">
+            <div className="text-white text-center">
+              <div className="text-sm opacity-80">{volumeIndicator.trackName}</div>
+              <div className="text-2xl font-bold">{volumeIndicator.volume}%</div>
+              <div className="text-xs opacity-60 mt-1">Volume</div>
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* Add Track Modal */}
@@ -2224,10 +2573,89 @@ const Timeline = () => {
         onAction={handleContextMenuAction}
       />
 
+      {/* Section Context Menu */}
+      <SectionContextMenu
+        isOpen={sectionContextMenu.isOpen}
+        position={sectionContextMenu.position}
+        onClose={handleSectionContextMenuClose}
+        onAction={handleSectionContextMenuAction}
+      />
+
       {/* Piano Component */}
       {showPiano && (
         <Piano onClose={() => setShowPiano(false)} />
       )}
+
+      {/* Rename Section Modal */}
+      <Dialog open={renameModal} onClose={() => setRenameModal(false)} className="relative z-10">
+        <DialogBackdrop transition className="fixed backdrop-blur-sm inset-0 bg-black/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in" />
+        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
+            <DialogPanel transition className="relative transform overflow-hidden rounded-[4px] bg-[#1F1F1F] text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 w-full xs:max-w-[340px] sm:max-w-[400px] md:max-w-lg xl:max-w-xl  data-closed:sm:translate-y-0 data-closed:sm:scale-95">
+              <div className="md:px-[10px] px-[20px]">
+                <div className="md:py-[20px] py-[10px] md:px-[10px] bg-[#1F1F1F] border-b-[0.5px] border-b-[#FFFFFF1A]">
+                  <div className="flex justify-between items-center">
+                    <div className="sm:text-xl text-lg font-[600] text-[#fff]">Rename Section</div>
+                    <img src={close} alt="" onClick={() => setRenameModal(false)} className="cursor-pointer" />
+                  </div>
+                </div>
+                <div className="md:pt-[20px] md:pb-[30px] py-[20px] md:w-[400px] m-auto">
+                  <div className=''>
+                    <div className='text-sm text-[#FFFFFF] font-[400] mb-[10px]'>Name</div>
+                    <input
+                      type="text"
+                      value={renameValue}
+                      onChange={e => setRenameValue(e.target.value)}
+                      onKeyPress={e => { if (e.key === 'Enter') handleRenameSubmit(); }}
+                      className='text-[#FFFFFF99] rounded-[4px] w-full md:p-[11px] p-[8px] bg-[#FFFFFF0F] border-[0.5px] border-[#14141499]'
+                    />
+                  </div>
+                  <div className="text-center md:pt-[40px] pt-[20px]">
+                    <button className="d_btn d_cancelbtn sm:me-7 me-5" onClick={() => setRenameModal(false)}>Cancel</button>
+                    <button className="d_btn d_createbtn" onClick={handleRenameSubmit}>Rename</button>
+                  </div>
+                </div>
+              </div>
+            </DialogPanel>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Resize Section Modal */}
+      <Dialog open={resizeModal} onClose={() => setResizeModal(false)} className="relative z-10">
+        <DialogBackdrop transition className="fixed backdrop-blur-sm inset-0 bg-black/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in" />
+        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
+            <DialogPanel transition className="relative transform overflow-hidden rounded-[4px] bg-[#1F1F1F] text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 w-full xs:max-w-[340px] sm:max-w-[400px] md:max-w-lg xl:max-w-xl  data-closed:sm:translate-y-0 data-closed:sm:scale-95">
+              <div className="md:px-[10px] px-[20px]">
+                <div className="md:py-[20px] py-[10px] md:px-[10px] bg-[#1F1F1F] border-b-[0.5px] border-b-[#FFFFFF1A]">
+                  <div className="flex justify-between items-center">
+                    <div className="sm:text-xl text-lg font-[600] text-[#fff]">Resize Section</div>
+                    <img src={close} alt="" onClick={() => setResizeModal(false)} className="cursor-pointer" />
+                  </div>
+                </div>
+                <div className="md:pt-[20px] md:pb-[30px] py-[20px] md:w-[400px] m-auto">
+                  <div className=''>
+                    <div className='text-sm text-[#FFFFFF] font-[400] mb-[10px]'>Width (px)</div>
+                    <input
+                      type="number"
+                      min={10}
+                      value={resizeValue}
+                      onChange={e => setResizeValue(e.target.value)}
+                      onKeyPress={e => { if (e.key === 'Enter') handleResizeSubmit(); }}
+                      className='text-[#FFFFFF99] rounded-[4px] w-full md:p-[11px] p-[8px] bg-[#FFFFFF0F] border-[0.5px] border-[#14141499]'
+                    />
+                  </div>
+                  <div className="text-center md:pt-[40px] pt-[20px]">
+                    <button className="d_btn d_cancelbtn sm:me-7 me-5" onClick={() => setResizeModal(false)}>Cancel</button>
+                    <button className="d_btn d_createbtn" onClick={handleResizeSubmit}>Resize</button>
+                  </div>
+                </div>
+              </div>
+            </DialogPanel>
+          </div>
+        </div>
+      </Dialog>
     </>
   );
 };

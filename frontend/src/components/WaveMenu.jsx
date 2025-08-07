@@ -100,6 +100,34 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
           <span className="flex-1">Edit name</span>
         </div>
 
+        {/* Volume Control Options */}
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
+          onClick={() => handleItemClick('volumeUp')}
+        >
+          <span className="w-4 h-4 flex items-center justify-center text-white text-lg">🔊</span>
+          <span className="flex-1">Volume Up</span>
+          <span className="text-gray-400 text-xs">Ctrl+↑</span>
+        </div>
+
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
+          onClick={() => handleItemClick('volumeDown')}
+        >
+          <span className="w-4 h-4 flex items-center justify-center text-white text-lg">🔉</span>
+          <span className="flex-1">Volume Down</span>
+          <span className="text-gray-400 text-xs">Ctrl+↓</span>
+        </div>
+
+        <div
+          className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
+          onClick={() => handleItemClick('volumeReset')}
+        >
+          <span className="w-4 h-4 flex items-center justify-center text-white text-lg">🔊</span>
+          <span className="flex-1">Reset Volume</span>
+          <span className="text-gray-400 text-xs">80%</span>
+        </div>
+
         <div
           className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('splitRegion')}
