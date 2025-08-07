@@ -34,14 +34,14 @@ const PianoRolls = () => {
     const wrapperRef = useRef();
     const timelineHeaderRef = useRef();
     const timelineContainerRef = useRef();
-    const [scale, setScale] = useState(1); // Zoom scale
+    const [scale, setScale] = useState(8); // Zoom scale
     const [currentTime, setCurrentTime] = useState(25); // Current playhead position
     const [scrollLeft, setScrollLeft] = useState(0); // Horizontal scroll position
 
-    const baseWidth = 2000;  // Increased base width for more content
+    const baseWidth = 1000;  // Increased base width for more content
     const height = 600;
-    const rowHeight = 20;
-    const audioDuration = 150; // Default duration in seconds
+    const rowHeight = 30;
+    const audioDuration = 1 * 60; // Default duration in seconds
     const pixelsPerSecond = 50; // Increased spacing between seconds
 
     // Get grid settings from Redux
@@ -52,10 +52,14 @@ const PianoRolls = () => {
 
         const svg = d3.select(timelineHeaderRef.current);
         const svgNode = timelineHeaderRef.current;
-        const width = Math.max(svgNode.clientWidth || 600, baseWidth * scale);
+        if(scale <=2){
+            setScale(2);
+        }
+        const minWidth =  scale <= 2 ? baseWidth * 2 : baseWidth * scale ; 
+        const width = Math.max(svgNode.clientWidth || 600,minWidth );
         const axisY = 50; // Center of the header
         const duration = audioDuration;
-
+        console.log("scale",scale ,minWidth ,width)
         svg.selectAll("*").remove();
 
         if (width <= 0 || duration <= 0) return;
@@ -126,7 +130,7 @@ const PianoRolls = () => {
                     .attr("font-size", 11)
                     .attr("text-anchor", "middle")
                     .attr("font-family", "Arial, sans-serif")
-                    .text(sec.toString());
+                    .text(sec.toString() + 's');
             }
         }
     }, [audioDuration, selectedGrid, scale, baseWidth]);
@@ -141,7 +145,7 @@ const PianoRolls = () => {
         group.selectAll('*').remove();
 
         const width = baseWidth * zoomScale;
-        const height = 560;
+        const height = NOTES.length * 30;
 
         svg.attr('width', width).attr('height', height);
 
@@ -158,7 +162,7 @@ const PianoRolls = () => {
             const isMainBeat = Math.abs(time - Math.round(time)) < 0.01;
             const isHalfBeat = Math.abs(time - Math.round(time * 2) / 2) < 0.01;
             const isQuarterBeat = Math.abs(time - Math.round(time * 4) / 4) < 0.01;
-            
+
             let strokeColor = '#ffffff15';
             let strokeWidth = 1;
 
@@ -172,7 +176,7 @@ const PianoRolls = () => {
                 strokeColor = '#ffffff20';
                 strokeWidth = 1;
             }
-            
+
             group.append('line')
                 .attr('x1', x)
                 .attr('y1', 0)
@@ -197,7 +201,7 @@ const PianoRolls = () => {
         for (let time = 0; time <= duration; time += 1) {
             const x = xForTime(time);
             const isMainBeat = Math.abs(time - Math.round(time)) < 0.01;
-            
+
             if (isMainBeat) {
                 group.append('text')
                     .text(Math.round(time).toString())
@@ -226,7 +230,7 @@ const PianoRolls = () => {
     const handleScroll = (e) => {
         const scrollLeft = e.target.scrollLeft;
         setScrollLeft(scrollLeft);
-        
+
         // Sync timeline header scroll with grid scroll
         if (timelineContainerRef.current) {
             timelineContainerRef.current.scrollLeft = scrollLeft;
@@ -237,7 +241,7 @@ const PianoRolls = () => {
     const handleWheel = (e) => {
         if (e.ctrlKey) {
             e.preventDefault(); // Prevent default browser zoom
-            
+
             if (e.deltaY < 0) {
                 // Scroll up - zoom in
                 handleZoomIn();
@@ -266,112 +270,266 @@ const PianoRolls = () => {
         setCurrentTime(snappedTime);
     };
 
+    // timeline handling over
+
+    // piano key handling start
+
+    const [notes, setNotes] = useState([]);
+    const [startTime, setStartTime] = useState(null);
+    const [activeNotes, setActiveNotes] = useState({});
+    let mouseDownTime = useRef(0);
+    const handleMouseDown = () => {
+        mouseDownTime.current = Date.now();
+    };
+
+    const handleMouseUp = (e) => {
+        const elapsed = Date.now() - mouseDownTime.current;
+        if (elapsed < 200) { // Only register if it's a click (not a drag)
+            handleGridClick(e);
+        }
+    };
+    // --- update handleGridClick to play sound and add note at correct position ---
+    const handleGridClick = (e) => {
+        // Only respond to clicks on the grid background, not on notes
+        if (e.target.tagName !== 'svg' && !e.target.classList.contains('bg-red-500') && !e.target.classList.contains('note-bg-div')) return;
+        const rect = svgRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const start = x / (GRID_UNIT * 2 * scale);
+        const noteIndex = Math.floor(y / 30);
+        // Remove restriction: allow adding anywhere
+        if (noteIndex >= 0 && noteIndex < NOTES.length) {
+            const note = NOTES[noteIndex];
+            // Play the note sound
+            const synth = new Tone.Synth().toDestination();
+            synth.triggerAttackRelease(note, '8n');
+            setNotes(prev => [
+                ...prev,
+                {
+                    note,
+                    start,
+                    duration: 0.1, // default duration
+                },
+            ]);
+        }
+    };
+    const handleKeyDown = (note) => {
+        if (activeNotes[note]) return;
+
+        const synth = new Tone.Synth().toDestination();
+        const time = Tone.now();
+        synth.triggerAttack(note, time);
+
+        setActiveNotes((prev) => ({
+            ...prev,
+            [note]: { synth, startTime: time },
+        }));
+    };
+
+    const handleKeyUp = (note) => {
+        const noteInfo = activeNotes[note];
+        if (!noteInfo) return;
+
+        const endTime = Tone.now();
+        const duration = endTime - noteInfo.startTime;
+        noteInfo.synth.triggerRelease(endTime);
+
+        const noteObj = {
+            note,
+            start: noteInfo.startTime - startTime,
+            duration,
+        };
+
+        setNotes((prev) => [...prev, noteObj]);
+
+        setActiveNotes((prev) => {
+            const copy = { ...prev };
+            delete copy[note];
+            return copy;
+        });
+    };
+
+    const getYFromNote = (note) => NOTES.indexOf(note) * 30;
+
+    const updateNote = (index, updates) => {
+        setNotes(prev => {
+            const updated = [...prev];
+            updated[index] = { ...updated[index], ...updates };
+            return updated;
+        });
+    };
+    // piano key handling over
+
+    // --- ZOOM CONTROLS ---
+    // Add visible zoom in/out buttons
+    const ZoomControls = () => (
+        <div className="absolute top-2 left-2 z-30 flex gap-2">
+            <button
+                className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center cursor-pointer text-xl"
+                onClick={handleZoomOut}
+                aria-label="Zoom Out"
+            >
+                -
+            </button>
+            <button
+                className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center cursor-pointer text-xl"
+                onClick={handleZoomIn}
+                aria-label="Zoom In"
+            >
+                +
+            </button>
+        </div>
+    );
+
     return (
-       <>
-       
-       <div 
-            className="relative w-full h-[640px] bg-[#1e1e1e] text-white"
-            onWheel={handleWheel}
-        >
-            {/* Control Icons - Right Side */}
-            <div className="absolute top-2 right-2 z-30 flex gap-2">
-                <div className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center cursor-pointer">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-                        <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"/>
-                    </svg>
-                </div>
-                <div className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center cursor-pointer">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-                        <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"/>
-                    </svg>
-                </div>
-            </div>
+        <>
+            {/* Zoom Controls */}
+            <ZoomControls />
 
-            {/* Timeline Header Container with Horizontal Scroll */}
-            <div 
-                ref={timelineContainerRef}
-                className="absolute top-0 left-16 right-0 h-[80px] overflow-x-auto overflow-y-hidden"
-                style={{ background: "#2a2a2a" }}
-                onClick={handleTimelineClick}
-            >
-                <div style={{ 
-                    width: `${baseWidth * scale}px`, 
-                    height: "100%", 
-                    position: "relative",
-                    minWidth: "100%"
-                }}>
-                    <svg
-                        ref={timelineHeaderRef}
-                        width="100%"
-                        height="100%"
-                        style={{ color: "white", width: "100%", background: "#2a2a2a" }}
-                    />
-                </div>
-            </div>
-
-            {/* Purple Playhead - spans full timeline and grid */}
             <div
-                style={{
-                    position: "absolute",
-                    left: `${playheadPosition}px`,
-                    top: 0,
-                    height: "640px",
-                    width: "2px",
-                    background: "#AD00FF",
-                    zIndex: 25,
-                    pointerEvents: "none",
-                }}
+                className="relative w-full h-[450px] bg-[#1e1e1e] text-white overflow-y-auto overflow-x-hidden"
+                onWheel={handleWheel}
             >
-                {/* Purple triangle at top */}
+                {/* Control Icons - Right Side */}
+              
+
+                {/* Timeline Header Container with Horizontal Scroll */}
+                <div
+                    ref={timelineContainerRef}
+                    className="sticky bg-[#1F1F1F] ms-[64px] left-16 right- mt-[20px] h-[60px] overflow-x-auto overflow-y-hidden z-[2]"
+                    style={{ background: "#2a2a2a" }}
+                    onClick={handleTimelineClick}
+                    onScroll={handleScroll}
+                >
+                    <div style={{
+                        width: `${baseWidth * scale}px`,
+                        height: "100%",
+                        position: "relative",
+                        minWidth: "100%"
+                    }}>
+                        <svg
+                            ref={timelineHeaderRef}
+                            width="100%"
+                            height="100%"
+                            style={{ color: "white", width: "100%", background: "#2a2a2a" }}
+                        />
+                    </div>
+                </div>
+
+                {/* Purple Playhead - spans full timeline and grid */}
                 <div
                     style={{
                         position: "absolute",
-                        top: "0px",
-                        left: "-4px",
-                        width: "0",
-                        height: "0",
-                        borderLeft: "5px solid transparent",
-                        borderRight: "5px solid transparent",
-                        borderTop: "8px solid #AD00FF",
+                        left: `${playheadPosition * scale}px`, // scale playhead position
+                        top: 0,
+                        height: "100%",
+                        width: "2px",
+                        background: "#AD00FF",
+                        zIndex: 25,
+                        pointerEvents: "none",
                     }}
-                />
-            </div>
-
-            {/* Piano Keys Column */}
-            <div className="absolute left-0 top-[80px] w-16 h-[560px] bg-[#1a1a1a] border-r border-gray-700 z-10">
-                {NOTES.slice(0, 28).map((note, index) => (
+                >
+                    {/* Purple triangle at top */}
                     <div
-                        key={note}
                         style={{
-                            height: `${560 / 28}px`,
-                            borderBottom: "1px solid #333",
-                            background: note.includes('#') ? "#333" : "#444",
-                            display: "flex",
-                            alignItems: "center",
-                            paddingLeft: "8px",
-                            fontSize: "10px",
-                            color: "#ccc"
+                            position: "absolute",
+                            top: "0px",
+                            left: "-4px",
+                            width: "0",
+                            height: "0",
+                            borderLeft: "5px solid transparent",
+                            borderRight: "5px solid transparent",
+                            borderTop: "8px solid #AD00FF",
                         }}
-                    >
-                        {note}
-                    </div>
-                ))}
+                    />
+                </div>
+
+                {/* Piano Keys Column */}
+                <div className="absolute left-0 top-[80px] w-16 h-[560px] bg-[#1a1a1a] border-r border-gray-700 z-10">
+                    {NOTES.map((note) => (
+                        <button
+                            key={note}
+                            onMouseDown={() => handleKeyDown(note)}
+                            onMouseUp={() => handleKeyUp(note)}
+                            onMouseLeave={() => handleKeyUp(note)}
+                            className={`h-[30px] min-h-[30px] text-xs ${note.includes('#') ? 'bg-black text-white w-[50%]' : 'bg-white w-full'} border`}
+                        >
+                            {note}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Scrollable Piano Roll Grid */}
+                <div
+                    ref={wrapperRef}
+                    className="absolute left-16 top-[80px] right-0  overflow-x-auto overflow-y-hidden"
+                    style={{ background: "#1e1e1e" }}
+                    onScroll={handleScroll}
+                    onMouseDown={handleMouseDown}
+                    onMouseUp={handleMouseUp}
+                >
+                    {/* White background for all notes */}
+                    {notes.length > 0 && (() => {
+                        const minStart = Math.min(...notes.map(n => n.start));
+                        const maxEnd = Math.max(...notes.map(n => n.start + n.duration)) + 0.1;
+                        const left = minStart * GRID_UNIT * 2 * scale;
+                        const width = (maxEnd - minStart) * GRID_UNIT * 2 * scale;
+                        return (
+                            <div
+                                className="note-bg-div border border-[#E44F65] "
+                                style={{
+                                    position: 'absolute',
+                                    left: `${left}px`,
+                                    top: 0,
+                                    width: `${width}px`,
+                                    height: '100%',
+                                    background: 'rgba(255, 0, 0, 0.1)',
+                                    zIndex: 0,
+                                    opacity: 1,
+                                    borderRadius:'5px'
+                                }}
+                                onMouseDown={handleMouseDown}
+                                onMouseUp={handleMouseUp}
+                            />
+                        );
+                    })()}
+                    {notes.map((n, i) => {
+                        return (
+                            <Rnd
+                                key={i}
+                                size={{ width: n.duration * GRID_UNIT * 2 * scale, height: 24 }}
+                                position={{ x: n.start * GRID_UNIT * 2 * scale, y: getYFromNote(n.note) }}
+                                bounds="parent"
+                                enableResizing={{ right: true }}
+                                dragAxis="both"
+                                onDragStop={(e, d) => {
+                                    const snappedY = Math.round(d.y / 30) * 30;
+                                    const noteIndex = Math.round(snappedY / 30);
+                                    const newNote = NOTES[noteIndex];
+                                    updateNote(i, {
+                                        start: d.x / (GRID_UNIT * 2 * scale),
+                                        note: newNote,
+                                    });
+                                }}
+                                onResizeStop={(e, direction, ref, delta, position) => {
+                                    const newWidth = parseFloat(ref.style.width);
+                                    updateNote(i, {
+                                        duration: newWidth / (GRID_UNIT * 2 * scale),
+                                        start: position.x / (GRID_UNIT * 2 * scale),
+                                    });
+                                }}
+                            >
+                                <div className="bg-red-500 rounded w-full h-full m-1 relative z-1 border" />
+                            </Rnd>
+                        );
+                    })}
+                    <svg ref={svgRef} style={{ width: `${baseWidth * scale}px`, height: "100%" }}>
+                        <g />
+                    </svg>
+                </div>
             </div>
 
-            {/* Scrollable Piano Roll Grid */}
-            <div
-                ref={wrapperRef}
-                className="absolute left-16 top-[80px] right-0 h-[560px] overflow-x-auto overflow-y-hidden"
-                style={{ background: "#1e1e1e" }}
-                onScroll={handleScroll}
-            >
-                <svg ref={svgRef} style={{ width: `${baseWidth * scale}px`, height: "100%" }}>
-                    <g />
-                </svg>
-            </div>
-        </div>
-       
-       </>
+        </>
     );
 };
 
