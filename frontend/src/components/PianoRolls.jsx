@@ -6,7 +6,9 @@ import * as d3 from 'd3';
 import { useSelector } from 'react-redux';
 import { selectGridSettings } from '../Redux/Slice/grid.slice';
 import { getGridDivisions } from '../Utils/gridUtils';
-
+import { FaPaste, FaRegCopy } from 'react-icons/fa';
+import { MdDelete } from "react-icons/md";
+import { IoCutOutline } from 'react-icons/io5';
 const generatePianoKeys = () => {
     const keys = [];
     const notesInOctave = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
@@ -44,6 +46,9 @@ const PianoRolls = () => {
     const audioDuration = 1 * 60; // Default duration in seconds
     const pixelsPerSecond = 50; // Increased spacing between seconds
 
+    // get data from redux
+    const track = useSelector((state)=>state.studio.tracks)
+    console.log('track',track);
     // Get grid settings from Redux
     const { selectedGrid } = useSelector(selectGridSettings);
 
@@ -52,14 +57,14 @@ const PianoRolls = () => {
 
         const svg = d3.select(timelineHeaderRef.current);
         const svgNode = timelineHeaderRef.current;
-        if(scale <=2){
+        if (scale <= 2) {
             setScale(2);
         }
-        const minWidth =  scale <= 2 ? baseWidth * 2 : baseWidth * scale ; 
-        const width = Math.max(svgNode.clientWidth || 600,minWidth );
+        const minWidth = scale <= 2 ? baseWidth * 2 : baseWidth * scale;
+        const width = Math.max(svgNode.clientWidth || 600, minWidth);
         const axisY = 50; // Center of the header
         const duration = audioDuration;
-        console.log("scale",scale ,minWidth ,width)
+        console.log("scale", scale, minWidth, width)
         svg.selectAll("*").remove();
 
         if (width <= 0 || duration <= 0) return;
@@ -253,7 +258,7 @@ const PianoRolls = () => {
     };
 
     // Calculate playhead position
-    const playheadPosition = (currentTime / audioDuration) * (baseWidth * scale);
+
 
     const handleTimelineClick = (e) => {
         if (!timelineHeaderRef.current) return;
@@ -283,13 +288,21 @@ const PianoRolls = () => {
     };
 
     const handleMouseUp = (e) => {
+        if (e.button !== 0) return; // only handle left-click
+
+        // 🛡️ Prevent adding new notes if context menu is open
+       
+        if (menuVisible || pasteMenu || selectedNoteIndex) return;
+
         const elapsed = Date.now() - mouseDownTime.current;
-        if (elapsed < 200) { // Only register if it's a click (not a drag)
+        if (elapsed < 200) {
             handleGridClick(e);
         }
     };
     // --- update handleGridClick to play sound and add note at correct position ---
     const handleGridClick = (e) => {
+        if (menuVisible || selectedNoteIndex) return;
+        if (pasteMenu) return;
         // Only respond to clicks on the grid background, not on notes
         if (e.target.tagName !== 'svg' && !e.target.classList.contains('bg-red-500') && !e.target.classList.contains('note-bg-div')) return;
         const rect = svgRef.current.getBoundingClientRect();
@@ -360,6 +373,151 @@ const PianoRolls = () => {
     };
     // piano key handling over
 
+
+    // playing time line
+    const [isPlaying, setIsPlaying] = useState(false);
+
+    const synthRef = useRef(null);
+    const [playheadPosition, setPlayheadPosition] = useState(0); // in seconds
+    const playheadRef = useRef(null);
+    const animationRef = useRef(null);
+    useEffect(() => {
+        if (wrapperRef.current) {
+            wrapperRef.current.scrollLeft = playheadPosition * scale - 100; // 100px padding
+        }
+    }, [playheadPosition]);
+
+    const startPlayheadAnimation = () => {
+        const update = () => {
+            const currentTime = Tone.Transport.seconds;
+            setPlayheadPosition(currentTime);
+            animationRef.current = requestAnimationFrame(update);
+        };
+        animationRef.current = requestAnimationFrame(update);
+    };
+
+    const stopPlayheadAnimation = () => {
+        cancelAnimationFrame(animationRef.current);
+    };
+    const handlePlayPause = async () => {
+        if (!synthRef.current) {
+            synthRef.current = new Tone.PolySynth().toDestination();
+        }
+
+        await Tone.start();
+
+        if (!isPlaying) {
+            // ⬇️ Only schedule notes if Transport is NOT already running
+            if (Tone.Transport.state !== "started") {
+                notes.forEach(n => {
+                    Tone.Transport.schedule((time) => {
+                        synthRef.current.triggerAttackRelease(n.note, n.duration, time);
+                    }, n.start);
+                });
+            }
+
+            Tone.Transport.start(); // ⬅️ Resumes from current position
+            setIsPlaying(true);
+            startPlayheadAnimation();
+        } else {
+            Tone.Transport.pause(); // ⬅️ Pauses without resetting
+            setIsPlaying(false);
+            stopPlayheadAnimation();
+        }
+    };
+
+
+
+    // right click menu handler 
+    const menuRef = useRef(null);
+    const [selectedNoteIndex, setSelectedNoteIndex] = useState(null);
+    console.log('selectedNoteIndex', selectedNoteIndex)
+    const [menuVisible, setMenuVisible] = useState(false);
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (menuRef.current && !menuRef.current.contains(e.target)) {
+                setMenuVisible(false);
+                setSelectedNoteIndex(null);
+                pasteMenu(false);
+            }
+        };
+        window.addEventListener("mousedown", handleClickOutside);
+        return () => window.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+
+
+    // note copy cut and paste functionlity
+    const [clipboardNote, setClipboardNote] = useState(null);
+    const pasteMenuRef = useRef(null);
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+
+    const [pasteMenu, setPasteMenu] = useState(false);
+    const handleDelete = () => {
+        if (selectedNoteIndex !== null) {
+            const updatedNotes = notes.filter((_, idx) => idx !== selectedNoteIndex);
+            setNotes(updatedNotes);
+            setTimeout(() => {
+                setMenuVisible(false);
+                setSelectedNoteIndex(null);
+            }, 0);
+        }
+    };
+
+    const handleCopy = () => {
+        if (selectedNoteIndex !== null) {
+            setClipboardNote({ ...notes[selectedNoteIndex] });
+            setTimeout(() => {
+                setMenuVisible(false);
+                setSelectedNoteIndex(null);
+            }, 0);
+        }
+    };
+
+    const handleCut = () => {
+        if (selectedNoteIndex !== null) {
+            setClipboardNote({ ...notes[selectedNoteIndex] });
+            handleDelete();
+        }
+    };
+
+    const handlePaste = () => {
+        if (clipboardNote && wrapperRef.current) {
+            const newX = position.x;
+            const newY = position.y;
+
+            // Convert X to start time
+            const start = newX / (GRID_UNIT * 2 * scale);
+
+            // Convert Y to note index
+            const noteIndex = Math.round(newY / 30);
+            const note = NOTES[noteIndex];
+
+            const pastedNote = {
+                ...clipboardNote,
+                start,
+                note,
+            };
+
+            setNotes((prev) => [...prev, pastedNote]);
+
+            // Reset state
+            setPasteMenu(false);
+            setMenuVisible(false);
+        }
+    };
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (pasteMenuRef.current && !pasteMenuRef.current.contains(e.target)) {
+                setPasteMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+
+
     // --- ZOOM CONTROLS ---
     // Add visible zoom in/out buttons
     const ZoomControls = () => (
@@ -385,13 +543,18 @@ const PianoRolls = () => {
         <>
             {/* Zoom Controls */}
             <ZoomControls />
-
+            <button
+                className="absolute right-4 top-2 z-50 bg-green-500 text-white px-4 py-2 rounded"
+                onClick={handlePlayPause}
+            >
+                {isPlaying ? "Pause" : "Play"}
+            </button>
             <div
-                className="relative w-full h-[450px] bg-[#1e1e1e] text-white overflow-y-auto overflow-x-hidden"
+                className={`relative w-full h-[450px] bg-[#1e1e1e] text-white ${selectedNoteIndex || pasteMenu ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'}  `}
                 onWheel={handleWheel}
             >
                 {/* Control Icons - Right Side */}
-              
+
 
                 {/* Timeline Header Container with Horizontal Scroll */}
                 <div
@@ -418,10 +581,12 @@ const PianoRolls = () => {
 
                 {/* Purple Playhead - spans full timeline and grid */}
                 <div
+                    ref={playheadRef}  // Add this line
                     style={{
-                        position: "absolute",
-                        left: `${playheadPosition * scale}px`, // scale playhead position
+                        position: "sticky",
+                        left: `${playheadPosition * GRID_UNIT * 2 * scale}px`,
                         top: 0,
+                        marginLeft: '64px',
                         height: "100%",
                         width: "2px",
                         background: "#AD00FF",
@@ -462,11 +627,27 @@ const PianoRolls = () => {
                 {/* Scrollable Piano Roll Grid */}
                 <div
                     ref={wrapperRef}
-                    className="absolute left-16 top-[80px] right-0  overflow-x-auto overflow-y-hidden"
+                    className={`absolute left-16 top-[80px] right-0 ${selectedNoteIndex || pasteMenu ? 'overflow-hidden' : ' overflow-x-auto overflow-y-auto'}`}
                     style={{ background: "#1e1e1e" }}
                     onScroll={handleScroll}
                     onMouseDown={handleMouseDown}
                     onMouseUp={handleMouseUp}
+                    onContextMenu={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        if (clipboardNote) {
+                            // if (e.target.closest('.note-box')) return;
+                            const wrapperRect = wrapperRef.current.getBoundingClientRect();
+                            setPasteMenu(true);
+                            setSelectedNoteIndex(null);
+                            setPosition({
+                                x: e.clientX - wrapperRect.left,
+                                y: e.clientY - wrapperRect.top,
+                            });
+                            console.log('iscalled')
+                        }
+                    }}
+
                 >
                     {/* White background for all notes */}
                     {notes.length > 0 && (() => {
@@ -486,7 +667,7 @@ const PianoRolls = () => {
                                     background: 'rgba(255, 0, 0, 0.1)',
                                     zIndex: 0,
                                     opacity: 1,
-                                    borderRadius:'5px'
+                                    borderRadius: '5px'
                                 }}
                                 onMouseDown={handleMouseDown}
                                 onMouseUp={handleMouseUp}
@@ -519,15 +700,67 @@ const PianoRolls = () => {
                                     });
                                 }}
                             >
-                                <div className="bg-red-500 rounded w-full h-full m-1 relative z-1 border" />
+                                <div
+                                    className={`bg-red-500 rounded w-full h-full m-1 relative z-1 ${selectedNoteIndex === i ? 'border-[2px]' : 'border'}`}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        e.nativeEvent.stopImmediatePropagation(); 
+                                        const wrapperRect = wrapperRef.current.getBoundingClientRect();
+                                        setSelectedNoteIndex(i);
+                                        setMenuVisible(true);
+                                        setPosition({
+                                            x: e.clientX - wrapperRect.left,
+                                            y: e.clientY - wrapperRect.top,
+                                        });
+                                    }}
+                                >
+                                    {(menuVisible && selectedNoteIndex === i) ? (
+                                        <ul
+                                            className="absolute bg-[#1F1F1F] text-black border border-[#1F1F1F] shadow rounded flex"
+                                            style={{
+                                                top: '100%',
+                                                right: 0,
+                                                zIndex: 1000,
+                                                listStyle: 'none',
+                                                padding: '0px   ',
+                                            }}
+                                        >
+                                            <li className="hover:bg-gray-200 hover:text-[#1F1F1F] cursor-pointer text-sm p-1 text-white" onClick={() => { handleCut() }}><IoCutOutline /></li>
+                                            <li className="hover:bg-gray-200 hover:text-[#1F1F1F] cursor-pointer text-sm p-1 text-white" onClick={() => { handleCopy() }}><FaRegCopy /></li>
+                                            <li className="hover:bg-gray-200 hover:text-[#1F1F1F] cursor-pointer text-sm p-1 text-white" onClick={() => { handleDelete() }}><MdDelete /></li>
+                                        </ul>
+                                    ): null}
+                                </div>
                             </Rnd>
                         );
                     })}
+
                     <svg ref={svgRef} style={{ width: `${baseWidth * scale}px`, height: "100%" }}>
                         <g />
                     </svg>
+                    {console.log('consition', pasteMenu && !menuVisible && clipboardNote, pasteMenu, menuVisible, clipboardNote)}
+                    {(pasteMenu && clipboardNote) ? (
+                        <span
+                            className='bg-[#1F1F1F] text-white hover:bg-gray-200 hover:text-[#1F1F1F] absolute cursor-pointer text-sm p-1'
+                            ref={pasteMenuRef}
+                            style={{
+                                top: position.y,
+                                left: position.x,
+                                zIndex: 9999,
+                                listStyle: 'none',
+                                padding: '4px',
+                            }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handlePaste();
+                            }}
+                        >
+                            <FaPaste />
+                        </span>
+                    ) : null}
                 </div>
-            </div>
+            </div >
 
         </>
     );
