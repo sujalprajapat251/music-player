@@ -50,24 +50,24 @@ import Effects2 from './Effects2';
 import audioEffectsPlayer from '../components/AudioEffectsPlayer'
 
 const effects = [
-    { id: 1, name: "Bitcrushar", subscription: true, image: Bitcrushar, color: "#8F7CFD" },
-    { id: 2, name: "Classic Dist", subscription: false, image: ClassicDist1, color: "#8F7CFD", component: ClassicDist },
-    { id: 3, name: "Clipper", subscription: true, image: Clipper1, color: "#8F7CFD", component: Clipper },
-    { id: 4, name: "Crusher", subscription: true, image: Crusher1, color: "#8F7CFD", component: Crusher },
-    { id: 5, name: "Fuzz", subscription: false, image: Fuzz1, color: "#8F7CFD", component: Fuzz },
-    { id: 6, name: "Juicy Distrotion", subscription: true, image: JuicyDistrotion1, color: "#8F7CFD", component: JuicyDistrotion },
-    { id: 7, name: "Overdrive", subscription: false, image: Overdrive1, color: "#8F7CFD", component: Overdrive },
-    { id: 8, name: "Auto Pan", subscription: false, image: AutoPan1, color: "#409C9F", component: AutoPan },
-    { id: 9, name: "Auto-Wah", subscription: false, image: AutoWah1, color: "#409C9F", component: AutoWah },
-    { id: 10, name: "Chorus", subscription: false, image: Chorus1, color: "#409C9F", component: Chorus },
-    { id: 11, name: "Flanger", subscription: false, image: Flanger1, color: "#409C9F", component: Flanger },
-    { id: 12, name: "Instant Sidechain", subscription: true, image: InstantSidechain, color: "#409C9F" },
-    { id: 13, name: "Phaser", subscription: false, image: Phaser1, color: "#409C9F", component: Phaser },
-    { id: 14, name: "Pitch Shifter", subscription: true, image: PitchShifter, color: "#409C9F" },
-    { id: 15, name: "Rotary", subscription: false, image: Rotary1, color: "#409C9F", component: Rotary },
-    { id: 16, name: "Rotary Pro", subscription: true, image: RotaryPro, color: "#409C9F" },
-    { id: 17, name: "Stereo Chorus", subscription: false, image: StereoChorus1, color: "#409C9F", component: StereoChorus },
-    { id: 18, name: "Tape Wobble", subscription: true, image: TapeWobble1, color: "#409C9F", component: TapeWobble },
+    { id: 1, name: "Bitcrushar", subscription: true, image: Bitcrushar, color: "#8F7CFD", category: "Distortion" },
+    { id: 2, name: "Classic Dist", subscription: false, image: ClassicDist1, color: "#8F7CFD", component: ClassicDist, category: "Distortion" },
+    { id: 3, name: "Clipper", subscription: true, image: Clipper1, color: "#8F7CFD", component: Clipper, category: "Distortion" },
+    { id: 4, name: "Crusher", subscription: true, image: Crusher1, color: "#8F7CFD", component: Crusher, category: "Distortion" },
+    { id: 5, name: "Fuzz", subscription: false, image: Fuzz1, color: "#8F7CFD", component: Fuzz, category: "Distortion" },
+    { id: 6, name: "Juicy Distrotion", subscription: true, image: JuicyDistrotion1, color: "#8F7CFD", component: JuicyDistrotion, category: "Distortion" },
+    { id: 7, name: "Overdrive", subscription: false, image: Overdrive1, color: "#8F7CFD", component: Overdrive, category: "Distortion" },
+    { id: 8, name: "Auto Pan", subscription: false, image: AutoPan1, color: "#409C9F", component: AutoPan, category: "Modulation" },
+    { id: 9, name: "Auto-Wah", subscription: false, image: AutoWah1, color: "#409C9F", component: AutoWah, category: "Modulation" },
+    { id: 10, name: "Chorus", subscription: false, image: Chorus1, color: "#409C9F", component: Chorus, category: "Modulation" },
+    { id: 11, name: "Flanger", subscription: false, image: Flanger1, color: "#409C9F", component: Flanger, category: "Modulation" },
+    { id: 12, name: "Instant Sidechain", subscription: true, image: InstantSidechain, color: "#409C9F", category: "Compression" },
+    { id: 13, name: "Phaser", subscription: false, image: Phaser1, color: "#409C9F", component: Phaser, category: "Modulation" },
+    { id: 14, name: "Pitch Shifter", subscription: true, image: PitchShifter, color: "#409C9F", category: "Pitch" },
+    { id: 15, name: "Rotary", subscription: false, image: Rotary1, color: "#409C9F", component: Rotary, category: "Modulation" },
+    { id: 16, name: "Rotary Pro", subscription: true, image: RotaryPro, color: "#409C9F", category: "Modulation" },
+    { id: 17, name: "Stereo Chorus", subscription: false, image: StereoChorus1, color: "#409C9F", component: StereoChorus, category: "Modulation" },
+    { id: 18, name: "Tape Wobble", subscription: true, image: TapeWobble1, color: "#409C9F", component: TapeWobble, category: "Modulation" },
 ];
 
 const Loops = () => {
@@ -83,7 +83,7 @@ const Loops = () => {
     const category = useSelector((state) => state.category?.category || []);
 
     const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas } = useSelector((state) => state.effects);
-    console.log(activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas);
+    // console.log(activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas);
 
     useEffect(() => {
         dispatch(getAllCategory());
@@ -101,13 +101,14 @@ const Loops = () => {
             setSearchTerm('');
         } else {
             setSelectedCategory(categoryName);
-            setSearchTerm(categoryName);
+            setSearchTerm('');
         }
     };
 
     const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-        if (selectedCategory && !e.target.value.toLowerCase().includes(selectedCategory.toLowerCase())) {
+        const value = e.target.value;
+        setSearchTerm(value);
+        if (value && selectedCategory) {
             setSelectedCategory(null);
         }
     };
@@ -171,23 +172,35 @@ const Loops = () => {
     // };
 
     const filteredEffects = effects.filter(effect => {
-        let matchesCategory = true;
+
         if (selectedCategory) {
-            matchesCategory = effect.name.toLowerCase().includes(selectedCategory.toLowerCase());
+            const categoryMatches = effect.category?.toLowerCase() === selectedCategory.toLowerCase();
+            if (!categoryMatches) return false;
         }
-        let matchesSearch = true;
-        if (searchTerm) {
-            matchesSearch = effect.name.toLowerCase().includes(searchTerm.toLowerCase());
+        if (searchTerm.trim()) {
+            const searchMatches = effect.name.toLowerCase().includes(searchTerm.toLowerCase()) || effect.category?.toLowerCase().includes(searchTerm.toLowerCase());
+            if (!searchMatches) return false;
         }
-        return matchesCategory && matchesSearch;
+        return true;
     });
 
+    const clearFilters = () => {
+        setSelectedCategory(null);
+        setSearchTerm('');
+    };
+
     return (
-        <>
-            <button className='p-2 bg-white text-black' onClick={() => dispatch(toggleEffectsOffcanvas())}>on/off</button>
+        <>    
+            <div className="relative flex flex-col w-full h-full">
+                <div className="flex-1 w-full">
+                    <button className='p-2 bg-white text-black' onClick={() => dispatch(toggleEffectsOffcanvas())}>on/off</button>
+                </div>
+                <div className={`transition-all duration-300 flex ${showEffectsOffcanvas ? 'w-[75%]' : 'w-full'} self-start`}>
+                    <Effects2 />
+                </div>
             {showEffectsOffcanvas && (
                 <>
-                    <div className="absolute top-0 bg-primary-light dark:bg-primary-dark right-0 max-h-[calc(100vh-82px)] sm:max-h-[calc(100vh-66px)] md:max-h-[calc(100vh-96px)]  z-50 shadow-lg transition-transform duration-300 transform translate-x-0 overflow-auto w-[70%] md600:w-[30%]  2xl:w-[25%] 3xl:w-[23%]">
+                    <div className="transition-all h-full w-[25%] md:w-[30%] xl:w-[25%] 3xl:w-[25%] absolute right-0 top-0 border-l border-gray-700 bg-primary-light dark:bg-primary-dark z-50 shadow-lg duration-300 transform translate-x-0 overflow-auto">
                         <div className=" text-secondary-light dark:text-secondary-dark bg-primary-light dark:bg-primary-dark">
                             <div className=' border-l border-[1px] border-[#1414141A] dark:border-[#FFFFFF1A] bg-transparent'>
                                 <div className='px-[6px] md600:px-[8px] lg:px-[12px] 3xl:px-[16px]'>
@@ -198,19 +211,45 @@ const Loops = () => {
                                         <div className="relative mb-1 md600:mb-2 lg:mb-3 3xl:mb-4">
                                             <div className="relative flex items-center">
                                                 <IoSearch className="absolute left-2 lg:left-3 w-3 h-3 md600:w-4 md600:h-4 lg:h-5 lg:w-5 text-[#888888] dark:text-[#FFFFFF99]" />
-                                                <input type="text" placeholder="Search..." className="w-full bg-primary-light dark:bg-primary-dark border-[1px] border-[#000] dark:border-[#fff] text-[10px] md600:text-[12px] lg:text-[14px] font-[ text-secondary-light dark:text-secondary-dark placeholder-gray-400 rounded-[4px] pl-6 pr-3  md600:pl-8 md600:pr-3 py-1 lg:pl-10 lg:pr-4 lg:py-2 outline- focus:outline-none transition-all duration-200" value={searchTerm} onChange={handleSearchChange} />
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="Search effects..." 
+                                                    className="w-full bg-primary-light dark:bg-primary-dark border-[1px] border-[#000] dark:border-[#fff] text-[10px] md600:text-[12px] lg:text-[14px] font-[ text-secondary-light dark:text-secondary-dark placeholder-gray-400 rounded-[4px] pl-6 pr-3  md600:pl-8 md600:pr-3 py-1 lg:pl-10 lg:pr-4 lg:py-2 outline- focus:outline-none transition-all duration-200" 
+                                                    value={searchTerm} 
+                                                    onChange={handleSearchChange} 
+                                                />
                                             </div>
                                         </div>
                                         <div className='flex flex-wrap gap-1 md600:gap-2 3xl:gap-3'>
                                             {category.map((categoryItem, index) => {
                                                 const isSelected = selectedCategory === categoryItem.name;
                                                 return (
-                                                    <div key={index} className={` bg-[#E5E5E5] dark:bg-[#262529]  w-[67px] md600:w-[64px] md:w-[65px] lg:w-[64px] xl:w-[83px] 2xl:w-[77px] 3xl:w-[70px] rounded-[2px] text-secondary-light dark:text-secondary-dark text-[10px] lg:text-[12px] lg:py-[4px] xl:py-[5px] text-center cursor-pointer hover:bg-[#b8b8b8] dark:hover:bg-gray-600 ${isSelected ? 'border border-[#1414141A] dark:border-[#FFFFFF1A]' : ''}`} onClick={() => handleCategoryClick(categoryItem.name)}>
+                                                    <div 
+                                                        key={index} 
+                                                        className={`bg-[#E5E5E5] dark:bg-[#262529] w-[67px] md600:w-[64px] md:w-[65px] lg:w-[64px] xl:w-[83px] 2xl:w-[77px] 3xl:w-[70px] rounded-[2px] text-secondary-light dark:text-secondary-dark text-[10px] lg:text-[12px] lg:py-[4px] xl:py-[5px] text-center cursor-pointer hover:bg-[#b8b8b8] dark:hover:bg-gray-600 transition-colors duration-200 ${isSelected ? 'border-2 border-blue-500 bg-blue-100 dark:bg-blue-900' : ''}`} 
+                                                        onClick={() => handleCategoryClick(categoryItem.name)}
+                                                    >
                                                         {categoryItem?.name}
                                                     </div>
                                                 )
                                             })}
                                         </div>
+                                        {(selectedCategory || searchTerm) && (
+                                            <div className="mt-2 flex items-center justify-between">
+                                                <p className="text-[10px] md600:text-[12px] text-gray-600 dark:text-gray-400">
+                                                    {selectedCategory && `Category: ${selectedCategory}`}
+                                                    {selectedCategory && searchTerm && " | "}
+                                                    {searchTerm && `Search: "${searchTerm}"`}
+                                                    {` (${filteredEffects.length} effects)`}
+                                                </p>
+                                                <button 
+                                                    onClick={clearFilters}
+                                                    className="text-[10px] md600:text-[12px] text-blue-500 hover:text-blue-700 underline"
+                                                >
+                                                    Clear
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Active Effects Summary */}
@@ -235,55 +274,61 @@ const Loops = () => {
                                         </div>
                                     </div>
                                     <div className="mt-2 sm:mt-3 md600:mt-4 md:mt-3 lg:mt-4 3xl:mt-5">
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 md600:grid-cols-1 md600:gap-3 md:grid-cols-2 md:gap-2 lg:grid-cols-3 lg:gap-2">
-                                            {filteredEffects.map((effect) => (
-                                                <div
-                                                    key={effect.id}
-                                                    className='cursor-pointer active:cursor-grabbing transition-all duration-200'
-                                                    draggable
-                                                    onDragStart={(e) => handleDragStart(e, effect)}
-                                                    onDragEnd={handleDragEnd}
-                                                >
-                                                    {effect?.subscription === true ?
-                                                        <div className="flex py-1 gap-1 md600:gap-2  md:gap-3 lg:gap-2 justify-center md600:py-2 items-center text-white" style={{ backgroundColor: effect?.color || '#8F7CFD' }}>
-                                                            <img src={subscription} alt="" className='w-5 h-5 sm:w-3 sm:h-3 md600:w-4 md600:h-4 md:w-4 md:h-4 3xl:w-5 3xl:h-5' />
-                                                            {effect?.name === "Juicy Distrotion" ? (
-                                                                <p className="text-white text-[16px] sm:text-[14px] md600:text-[12px] md:text-[10px] lg:text-[8px] xl:text-[12px] 2xl:text-[11px] 4xl:text-[11px]">{effect.name}</p>
-                                                            ) : effect?.name === "Instant Sidechain" ? (
-                                                                <p className="text-white text-[16px] sm:text-[13px] md600:text-[12px]  md:text-[9px] lg:text-[7px] xl:text-[11px] 2xl:text-[10px] 3xl:text-[10px]">{effect.name}</p>
-                                                            ) : effect?.name === "Tape Wobble" ? (
-                                                                <p className="text-white text-[16px] sm:text-[14px] md600:text-[12px] md:text-[11px] lg:text-[10px] xl:text-[12px]">{effect.name}</p>
-                                                            ) : (
-                                                                <p className="text-white text-[16px] sm:text-[14px] md600:text-[14px] md:text-[12px] lg:text-[11px] xl:text-[13px] 2xl:text-[12px] 4xl:text-[14px]">{effect.name}</p>
-                                                            )}
+                                        {filteredEffects.length === 0 ? (
+                                            <div className="text-center py-8">
+                                                <p className="text-gray-500 dark:text-gray-400 text-[12px] md600:text-[14px]">No effects found matching your criteria</p>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 md600:grid-cols-1 md600:gap-3 md:grid-cols-2 md:gap-2 lg:grid-cols-3 lg:gap-2">
+                                                {filteredEffects.map((effect) => (
+                                                    <div
+                                                        key={effect.id}
+                                                        className='cursor-pointer active:cursor-grabbing transition-all duration-200'
+                                                        draggable
+                                                        onDragStart={(e) => handleDragStart(e, effect)}
+                                                        onDragEnd={handleDragEnd}
+                                                    >
+                                                        {effect?.subscription === true ?
+                                                            <div className="flex py-1 gap-1 md600:gap-2  md:gap-3 lg:gap-2 justify-center md600:py-2 items-center text-white" style={{ backgroundColor: effect?.color || '#8F7CFD' }}>
+                                                                <img src={subscription} alt="" className='w-5 h-5 sm:w-3 sm:h-3 md600:w-4 md600:h-4 md:w-4 md:h-4 3xl:w-5 3xl:h-5' />
+                                                                {effect?.name === "Juicy Distrotion" ? (
+                                                                    <p className="text-white text-[16px] sm:text-[14px] md600:text-[12px] md:text-[10px] lg:text-[8px] xl:text-[12px] 2xl:text-[11px] 4xl:text-[11px]">{effect.name}</p>
+                                                                ) : effect?.name === "Instant Sidechain" ? (
+                                                                    <p className="text-white text-[16px] sm:text-[13px] md600:text-[12px]  md:text-[9px] lg:text-[7px] xl:text-[11px] 2xl:text-[10px] 3xl:text-[10px]">{effect.name}</p>
+                                                                ) : effect?.name === "Tape Wobble" ? (
+                                                                    <p className="text-white text-[16px] sm:text-[14px] md600:text-[12px] md:text-[11px] lg:text-[10px] xl:text-[12px]">{effect.name}</p>
+                                                                ) : (
+                                                                    <p className="text-white text-[16px] sm:text-[14px] md600:text-[14px] md:text-[12px] lg:text-[11px] xl:text-[13px] 2xl:text-[12px] 4xl:text-[14px]">{effect.name}</p>
+                                                                )}
+                                                            </div>
+                                                            :
+                                                            <div className=" flex gap-1 md600:gap-2 md:gap-3 justify-center py-1 md:py-2 items-center text-white" style={{ backgroundColor: effect?.color || '#8F7CFD' }}>
+                                                                <p className="text-white text-[16px] sm:text-[14px] md600:text-[19px] md:text-[12px] lg:text-[11px] xl:text-[13px] 2xl:text-[12px] 3xl:text-[13px] 4xl:text-[14px]">{effect.name}</p>
+                                                            </div>
+                                                        }
+                                                        <img
+                                                            onClick={(e) => {
+                                                                if (!isDragging && e.target.style.opacity !== '0.5') {
+                                                                    handleAddEffect(effect);
+                                                                    e.target.style.transform = 'scale(0.95)';
+                                                                    setTimeout(() => {
+                                                                        e.target.style.transform = 'scale(1)';
+                                                                    }, 150);
+                                                                }
+                                                            }} src={effect.image} alt={effect.name} className="w-full transition-transform duration-150"
+                                                        />
+                                                        <div className="flex gap-1 justify-center my-2">
+                                                            <button onClick={() => handleEffectPlayPause(effect.id)}
+                                                                className={`flex justify-center p-2 rounded-full items-center transition-all duration-200 ${playingEffectId === effect.id && isPlaying ? 'bg-[#FFFFFF1A] hover:bg-[#FFFFFF33]' : 'bg-[#FFFFFF1A] hover:bg-[#FFFFFF33]'
+                                                                    }`}
+                                                                draggable={false} disabled={isPlaying && playingEffectId !== effect.id} title={`${playingEffectId === effect.id && isPlaying ? 'Stop' : 'Play'} ${effect.name} demo`}>
+                                                                {playingEffectId === effect.id && isPlaying ? <MdOutlinePause className='text-white text-[12px] lg:text-[10px] xl:text-[12px]' /> : <FaPlay className='text-white text-[12px] lg:text-[10px] xl:text-[12px]' />}
+                                                            </button>
                                                         </div>
-                                                        :
-                                                        <div className=" flex gap-1 md600:gap-2 md:gap-3 justify-center py-1 md:py-2 items-center text-white" style={{ backgroundColor: effect?.color || '#8F7CFD' }}>
-                                                            <p className="text-white text-[16px] sm:text-[14px] md600:text-[19px] md:text-[12px] lg:text-[11px] xl:text-[13px] 2xl:text-[12px] 3xl:text-[13px] 4xl:text-[14px]">{effect.name}</p>
-                                                        </div>
-                                                    }
-                                                    <img
-                                                        onClick={(e) => {
-                                                            if (!isDragging && e.target.style.opacity !== '0.5') {
-                                                                handleAddEffect(effect);
-                                                                e.target.style.transform = 'scale(0.95)';
-                                                                setTimeout(() => {
-                                                                    e.target.style.transform = 'scale(1)';
-                                                                }, 150);
-                                                            }
-                                                        }} src={effect.image} alt={effect.name} className="w-full transition-transform duration-150"
-                                                    />
-                                                    <div className="flex gap-1 justify-center my-2">
-                                                        <button onClick={() => handleEffectPlayPause(effect.id)}
-                                                            className={`flex justify-center p-2 rounded-full items-center transition-all duration-200 ${playingEffectId === effect.id && isPlaying ? 'bg-[#FFFFFF1A] hover:bg-[#FFFFFF33]' : 'bg-[#FFFFFF1A] hover:bg-[#FFFFFF33]'
-                                                                }`}
-                                                            draggable={false} disabled={isPlaying && playingEffectId !== effect.id} title={`${playingEffectId === effect.id && isPlaying ? 'Stop' : 'Play'} ${effect.name} demo`}>
-                                                            {playingEffectId === effect.id && isPlaying ? <MdOutlinePause className='text-white text-[12px] lg:text-[10px] xl:text-[12px]' /> : <FaPlay className='text-white text-[12px] lg:text-[10px] xl:text-[12px]' />}
-                                                        </button>
                                                     </div>
-                                                </div>
-                                            ))}
-                                        </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -291,7 +336,8 @@ const Loops = () => {
                     </div>
                 </>
             )}
-            <Effects2 />
+           
+            </div>
         </>
     )
 }
