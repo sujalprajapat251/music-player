@@ -3,9 +3,9 @@ import WaveSurfer from "wavesurfer.js";
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
-import { addTrack, updateTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack } from "../Redux/Slice/studio.slice";
+import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack } from "../Redux/Slice/studio.slice";
 import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM } from "../Redux/Slice/grid.slice";
-import { getGridDivisions, getGridSpacing, snapToGrid, formatTime, getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
+import { getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
 import { IMAGE_URL } from "../Utils/baseUrl";
 import { getNextTrackColor } from "../Utils/colorUtils";
 import magnetIcon from "../Images/magnet.svg";
@@ -35,7 +35,6 @@ const ResizableTrimHandle = ({
   onDragEnd,
   trackDuration,
   trackWidth,
-  trimStart,
   trimEnd,
   gridSpacing = 0.25 // Default to 1/4 beat grid
 }) => {
@@ -129,11 +128,7 @@ const ResizableTrimHandle = ({
           width: "24px",
           height: "100%",
           background: "transparent",
-          // borderRadius: "6px",
-          // border: `2px solid ${isDragging || isHovered ? "#FFFFFF" : "#FF0000"}`,
-          // boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
           transition: isDragging ? "none" : "all 0.2s ease",
-          // transform: isDragging || isHovered ? "scale(1.05)" : "scale(1)",
           position: "relative",
           display: "flex",
           alignItems: "end",
@@ -171,7 +166,6 @@ const AudioClip = ({
   trackId,
   onTrimChange,
   onPositionChange,
-  onRemoveClip,
   onContextMenu,
   onSelect,
   isSelected = false,
@@ -494,9 +488,7 @@ const LoopBar = ({
   loopStart,
   loopEnd,
   onLoopChange,
-  timelineWidthPerSecond,
   gridSpacing = 0.25,
-  currentTime,
   isLoopEnabled = false
 }) => {
   const [isDraggingStart, setIsDraggingStart] = useState(false);
@@ -886,11 +878,6 @@ const Timeline = () => {
 
     try {
       const controller = new AbortController();
-
-      const cleanup = () => {
-        isCancelled = true;
-        controller.abort();
-      };
 
       const response = await fetch(clip.url, {
         signal: controller.signal
@@ -1944,7 +1931,6 @@ const Timeline = () => {
               minWidth: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`,
               position: "relative",
               height: "100vh",
-              // paddingBottom: "100px"
             }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
