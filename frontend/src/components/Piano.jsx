@@ -20,6 +20,7 @@ import music from "../Images/playingsounds.svg";
 import BottomToolbar from './Layout/BottomToolbar';
 import { setRecordingAudio } from '../Redux/Slice/studio.slice';
 import PianoRolls from './PianoRolls';
+import * as Tone from "tone";
 
 
 function polarToCartesian(cx, cy, r, angle) {
@@ -317,10 +318,35 @@ const BasicData = [
     { name: "Am7", image: Am7 }
 ];
 
-const BasicData1 = [
-    { name: "Full Chord" },
-    { name: "On One" },
-];
+const patternCategories = {
+    basic: [
+      { name: "Full Chord", synthType: "fullChord" },
+      { name: "On One", synthType: "onOne" },
+    ],
+    stabs: [
+      { name: "On Air", synthType: "onAir" },
+      { name: "Eight's", synthType: "eights" },
+      { name: "Soul Stabs", synthType: "soulStabs" },
+      { name: "Simple Stabs", synthType: "simpleStabs" },
+      { name: "Latinesque", synthType: "latinesque" },
+      { name: "Moderate Stabs", synthType: "moderateStabs" },
+    ],
+    arpeggiated: [
+      { name: "Layout", synthType: "layout" },
+      { name: "Storytime", synthType: "storytime" },
+      { name: "Rising Arp", synthType: "risingArp" },
+      { name: "Dreamer", synthType: "dreamer" },
+      { name: "Moving Arp", synthType: "movingArp" },
+      { name: "Quick Arp", synthType: "quickArp" },
+      { name: "Simple Stride", synthType: "simpleStride" },
+      { name: "Simple Rain", synthType: "simpleRain" },
+    ],
+    other: [
+      { name: "Simple Slide", synthType: "simpleSlide" },
+      { name: "Simple Player", synthType: "simplePlayer" },
+      { name: "Alternating Stride", synthType: "alternatingStride" },
+    ],
+  };
 
 const Stabs = [
     { name: "On Air" },
@@ -708,6 +734,716 @@ const Pianodemo = ({ onClose }) => {
 
     // ****************** Chords *****************
 
+     // --- STATE MANAGEMENT ---
+  const [isAudioReady, setIsAudioReady] = useState(false);
+  const [isAudioStarted, setIsAudioStarted] = useState(false);
+  const [activeChord, setActiveChord] = useState(null);
+  const [activePatternKey, setActivePatternKey] = useState("basic-0");
+  const [loadingStatus, setLoadingStatus] = useState("Initializing...");
+  const [activeChords, setActiveChords] = useState(-1)
+
+  // --- REFS FOR TONE.JS OBJECTS ---
+  const synths = useRef(null);
+  const effects = useRef(null);
+
+  const chordNotes = {
+    Am: ["A3", "C4", "E4"],
+    Bdim: ["B3", "D4", "F4"], 
+    C: ["C3", "E3", "G3", "C4"],
+    Dm: ["D3", "F3", "A3", "D4"],
+    E: ["E3", "G#3", "B3", "E4"],
+    F: ["F3", "A3", "C4", "F4"],
+    G: ["G3", "B3", "D4", "G4"],
+    Am7: ["A3", "C4", "E4", "G4"],
+  };
+
+  const patternCategories = {
+    basic: [
+      { name: "Full Chord", synthType: "fullChord" },
+      { name: "On One", synthType: "onOne" },
+    ],
+    stabs: [
+      { name: "On Air", synthType: "onAir" },
+      { name: "Eight's", synthType: "eights" },
+      { name: "Soul Stabs", synthType: "soulStabs" },
+      { name: "One and Three", synthType: "delayedStab" },
+      { name: "Simple Stabs", synthType: "simpleStabs" },
+      { name: "Latinesque", synthType: "latinesque" },
+      { name: "All Four", synthType: "layeredStab"},
+      { name: "Moderate Stabs", synthType: "moderateStabs" },
+    ],
+    arpeggiated: [
+      { name: "Layout", synthType: "layout" },
+      { name: "Storytime", synthType: "storytime" },
+      { name: "Rising Arp", synthType: "risingArp" },
+      { name: "Dreamer", synthType: "dreamer" },
+      { name: "Moving Arp", synthType: "movingArp" },
+      { name: "Quick Arp", synthType: "quickArp" },
+      { name: "Simple Stride", synthType: "simpleStride" },
+      { name: "Simple Rain", synthType: "simpleRain" },
+    ],
+    other: [
+      { name: "Simple Slide", synthType: "simpleSlide" },
+      { name: "Simple Player", synthType: "simplePlayer" },
+      { name: "Alternating Stride", synthType: "alternatingStride" },
+    ],
+  };
+
+  useEffect(() => {
+    const initializeAudio = async () => {
+      try {
+        setLoadingStatus("Creating audio destination...");
+        
+        // Set master volume
+        Tone.Destination.volume.value = -3;
+        
+        setLoadingStatus("Creating effects chain...");
+        
+        // Enhanced effects chain for professional sound
+        const mainGain = new Tone.Gain(0.8).toDestination();
+        
+        const compressor = new Tone.Compressor({
+          threshold: -12,
+          ratio: 3,
+          attack: 0.003,
+          release: 0.1
+        }).connect(mainGain);
+        
+        const reverb = new Tone.Reverb({
+          decay: 2.0,
+          wet: 0.25
+        }).connect(mainGain);
+        
+        const delay = new Tone.FeedbackDelay({
+          delayTime: "8n",
+          feedback: 0.18,
+          wet: 0.12
+        }).connect(mainGain);
+
+        // Additional chorus effect for warmth
+        const chorus = new Tone.Chorus({
+          frequency: 0.5,
+          delayTime: 3.5,
+          depth: 0.7,
+          wet: 0.15
+        }).connect(mainGain);
+        
+        effects.current = { 
+          mainGain, 
+          compressor, 
+          reverb, 
+          delay,
+          chorus 
+        };
+
+        setLoadingStatus("Creating professional synthesizers...");
+
+        // PROFESSIONAL SYNTH COLLECTION - ALL PROPERLY DEFINED
+        
+        // === BASIC SOUNDS ===
+        
+        // 1. Acoustic Piano (Rich harmonics)
+        const acousticPiano = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { 
+            type: "triangle",
+            harmonicity: 1.2
+          },
+          envelope: { 
+            attack: 0.02, 
+            decay: 0.4, 
+            sustain: 0.6, 
+            release: 1.8 
+          },
+          volume: -6
+        }).connect(compressor);
+
+        // 2. Electric Piano (Classic Fender Rhodes style)
+        const electricPiano = new Tone.PolySynth(Tone.FMSynth, {
+          harmonicity: 1.2,
+          modulationIndex: 2.5,
+          oscillator: { type: "sine" },
+          envelope: { 
+            attack: 0.008, 
+            decay: 0.8, 
+            sustain: 0.4, 
+            release: 1.5 
+          },
+          modulation: { type: "square" },
+          modulationEnvelope: { 
+            attack: 0.02, 
+            decay: 0.4, 
+            sustain: 0.12, 
+            release: 1.0 
+          },
+          volume: -5
+        }).connect(chorus);
+
+        // === STAB SOUNDS ===
+
+        // 3. Bright Stab (Sharp and cutting)
+        const brightStab = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { 
+            type: "sawtooth",
+          },
+          envelope: { 
+            attack: 0.001, 
+            decay: 0.25, 
+            sustain: 0.08, 
+            release: 0.4 
+          },
+          volume: -8
+        }).connect(compressor);
+
+        // 4. Soul Stab (Warm and punchy)
+        const soulStab = new Tone.PolySynth(Tone.AMSynth, {
+          harmonicity: 1.8,
+          oscillator: { type: "sine" },
+          envelope: { 
+            attack: 0.01, 
+            decay: 0.4, 
+            sustain: 0.25, 
+            release: 0.9 
+          },
+          modulation: { type: "sine" },
+          modulationEnvelope: { 
+            attack: 0.02, 
+            decay: 0.3, 
+            sustain: 0.18, 
+            release: 0.7 
+          },
+          volume: -6
+        }).connect(compressor);
+
+        // 5. Pluck Synth (Quick attack)
+        const pluckSynth = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: "triangle" },
+          envelope: { 
+            attack: 0.001, 
+            decay: 0.12, 
+            sustain: 0.02, 
+            release: 0.25 
+          },
+          volume: -6
+        }).connect(delay);
+
+        // 6. Sharp Stab (Very percussive)
+        const sharpStab = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: "square" },
+          envelope: { 
+            attack: 0.001, 
+            decay: 0.18, 
+            sustain: 0.05, 
+            release: 0.3 
+          },
+          volume: -9
+        }).connect(compressor);
+
+        // 7. Latin Synth (Percussive with filter sweep)
+        const latinSynth = new Tone.PolySynth(Tone.FMSynth, {
+          harmonicity: 2.5,
+          modulationIndex: 6,
+          oscillator: { type: "sine" },
+          envelope: { 
+            attack: 0.005, 
+            decay: 0.3, 
+            sustain: 0.15, 
+            release: 0.6 
+          },
+          modulation: { type: "sawtooth" },
+          modulationEnvelope: { 
+            attack: 0.01, 
+            decay: 0.25, 
+            sustain: 0.08, 
+            release: 0.5 
+          },
+          volume: -7
+        }).connect(delay);
+
+        // 8. Moderate Stab (Balanced attack)
+        const moderateStab = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { 
+            type: "sawtooth"
+          },
+          envelope: { 
+            attack: 0.01, 
+            decay: 0.3, 
+            sustain: 0.2, 
+            release: 0.5 
+          },
+          volume: -7
+        }).connect(compressor);
+
+        // === ARPEGGIATED SOUNDS ===
+
+        // 9. Bell Synth (Metallic and shimmering)
+        const bellSynth = new Tone.PolySynth(Tone.FMSynth, {
+          harmonicity: 3.2,
+          modulationIndex: 18,
+          oscillator: { type: "sine" },
+          envelope: { 
+            attack: 0.001, 
+            decay: 1.2, 
+            sustain: 0.08, 
+            release: 2.5 
+          },
+          modulation: { type: "sine" },
+          modulationEnvelope: { 
+            attack: 0.001, 
+            decay: 0.6, 
+            sustain: 0.02, 
+            release: 1.8 
+          },
+          volume: -10
+        }).connect(reverb);
+
+        // 10. Crystal Synth (Bright and sparkly)
+        const crystalSynth = new Tone.PolySynth(Tone.FMSynth, {
+          harmonicity: 8.5,
+          modulationIndex: 3,
+          oscillator: { type: "sine" },
+          envelope: { 
+            attack: 0.001, 
+            decay: 0.9, 
+            sustain: 0.15, 
+            release: 1.8 
+          },
+          modulation: { type: "sine" },
+          modulationEnvelope: { 
+            attack: 0.001, 
+            decay: 0.4, 
+            sustain: 0.08, 
+            release: 1.2 
+          },
+          volume: -8
+        }).connect(delay);
+
+        // 11. Dreamy Pad (Soft and atmospheric)
+        const dreamyPad = new Tone.PolySynth(Tone.AMSynth, {
+          harmonicity: 2.2,
+          oscillator: { type: "sine" },
+          envelope: { 
+            attack: 0.8, 
+            decay: 1.0, 
+            sustain: 0.7, 
+            release: 3.0 
+          },
+          modulation: { type: "sine" },
+          modulationEnvelope: { 
+            attack: 0.5, 
+            decay: 0.7, 
+            sustain: 0.4, 
+            release: 2.0 
+          },
+          volume: -12
+        }).connect(reverb);
+
+        // 12. String Pad (Warm strings)
+        const stringPad = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { 
+            type: "sawtooth"
+          },
+          envelope: { 
+            attack: 1.2, 
+            decay: 0.6, 
+            sustain: 0.8, 
+            release: 3.5 
+          },
+          volume: -10
+        }).connect(reverb);
+
+        // 13. Moving Arp (Quick and bouncy)
+        const movingArp = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: "triangle" },
+          envelope: { 
+            attack: 0.005, 
+            decay: 0.15, 
+            sustain: 0.1, 
+            release: 0.3 
+          },
+          volume: -6
+        }).connect(delay);
+
+        // 14. Quick Arp (Very fast attack)
+        const quickArp = new Tone.PolySynth(Tone.FMSynth, {
+          harmonicity: 4,
+          modulationIndex: 8,
+          oscillator: { type: "sine" },
+          envelope: { 
+            attack: 0.001, 
+            decay: 0.08, 
+            sustain: 0.05, 
+            release: 0.2 
+          },
+          modulation: { type: "square" },
+          modulationEnvelope: { 
+            attack: 0.001, 
+            decay: 0.05, 
+            sustain: 0.02, 
+            release: 0.15 
+          },
+          volume: -7
+        }).connect(delay);
+
+        // 15. Rain Synth (Soft droplets)
+        const rainSynth = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: "sine" },
+          envelope: { 
+            attack: 0.001, 
+            decay: 0.4, 
+            sustain: 0.05, 
+            release: 0.8 
+          },
+          volume: -9
+        }).connect(reverb);
+
+        // === OTHER SOUNDS ===
+
+        // 16. Bass Synth (Deep and powerful)
+        const bassSynth = new Tone.MonoSynth({
+          oscillator: { type: "sawtooth" },
+          envelope: { 
+            attack: 0.01, 
+            decay: 0.35, 
+            sustain: 0.7, 
+            release: 1.2 
+          },
+          filterEnvelope: { 
+            attack: 0.02, 
+            decay: 0.25, 
+            sustain: 0.4, 
+            release: 1.0, 
+            baseFrequency: 180, 
+            octaves: 5 
+          },
+          volume: -1
+        }).connect(compressor);
+
+        // 17. Organ Synth (Classic drawbar organ)
+        const organSynth = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: "square" },
+          envelope: { 
+            attack: 0.008, 
+            decay: 0.1, 
+            sustain: 0.85, 
+            release: 0.4 
+          },
+          volume: -6
+        }).connect(chorus);
+
+        // 18. Slide Synth (Smooth portamento)
+        const slideSynth = new Tone.PolySynth(Tone.AMSynth, {
+          harmonicity: 1.5,
+          oscillator: { type: "sine" },
+          envelope: { 
+            attack: 0.05, 
+            decay: 0.4, 
+            sustain: 0.6, 
+            release: 1.0 
+          },
+          modulation: { type: "sine" },
+          modulationEnvelope: { 
+            attack: 0.1, 
+            decay: 0.3, 
+            sustain: 0.4, 
+            release: 0.8 
+          },
+          volume: -6
+        }).connect(chorus);
+
+        // 19. Delayed Stab (Sharp & Rhythmic)
+// 19. Delayed Stab (Sharp, Metallic & Rhythmic)
+const delayedStab = new Tone.PolySynth(Tone.FMSynth, {
+    harmonicity: 3.5,
+    modulationIndex: 15,
+    oscillator: { type: "sine" },
+    envelope: {
+      attack: 0.001, // Ekdam fast attack
+      decay: 0.1,    // Khubaj jhadpi decay
+      sustain: 0,    // Sustain nathi, jethi "pluck" jevo avaj aave
+      release: 0.1   // Short release
+    },
+    modulation: { type: "square" },
+    modulationEnvelope: {
+      attack: 0.001,
+      decay: 0.05,
+      sustain: 0,
+      release: 0.05
+    },
+    volume: -8
+}).connect(delay); // Main focus - aa avaj delay mate j che
+          
+        // 20. Layered Stab (All Four)
+// 20. Layered Stab (Soft, Wide & Atmospheric)
+const layeredStab = new Tone.PolySynth(Tone.DuoSynth, {
+    voice0: {
+      oscillator: { type: "sawtooth" },
+      envelope: {
+        attack: 0.4,   // Dhimo attack, jethi avaj dhire thi sharu thay
+        decay: 0.3,
+        sustain: 0.5,
+        release: 1.5   // Lambo release, jethi avaj dhire dhire band thay
+      }
+    },
+    voice1: {
+      oscillator: { type: "sine" }, // Sawtooth ni jagyae Sine wave for softness
+      detune: -10, // Thodu detune karvathi avaj vadhare "rich" lage
+      envelope: {
+        attack: 0.5,  // Thodo vadhare dhimo attack
+        decay: 0.3,
+        sustain: 0.5,
+        release: 1.8  // Vadhare lambo release
+      }
+    },
+    harmonicity: 1.0,
+    vibratoAmount: 0.2,
+    vibratoRate: 2, // Dhimi vibrato
+    volume: -9
+}).chain(chorus, reverb); // Main focus - chorus ane reverb thi mota space no anubhav
+          
+
+        // Store all synths with clear mapping
+        synths.current = {
+          // Basic patterns
+          acousticPiano,
+          electricPiano,
+          
+          // Stab patterns  
+          brightStab,
+          soulStab,
+          pluckSynth,
+          delayedStab,
+          sharpStab,
+          latinSynth,
+          layeredStab,
+          moderateStab,
+          
+          // Arpeggiated patterns
+          bellSynth,
+          crystalSynth,
+          dreamyPad,
+          stringPad,
+          movingArp,
+          quickArp,
+          rainSynth,
+          
+          // Other patterns
+          bassSynth,
+          organSynth,
+          slideSynth,
+        };
+
+        console.log("✅ Created", Object.keys(synths.current).length, "professional synths");
+
+        Tone.Transport.bpm.value = 120;
+        
+        setLoadingStatus("Ready!");
+        setIsAudioReady(true);
+
+      } catch (error) {
+        console.error("❌ Audio initialization error:", error);
+        setLoadingStatus("Error loading - using fallback");
+        setIsAudioReady(true);
+      }
+    };
+
+    initializeAudio();
+
+    return () => {
+      if (synths.current) {
+        Object.values(synths.current).forEach((s) => s?.dispose());
+      }
+      if (effects.current) {
+        Object.values(effects.current).forEach((e) => e?.dispose());
+      }
+    };
+  }, []);
+
+  const startAudioContext = async () => {
+    if (Tone.context.state !== "running") {
+      await Tone.start();
+      setIsAudioStarted(true);
+      console.log("🔊 Audio context started");
+    }
+  };
+
+  const getCurrentSynthType = () => {
+    if (!activePatternKey) return "fullChord";
+    const [category, indexStr] = activePatternKey.split("-");
+    const pattern = patternCategories[category]?.[parseInt(indexStr, 10)];
+    return pattern?.synthType || "fullChord";
+  };
+
+  const stopAllSounds = () => {
+    if (synths.current) {
+      Object.values(synths.current).forEach((synth) => {
+        try {
+          if (synth?.releaseAll) {
+            synth.releaseAll();
+          }
+        } catch (e) {
+          console.warn("Error stopping synth:", e);
+        }
+      });
+    }
+    setActiveChord(null);
+  };
+
+  const handleChordClick = async (chordName) => {
+    if (!isAudioReady) return;
+    await startAudioContext();
+    setActiveChord(chordName);
+
+    // Stop all currently playing sounds
+    stopAllSounds();
+
+    const synthType = getCurrentSynthType();
+    const notes = chordNotes[chordName];
+    const now = Tone.now();
+
+    // ENHANCED SYNTH MAPPING - Each pattern gets unique professional sound
+    const synthMap = {
+      // Basic - Rich piano sounds
+      fullChord: "acousticPiano",     // Rich acoustic piano
+      onOne: "electricPiano",         // Classic electric piano
+      
+      // Stabs - Professional stab sounds
+      onAir: "brightStab",           // Sharp sawtooth stab
+      eights: "pluckSynth",          // Quick plucked sound
+      soulStabs: "soulStab",         // Warm soul stab
+      oneAndThree: "delayedStab",       // ← maps to "One and Three"
+      simpleStabs: "sharpStab",      // Percussive stab
+      latinesque: "latinSynth",      // Latin-style synth
+      moderateStabs: "moderateStab", // Balanced stab
+      allFour: "layeredStab",  
+      oneAndThree: "delayedStab",       // ← maps to "One and Three"
+      
+      // Arpeggiated - Varied textures with character
+      layout: "crystalSynth",        // Bright crystal sound
+      storytime: "dreamyPad",        // Soft dreamy pad
+      risingArp: "bellSynth",        // Metallic bell
+      dreamer: "stringPad",          // Warm string pad
+      movingArp: "movingArp",        // Bouncy arp
+      quickArp: "quickArp",          // Fast attack arp
+      simpleStride: "electricPiano", // Classic stride piano
+      simpleRain: "rainSynth",       // Soft rain drops
+      
+      // Other - Special character sounds
+      simpleSlide: "slideSynth",     // Smooth slide synth
+      simplePlayer: "organSynth",    // Classic organ
+      alternatingStride: "bassSynth", // Deep bass
+    };
+
+    const synthKey = synthMap[synthType] || "acousticPiano";
+    const selectedSynth = synths.current?.[synthKey];
+
+    console.log(`🎵 Playing ${synthType} -> ${synthKey}`);
+
+    if (selectedSynth && notes) {
+      try {
+        // Special playing patterns for different types
+        if (synthType === "alternatingStride") {
+          // Bass: Play notes in sequence
+          notes.forEach((note, i) => {
+            selectedSynth.triggerAttackRelease(note, "4n", now + i * 0.12);
+          });
+        } else if (synthType === "simpleSlide") {
+          // Slide: Smooth note transitions
+          notes.forEach((note, i) => {
+            selectedSynth.triggerAttackRelease(note, "8n", now + i * 0.08);
+          });
+        } else if (synthType === "risingArp") {
+          // Rising arp: Notes go up in sequence
+          notes.forEach((note, i) => {
+            selectedSynth.triggerAttackRelease(note, "8n", now + i * 0.1);
+          });
+        } else if (synthType === "simpleRain") {
+          // Rain: Random-ish timing
+          notes.forEach((note, i) => {
+            const delay = i * 0.15 + (Math.random() * 0.05);
+            selectedSynth.triggerAttackRelease(note, "4n", now + delay);
+          });
+        } else if (synthType === "quickArp" || synthType === "movingArp") {
+          // Quick arps: Fast succession
+          notes.forEach((note, i) => {
+            selectedSynth.triggerAttackRelease(note, "16n", now + i * 0.06);
+          });
+        } else if (synthType === "eights") {
+          // Eighth note pattern
+          notes.forEach((note, i) => {
+            selectedSynth.triggerAttackRelease(note, "8n", now + i * 0.125);
+          });
+        } else if (synthType === "layout") {
+          // Layout: Spread notes across time
+          notes.forEach((note, i) => {
+            selectedSynth.triggerAttackRelease(note, "4n", now + i * 0.2);
+          });
+        } else if (synthType === "storytime") {
+          // Dreamy storytelling pattern
+          notes.forEach((note, i) => {
+            selectedSynth.triggerAttackRelease(note, "2n", now + i * 0.3);
+          });
+        } else {
+          // Standard chord
+          selectedSynth.triggerAttackRelease(notes, "2n", now);
+        }
+        
+        console.log(`✅ Successfully played ${synthKey}`);
+        
+      } catch (error) {
+        console.error(`❌ Error playing ${synthKey}:`, error);
+        // Fallback to acoustic piano
+        if (synths.current.acousticPiano && synthKey !== "acousticPiano") {
+          console.log("🔄 Falling back to acoustic piano");
+          synths.current.acousticPiano.triggerAttackRelease(notes, "2n", now);
+        }
+      }
+    } else {
+      console.warn(`⚠️ Synth ${synthKey} not available`);
+      // Fallback to acoustic piano
+      if (synths.current?.acousticPiano) {
+        synths.current.acousticPiano.triggerAttackRelease(notes, "2n", now);
+      }
+    }
+  };
+
+  const getPatternDisplayName = () => {
+    if (!activePatternKey) return null;
+    const [category, indexStr] = activePatternKey.split("-");
+    return patternCategories[category]?.[parseInt(indexStr, 10)]?.name || null;
+  };
+
+  const handlePatternSelect = (key) => {    
+    setActivePatternKey((prev) => (prev === key ? null : key));
+    setActiveChord(null);
+  };
+
+  // Test all synths function
+  const testAllSynths = async () => {
+    if (!isAudioReady) return;
+    await startAudioContext();
+    
+    console.log("🧪 Testing all professional synths...");
+    const testNotes = ["C4", "E4", "G4"];
+    
+    Object.entries(synths.current).forEach(([name, synth], index) => {
+      setTimeout(() => {
+        try {
+          if (synth && synth.triggerAttackRelease) {
+            if (name === "bassSynth") {
+              synth.triggerAttackRelease("C3", "4n", Tone.now());
+            } else {
+              synth.triggerAttackRelease(testNotes, "4n", Tone.now());
+            }
+            console.log(`✅ ${name} - Professional sound working`);
+          } else {
+            console.log(`❌ ${name} - Not available`);
+          }
+        } catch (e) {
+          console.log(`❌ ${name} - Error:`, e);
+        }
+      }, index * 800);
+    });
+  };
 
 
     return (
@@ -934,11 +1670,13 @@ const Pianodemo = ({ onClose }) => {
                                                         <HiMiniChevronUpDown className='text-[#FFFFFF99] text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]' />
                                                     </div>
                                                     <div className="grid grid-cols-3 gap-1 md600:gap-2 mx-1 mt-1 md:grid-cols-4 md:gap-3 md:mx-2 md:mt-2 lg:gap-4 lg:mx-3 lg:mt-3">
-                                                        {BasicData.map((item, index) => (
-                                                            <div key={index} className="bg-[#1F1F1F] text-white w-[90px] md600:w-[110px] p-1 md600:p-2 md:w-[120px] lg:w-[130px]">
-                                                                <p className='text-white text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px] text-center mb-1'>{item.name}</p>
+                                                        {Object.keys(chordNotes).map((name , index) => (
+                                                            <div key={name}
+                                                            onClick={() => {handleChordClick(name); setActiveChords(index)}}
+                                                            disabled={!isAudioReady} className={`bg-[#1F1F1F] cursor-pointer text-white w-[90px] md600:w-[110px] p-1 md600:p-2 md:w-[120px] lg:w-[130px] ${activeChords === index  ? 'border-[white] border-[1px]' : 'border-[#1F1F1F] border-[1px]'}`}>
+                                                                <p className='text-white text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px] text-center mb-1'>{name}</p>
                                                                 <div className="flex justify-between">
-                                                                    <img src={item.image} alt="" className="w-2 h-2 md600:w-3 md600:h-3 lg:w-4 lg:h-4" />
+                                                                    <img src={BasicData[index]?.image} alt="" className="w-2 h-2 md600:w-3 md600:h-3 lg:w-4 lg:h-4" />
                                                                     <FaPlus className='text-[10px] md600:text-[12px] lg:text-[16px] text-[#FFFFFF99]' />
                                                                 </div>
                                                             </div>
@@ -954,21 +1692,39 @@ const Pianodemo = ({ onClose }) => {
                                                         <p className='text-white text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]'>Playing Sounds</p>
                                                     </div>
                                                     <div className="flex">
-                                                        <div className='bg-[#1F1F1F] ms-1 mt-1 p-1 w-[110px] h-[120px] md600:w-[100px] md600:h-[155px] md:ms-2 md:mt-2 md:p-2 md:w-[110px] md:h-[180px] lg:ms-3 lg:w-[116px] lg:h-[150px]'>
-                                                            <p className='text-[#FFFFFF99] text-[10px] md600:text-[12px] md:text-[14px] '>Basic</p>
-
-                                                            {BasicData1.map((item, index) => (
-                                                                <div key={index} className="">
-                                                                    <button
-                                                                        className={`${isButtonSelected('basic', index) ? "bg-white text-black" : "text-[#FFFFFF] bg-transparent"} justify-center  w-[100px] mt-1  h-[25px] lg:w-[100px] lg:h-[30px]  md:mt-2 text-[8px] md600:text-[10px] rounded-md border border-[#FFFFFF1A]`}
-                                                                        onClick={() => toggleButton('basic', index)}
-                                                                    >
-                                                                        {item.name}
-                                                                    </button>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                        <div className='bg-[#1F1F1F] mx-1 mt-1 p-1 w-[315px] h-[120px] md600:w-[170px] md600:h-[155px] md:mx-2 lg:mx-3 md:mt-2 md:p-2 md:w-[200px] md:h-[180px] lg:w-[340px] lg:h-[150px]'>
+                                                        {Object.entries(patternCategories).map(([category, patterns], index)=>{
+                                                            console.log("Hello HI" , index);
+                                                            
+                                                            return (
+                                                                <div className={` ${index === 0 || index === 3 ? 'bg-[#1F1F1F] ms-1 mt-1 p-1 w-[110px] h-[120px] md600:w-[100px] md600:h-[155px] md:ms-2 md:mt-2 md:p-2 md:w-[110px] md:h-[180px] lg:ms-3 lg:w-[116px] lg:h-[150px]' : ''} ${index === 1 || index === 2 ? 'bg-[#1F1F1F] mx-1 mt-1 p-1 w-[315px] h-[120px] md600:w-[170px] md600:h-[155px] md:mx-2 lg:mx-3 md:mt-2 md:p-2 md:w-[200px] md:h-[180px] lg:w-[340px] lg:h-[150px]' : ''}`}>
+                                                                   <p className='text-[#FFFFFF99] text-[10px] md600:text-[12px] md:text-[14px] '>{category}</p>
+                                                                   <div className={`${index === 1 || index === 2 ? 'grid grid-cols-3 pt-1 md600:grid-cols-2  md:gap-1 lg:grid-cols-3 lg:gap-0  md:pt-1' : ''}`}>
+                                                                      {patterns.map((item, index) =>{
+                                                                           const key = `${category}-${index}`;
+                                                                           const isSelected = activePatternKey === key;
+                                                                          return (
+                                                                            <div key={index} className="">
+                                                                               <button
+                                                                                 key={key}
+                                                                                 onClick={() => handlePatternSelect(key)}
+                                                                                 disabled={!isAudioReady}
+                                                                                //    className={`${isButtonSelected('basic', index) ? "bg-white text-black" : "text-[#FFFFFF] bg-transparent"} justify-center  w-[100px] mt-1  h-[25px] lg:w-[100px] lg:h-[30px]  md:mt-2 text-[8px] md600:text-[10px] rounded-md border border-[#FFFFFF1A]`}
+                                                                                className={`${
+                                                                                    isSelected
+                                                                                      ? "bg-white text-black"
+                                                                                      : "text-[#FFFFFF] bg-transparent"} border-[#FFFFFF1A] justify-center  w-[100px] mt-1  h-[25px] lg:w-[100px] lg:h-[30px]  md:mt-2 text-[8px] md600:text-[10px] rounded-md border "}`}
+                                                                                 //  onClick={() => toggleButton('basic', index)}
+                                                                               >
+                                                                                   {item.name}
+                                                                               </button>
+                                                                            </div>
+                                                                          )
+                                                                      })}
+                                                                   </div>
+                                                                 </div>
+                                                            )
+                                                        })}
+                                                        {/* <div className='bg-[#1F1F1F] mx-1 mt-1 p-1 w-[315px] h-[120px] md600:w-[170px] md600:h-[155px] md:mx-2 lg:mx-3 md:mt-2 md:p-2 md:w-[200px] md:h-[180px] lg:w-[340px] lg:h-[150px]'>
                                                             <p className='text-[#FFFFFF99] text-[8px] sm:text-[10px] md600:text-[12px] md:text-[14px]'>Stabs</p>
                                                             <div className="grid grid-cols-3 pt-1 md600:grid-cols-2 gap-1 md:gap-2 lg:grid-cols-3 lg:gap-3  md:pt-2">
                                                                 {Stabs.map((item, index) => (
@@ -1010,7 +1766,7 @@ const Pianodemo = ({ onClose }) => {
                                                                     </button>
                                                                 </div>
                                                             ))}
-                                                        </div>
+                                                        </div> */}
                                                     </div>
                                                 </div>
                                             </div>
