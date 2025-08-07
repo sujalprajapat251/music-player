@@ -1203,7 +1203,7 @@ const TimelineDemo = () => {
               ))}
 
               {/* Tracks */}
-              {tracks.map((track, index) => (
+              {/* {tracks[0]?.audioClips.map((track, index) => (
                 <div
                   key={track.id}
                   style={{
@@ -1233,7 +1233,41 @@ const TimelineDemo = () => {
                     gridSpacing={getGridSpacing(selectedGrid)} // Pass grid spacing to the track
                   />
                 </div>
-              ))}
+              ))} */}
+
+              {tracks.map((trackGroup, trackGroupIndex) =>
+                trackGroup?.audioClips?.map((track, clipIndex) => (
+                  <div
+                    key={`${trackGroup.id || trackGroupIndex}-${track.id}`}
+                    style={{
+                      position: "absolute",
+                      top: `${trackGroupIndex * trackHeight}px`,
+                      left: 0,
+                      width: "100%",  
+                      height: `${trackHeight}px`,
+                      zIndex: 0,
+                    }}
+                  >
+                    <TimelineTrack
+                      key={track.id}
+                      url={track.url}
+                      color={track.color}
+                      height={trackHeight}
+                      trackId={track.id}
+                      onReady={(ws) => handleReady(ws, track.url, track)}
+                      startTime={track.startTime}
+                      duration={track.duration}
+                      trimStart={track.trimStart || 0}
+                      trimEnd={track.trimEnd || track.duration}
+                      onTrimChange={(trimData) => handleTrimChange(track.id, trimData)}
+                      onPositionChange={handleTrackPositionChange}
+                      timelineWidthPerSecond={timelineWidthPerSecond}
+                      frozen={track.frozen}
+                      gridSpacing={getGridSpacing(selectedGrid)}
+                    />
+                  </div>
+                ))
+              )}
             </div>
 
             {/* Playhead */}

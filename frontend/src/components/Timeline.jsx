@@ -3,7 +3,13 @@ import WaveSurfer from "wavesurfer.js";
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
+<<<<<<< Updated upstream
 import { addTrack, updateTrack, setSoloTrackId } from "../Redux/Slice/studio.slice";
+=======
+import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateTrackAudio } from "../Redux/Slice/studio.slice";
+import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM } from "../Redux/Slice/grid.slice";
+import { getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
+>>>>>>> Stashed changes
 import { IMAGE_URL } from "../Utils/baseUrl";
 import magnetIcon from "../Images/magnet.svg";
 import settingIcon from "../Images/setting.svg";
@@ -16,6 +22,15 @@ import { Rnd } from "react-rnd";
 import rightSize from '../Images/right-size.svg'
 import LeftSize from '../Images/left-size.svg'
 import WaveMenu from "./WaveMenu";
+<<<<<<< Updated upstream
+=======
+import MySection from "./MySection";
+import TimelineActionBoxes from "./TimelineActionBoxes";
+import AddNewTrackModel from "./AddNewTrackModel";
+import Piano from "./Piano";
+import WavEncoder from 'wav-encoder';
+import Pianodemo from "./Piano";
+>>>>>>> Stashed changes
 
 // Custom Resizable Trim Handle Component
 const ResizableTrimHandle = ({ 
@@ -624,6 +639,7 @@ const Timeline = () => {
   const sidebarScrollOffset = useSelector((state) => state.studio?.sidebarScrollOffset || 0);
   const soloTrackId = useSelector((state) => state.studio.soloTrackId);
   const timelineWidthPerSecond = 100;
+<<<<<<< Updated upstream
 // Mute functionality
  
 useEffect(() => {
@@ -637,6 +653,104 @@ useEffect(() => {
     }
   });
 }, [tracks, players, soloTrackId]);
+=======
+
+  // Get audio state from Redux
+  const isPlaying = useSelector((state) => state.studio?.isPlaying || false);
+  const currentTime = useSelector((state) => state.studio?.currentTime || 0);
+  const audioDuration = useSelector((state) => state.studio?.audioDuration || 150);
+
+  // Grid settings from Redux
+  const { selectedGrid, selectedTime, selectedRuler } = useSelector(selectGridSettings);
+
+  // Add masterVolume selector after other selectors
+  const masterVolume = useSelector((state) => state.studio?.masterVolume ?? 80);
+
+  const pianoRecording = useSelector((state) => state.studio.pianoRecord);
+  const currentTrackId = useSelector((state) => state.studio.currentTrackId);
+  const lastProcessedRef = useRef(null);
+
+  useEffect(() => {
+    if (pianoRecording instanceof Blob && currentTrackId && pianoRecording !== lastProcessedRef.current) {
+      lastProcessedRef.current = pianoRecording;
+      getAudioDuration(pianoRecording).then((duration) => {
+        // Ensure the blob is fully usable
+        const url = URL.createObjectURL(pianoRecording);
+
+        const audio = new Audio();
+        audio.src = url;
+
+        function generateRandomHexColor() {
+          let randomNumber = Math.floor(Math.random() * 16777215);
+          let hexColor = randomNumber.toString(16);
+          hexColor = hexColor.padStart(6, '0');
+          return `#${hexColor}`;
+        }
+
+        audio.oncanplaythrough = () => {
+          const newColor = generateRandomHexColor();
+
+          dispatch(updateTrackAudio({
+            trackId: currentTrackId,
+            audioData: {
+              url,
+              duration,
+              color: newColor,
+              trimStart: 0,
+              trimEnd: duration,
+              name: "Piano Recording",
+              frozen: false,
+            },
+          }));
+
+          console.log("Track updated with recording:", { url, duration });
+        };
+
+        audio.onerror = (err) => {
+          console.error("Audio load error:", err);
+        };
+      }).catch((err) => {
+        console.error("Failed to decode audio:", err);
+      });
+    }
+  }, [pianoRecording, currentTrackId]);
+
+
+  const getAudioDuration = async (blob) => {
+    const arrayBuffer = await blob.arrayBuffer();
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    return audioBuffer.duration;
+  };
+
+  const getTrackType = useSelector((state) => state.studio.newtrackType);
+
+  // Mute functionality
+
+  useEffect(() => {
+    players.forEach(playerObj => {
+      const track = tracks.find(t => t.id === playerObj.trackId);
+      const isMuted = soloTrackId
+        ? soloTrackId !== track.id
+        : track.muted;
+      if (playerObj.player && track) {
+        playerObj.player.volume.value = isMuted ? -Infinity : 0;
+      }
+    });
+  }, [tracks, players, soloTrackId]);
+
+  // After the mute functionality useEffect (line ~758), add a new useEffect for masterVolume
+  useEffect(() => {
+    // Convert masterVolume (0-100) to dB: 0 = -60dB, 100 = 0dB
+    const volumeDb = (masterVolume - 100) * 0.6;
+    players.forEach(playerObj => {
+      if (playerObj.player && typeof playerObj.player.volume === 'object') {
+        playerObj.player.volume.value = volumeDb;
+      }
+    });
+  }, [masterVolume, players]);
+
+>>>>>>> Stashed changes
   // Loop change handler
   const handleLoopChange = useCallback((newStart, newEnd) => {
     const gridSpacing = getGridSpacing(selectedGrid);
@@ -1342,6 +1456,43 @@ useEffect(() => {
     const track = tracks.find(t => t.id === trackId);
     if (!track) return;
 
+<<<<<<< Updated upstream
+=======
+    // Always find the clip if clipId is provided
+    const clip = clipId ? track.audioClips?.find(c => c.id === clipId) : undefined;
+
+    // Clip-level actions (cut/copy/delete always operate on the selected clip)
+    if (clipId && clip) {
+      switch (action) {
+        case 'cut':
+          setClipboard({ type: 'clip', clip: { ...clip }, trackId });
+          dispatch(removeAudioClip({ trackId, clipId }));
+          break;
+        case 'copy':
+          setClipboard({ type: 'clip', clip: { ...clip }, trackId });
+          break;
+        case 'paste':
+          if (clipboard && clipboard.type === 'clip' && clipboard.clip) {
+            const newClip = {
+              ...clipboard.clip,
+              id: Date.now() + Math.random(),
+              startTime: (clip.startTime || 0) + 1 // Offset to avoid overlap
+            };
+            dispatch(addAudioClipToTrack({ trackId, audioClip: newClip }));
+          }
+          break;
+        case 'delete':
+          dispatch(removeAudioClip({ trackId, clipId }));
+          break;
+        default:
+
+          break;
+      }
+      return;
+    }
+
+    // Track-level actions (paste works even if no clip is selected)
+>>>>>>> Stashed changes
     switch (action) {
       case 'cut':
         // Implement cut functionality
@@ -1745,7 +1896,13 @@ useEffect(() => {
       </div>
 
       <MusicOff showOffcanvas={showOffcanvas} setShowOffcanvas={setShowOffcanvas} />
+<<<<<<< Updated upstream
       
+=======
+
+      {getTrackType == "Keys" ? <Pianodemo key={Date.now()} /> : ''}
+
+>>>>>>> Stashed changes
       {/* Context Menu */}
       <WaveMenu
         isOpen={contextMenu.isOpen}
