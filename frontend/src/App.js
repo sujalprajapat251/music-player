@@ -48,6 +48,8 @@ import JuicyDistrotion from './components/JuicyDistrotion';
 import TapeWobble from './components/TapeWobble';
 import VoiceTransformer from './components/VoiceTransfrom';
 import React, { useEffect } from "react";
+import * as soundtouch from 'soundtouchjs';
+window.soundtouch = soundtouch;
 
 function App() {
   useEffect(() => {

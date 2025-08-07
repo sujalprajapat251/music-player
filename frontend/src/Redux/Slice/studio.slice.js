@@ -23,7 +23,8 @@ const initialState = {
   isPlaying: false,
   currentTime: 0,
   audioDuration: 150,
-  masterVolume: 80 // Master volume control
+  masterVolume: 80 ,// Master volume control
+  bpm: 120,   
 };
 
 const studioSlice = createSlice({
@@ -259,6 +260,9 @@ const studioSlice = createSlice({
     setMasterVolume: (state, action) => {
       state.masterVolume = action.payload;
     },
+    setBPM: (state, action) => {
+      state.bpm = action.payload;
+    },
     
   },
 });
@@ -296,6 +300,7 @@ export const {
   togglePlayPause,
   resetTrackColors,
   setMasterVolume,
+  setBPM
 } = studioSlice.actions;
 
 export default studioSlice.reducer;

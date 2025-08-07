@@ -15,7 +15,7 @@ import { ReactComponent as Tempobutton } from "../../Images/Tempobutton.svg";
 import { ReactComponent as Tick } from "../../Images/Tick.svg";
 import { FaStop } from 'react-icons/fa6';
 import { useDispatch, useSelector } from 'react-redux';
-import { setRecording, togglePlayPause, setCurrentTime, setGlobalVolume, setAllTracksVolume, setMasterVolume } from '../../Redux/Slice/studio.slice';
+import { setRecording, togglePlayPause, setCurrentTime, setGlobalVolume, setAllTracksVolume, setMasterVolume, setBPM } from '../../Redux/Slice/studio.slice';
 
 const BottomToolbar = () => {
     const [volume1, setVolume1] = useState(50);
@@ -30,7 +30,7 @@ const BottomToolbar = () => {
     const menuDropdownRef = useRef(null);
     const [appliedSelection, setAppliedSelection] = useState(null);
     const [tempo, setTempo] = useState(120);
-    const [appliedTempo, setAppliedTempo] = useState(0);
+    const [appliedTempo, setAppliedTempo] = useState(120);
     const [selectedMenuitems, setSelectedMenuitems] = useState('Click');
     const [selectedCountIn, setSelectedCountIn] = useState('2 bars');
     const [isVolumeChanging, setIsVolumeChanging] = useState(false);
@@ -42,6 +42,7 @@ const BottomToolbar = () => {
     const currentTime = useSelector((state) => state.studio?.currentTime || 0);
     const audioDuration = useSelector((state) => state.studio?.audioDuration || 150);
     const masterVolume = useSelector((state) => state.studio?.masterVolume || 80);
+    const bpm = useSelector(state => state.studio.bpm);
     const tracks = useSelector((state) => state.studio?.tracks || []);
     
     // Handle volume change for all tracks (wise volume)
@@ -135,18 +136,16 @@ const BottomToolbar = () => {
         setTempo(prev => Math.max(prev - 1, 60)); // Min 60 BPM
     };
 
-
-
     const handleApply2 = () => {
         setAppliedTempo(tempo);
         setIsOpen1(false);
+        dispatch(setBPM(tempo));
     };
 
     const handleTempoInputChange = (e) => {
         const value = parseInt(e.target.value) || 60;
         setTempo(Math.min(Math.max(value, 60), 200));
     };
-
 
     const keys = ["C", "D", "E", "F", "G", "A", "B"];
     const sharpKeys = ["Dᵇ", "Eᵇ"];
