@@ -236,7 +236,7 @@ const Rotary = () => {
             <div className={`w-[150px] h-[140px] sm:w-[190px] sm:h-[180px] md600:w-[220px] md600:h-[210px] md:w-[230px] md:h-[265px] lg:w-[240px] lg:h-[282px] xl:w-[240px] xl:h-[285px] 2xl:w-[256px] 2xl:h-[300px]  bg-[#302f2f] flex items-center justify-center ${!isPoweredOn ? 'opacity-50 pointer-events-none' : ''}`}>
                 {/* Tone Knob - Top Right */}
                 <div className="">
-                    <Knob3 label="Rate" min={-135} max={135} defaultAngle={0} />
+                    <Knob3 label="Rate" min={-135} max={135} defaultAngle={-2} />
                 </div>
 
 
