@@ -14,6 +14,7 @@ import categoryReducer from './Slice/category.slice';
 import patternReducer from './Slice/pattern.slice';
 import effectsReducer from './Slice/effects.slice';
 import gridReducer from './Slice/grid.slice';
+import loopReducer from './Slice/loop.slice';
 
 export const rootReducer = combineReducers({
     alert: alertSlice,
@@ -30,4 +31,5 @@ export const rootReducer = combineReducers({
     pattern:patternReducer,
     effects: effectsReducer,
     grid: gridReducer,
+    loop: loopReducer,
 });

@@ -619,7 +619,7 @@ const Pianodemo = ({ onClose }) => {
                 convolverNodeRef.current.buffer = newImpulse;
             }
 
-            console.log(`Reverb: ${reverb} -> Wet: ${wetLevel.toFixed(2)}, Dry: ${dryLevel.toFixed(2)}`);
+            // console.log(`Reverb: ${reverb} -> Wet: ${wetLevel.toFixed(2)}, Dry: ${dryLevel.toFixed(2)}`);
         }
     }, [reverb]);
 
@@ -635,7 +635,7 @@ const Pianodemo = ({ onClose }) => {
 
             panNodeRef.current.pan.value = clampedPanValue;
 
-            console.log(`Pan value: ${pan} -> Stereo pan: ${clampedPanValue}`);
+            // console.log(`Pan value: ${pan} -> Stereo pan: ${clampedPanValue}`);
             // When panValue is:
             // -1: Full left channel
             // 0: Center (both channels equally)
@@ -710,7 +710,7 @@ const Pianodemo = ({ onClose }) => {
         mediaRecorder.onstop = () => {
             const blob = new Blob(recordedChunksRef.current, { type: 'audio/webm' });
 
-            console.log("blob :::: > ", blob);
+            // console.log("blob :::: > ", blob);
             dispatch(setRecordingAudio(blob));
             // const url = URL.createObjectURL(blob);
             // const a = document.createElement('a');
@@ -1232,7 +1232,7 @@ const layeredStab = new Tone.PolySynth(Tone.DuoSynth, {
           slideSynth,
         };
 
-        console.log("✅ Created", Object.keys(synths.current).length, "professional synths");
+        // console.log("✅ Created", Object.keys(synths.current).length, "professional synths");
 
         Tone.Transport.bpm.value = 120;
         
@@ -1262,7 +1262,7 @@ const layeredStab = new Tone.PolySynth(Tone.DuoSynth, {
     if (Tone.context.state !== "running") {
       await Tone.start();
       setIsAudioStarted(true);
-      console.log("🔊 Audio context started");
+      // console.log("🔊 Audio context started");
     }
   };
 
@@ -1336,7 +1336,7 @@ const layeredStab = new Tone.PolySynth(Tone.DuoSynth, {
     const synthKey = synthMap[synthType] || "acousticPiano";
     const selectedSynth = synths.current?.[synthKey];
 
-    console.log(`🎵 Playing ${synthType} -> ${synthKey}`);
+    // console.log(`🎵 Playing ${synthType} -> ${synthKey}`);
 
     if (selectedSynth && notes) {
       try {
@@ -1387,13 +1387,13 @@ const layeredStab = new Tone.PolySynth(Tone.DuoSynth, {
           selectedSynth.triggerAttackRelease(notes, "2n", now);
         }
         
-        console.log(`✅ Successfully played ${synthKey}`);
+        // console.log(`✅ Successfully played ${synthKey}`);
         
       } catch (error) {
-        console.error(`❌ Error playing ${synthKey}:`, error);
+        // console.error(`❌ Error playing ${synthKey}:`, error);
         // Fallback to acoustic piano
         if (synths.current.acousticPiano && synthKey !== "acousticPiano") {
-          console.log("🔄 Falling back to acoustic piano");
+          // console.log("🔄 Falling back to acoustic piano");
           synths.current.acousticPiano.triggerAttackRelease(notes, "2n", now);
         }
       }
@@ -1422,7 +1422,7 @@ const layeredStab = new Tone.PolySynth(Tone.DuoSynth, {
     if (!isAudioReady) return;
     await startAudioContext();
     
-    console.log("🧪 Testing all professional synths...");
+    // console.log("🧪 Testing all professional synths...");
     const testNotes = ["C4", "E4", "G4"];
     
     Object.entries(synths.current).forEach(([name, synth], index) => {
@@ -1434,12 +1434,12 @@ const layeredStab = new Tone.PolySynth(Tone.DuoSynth, {
             } else {
               synth.triggerAttackRelease(testNotes, "4n", Tone.now());
             }
-            console.log(`✅ ${name} - Professional sound working`);
+            // console.log(`✅ ${name} - Professional sound working`);
           } else {
-            console.log(`❌ ${name} - Not available`);
+            // console.log(`❌ ${name} - Not available`);
           }
         } catch (e) {
-          console.log(`❌ ${name} - Error:`, e);
+          // console.log(`❌ ${name} - Error:`, e);
         }
       }, index * 800);
     });
@@ -1693,7 +1693,7 @@ const layeredStab = new Tone.PolySynth(Tone.DuoSynth, {
                                                     </div>
                                                     <div className="flex">
                                                         {Object.entries(patternCategories).map(([category, patterns], index)=>{
-                                                            console.log("Hello HI" , index);
+                                                            // console.log("Hello HI" , index);
                                                             
                                                             return (
                                                                 <div className={` ${index === 0 || index === 3 ? 'bg-[#1F1F1F] ms-1 mt-1 p-1 w-[110px] h-[120px] md600:w-[100px] md600:h-[155px] md:ms-2 md:mt-2 md:p-2 md:w-[110px] md:h-[180px] lg:ms-3 lg:w-[116px] lg:h-[150px]' : ''} ${index === 1 || index === 2 ? 'bg-[#1F1F1F] mx-1 mt-1 p-1 w-[315px] h-[120px] md600:w-[170px] md600:h-[155px] md:mx-2 lg:mx-3 md:mt-2 md:p-2 md:w-[200px] md:h-[180px] lg:w-[340px] lg:h-[150px]' : ''}`}>
