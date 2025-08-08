@@ -12,7 +12,7 @@ import headphone from "../Images/headphone.svg";
 import mute from "../Images/mute.svg";
 import more from "../Images/more.svg";
 import TrackMenu from "./TrackMenu";
-import { renameTrack, setCurrentTrackId, setSidebarScrollOffset, toggleMuteTrack, setSoloTrackId } from "../Redux/Slice/studio.slice";
+import { renameTrack, setCurrentTrackId, setSidebarScrollOffset, toggleMuteTrack, setSoloTrackId, setTrackVolume } from "../Redux/Slice/studio.slice";
 import FreezeIcon from "../Images/freeze.svg";
 import { ReactComponent as Track1 } from '../Images/track1.svg'
 import { ReactComponent as Track2 } from '../Images/track2.svg'
@@ -34,6 +34,7 @@ const Sidebar2 = () => {
 
   const currentTrackId = useSelector((state) => state.studio.currentTrackId);
   const soloTrackId = useSelector((state) => state.studio.soloTrackId);
+  const isRecording = useSelector(state => state.studio.isRecording);
 
   const handleScroll = (e) => {
     const scrollTop = e.target.scrollTop;
@@ -55,6 +56,10 @@ const Sidebar2 = () => {
     } else {
       dispatch(setSoloTrackId(trackId));
     }
+  };
+
+  const handleTrackVolumeChange = (volume, trackId) => {
+    dispatch(setTrackVolume({ trackId, volume }));
   };
 
   return (
@@ -151,14 +156,18 @@ const Sidebar2 = () => {
                       )}
                     </div>
                     <div className="flex flex-row items-center justify-around gap-x-2 mt-1">
-                      <span className={`w-6 h-6 rounded text-xs font-bold flex items-center justify-center bg-[#444] text-white`}>
+                      <span className={`w-6 h-6 rounded text-xs font-bold flex items-center justify-center ${isRecording ? 'bg-[#FF006B]' : 'bg-[#444]'} text-white`}>
                         R
                       </span>
                       <span className="w-8 h-8 rounded-full bg-transparent">
                         <img src={tk} alt="" className={`w-full h-full opacity-60`} />
                       </span>
                       <span>
-                        <VolumeKnob />
+                        <VolumeKnob 
+                          initialVolume={track.volume || 80}
+                          onChange={handleTrackVolumeChange}
+                          trackId={track.id}
+                        />
                       </span>
                     </div>
                   </div>

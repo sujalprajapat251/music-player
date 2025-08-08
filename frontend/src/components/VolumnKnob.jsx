@@ -1,10 +1,32 @@
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 
-const Knob = ({ label = "Vol", min = -135, max = 135 }) => {
-  const [angle, setAngle] = useState(min);
+const Knob = ({ 
+  label = "Vol", 
+  min = -135, 
+  max = 135, 
+  initialVolume = 80, 
+  onChange, 
+  trackId 
+}) => {
+  // Convert volume (0-100) to angle (-135 to 135)
+  const volumeToAngle = (volume) => {
+    return min + ((volume / 100) * (max - min));
+  };
+
+  // Convert angle to volume (0-100)
+  const angleToVolume = (angle) => {
+    return Math.round(((angle - min) / (max - min)) * 100);
+  };
+
+  const [angle, setAngle] = useState(volumeToAngle(initialVolume));
   const knobRef = useRef(null);
   const dragging = useRef(false);
   const lastY = useRef(0);
+
+  // Update angle when initialVolume prop changes
+  useEffect(() => {
+    setAngle(volumeToAngle(initialVolume));
+  }, [initialVolume]);
 
   // SVG circle parameters
   const size = 28;
@@ -26,6 +48,13 @@ const Knob = ({ label = "Vol", min = -135, max = 135 }) => {
     setAngle((prev) => {
       let next = prev + deltaY * 1.5;
       next = Math.max(min, Math.min(max, next));
+      
+      // Convert angle to volume and call onChange
+      const newVolume = angleToVolume(next);
+      if (onChange) {
+        onChange(newVolume, trackId);
+      }
+      
       return next;
     });
   };
@@ -78,7 +107,9 @@ const Knob = ({ label = "Vol", min = -135, max = 135 }) => {
           }}
         />
       </div>
-      <div className='mt-4' style={{ color: "#fff", fontSize: 12, marginLeft: 4, fontFamily: "sans-serif" }}>{label}</div>
+      <div className='mt-4' style={{ color: "#fff", fontSize: 12, marginLeft: 4, fontFamily: "sans-serif" }}>
+        {label}
+      </div>
     </div>
   );
 }
