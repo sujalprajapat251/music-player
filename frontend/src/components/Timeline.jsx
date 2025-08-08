@@ -24,6 +24,7 @@ import TimelineActionBoxes from "./TimelineActionBoxes";
 import AddNewTrackModel from "./AddNewTrackModel";
 import Piano from "./Piano";
 import WavEncoder from 'wav-encoder';
+import Drum from './Drum';
 
 // Custom Resizable Trim Handle Component
 const ResizableTrimHandle = ({
@@ -1908,6 +1909,36 @@ const Timeline = () => {
   //   return () => document.removeEventListener('click', handleGlobalClick);
   // }, []);
 
+  const handleDrumRecordingComplete = async (blob) => {
+    const url = URL.createObjectURL(blob);
+    let audioDurationSec = null;
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const arrayBuffer = await blob.arrayBuffer();
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      audioDurationSec = audioBuffer.duration;
+    } catch (err) {
+      console.error('Error decoding drum audio:', err);
+    }
+
+    const newTrack = {
+      id: Date.now(),
+      name: 'Drum Recording',
+      url,
+      color: '#FFD700',
+      height: 100, // or your default
+      startTime: 0,
+      duration: audioDurationSec,
+      trimStart: 0,
+      trimEnd: audioDurationSec,
+      soundData: { type: 'drum' }
+    };
+
+    dispatch(addTrack(newTrack));
+  };
+
+  const recordedData = useSelector((state) => state.studio?.recordedData || []);
+
   return (
     <>
       <div
@@ -2196,6 +2227,8 @@ const Timeline = () => {
         </div>
 
       </div>
+
+      <Drum onDrumRecordingComplete={handleDrumRecordingComplete} />
 
       {/* Add Track Modal */}
       {showAddTrackModal && (

@@ -23,7 +23,8 @@ const initialState = {
   isPlaying: false,
   currentTime: 0,
   audioDuration: 150,
-  masterVolume: 80 // Master volume control
+  masterVolume: 80, // Master volume control
+  recordedData: [], // New state for recorded data
 };
 
 const studioSlice = createSlice({
@@ -192,6 +193,9 @@ const studioSlice = createSlice({
     setRecording: (state, action) => {
       state.isRecording = action.payload;
     },
+    setRecordedData: (state, action) => {
+      state.recordedData = action.payload;
+    },
     setTrackType: (state, action) => {
       state.newtrackType = action.payload;
     },
@@ -281,6 +285,7 @@ export const {
   exportTrack,
   setRecordingAudio,
   setRecording,
+  setRecordedData,
   setTrackType,
   setCurrentTrackId,
   toggleMuteTrack,

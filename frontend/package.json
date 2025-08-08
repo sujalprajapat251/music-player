@@ -16,6 +16,7 @@
     "axios": "^1.10.0",
     "buffer": "^6.0.3",
     "d3": "^7.9.0",
+    "drum-machine": "^3.0.2",
     "formik": "^2.4.6",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.525.0",
