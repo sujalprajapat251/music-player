@@ -3,7 +3,7 @@ import WaveSurfer from "wavesurfer.js";
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
-import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack } from "../Redux/Slice/studio.slice";
+import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateTrackAudio } from "../Redux/Slice/studio.slice";
 import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM } from "../Redux/Slice/grid.slice";
 import { getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
 import { IMAGE_URL } from "../Utils/baseUrl";
@@ -19,12 +19,14 @@ import { Rnd } from "react-rnd";
 import rightSize from '../Images/right-size.svg'
 import LeftSize from '../Images/left-size.svg'
 import WaveMenu from "./WaveMenu";
+
 import MySection from "./MySection";
 import TimelineActionBoxes from "./TimelineActionBoxes";
 import AddNewTrackModel from "./AddNewTrackModel";
 import Piano from "./Piano";
 import WavEncoder from 'wav-encoder';
 import Drum from './Drum';
+import Pianodemo from "./Piano";
 
 // Custom Resizable Trim Handle Component
 const ResizableTrimHandle = ({
@@ -726,6 +728,21 @@ const Timeline = () => {
 
   const timelineWidthPerSecond = 100;
 
+// Mute functionality
+ 
+useEffect(() => {
+  players.forEach(playerObj => {
+    const track = tracks.find(t => t.id === playerObj.trackId);
+    const isMuted = soloTrackId
+      ? soloTrackId !== track.id
+      : track.muted;
+    if (playerObj.player && track) {
+      playerObj.player.volume.value = isMuted ? -Infinity : 0;
+    }
+  });
+}, [tracks, players, soloTrackId]);
+
+
   // Get audio state from Redux
   const isPlaying = useSelector((state) => state.studio?.isPlaying || false);
   const currentTime = useSelector((state) => state.studio?.currentTime || 0);
@@ -736,9 +753,70 @@ const Timeline = () => {
 
   // Add masterVolume selector after other selectors
   const masterVolume = useSelector((state) => state.studio?.masterVolume ?? 80);
+
   const bpm = useSelector((state) => state.studio?.bpm ?? 120);
 
   const ORIGINAL_BPM = 120; 
+
+
+  const pianoRecording = useSelector((state) => state.studio.pianoRecord);
+  const currentTrackId = useSelector((state) => state.studio.currentTrackId);
+  const lastProcessedRef = useRef(null);
+
+  useEffect(() => {
+    if (pianoRecording instanceof Blob && currentTrackId && pianoRecording !== lastProcessedRef.current) {
+      lastProcessedRef.current = pianoRecording;
+      getAudioDuration(pianoRecording).then((duration) => {
+        // Ensure the blob is fully usable
+        const url = URL.createObjectURL(pianoRecording);
+
+        const audio = new Audio();
+        audio.src = url;
+
+        function generateRandomHexColor() {
+          let randomNumber = Math.floor(Math.random() * 16777215);
+          let hexColor = randomNumber.toString(16);
+          hexColor = hexColor.padStart(6, '0');
+          return `#${hexColor}`;
+        }
+
+        audio.oncanplaythrough = () => {
+          const newColor = generateRandomHexColor();
+
+          dispatch(updateTrackAudio({
+            trackId: currentTrackId,
+            audioData: {
+              url,
+              duration,
+              color: newColor,
+              trimStart: 0,
+              trimEnd: duration,
+              name: "Piano Recording",
+              frozen: false,
+            },
+          }));
+
+          console.log("Track updated with recording:", { url, duration });
+        };
+
+        audio.onerror = (err) => {
+          console.error("Audio load error:", err);
+        };
+      }).catch((err) => {
+        console.error("Failed to decode audio:", err);
+      });
+    }
+  }, [pianoRecording, currentTrackId]);
+
+
+  const getAudioDuration = async (blob) => {
+    const arrayBuffer = await blob.arrayBuffer();
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    return audioBuffer.duration;
+  };
+
+  const getTrackType = useSelector((state) => state.studio.newtrackType);
 
 
   // Mute functionality
@@ -766,7 +844,6 @@ const Timeline = () => {
     });
   }, [masterVolume, players]);
 
-  
 
   // Loop change handler
   const handleLoopChange = useCallback((newStart, newEnd) => {
@@ -1643,7 +1720,6 @@ const Timeline = () => {
 
     const track = tracks.find(t => t.id === trackId);
     if (!track) return;
-
     // Always find the clip if clipId is provided
     const clip = clipId ? track.audioClips?.find(c => c.id === clipId) : undefined;
 
@@ -1671,7 +1747,7 @@ const Timeline = () => {
           dispatch(removeAudioClip({ trackId, clipId }));
           break;
         default:
-          
+
           break;
       }
       return;
@@ -2252,6 +2328,10 @@ const Timeline = () => {
         }}
       />
       <MusicOff showOffcanvas={showOffcanvas} setShowOffcanvas={setShowOffcanvas} />
+
+
+      {getTrackType == "Keys" ? <Pianodemo key={Date.now()} /> : ''}
+
 
       {/* Context Menu */}
       <WaveMenu
