@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import * as Tone from 'tone';
+import { PitchDetector } from 'pitchy';
 import { Rnd } from 'react-rnd';
 import 'react-resizable/css/styles.css';
 import * as d3 from 'd3';
@@ -9,6 +10,7 @@ import { getGridDivisions } from '../Utils/gridUtils';
 import { FaPaste, FaRegCopy } from 'react-icons/fa';
 import { MdDelete } from "react-icons/md";
 import { IoCutOutline } from 'react-icons/io5';
+import audio from '../Images/piano-beats.mp3'
 const generatePianoKeys = () => {
     const keys = [];
     const notesInOctave = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
@@ -48,7 +50,7 @@ const PianoRolls = () => {
 
     // get data from redux
     const track = useSelector((state)=>state.studio.tracks)
-    console.log('track',track);
+    console.log('track',audio);
     // Get grid settings from Redux
     const { selectedGrid } = useSelector(selectGridSettings);
 
@@ -539,6 +541,143 @@ const PianoRolls = () => {
         </div>
     );
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // audio detection code 
+    const [notes1, setNotes1] = useState([]);
+    // const handleFileChange = async (e) => {
+    //     const file = e.target.files[0];
+    //     if (!file) return;
+    
+    //     const audioBuffer = await decodeAudio(file);
+    //     console.log("Decoded audio:", audioBuffer);
+    
+    //     const notes = detectNotes(audioBuffer);
+    //     console.log("Detected Notes:", notes);
+    // };
+    
+    useEffect(() => {
+        if (track[0]?.audioClips[0]?.url) {
+            (async () => {
+                const audioBuffer = await decodeAudio(track[0].audioClips[0].url);
+                if (audioBuffer) {
+                    detectNotes(audioBuffer);
+                }
+            })();
+        }
+    }, [track]);
+    const decodeAudio = async (fileOrUrl) => {
+        let arrayBuffer;
+    
+        if (fileOrUrl instanceof File || fileOrUrl instanceof Blob) {
+            arrayBuffer = await fileOrUrl.arrayBuffer();
+        }
+        // 🔥 Fix: handle raw URL string
+        else if (typeof fileOrUrl === 'string') {
+            const res = await fetch(fileOrUrl);
+            const blob = await res.blob();
+            arrayBuffer = await blob.arrayBuffer();
+        } else if (typeof fileOrUrl === 'object' && fileOrUrl.url) {
+            const res = await fetch(fileOrUrl.url);
+            const blob = await res.blob();
+            arrayBuffer = await blob.arrayBuffer();
+        } else {
+            console.warn("Unsupported audio input:", fileOrUrl);
+            return;
+        }
+    
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        return await audioCtx.decodeAudioData(arrayBuffer);
+    };
+    const detectNotes = (audioBuffer) => {
+        
+        const audioData = audioBuffer.getChannelData(0); // mono
+        const sampleRate = audioBuffer.sampleRate;
+        const frameSize = 2048;
+        const hopSize = 512;
+    
+        const detector = PitchDetector.forFloat32Array(frameSize);
+    
+        const results = [];
+        let currentNote = null;
+        let noteStart = null;
+    
+        for (let i = 0; i + frameSize < audioData.length; i += hopSize) {
+            const frame = audioData.slice(i, i + frameSize);
+            const [pitch, clarity] = detector.findPitch(frame, sampleRate);
+    
+            const time = i / sampleRate;
+    
+            if (clarity > 0.95 && pitch > 50 && pitch < 2000) {
+                const note = pitchToNote(pitch);
+    
+                if (currentNote === note) {
+                    continue;
+                } else {
+                    // finish previous note if exists
+                    if (currentNote && noteStart !== null) {
+                        const duration = time - noteStart;
+                        results.push({
+                            note: currentNote,
+                            start: parseFloat(noteStart.toFixed(2)),
+                            duration: parseFloat(duration.toFixed(2)),
+                        });
+                    }
+    
+                    // start new note
+                    currentNote = note;
+                    noteStart = time;
+                }
+            } else {
+                if (currentNote && noteStart !== null) {
+                    const duration = time - noteStart;
+                    results.push({
+                        note: currentNote,
+                        start: parseFloat(noteStart.toFixed(2)),
+                        duration: parseFloat(duration.toFixed(2)),
+                    });
+                    currentNote = null;
+                    noteStart = null;
+                }
+            }
+        }
+    
+        console.log('results',results);
+        if (currentNote && noteStart !== null) {
+            const endTime = audioData.length / sampleRate;
+            const duration = endTime - noteStart;
+            results.push({
+                note: currentNote,
+                start: parseFloat(noteStart.toFixed(2)),
+                duration: parseFloat(duration.toFixed(2)),
+            });
+        }
+    
+        setNotes(results);
+        return results;
+    };
+
+    const pitchToNote = (freq) => {
+        const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const midi = Math.round(69 + 12 * Math.log2(freq / 440));
+        const name = noteNames[midi % 12];
+        const octave = Math.floor(midi / 12) - 1;
+        return `${name}${octave}`;
+    };
+
+
     return (
         <>
             {/* Zoom Controls */}
@@ -559,8 +698,8 @@ const PianoRolls = () => {
                 {/* Timeline Header Container with Horizontal Scroll */}
                 <div
                     ref={timelineContainerRef}
-                    className="sticky bg-[#1F1F1F] ms-[64px] left-16 right- mt-[20px] h-[60px] overflow-x-auto overflow-y-hidden z-[2]"
-                    style={{ background: "#2a2a2a" }}
+                    className="fixed  ms-[0px] left-0 right-  h-[80px] overflow-x-auto overflow-y-hidden z-[2]"
+                    style={{ background: "#1F1F1F" }}
                     onClick={handleTimelineClick}
                     onScroll={handleScroll}
                 >
@@ -571,10 +710,11 @@ const PianoRolls = () => {
                         minWidth: "100%"
                     }}>
                         <svg
+                        className='ms-16'
                             ref={timelineHeaderRef}
                             width="100%"
                             height="100%"
-                            style={{ color: "white", width: "100%", background: "#2a2a2a" }}
+                            style={{ color: "white", width: "100%" }}
                         />
                     </div>
                 </div>
@@ -610,7 +750,7 @@ const PianoRolls = () => {
                 </div>
 
                 {/* Piano Keys Column */}
-                <div className="absolute left-0 top-[80px] w-16 h-[560px] bg-[#1a1a1a] border-r border-gray-700 z-10">
+                <div className="absolute left-0 top-[80px] w-16 h-[560px] bg-[#1a1a1a] border-r border-gray-700 z-1">
                     {NOTES.map((note) => (
                         <button
                             key={note}
@@ -674,6 +814,7 @@ const PianoRolls = () => {
                             />
                         );
                     })()}
+                    {console.log('notes',notes)}
                     {notes.map((n, i) => {
                         return (
                             <Rnd
