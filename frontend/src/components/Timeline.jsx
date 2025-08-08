@@ -736,7 +736,9 @@ const Timeline = () => {
 
   // Add masterVolume selector after other selectors
   const masterVolume = useSelector((state) => state.studio?.masterVolume ?? 80);
+  const bpm = useSelector((state) => state.studio?.bpm ?? 120);
 
+  const ORIGINAL_BPM = 120; 
 
 
   // Mute functionality
@@ -763,6 +765,8 @@ const Timeline = () => {
       }
     });
   }, [masterVolume, players]);
+
+  
 
   // Loop change handler
   const handleLoopChange = useCallback((newStart, newEnd) => {
@@ -956,7 +960,7 @@ const Timeline = () => {
       if (isPlaying) {
         // Stop all players
         players.forEach((playerObj) => {
-          if (playerObj?.player && typeof playerObj.player.stop === 'function') {
+          if (playerObj?.player && typeof playerObj.player.start === 'function') {
             try {
               playerObj.player.stop();
             } catch (error) {
