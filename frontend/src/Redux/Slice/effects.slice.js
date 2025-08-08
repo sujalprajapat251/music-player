@@ -149,22 +149,19 @@ const EFFECT_CONFIGS = {
 // Component mapping for effects
 const EFFECT_COMPONENTS = {
     "Fuzz": Fuzz,
-    "Clipper" : Clipper,
-    "ClassicDist" : ClassicDist,
-    "Chorus" : Chorus,
-    "Crusher" : Crusher,
-    "JuicyDistrotion" : JuicyDistrotion,
-    "Overdrive" : Overdrive,
-    "AutoPan" : AutoPan,
-    "AutoWah" : AutoWah,
-    "Flanger" : Flanger,
-    "Phaser" : Phaser,
-    "Rotary" : Rotary,
-    "StereoChorus" : StereoChorus,
-    "TapeWobble" : TapeWobble
-    // "Classic Dist": ClassicDist,
-    // "Bitcrushar": Bitcrushar,
-    // etc.
+    "Clipper": Clipper,
+    "ClassicDist": ClassicDist,
+    "Chorus": Chorus,
+    "Crusher": Crusher,
+    "JuicyDistrotion": JuicyDistrotion,
+    "Overdrive": Overdrive,
+    "AutoPan": AutoPan,
+    "AutoWah": AutoWah,
+    "Flanger": Flanger,
+    "Phaser": Phaser,
+    "Rotary": Rotary,
+    "StereoChorus": StereoChorus,
+    "TapeWobble": TapeWobble
 };
 
 const initialState = {
@@ -192,6 +189,8 @@ const initialState = {
     selectedEffect: null, // Currently selected effect for detailed view
     showEffectsLibrary: false, // Controls the effects library modal
     showEffectsOffcanvas: false, // Controls the Effects.jsx component visibility
+    selectedCategory: null,
+    searchTerm: '',
 };
 
 const effectsSlice = createSlice({
@@ -259,6 +258,22 @@ const effectsSlice = createSlice({
             const { fromIndex, toIndex } = action.payload;
             const [removed] = state.activeEffects.splice(fromIndex, 1);
             state.activeEffects.splice(toIndex, 0, removed);
+        },
+        setSelectedCategory: (state, action) => {
+            state.selectedCategory = action.payload;
+            if (action.payload) {
+                state.searchTerm = '';
+            }
+        },
+        setSearchTerm: (state, action) => {
+            state.searchTerm = action.payload;
+            if (action.payload) {
+                state.selectedCategory = null;
+            }
+        },
+        clearFilters: (state) => {
+            state.selectedCategory = null;
+            state.searchTerm = '';
         }
     }
 });
@@ -272,7 +287,10 @@ export const {
     setShowEffectsOffcanvas,
     toggleEffectsOffcanvas,
     clearAllEffects,
-    reorderEffects
+    reorderEffects,
+    setSelectedCategory,
+    setSearchTerm,
+    clearFilters
 } = effectsSlice.actions;
 
 export default effectsSlice.reducer; 
