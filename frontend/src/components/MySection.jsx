@@ -66,12 +66,23 @@ const MySection = ({ timelineContainerRef, audioDuration, selectedGrid }) => {
   }, [handleMouseMove, handleMouseLeave]);
 
   // Close dropdown on outside click
-  // useEffect(() => {
-  //   if (!dropdownOpen) return;
-  //   const handleClick = (e) => setDropdownOpen(false);
-  //   document.addEventListener("mousedown", handleClick);
-  //   return () => document.removeEventListener("mousedown", handleClick);
-  // }, [dropdownOpen]);
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    
+    const handleClick = (e) => {
+      // Check if the click is outside the dropdown
+      const dropdown = document.querySelector('[data-dropdown="section-dropdown"]');
+      const sectionLabel = document.querySelector('[data-section-label="true"]');
+      
+      if (dropdown && !dropdown.contains(e.target) && 
+          sectionLabel && !sectionLabel.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [dropdownOpen]);
 
   // Calculate dropdown position relative to viewport
   const handleDropdownToggle = useCallback((e) => {
@@ -91,13 +102,13 @@ const MySection = ({ timelineContainerRef, audioDuration, selectedGrid }) => {
     const startTime = (cursorPosition / 100) * audioDuration;
     const snappedStartTime = snapToGrid(startTime);
     
-    console.log('=== MySection Dropdown Opened ===');
-    console.log('Cursor Position:', cursorPosition + '%');
-    console.log('Start Time:', formatTime(snappedStartTime) + ' (' + snappedStartTime + ' seconds)');
-    console.log('Audio Duration:', formatTime(audioDuration) + ' (' + audioDuration + ' seconds)');
-    console.log('Timeline Width:', timelineWidth + 'px');
-    console.log('Cursor X Position:', cursorX + 'px');
-    console.log('================================');
+    // console.log('=== MySection Dropdown Opened ===');
+    // console.log('Cursor Position:', cursorPosition + '%');
+    // console.log('Start Time:', formatTime(snappedStartTime) + ' (' + snappedStartTime + ' seconds)');
+    // console.log('Audio Duration:', formatTime(audioDuration) + ' (' + audioDuration + ' seconds)');
+    // console.log('Timeline Width:', timelineWidth + 'px');
+    // console.log('Cursor X Position:', cursorX + 'px');
+    // console.log('================================');
     
     setDropdownPosition({ x: absoluteX, y: absoluteY });
     setDropdownOpen((open) => !open);
@@ -115,20 +126,21 @@ const MySection = ({ timelineContainerRef, audioDuration, selectedGrid }) => {
     const sectionDuration = getSectionDuration(sectionName, gridSpacing);
     const endTime = Math.min(audioDuration, snappedStartTime + sectionDuration);
     
-    console.log('=== Section Selected ===');
-    console.log('Selected Section:', sectionName);
-    console.log('Start Time:', formatTime(snappedStartTime) + ' (' + snappedStartTime + ' seconds)');
-    console.log('End Time:', formatTime(endTime) + ' (' + endTime + ' seconds)');
-    console.log('Section Duration:', formatTime(endTime - snappedStartTime) + ' (' + (endTime - snappedStartTime) + ' seconds)');
-    console.log('Calculated Duration:', formatTime(sectionDuration) + ' (' + sectionDuration + ' seconds)');
-    console.log('Cursor Position:', cursorPosition + '%');
-    console.log('Grid Spacing:', formatTime(gridSpacing) + ' (' + gridSpacing + ' seconds)');
-    console.log('========================');
+    // console.log('=== Section Selected ===');
+    // console.log('Selected Section:', sectionName);
+    // console.log('Start Time:', formatTime(snappedStartTime) + ' (' + snappedStartTime + ' seconds)');
+    // console.log('End Time:', formatTime(endTime) + ' (' + endTime + ' seconds)');
+    // console.log('Section Duration:', formatTime(endTime - snappedStartTime) + ' (' + (endTime - snappedStartTime) + ' seconds)');
+    // console.log('Calculated Duration:', formatTime(sectionDuration) + ' (' + sectionDuration + ' seconds)');
+    // console.log('Cursor Position:', cursorPosition + '%');
+    // console.log('Grid Spacing:', formatTime(gridSpacing) + ' (' + gridSpacing + ' seconds)');
+    // console.log('========================');
     
     if (sectionName === "Custom Name") {
-      // Open the custom name modal
+      // Open the custom name modal and close dropdown immediately
       setCustomenamodal(true);
-      return; // Don't close dropdown yet, wait for modal input
+      setDropdownOpen(false);
+      return;
     } else {
       setSelectedSection(sectionName);
       
@@ -236,6 +248,25 @@ const MySection = ({ timelineContainerRef, audioDuration, selectedGrid }) => {
     "Interlude", "Solo", "Hook", "Breakdown", "Drop", "Build Up", "Custom Name"
   ];
 
+    // Close dropdown on outside click
+    useEffect(() => {
+      if (!dropdownOpen) return;
+      
+      const handleClick = (e) => {
+        // Check if the click is outside the dropdown
+        const dropdown = document.querySelector('[data-dropdown="section-dropdown"]');
+        const sectionLabel = document.querySelector('[data-section-label="true"]');
+        
+        if (dropdown && !dropdown.contains(e.target) && 
+            sectionLabel && !sectionLabel.contains(e.target)) {
+          setDropdownOpen(false);
+        }
+      };
+      
+      document.addEventListener("mousedown", handleClick);
+      return () => document.removeEventListener("mousedown", handleClick);
+    }, [dropdownOpen]);
+
   return (
     <>
       <div
@@ -273,6 +304,7 @@ const MySection = ({ timelineContainerRef, audioDuration, selectedGrid }) => {
             pointerEvents: "auto", // Make it clickable
           }}
           onClick={handleDropdownToggle}
+            data-section-label="true"
         >
           my section
         </div>
@@ -286,15 +318,15 @@ const MySection = ({ timelineContainerRef, audioDuration, selectedGrid }) => {
             top: `${dropdownPosition.y}px`,
             left: `${dropdownPosition.x}px`,
             transform: "translateX(-50%)",
-            background: "#23232A",
-            borderRadius: "6px",
+            background: "#1F1F1F",
+            borderRadius: "4px",
             boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
-            border: "1px solid #444",
             minWidth: "200px",
             zIndex: 9999, // Very high z-index to ensure it's on top
             color: "white",
-            padding: "6px 0",
+            // padding: "6px 0",
           }}
+          data-dropdown="section-dropdown"
         >
           {sectionOptions.map((item, idx) => (
             <div
@@ -305,6 +337,7 @@ const MySection = ({ timelineContainerRef, audioDuration, selectedGrid }) => {
                 background: idx === 12 ? "#23232A" : "none",
                 borderTop: idx === 12 ? "1px solid #333" : "none",
                 transition: "background-color 0.2s ease",
+                fontSize: "14px"
               }}
               onClick={() => handleSectionSelect(item)}
               onMouseEnter={(e) => {

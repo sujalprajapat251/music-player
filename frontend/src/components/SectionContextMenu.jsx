@@ -1,10 +1,10 @@
 import React from 'react';
-import editname from '../Images/editname.svg';
+import Editsec from '../Images/editsec.svg';
 import deleteIcon from '../Images/delete.svg';
 import copyIcon from '../Images/copy.svg';
-import loopIcon from '../Images/loop.svg';
-import plusIcon from '../Images/duplicate.svg';
-import resizeIcon from '../Images/left-size.svg';
+import Loop from '../Images/loopsec.svg';
+import Resizesec from '../Images/resizesec.svg';
+import Plus from '../Images/split.svg';
 
 const SectionContextMenu = ({ isOpen, position, onClose, onAction }) => {
   if (!isOpen) return null;
@@ -30,7 +30,7 @@ const SectionContextMenu = ({ isOpen, position, onClose, onAction }) => {
 
       {/* Menu Container */}
       <div
-        className="absolute bg-[#1F1F1F] rounded-[4px] py-2 min-w-[200px] shadow-lg z-[1000] text-sm text-white"
+        className="absolute bg-[#1F1F1F] rounded-[4px] min-w-[200px] shadow-lg z-[1000] text-sm text-white"
         style={{
           top: position?.y || 0,
           left: position?.x || 0,
@@ -41,7 +41,7 @@ const SectionContextMenu = ({ isOpen, position, onClose, onAction }) => {
           className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('rename')}
         >
-          <img src={editname} className="w-4 h-4 flex items-center justify-center text-white" />
+          <img src={Editsec} className="w-4 h-4 flex items-center justify-center text-white" />
           <span className="flex-1">Rename</span>
         </div>
 
@@ -59,7 +59,7 @@ const SectionContextMenu = ({ isOpen, position, onClose, onAction }) => {
           className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('resize')}
         >
-          <img src={resizeIcon} className="w-4 h-4 flex items-center justify-center text-white" />
+          <img src={Resizesec} className="w-4 h-4 flex items-center justify-center text-white" />
           <span className="flex-1">Resize</span>
         </div>
 
@@ -77,7 +77,7 @@ const SectionContextMenu = ({ isOpen, position, onClose, onAction }) => {
           className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('loop')}
         >
-          <img src={loopIcon} className="w-4 h-4 flex items-center justify-center text-white" />
+          <img src={Loop} className="w-4 h-4 flex items-center justify-center text-white" />
           <span className="flex-1">Loop</span>
         </div>
 
@@ -86,7 +86,7 @@ const SectionContextMenu = ({ isOpen, position, onClose, onAction }) => {
           className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('createSectionAfter')}
         >
-          <img src={plusIcon} className="w-4 h-4 flex items-center justify-center text-white" />
+          <img src={Plus} className="w-4 h-4 flex items-center justify-center text-white" />
           <span className="flex-1">Create section after</span>
         </div>
       </div>
