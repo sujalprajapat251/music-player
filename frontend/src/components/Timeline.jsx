@@ -19,7 +19,7 @@ import { Rnd } from "react-rnd";
 import rightSize from '../Images/right-size.svg'
 import LeftSize from '../Images/left-size.svg'
 import WaveMenu from "./WaveMenu";
-
+import Effects from './Effects'
 import MySection from "./MySection";
 import TimelineActionBoxes from "./TimelineActionBoxes";
 import AddNewTrackModel from "./AddNewTrackModel";
@@ -30,6 +30,7 @@ import Pianodemo from "./Piano";
 import SectionContextMenu from "./SectionContextMenu";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import close from '../Images/close.svg';
+import { toggleEffectsOffcanvas } from "../Redux/Slice/effects.slice";
 
 // Resizable Section Label Component
 const ResizableSectionLabel = ({ section, audioDuration, selectedGrid, timelineContainerRef, onResize, onContextMenu }) => {
@@ -2368,7 +2369,7 @@ useEffect(() => {
           padding: "0",
           color: "white",
           background: "transparent",
-          height: "100%",
+          // height: "100%",
           marginRight: showOffcanvas ? "23vw" : 0,
         }}
         className="relative overflow-hidden"
@@ -2383,7 +2384,7 @@ useEffect(() => {
             style={{
               minWidth: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`,
               position: "relative",
-              height: "100vh",
+              // height: "100vh",
             }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
@@ -2638,7 +2639,7 @@ useEffect(() => {
             <img src={offce} alt="Off canvas" />
           </div>
           <div className="bg-[#1F1F1F] w-[40px] h-[40px] flex items-center justify-center rounded-full mt-2">
-            <img src={fxIcon} alt="Effects" />
+            <img src={fxIcon} alt="Effects" onClick={() => dispatch(toggleEffectsOffcanvas())}/>
           </div>
         </div>
 
@@ -2655,7 +2656,7 @@ useEffect(() => {
 
       </div>
 
-      <Drum onDrumRecordingComplete={handleDrumRecordingComplete} />
+      {/* <Drum onDrumRecordingComplete={handleDrumRecordingComplete} /> */}
 
       {/* Add Track Modal */}
       {showAddTrackModal && (
@@ -2675,6 +2676,7 @@ useEffect(() => {
         }}
       />
       <MusicOff showOffcanvas={showOffcanvas} setShowOffcanvas={setShowOffcanvas} />
+      <Effects showOffcanvas={showOffcanvas} setShowOffcanvas={setShowOffcanvas}/>
 
 
       {getTrackType == "Keys" ? <Pianodemo key={Date.now()} /> : ''}

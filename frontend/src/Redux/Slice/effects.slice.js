@@ -189,6 +189,7 @@ const initialState = {
     selectedEffect: null, // Currently selected effect for detailed view
     showEffectsLibrary: false, // Controls the effects library modal
     showEffectsOffcanvas: false, // Controls the Effects.jsx component visibility
+    showEffectsTwoState: false,
     selectedCategory: null,
     searchTerm: '',
 };
@@ -251,6 +252,9 @@ const effectsSlice = createSlice({
         toggleEffectsOffcanvas: (state) => {
             state.showEffectsOffcanvas = !state.showEffectsOffcanvas;
         },
+        showEffectsTwo: (state, action) => {
+            state.showEffectsTwoState = action.payload;
+        },
         clearAllEffects: (state) => {
             state.activeEffects = [];
         },
@@ -290,6 +294,7 @@ export const {
     reorderEffects,
     setSelectedCategory,
     setSearchTerm,
+    showEffectsTwo,
     clearFilters
 } = effectsSlice.actions;
 

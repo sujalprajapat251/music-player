@@ -48,6 +48,7 @@ import TapeWobble from './TapeWobble';
 import Pianodemo from './Piano';
 import Effects2 from './Effects2';
 import audioEffectsPlayer from '../components/AudioEffectsPlayer'
+import { showEffectsTwo } from '../Redux/Slice/effects.slice';
 
 const effects = [
     { id: 1, name: "Bitcrushar", subscription: true, image: Bitcrushar, color: "#8F7CFD", category: "Distortion" },
@@ -70,7 +71,7 @@ const effects = [
     { id: 18, name: "Tape Wobble", subscription: true, image: TapeWobble1, color: "#409C9F", component: TapeWobble, category: "Modulation" },
 ];
 
-const Loops = () => {
+const Effects = () => {
 
     const dispatch = useDispatch();
 
@@ -82,8 +83,8 @@ const Loops = () => {
     const [isPlaying, setIsPlaying] = useState(false);
     const category = useSelector((state) => state.category?.category || []);
 
-    const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas } = useSelector((state) => state.effects);
-    // console.log(activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas);
+    const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas, showEffectsTwoState } = useSelector((state) => state.effects);
+    console.log("hhhh", showEffectsTwoState);
 
     useEffect(() => {
         dispatch(getAllCategory());
@@ -191,12 +192,12 @@ const Loops = () => {
 
     return (
         <>    
-            <div className="relative flex flex-col w-full h-full">
-                <div className="flex-1 w-full">
+            <div>
+                {/* <div className="flex-1 w-full">
                     <button className='p-2 bg-white text-black' onClick={() => dispatch(toggleEffectsOffcanvas())}>on/off</button>
-                </div>
+                </div> */}
                 <div className={`transition-all duration-300 flex ${showEffectsOffcanvas ? 'w-[75%]' : 'w-full'} self-start`}>
-                    <Effects2 />
+                {showEffectsTwoState ? <Effects2 /> : ""}
                 </div>
             {showEffectsOffcanvas && (
                 <>
@@ -314,6 +315,7 @@ const Loops = () => {
                                                                     setTimeout(() => {
                                                                         e.target.style.transform = 'scale(1)';
                                                                     }, 150);
+                                                                    dispatch(showEffectsTwo(true));
                                                                 }
                                                             }} src={effect.image} alt={effect.name} className="w-full transition-transform duration-150"
                                                         />
@@ -342,4 +344,4 @@ const Loops = () => {
     )
 }
 
-export default Loops
+export default Effects
