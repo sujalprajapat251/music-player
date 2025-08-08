@@ -2676,10 +2676,6 @@ useEffect(() => {
       />
       <MusicOff showOffcanvas={showOffcanvas} setShowOffcanvas={setShowOffcanvas} />
 
-
-      {getTrackType == "Keys" ? <Pianodemo key={Date.now()} /> : ''}
-
-
       {/* Context Menu */}
       <WaveMenu
         isOpen={contextMenu.isOpen}
@@ -2697,7 +2693,7 @@ useEffect(() => {
       />
 
       {/* Piano Component */}
-      {showPiano && (
+      {showPiano || getTrackType == "Keys" &&  (
         <Piano onClose={() => setShowPiano(false)} />
       )}
 
