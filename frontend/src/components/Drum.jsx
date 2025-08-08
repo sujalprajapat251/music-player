@@ -1,1560 +1,155 @@
-// import React, { useState, useRef, useCallback, useEffect } from 'react';
-
-// const DrumPadMachine = () => {
-//   const [currentMachine, setCurrentMachine] = useState(0);
-//   const [activePads, setActivePads] = useState(new Set());
-//   const [displayDescription, setDisplayDescription] = useState('Press a key or click a pad!');
-//   const [volume, setVolume] = useState(0.7);
-//   const [pan, setPan] = useState(0); // -1 to 1 (left to right)
-//   const [reverb, setReverb] = useState(0.2); // 0 to 1 (dry to wet)
-//   const [isRecording, setIsRecording] = useState(false);
-//   const [sequence, setSequence] = useState([]);
-//   const [isPlaying, setIsPlaying] = useState(false);
-//   const [audioBuffers, setAudioBuffers] = useState({});
-//   const [loadingStatus, setLoadingStatus] = useState({});
-//   const [selectedPad, setSelectedPad] = useState(null); // For individual pad effects
-//   const [padEffects, setPadEffects] = useState({}); // Store effects for each pad
-//   const audioContextRef = useRef(null);
-//   const reverbBufferRef = useRef(null);
-
-//   const descriptions = {
-//     Q: 'Chant: Hey!', '1': 'Clap', '3': 'Crash',
-//     G: 'Closed hi-hat', E: 'Open hi-hat', '8': 'Percussion',
-//     D: 'Snare', A: 'Kick one', U: 'Kick two',
-//     X: 'Tom', T: 'Ride', '7': 'Cymbal',
-//     Y: 'Clap', H: 'Shaker', J: 'Cowbell', K: 'Wood block'
-//   };
-
-//   // Initialize Web Audio API
-//   const getAudioContext = useCallback(() => {
-//     if (!audioContextRef.current) {
-//       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-//     }
-//     return audioContextRef.current;
-//   }, []);
-
-//   // Create reverb impulse response
-//   const createReverbBuffer = useCallback(() => {
-//     if (reverbBufferRef.current) return reverbBufferRef.current;
-
-//     const audioContext = getAudioContext();
-//     const length = audioContext.sampleRate * 2; // 2 second reverb
-//     const buffer = audioContext.createBuffer(2, length, audioContext.sampleRate);
-
-//     for (let channel = 0; channel < 2; channel++) {
-//       const channelData = buffer.getChannelData(channel);
-//       for (let i = 0; i < length; i++) {
-//         const decay = Math.pow(1 - i / length, 2);
-//         channelData[i] = (Math.random() * 2 - 1) * decay;
-//       }
-//     }
-
-//     reverbBufferRef.current = buffer;
-//     return buffer;
-//   }, [getAudioContext]);
-
-//   const machines = [
-//     {
-//       name: "Trap Kit",
-//       type:"Machine",
-//       color: '#7c3aed',
-//       pads: [
-//         { id: 'Q', label: 'Q', audioUrl: '/Audio/Tasty/q.mp3' },
-//         { id: '1', label: '1', audioUrl: '/Audio/Tasty/1.mp3' },
-//         { id: 'E', label: 'E', audioUrl: '/Audio/Tasty/e.mp3' },
-//         { id: '8', label: '8', audioUrl: '/Audio/Tasty/8.mp3' },
-//         { id: 'D', label: 'D', audioUrl: '/Audio/Tasty/d.mp3' },
-//         { id: 'O', label: 'O', audioUrl: '/Audio/Tasty/o.mp3' },
-//         { id: 'A', label: 'A', audioUrl: '/Audio/Tasty/a.mp3' },
-//         { id: 'U', label: 'U', audioUrl: '/Audio/Tasty/u.mp3' },
-//         { id: 'X', label: 'X', audioUrl: '/Audio/Tasty/x.mp3' },
-//         { id: 'T', label: 'T', audioUrl: '/Audio/Tasty/t.mp3' },
-//         { id: 'J', label: 'J', audioUrl: '/Audio/Tasty/j.mp3' },
-//       ]
-//     },
-//     {
-//       name: "Muffle Kit",
-//       type:"Machine",
-//       color: '#7c3aed',
-//       pads: [
-//         { id: 'Q', label: 'Q', audioUrl: '/Audio/Muffled/q.mp3' },
-//         { id: '1', label: '1', audioUrl: '/Audio/Muffled/1.mp3' },
-//         { id: 'E', label: 'E', audioUrl: '/Audio/Muffled/e.mp3' },
-//         { id: '8', label: '8', audioUrl: '/Audio/Muffled/8.mp3' },
-//         { id: 'D', label: 'D', audioUrl: '/Audio/Muffled/d.mp3' },
-//         { id: 'O', label: 'O', audioUrl: '/Audio/Muffled/o.mp3' },
-//         { id: 'A', label: 'A', audioUrl: '/Audio/Muffled/a.mp3' },
-//         { id: 'U', label: 'U', audioUrl: '/Audio/Muffled/u.mp3' },
-//         { id: 'X', label: 'X', audioUrl: '/Audio/Muffled/x.mp3' },
-//         { id: 'T', label: 'T', audioUrl: '/Audio/Muffled/t.mp3' },
-//         { id: 'J', label: 'J', audioUrl: '/Audio/Muffled/j.mp3' },
-//         { id: 'H', label: 'H', audioUrl: '/Audio/Muffled/h.mp3' },
-//         { id: 'K', label: 'K', audioUrl: '/Audio/Muffled/k.mp3' },
-//         { id: 'Y', label: 'Y', audioUrl: '/Audio/Muffled/y.mp3' },
-//         { id: '9', label: '9', audioUrl: '/Audio/Muffled/9.mp3' },
-//         { id: '7', label: '7', audioUrl: '/Audio/Muffled/7.mp3' },
-//       ]
-//     }
-//   ];
-
-//   // Load audio from URL
-//   const loadAudioFromUrl = useCallback(async (audioUrl, padId, machineIndex) => {
-//     try {
-//       const bufferKey = `${machineIndex}-${padId}`;
-//       setLoadingStatus(prev => ({
-//         ...prev,
-//         [bufferKey]: 'loading'
-//       }));
-
-//       const audioContext = getAudioContext();
-//       const response = await fetch(audioUrl);
-
-//       if (!response.ok) {
-//         throw new Error(`HTTP error! status: ${response.status}`);
-//       }
-
-//       const arrayBuffer = await response.arrayBuffer();
-//       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-
-//       setAudioBuffers(prev => ({
-//         ...prev,
-//         [bufferKey]: audioBuffer
-//       }));
-
-//       setLoadingStatus(prev => ({
-//         ...prev,
-//         [bufferKey]: 'loaded'
-//       }));
-
-//       return audioBuffer;
-//     } catch (error) {
-//       console.error('Error loading audio from URL:', error);
-//       const bufferKey = `${machineIndex}-${padId}`;
-//       setLoadingStatus(prev => ({
-//         ...prev,
-//         [bufferKey]: 'error'
-//       }));
-//       return null;
-//     }
-//   }, [getAudioContext]);
-
-//   // Play sound with effects
-//   const playSound = useCallback((pad) => {
-//     try {
-//       const audioContext = getAudioContext();
-
-//       // Resume context if suspended
-//       if (audioContext.state === 'suspended') {
-//         audioContext.resume();
-//       }
-
-//       const bufferKey = `${currentMachine}-${pad.id}`;
-//       const audioBuffer = audioBuffers[bufferKey];
-
-//       if (audioBuffer) {
-//         // Get pad-specific effects or use global settings
-//         const padEffect = padEffects[pad.id] || {};
-//         const effectiveVolume = padEffect.volume !== undefined ? padEffect.volume : volume;
-//         const effectivePan = padEffect.pan !== undefined ? padEffect.pan : pan;
-//         const effectiveReverb = padEffect.reverb !== undefined ? padEffect.reverb : reverb;
-
-//         // Create audio nodes
-//         const source = audioContext.createBufferSource();
-//         const gainNode = audioContext.createGain();
-//         const panNode = audioContext.createStereoPanner();
-//         const dryGainNode = audioContext.createGain();
-//         const wetGainNode = audioContext.createGain();
-//         const convolver = audioContext.createConvolver();
-
-//         // Set up reverb
-//         convolver.buffer = createReverbBuffer();
-
-//         // Set up source
-//         source.buffer = audioBuffer;
-
-//         // Set up gain (volume)
-//         gainNode.gain.setValueAtTime(effectiveVolume, audioContext.currentTime);
-
-//         // Set up pan (-1 = left, 1 = right)
-//         panNode.pan.setValueAtTime(effectivePan, audioContext.currentTime);
-
-//         // Set up reverb mix
-//         dryGainNode.gain.setValueAtTime(1 - effectiveReverb, audioContext.currentTime);
-//         wetGainNode.gain.setValueAtTime(effectiveReverb, audioContext.currentTime);
-
-//         // Connect nodes: Source -> Gain -> Pan -> Split to Dry/Wet
-//         source.connect(gainNode);
-//         gainNode.connect(panNode);
-
-//         // Dry path
-//         panNode.connect(dryGainNode);
-//         dryGainNode.connect(audioContext.destination);
-
-//         // Wet path (reverb)
-//         panNode.connect(convolver);
-//         convolver.connect(wetGainNode);
-//         wetGainNode.connect(audioContext.destination);
-
-//         source.start(audioContext.currentTime);
-
-//         // Visual feedback
-//         setActivePads(prev => new Set([...prev, pad.id]));
-//         setTimeout(() => {
-//           setActivePads(prev => {
-//             const newSet = new Set(prev);
-//             newSet.delete(pad.id);
-//             return newSet;
-//           });
-//         }, 200);
-
-//         const effectsText = padEffect.volume !== undefined || padEffect.pan !== undefined || padEffect.reverb !== undefined 
-//           ? ' (Custom)' : '';
-//         setDisplayDescription(`${descriptions[pad.id] || 'Drum Pad'} - ${machines[currentMachine].name}${effectsText}`);
-
-//         if (isRecording) {
-//           setSequence(prev => [...prev, { 
-//             key: pad.id, 
-//             time: Date.now(), 
-//             machine: currentMachine,
-//             effects: { ...padEffect }
-//           }]);
-//         }
-//       } else {
-//         setDisplayDescription(`${descriptions[pad.id] || 'Drum Pad'} - Loading audio...`);
-//       }
-//     } catch (error) {
-//       console.error('Error playing sound:', error);
-//       setDisplayDescription('Audio not available');
-//     }
-//   }, [getAudioContext, volume, pan, reverb, descriptions, machines, currentMachine, isRecording, audioBuffers, padEffects, createReverbBuffer]);
-
-//   // Load initial audio files on component mount and machine change
-//   useEffect(() => {
-//     const currentMachineData = machines[currentMachine];
-
-//     currentMachineData.pads.forEach((pad) => {
-//       if (pad.audioUrl) {
-//         const bufferKey = `${currentMachine}-${pad.id}`;
-//         if (!audioBuffers[bufferKey] && !loadingStatus[bufferKey]) {
-//           loadAudioFromUrl(pad.audioUrl, pad.id, currentMachine);
-//         }
-//       }
-//     });
-//   }, [currentMachine, machines, loadAudioFromUrl, audioBuffers, loadingStatus]);
-
-//   // Keyboard handling
-//   useEffect(() => {
-//     const handleKeyDown = (event) => {
-//       const keyMap = {
-//         81: 'Q', 49: '1', 51: '3', 71: 'G', 69: 'E', 56: '8',
-//         68: 'D', 65: 'A', 85: 'U', 88: 'X', 84: 'T', 55: '7',
-//         89: 'Y', 72: 'H', 74: 'J', 75: 'K'
-//       };    
-
-//       if (keyMap[event.keyCode]) {
-//         event.preventDefault();
-//         const currentPads = machines[currentMachine].pads;
-//         const pad = currentPads.find(p => p.id === keyMap[event.keyCode]);
-//         if (pad) {
-//           playSound(pad);
-//         }
-//       }
-//     };
-
-//     document.addEventListener('keydown', handleKeyDown);
-//     return () => document.removeEventListener('keydown', handleKeyDown);
-//   }, [currentMachine, machines, playSound]);
-
-//   const toggleRecording = () => {
-//     if (isRecording) {
-//       setIsRecording(false);
-//       setDisplayDescription('Recording stopped');
-//     } else {
-//       setSequence([]);
-//       setIsRecording(true);
-//       setDisplayDescription('Recording started...');
-//     }
-//   };
-
-//   const playSequence = async () => {
-//     if (sequence.length === 0) return;
-
-//     setIsPlaying(true);
-//     setDisplayDescription('Playing sequence...');
-
-//     const startTime = sequence[0].time;
-//     const originalMachine = currentMachine;
-
-//     for (let i = 0; i < sequence.length; i++) {
-//       const note = sequence[i];
-//       const delay = note.time - startTime;
-
-//       setTimeout(() => {
-//         if (note.machine !== undefined && note.machine !== currentMachine) {
-//           setCurrentMachine(note.machine);
-//         }
-
-//         // Temporarily apply recorded effects
-//         if (note.effects) {
-//           setPadEffects(prev => ({
-//             ...prev,
-//             [note.key]: note.effects
-//           }));
-//         }
-
-//         const currentPads = machines[note.machine || currentMachine].pads;
-//         const pad = currentPads.find(p => p.id === note.key);
-//         if (pad) {
-//           playSound(pad);
-//         }
-
-//         if (i === sequence.length - 1) {
-//           setIsPlaying(false);
-//           setDisplayDescription('Sequence finished');
-//           setCurrentMachine(originalMachine);
-//         }
-//       }, delay / 4);
-//     }
-//   };
-
-//   const clearSequence = () => {
-//     setSequence([]);
-//     setDisplayDescription('Sequence cleared');
-//   };
-
-//   // Update pad-specific effects
-//   const updatePadEffect = (padId, effectType, value) => {
-//     setPadEffects(prev => ({
-//       ...prev,
-//       [padId]: {
-//         ...prev[padId],
-//         [effectType]: value
-//       }
-//     }));
-//   };
-
-//   // Clear pad-specific effects
-//   const clearPadEffects = (padId) => {
-//     setPadEffects(prev => {
-//       const newEffects = { ...prev };
-//       delete newEffects[padId];
-//       return newEffects;
-//     });
-//   };
-
-//   const currentMachineData = machines[currentMachine];
-
-//   // Clean Pad Button Component
-//   const PadButton = ({ pad, index, isActive, onClick }) => {
-//     const description = descriptions[pad.id] || 'Drum Pad';
-//     const bufferKey = `${currentMachine}-${pad.id}`;
-//     const hasAudioFile = audioBuffers[bufferKey];
-//     const loadingState = loadingStatus[bufferKey];
-//     const hasCustomEffects = padEffects[pad.id];
-
-//     return (
-//       <button
-//         className={`w-24 h-24 rounded-xl border-2 flex flex-col items-center justify-center font-bold transition-all duration-200 transform group relative ${
-//           isActive 
-//             ? 'border-white bg-gradient-to-br from-white to-gray-200 text-gray-900 scale-105 shadow-2xl' 
-//             : selectedPad === pad.id
-//             ? 'border-yellow-400 bg-gradient-to-br from-yellow-700/40 to-yellow-800/60 text-white hover:border-yellow-300 hover:scale-102 shadow-lg backdrop-blur-sm'
-//             : 'border-purple-300/60 bg-gradient-to-br from-gray-700/80 to-gray-800/90 text-white hover:border-purple-400 hover:bg-gradient-to-br hover:from-purple-700/40 hover:to-purple-800/60 hover:scale-102 shadow-lg backdrop-blur-sm'
-//         }`}
-//         style={{
-//           boxShadow: isActive 
-//             ? `0 0 25px ${currentMachineData.color}, 0 0 50px ${currentMachineData.color}44, 0 8px 32px rgba(0,0,0,0.4)` 
-//             : selectedPad === pad.id
-//             ? '0 0 15px #fbbf24, 0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)'
-//             : '0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)'
-//         }}
-//         onClick={onClick}
-//         onDoubleClick={() => setSelectedPad(selectedPad === pad.id ? null : pad.id)}
-//         onMouseDown={(e) => e.preventDefault()}
-//         title={`${description} - ${hasAudioFile ? 'Audio Loaded' : loadingState === 'loading' ? 'Loading...' : 'No Audio'} ${selectedPad === pad.id ? '(Selected for editing)' : '(Double-click to edit effects)'}`}
-//       >
-//         <div className={`text-2xl font-black ${isActive ? 'text-gray-800' : selectedPad === pad.id ? 'text-yellow-200' : 'text-white group-hover:text-purple-200'}`}>
-//           {pad.label}
-//         </div>
-//         <div className={`text-xs font-medium mt-1 ${isActive ? 'text-gray-600' : selectedPad === pad.id ? 'text-yellow-300' : 'text-gray-300 group-hover:text-purple-300'} truncate max-w-20 text-center leading-tight`}>
-//           {description.split(':')[0].split(' ')[0]}
-//         </div>
-
-//         {/* Audio status indicator */}
-//         <div className="absolute -top-1 -right-1">
-//           {loadingState === 'loading' && (
-//             <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
-//           )}
-//           {loadingState === 'loaded' && (
-//             <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-//           )}
-//           {loadingState === 'error' && (
-//             <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-//           )}
-//           {!loadingState && (
-//             <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
-//           )}
-//         </div>
-
-//         {/* Custom effects indicator */}
-//         {hasCustomEffects && (
-//           <div className="absolute -top-1 -left-1">
-//             <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
-//           </div>
-//         )}
-
-//         {/* Pulse animation when active */}
-//         {isActive && (
-//           <div 
-//             className="absolute inset-0 rounded-xl animate-ping opacity-75"
-//             style={{
-//               border: `2px solid ${currentMachineData.color}`,
-//               backgroundColor: `${currentMachineData.color}22`
-//             }}
-//           />
-//         )}
-//       </button>
-//     );
-//   };
-
-//   return (
-//     <div className="w-full  bg-gray-900 text-white ">
-//       {/* Top Navigation */}
-//       <div className="flex justify-center items-center py-4 border-b border-gray-700">
-//         <div className="flex space-x-8">
-//           <button className="text-purple-400 border-b-2 border-purple-400 pb-1">
-//             Instrument
-//           </button>
-//           <button className="text-gray-400 hover:text-white">Patterns</button>
-//           <button className="text-gray-400 hover:text-white">Piano Roll</button>
-//           <button className="text-purple-400 font-semibold">Effects</button>
-//         </div>
-//       </div>
-
-//       {/* Machine Selector and Controls */}
-//       <div className="flex justify-between items-center px-8 py-4">
-//         <div className="flex items-center space-x-4">
-//           <button 
-//             onClick={() => setCurrentMachine((prev) => (prev - 1 + machines.length) % machines.length)}
-//             className="text-gray-400 hover:text-white text-xl"
-//           >
-//             ←
-//           </button>
-//           <div className="text-center">
-//             <div className="text-sm text-gray-400">⚙️</div>
-//             <div className="text-white font-medium">{currentMachineData.type}</div>
-//             <div className="text-white text-sm font-medium">{currentMachineData.name}</div>
-//           </div>
-//           <button 
-//             onClick={() => setCurrentMachine((prev) => (prev + 1) % machines.length)}
-//             className="text-gray-400 hover:text-white text-xl"
-//           >
-//             →
-//           </button>
-//         </div>
-//       </div>
-
-//       {/* Display */}
-//       <div className="text-center py-2">
-//         <div className="bg-black/50 rounded-lg p-3 backdrop-blur-sm inline-block min-w-96">
-//           <p className="text-xl font-mono text-green-400">{displayDescription}</p>
-//           {selectedPad && (
-//             <p className="text-sm text-yellow-400 mt-1">
-//               Editing pad {selectedPad} - Double-click another pad or same pad to change selection
-//             </p>
-//           )}
-//         </div>
-//       </div>
-
-//       {/* Drum Pad Area */}
-//       <div className="flex-1 flex items-center justify-center p-4">
-//         <div 
-//           className="p-8 rounded-2xl"
-//           style={{
-//             background: `linear-gradient(135deg, ${currentMachineData.color}22 0%, ${currentMachineData.color}44 50%, ${currentMachineData.color}33 100%)`,
-//             backdropFilter: 'blur(10px)',
-//             border: `1px solid ${currentMachineData.color}44`
-//           }}
-//         >
-//           {/* 3x3 Grid Layout - First 9 pads */}
-//           <div className="grid grid-cols-3 gap-6 mb-8">
-//             {currentMachineData.pads.slice(0, 9).map((pad, index) => (
-//               <PadButton
-//                 key={pad.id}
-//                 pad={pad}
-//                 index={index}
-//                 isActive={activePads.has(pad.id)}
-//                 onClick={() => playSound(pad)}
-//               />
-//             ))}
-//           </div>
-
-//           {/* Additional pads row */}
-//           {currentMachineData.pads.length > 9 && (
-//             <div className="grid grid-cols-4 gap-4 justify-items-center">
-//               {currentMachineData.pads.slice(9).map((pad, index) => (
-//                 <PadButton
-//                   key={pad.id}
-//                   pad={pad}
-//                   index={index + 9}
-//                   isActive={activePads.has(pad.id)}
-//                   onClick={() => playSound(pad)}
-//                 />
-//               ))}
-//             </div>
-//           )}
-//         </div>
-//       </div>
-
-//       {/* Controls */}
-//       <div className="bg-gray-800/95 backdrop-blur-sm p-4 border-t border-gray-700">
-//         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 max-w-7xl mx-auto">
-//           {/* Global Effects Controls */}
-//           <div className="space-y-3 ">
-//             <label className="text-white font-semibold text-sm">Global Effects</label>
-//             <div className="flex">
-//             {/* Volume Control */}
-//             <div className="space-y-1">
-//               <label className="text-gray-300 text-xs">Volume: {Math.round(volume * 100)}%</label>
-//               <input
-//                 type="range"
-//                 min="0"
-//                 max="1"
-//                 step="0.1"
-//                 value={volume}
-//                 onChange={(e) => setVolume(parseFloat(e.target.value))}
-//                 className="w-full accent-purple-500"
-//               />
-//             </div>
-
-//             {/* Pan Control */}
-//             <div className="space-y-1">
-//               <label className="text-gray-300 text-xs">Pan: {pan === 0 ? 'Center' : pan < 0 ? `${Math.abs(Math.round(pan * 100))}% Left` : `${Math.round(pan * 100)}% Right`}</label>
-//               <input
-//                 type="range"
-//                 min="-1"
-//                 max="1"
-//                 step="0.1"
-//                 value={pan}
-//                 onChange={(e) => setPan(parseFloat(e.target.value))}
-//                 className="w-full accent-blue-500"
-//               />
-//             </div>
-
-//             {/* Reverb Control */}
-//             <div className="space-y-1">
-//               <label className="text-gray-300 text-xs">Reverb: {Math.round(reverb * 100)}%</label>
-//               <input
-//                 type="range"
-//                 min="0"
-//                 max="1"
-//                 step="0.1"
-//                 value={reverb}
-//                 onChange={(e) => setReverb(parseFloat(e.target.value))}
-//                 className="w-full accent-green-500"
-//               />
-//             </div>
-//             </div>
-//           </div>
-
-//           {/* Individual Pad Effects */}
-//           {selectedPad && (
-//             <div className="space-y-3">
-//               <div className="flex items-center justify-between">
-//                 <label className="text-white font-semibold text-sm">Pad {selectedPad} Effects</label>
-//                 <button
-//                   onClick={() => clearPadEffects(selectedPad)}
-//                   className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs"
-//                 >
-//                   Reset
-//                 </button>
-//               </div>
-
-//               {/* Pad Volume */}
-//               <div className="space-y-1">
-//                 <label className="text-gray-300 text-xs">
-//                   Volume: {padEffects[selectedPad]?.volume !== undefined ? Math.round(padEffects[selectedPad].volume * 100) + '%' : 'Global'}
-//                 </label>
-//                 <input
-//                   type="range"
-//                   min="0"
-//                   max="1"
-//                   step="0.1"
-//                   value={padEffects[selectedPad]?.volume ?? volume}
-//                   onChange={(e) => updatePadEffect(selectedPad, 'volume', parseFloat(e.target.value))}
-//                   className="w-full accent-purple-500"
-//                 />
-//               </div>
-
-//               {/* Pad Pan */}
-//               <div className="space-y-1">
-//                 <label className="text-gray-300 text-xs">
-//                   Pan: {padEffects[selectedPad]?.pan !== undefined 
-//                     ? padEffects[selectedPad].pan === 0 ? 'Center' 
-//                       : padEffects[selectedPad].pan < 0 
-//                         ? `${Math.abs(Math.round(padEffects[selectedPad].pan * 100))}% Left`
-//                         : `${Math.round(padEffects[selectedPad].pan * 100)}% Right`
-//                     : 'Global'}
-//                 </label>
-//                 <input
-//                   type="range"
-//                   min="-1"
-//                   max="1"
-//                   step="0.1"
-//                   value={padEffects[selectedPad]?.pan ?? pan}
-//                   onChange={(e) => updatePadEffect(selectedPad, 'pan', parseFloat(e.target.value))}
-//                   className="w-full accent-blue-500"
-//                 />
-//               </div>
-
-//               {/* Pad Reverb */}
-//               <div className="space-y-1">
-//                 <label className="text-gray-300 text-xs">
-//                   Reverb: {padEffects[selectedPad]?.reverb !== undefined ? Math.round(padEffects[selectedPad].reverb * 100) + '%' : 'Global'}
-//                 </label>
-//                 <input
-//                   type="range"
-//                   min="0"
-//                   max="1"
-//                   step="0.1"
-//                   value={padEffects[selectedPad]?.reverb ?? reverb}
-//                   onChange={(e) => updatePadEffect(selectedPad, 'reverb', parseFloat(e.target.value))}
-//                   className="w-full accent-green-500"
-//                 />
-//               </div>
-//             </div>
-//           )}
-
-//           {/* Recording Controls */}
-//           <div className="space-y-2">
-//             <label className="text-white font-semibold text-sm">Recording</label>
-//             <div className="flex gap-2">
-//               <button
-//                 onClick={toggleRecording}
-//                 className={`px-3 py-1 rounded text-sm font-semibold transition-colors ${
-//                   isRecording
-//                     ? 'bg-red-600 hover:bg-red-700 text-white'
-//                     : 'bg-green-600 hover:bg-green-700 text-white'
-//                 }`}
-//               >
-//                 {isRecording ? '⏹️ Stop' : '🔴 Rec'}
-//               </button>
-//               <button
-//                 onClick={clearSequence}
-//                 className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm font-semibold transition-colors disabled:opacity-50"
-//                 disabled={sequence.length === 0}
-//               >
-//                 🗑️ Clear
-//               </button>
-//             </div>
-//           </div>
-
-//           {/* Playback Controls */}
-//           <div className="space-y-2">
-//             <label className="text-white font-semibold text-sm">Playback</label>
-//             <div className="flex gap-2 items-center">
-//               <button
-//                 onClick={playSequence}
-//                 className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-semibold transition-colors disabled:opacity-50"
-//                 disabled={sequence.length === 0 || isPlaying}
-//               >
-//                 {isPlaying ? '⏸️ Playing...' : '▶️ Play'}
-//               </button>
-//               <span className="text-white text-xs">
-//                 {sequence.length} beats
-//               </span>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-
-//       {/* Instructions */}
-//       <div className="text-center text-gray-400 text-xs py-2 border-t border-gray-700">
-//         Click pads or use keyboard • Double-click pads to edit individual effects • 🟢 Loaded | 🟡 Loading | 🔴 Error | ⚫ No Audio | 🔵 Custom Effects
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default DrumPadMachine;
-
-
-
-
-
-
-
-
-
-
-
-// import React, { useState, useRef, useCallback, useEffect } from 'react';
-
-// const DrumPadMachine = () => {
-//   const [currentType, setCurrentType] = useState(0);
-//   const [activePads, setActivePads] = useState(new Set());
-//   const [displayDescription, setDisplayDescription] = useState('Press a key or click a pad!');
-//   const [volume, setVolume] = useState(0.7);
-//   const [pan, setPan] = useState(0);
-//   const [reverb, setReverb] = useState(0.2);
-//   const [isRecording, setIsRecording] = useState(false);
-//   const [sequence, setSequence] = useState([]);
-//   const [isPlaying, setIsPlaying] = useState(false);
-//   const [audioBuffers, setAudioBuffers] = useState({});
-//   const [loadingStatus, setLoadingStatus] = useState({});
-//   const [selectedPad, setSelectedPad] = useState(null);
-//   const [padEffects, setPadEffects] = useState({});
-//   const audioContextRef = useRef(null);
-//   const reverbBufferRef = useRef(null);
-
-//   // Define different drum machine types with their own sounds
-//   const drumMachineTypes = [
-//     {
-//       name: "Classic 808",
-//       icon: "🥁",
-//       color: '#7c3aed',
-//       description: "Classic analog drum machine sounds",
-//       effects: {
-//         bassBoost: 1.2,
-//         compression: 0.8,
-//         saturation: 0.3
-//       },
-//       pads: [
-//         { id: 'Q', label: 'Q', sound: 'kick', audioUrl: '/Audio/808/kick.mp3' },
-//         { id: '1', label: '1', sound: 'snare', audioUrl: '/Audio/808/snare.mp3' },
-//         { id: 'E', label: 'E', sound: 'hihat', audioUrl: '/Audio/808/hihat.mp3' },
-//         { id: '8', label: '8', sound: 'openhat', audioUrl: '/Audio/808/openhat.mp3' },
-//         { id: 'D', label: 'D', sound: 'clap', audioUrl: '/Audio/808/clap.mp3' },
-//         { id: 'O', label: 'O', sound: 'perc1', audioUrl: '/Audio/808/perc1.mp3' },
-//         { id: 'A', label: 'A', sound: 'bass', audioUrl: '/Audio/808/bass.mp3' },
-//         { id: 'U', label: 'U', sound: 'tom', audioUrl: '/Audio/808/tom.mp3' },
-//         { id: 'X', label: 'X', sound: 'crash', audioUrl: '/Audio/808/crash.mp3' },
-//         { id: 'T', label: 'T', sound: 'ride', audioUrl: '/Audio/Tasty/t.mp3' },
-//         { id: 'J', label: 'J', sound: 'cowbell', audioUrl: '/Audio/Tasty/j.mp3' },
-//       ]
-//     },
-//     {
-//       name: "Vintage 909",
-//       icon: "🎛️",
-//       color: '#dc2626',
-//       description: "House and techno drum machine",
-//       effects: {
-//         bassBoost: 1.0,
-//         compression: 0.6,
-//         saturation: 0.2
-//       },
-//       pads: [
-//         { id: 'Q', label: 'Q', sound: 'kick', audioUrl: '/Audio/909/kick.mp3' },
-//         { id: '1', label: '1', sound: 'snare', audioUrl: '/Audio/909/snare.mp3' },
-//         { id: 'E', label: 'E', sound: 'hihat', audioUrl: '/Audio/909/hihat.mp3' },
-//         { id: '8', label: '8', sound: 'openhat', audioUrl: '/Audio/909/openhat.mp3' },
-//         { id: 'D', label: 'D', sound: 'clap', audioUrl: '/Audio/909/clap.mp3' },
-//         { id: 'O', label: 'O', sound: 'perc1', audioUrl: '/Audio/909/perc1.mp3' },
-//         { id: 'A', label: 'A', sound: 'bass', audioUrl: '/Audio/909/bass.mp3' },
-//         { id: 'U', label: 'U', sound: 'tom', audioUrl: '/Audio/909/tom.mp3' },
-//         { id: 'X', label: 'X', sound: 'crash', audioUrl: '/Audio/909/crash.mp3' },
-//         { id: 'T', label: 'T', sound: 'ride', audioUrl: '/Audio/Muffled/t.mp3' },
-//         { id: 'J', label: 'J', sound: 'cowbell', audioUrl: '/Audio/Muffled/j.mp3' },
-//         { id: 'H', label: 'H', sound: 'shaker', audioUrl: '/Audio/Muffled/h.mp3' },
-//       ]
-//     },
-//     {
-//       name: "Modern Trap",
-//       icon: "💎",
-//       color: '#059669',
-//       description: "Contemporary trap and hip-hop sounds",
-//       effects: {
-//         bassBoost: 1.5,
-//         compression: 1.2,
-//         saturation: 0.5
-//       },
-//       pads: [
-//         { id: 'Q', label: 'Q', sound: 'kick', audioUrl: '/Audio/Tasty/q.mp3' },
-//         { id: '1', label: '1', sound: 'snare', audioUrl: '/Audio/Tasty/1.mp3' },
-//         { id: 'E', label: 'E', sound: 'hihat', audioUrl: '/Audio/Tasty/e.mp3' },
-//         { id: '8', label: '8', sound: 'openhat', audioUrl: '/Audio/Tasty/8.mp3' },
-//         { id: 'D', label: 'D', sound: 'clap', audioUrl: '/Audio/Tasty/d.mp3' },
-//         { id: 'O', label: 'O', sound: 'perc1', audioUrl: '/Audio/Tasty/o.mp3' },
-//         { id: 'A', label: 'A', sound: 'bass', audioUrl: '/Audio/Tasty/a.mp3' },
-//         { id: 'U', label: 'U', sound: 'tom', audioUrl: '/Audio/Tasty/u.mp3' },
-//         { id: 'X', label: 'X', sound: 'crash', audioUrl: '/Audio/Tasty/x.mp3' },
-//         { id: 'T', label: 'T', sound: 'ride', audioUrl: '/Audio/Tasty/t.mp3' },
-//         { id: 'J', label: 'J', sound: 'cowbell', audioUrl: '/Audio/Tasty/j.mp3' },
-//       ]
-//     },
-//     {
-//       name: "Acoustic Kit",
-//       icon: "🪘",
-//       color: '#d97706',
-//       description: "Natural acoustic drum sounds",
-//       effects: {
-//         bassBoost: 0.9,
-//         compression: 0.4,
-//         saturation: 0.1
-//       },
-//       pads: [
-//         { id: 'Q', label: 'Q', sound: 'kick', audioUrl: '/Audio/Acoustic/kick.mp3' },
-//         { id: '1', label: '1', sound: 'snare', audioUrl: '/Audio/Acoustic/snare.mp3' },
-//         { id: 'E', label: 'E', sound: 'hihat', audioUrl: '/Audio/Acoustic/hihat.mp3' },
-//         { id: '8', label: '8', sound: 'openhat', audioUrl: '/Audio/Acoustic/openhat.mp3' },
-//         { id: 'D', label: 'D', sound: 'clap', audioUrl: '/Audio/Acoustic/clap.mp3' },
-//         { id: 'O', label: 'O', sound: 'perc1', audioUrl: '/Audio/Acoustic/perc1.mp3' },
-//         { id: 'A', label: 'A', sound: 'bass', audioUrl: '/Audio/Acoustic/bass.mp3' },
-//         { id: 'U', label: 'U', sound: 'tom', audioUrl: '/Audio/Acoustic/tom.mp3' },
-//         { id: 'X', label: 'X', sound: 'crash', audioUrl: '/Audio/Acoustic/crash.mp3' },
-//         { id: 'T', label: 'T', sound: 'ride', audioUrl: '/Audio/Muffled/t.mp3' },
-//         { id: 'J', label: 'J', sound: 'cowbell', audioUrl: '/Audio/Muffled/j.mp3' },
-//         { id: 'H', label: 'H', sound: 'shaker', audioUrl: '/Audio/Muffled/h.mp3' },
-//         { id: 'K', label: 'K', sound: 'woodblock', audioUrl: '/Audio/Muffled/k.mp3' },
-//       ]
-//     },
-//     {
-//       name: "Electro Pop",
-//       icon: "⚡",
-//       color: '#c2410c',
-//       description: "Electronic pop and synth sounds",
-//       effects: {
-//         bassBoost: 1.1,
-//         compression: 0.9,
-//         saturation: 0.6
-//       },
-//       pads: [
-//         { id: 'Q', label: 'Q', sound: 'kick', audioUrl: '/Audio/Electro/kick.mp3' },
-//         { id: '1', label: '1', sound: 'snare', audioUrl: '/Audio/Electro/snare.mp3' },
-//         { id: 'E', label: 'E', sound: 'hihat', audioUrl: '/Audio/Electro/hihat.mp3' },
-//         { id: '8', label: '8', sound: 'openhat', audioUrl: '/Audio/Electro/openhat.mp3' },
-//         { id: 'D', label: 'D', sound: 'clap', audioUrl: '/Audio/Electro/clap.mp3' },
-//         { id: 'O', label: 'O', sound: 'perc1', audioUrl: '/Audio/Electro/perc1.mp3' },
-//         { id: 'A', label: 'A', sound: 'bass', audioUrl: '/Audio/Electro/bass.mp3' },
-//         { id: 'U', label: 'U', sound: 'tom', audioUrl: '/Audio/Electro/tom.mp3' },
-//         { id: 'X', label: 'X', sound: 'crash', audioUrl: '/Audio/Electro/crash.mp3' },
-//         { id: 'T', label: 'T', sound: 'ride', audioUrl: '/Audio/Muffled/t.mp3' },
-//         { id: 'J', label: 'J', sound: 'cowbell', audioUrl: '/Audio/Muffled/j.mp3' },
-//         { id: 'H', label: 'H', sound: 'shaker', audioUrl: '/Audio/Muffled/h.mp3' },
-//         { id: 'K', label: 'K', sound: 'woodblock', audioUrl: '/Audio/Muffled/k.mp3' },
-//         { id: 'Y', label: 'Y', sound: 'vocal', audioUrl: '/Audio/Muffled/y.mp3' },
-//       ]
-//     },
-//     {
-//       name: "Lo-Fi Vinyl",
-//       icon: "📀",
-//       color: '#7c2d12',
-//       description: "Vintage vinyl-sampled drums",
-//       effects: {
-//         bassBoost: 0.8,
-//         compression: 0.5,
-//         saturation: 0.4
-//       },
-//       pads: [
-//         { id: 'Q', label: 'Q', sound: 'kick', audioUrl: '/Audio/Muffled/q.mp3' },
-//         { id: '1', label: '1', sound: 'snare', audioUrl: '/Audio/Muffled/1.mp3' },
-//         { id: 'E', label: 'E', sound: 'hihat', audioUrl: '/Audio/Muffled/e.mp3' },
-//         { id: '8', label: '8', sound: 'openhat', audioUrl: '/Audio/Muffled/8.mp3' },
-//         { id: 'D', label: 'D', sound: 'clap', audioUrl: '/Audio/Muffled/d.mp3' },
-//         { id: 'O', label: 'O', sound: 'perc1', audioUrl: '/Audio/Muffled/o.mp3' },
-//         { id: 'A', label: 'A', sound: 'bass', audioUrl: '/Audio/Muffled/a.mp3' },
-//         { id: 'U', label: 'U', sound: 'tom', audioUrl: '/Audio/Muffled/u.mp3' },
-//         { id: 'X', label: 'X', sound: 'crash', audioUrl: '/Audio/Muffled/x.mp3' },
-//         { id: 'T', label: 'T', sound: 'ride', audioUrl: '/Audio/Muffled/t.mp3' },
-//         { id: 'J', label: 'J', sound: 'cowbell', audioUrl: '/Audio/Muffled/j.mp3' },
-//         { id: 'H', label: 'H', sound: 'shaker', audioUrl: '/Audio/Muffled/h.mp3' },
-//         { id: 'K', label: 'K', sound: 'woodblock', audioUrl: '/Audio/Muffled/k.mp3' },
-//         { id: 'Y', label: 'Y', sound: 'vocal', audioUrl: '/Audio/Muffled/y.mp3' },
-//         { id: '9', label: '9', sound: 'fx1', audioUrl: '/Audio/Muffled/9.mp3' },
-//         { id: '7', label: '7', sound: 'fx2', audioUrl: '/Audio/Muffled/7.mp3' },
-//       ]
-//     }
-//   ];
-
-//   const soundDescriptions = {
-//     kick: 'Kick Drum',
-//     snare: 'Snare Drum', 
-//     hihat: 'Hi-Hat Closed',
-//     openhat: 'Hi-Hat Open',
-//     clap: 'Hand Clap',
-//     perc1: 'Percussion',
-//     bass: 'Bass Drum',
-//     tom: 'Tom Drum',
-//     crash: 'Crash Cymbal',
-//     ride: 'Ride Cymbal',
-//     cowbell: 'Cowbell',
-//     shaker: 'Shaker',
-//     woodblock: 'Wood Block',
-//     vocal: 'Vocal Sample',
-//     fx1: 'Sound FX 1',
-//     fx2: 'Sound FX 2'
-//   };
-
-//   // Initialize Web Audio API
-//   const getAudioContext = useCallback(() => {
-//     if (!audioContextRef.current) {
-//       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-//     }
-//     return audioContextRef.current;
-//   }, []);
-
-//   // Create reverb impulse response
-//   const createReverbBuffer = useCallback(() => {
-//     if (reverbBufferRef.current) return reverbBufferRef.current;
-
-//     const audioContext = getAudioContext();
-//     const length = audioContext.sampleRate * 2;
-//     const buffer = audioContext.createBuffer(2, length, audioContext.sampleRate);
-
-//     for (let channel = 0; channel < 2; channel++) {
-//       const channelData = buffer.getChannelData(channel);
-//       for (let i = 0; i < length; i++) {
-//         const decay = Math.pow(1 - i / length, 2);
-//         channelData[i] = (Math.random() * 2 - 1) * decay;
-//       }
-//     }
-
-//     reverbBufferRef.current = buffer;
-//     return buffer;
-//   }, [getAudioContext]);
-
-//   // Apply drum machine type effects to audio
-//   const applyTypeEffects = useCallback((audioNode, typeEffects) => {
-//     const audioContext = getAudioContext();
-
-//     // Create EQ for bass boost
-//     const lowShelf = audioContext.createBiquadFilter();
-//     lowShelf.type = 'lowshelf';
-//     lowShelf.frequency.setValueAtTime(200, audioContext.currentTime);
-//     lowShelf.gain.setValueAtTime((typeEffects.bassBoost - 1) * 10, audioContext.currentTime);
-
-//     // Create compressor
-//     const compressor = audioContext.createDynamicsCompressor();
-//     compressor.threshold.setValueAtTime(-24, audioContext.currentTime);
-//     compressor.knee.setValueAtTime(30, audioContext.currentTime);
-//     compressor.ratio.setValueAtTime(12, audioContext.currentTime);
-//     compressor.attack.setValueAtTime(0.003, audioContext.currentTime);
-//     compressor.release.setValueAtTime(0.25, audioContext.currentTime);
-
-//     // Create waveshaper for saturation
-//     const waveshaper = audioContext.createWaveShaper();
-//     const samples = 44100;
-//     const curve = new Float32Array(samples);
-//     const deg = Math.PI / 180;
-//     for (let i = 0; i < samples; i++) {
-//       const x = (i * 2) / samples - 1;
-//       curve[i] = (3 + typeEffects.saturation) * x * 20 * deg / (Math.PI + typeEffects.saturation * Math.abs(x));
-//     }
-//     waveshaper.curve = curve;
-//     waveshaper.oversample = '4x';
-
-//     // Connect effects chain
-//     audioNode.connect(lowShelf);
-//     lowShelf.connect(compressor);
-//     compressor.connect(waveshaper);
-
-//     return waveshaper;
-//   }, [getAudioContext]);
-
-//   // Load audio from URL
-//   const loadAudioFromUrl = useCallback(async (audioUrl, padId, typeIndex) => {
-//     try {
-//       const bufferKey = `${typeIndex}-${padId}`;
-//       setLoadingStatus(prev => ({
-//         ...prev,
-//         [bufferKey]: 'loading'
-//       }));
-
-//       const audioContext = getAudioContext();
-//       const response = await fetch(audioUrl);
-
-//       if (!response.ok) {
-//         throw new Error(`HTTP error! status: ${response.status}`);
-//       }
-
-//       const arrayBuffer = await response.arrayBuffer();
-//       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-
-//       setAudioBuffers(prev => ({
-//         ...prev,
-//         [bufferKey]: audioBuffer
-//       }));
-
-//       setLoadingStatus(prev => ({
-//         ...prev,
-//         [bufferKey]: 'loaded'
-//       }));
-
-//       return audioBuffer;
-//     } catch (error) {
-//       console.error('Error loading audio from URL:', error);
-//       const bufferKey = `${typeIndex}-${padId}`;
-//       setLoadingStatus(prev => ({
-//         ...prev,
-//         [bufferKey]: 'error'
-//       }));
-//       return null;
-//     }
-//   }, [getAudioContext]);
-
-//   // Play sound with effects
-//   const playSound = useCallback((pad) => {
-//     try {
-//       const audioContext = getAudioContext();
-
-//       if (audioContext.state === 'suspended') {
-//         audioContext.resume();
-//       }
-
-//       const bufferKey = `${currentType}-${pad.id}`;
-//       const audioBuffer = audioBuffers[bufferKey];
-
-//       if (audioBuffer) {
-//         const padEffect = padEffects[pad.id] || {};
-//         const effectiveVolume = padEffect.volume !== undefined ? padEffect.volume : volume;
-//         const effectivePan = padEffect.pan !== undefined ? padEffect.pan : pan;
-//         const effectiveReverb = padEffect.reverb !== undefined ? padEffect.reverb : reverb;
-//         const currentTypeEffects = drumMachineTypes[currentType].effects;
-
-//         // Create audio nodes
-//         const source = audioContext.createBufferSource();
-//         const gainNode = audioContext.createGain();
-//         const panNode = audioContext.createStereoPanner();
-//         const dryGainNode = audioContext.createGain();
-//         const wetGainNode = audioContext.createGain();
-//         const convolver = audioContext.createConvolver();
-
-//         // Set up reverb
-//         convolver.buffer = createReverbBuffer();
-
-//         // Set up source
-//         source.buffer = audioBuffer;
-
-//         // Set up gain (volume)
-//         gainNode.gain.setValueAtTime(effectiveVolume, audioContext.currentTime);
-
-//         // Set up pan
-//         panNode.pan.setValueAtTime(effectivePan, audioContext.currentTime);
-
-//         // Set up reverb mix
-//         dryGainNode.gain.setValueAtTime(1 - effectiveReverb, audioContext.currentTime);
-//         wetGainNode.gain.setValueAtTime(effectiveReverb, audioContext.currentTime);
-
-//         // Apply drum machine type effects
-//         const effectsOutput = applyTypeEffects(source, currentTypeEffects);
-
-//         // Connect nodes with type effects
-//         effectsOutput.connect(gainNode);
-//         gainNode.connect(panNode);
-
-//         // Dry path
-//         panNode.connect(dryGainNode);
-//         dryGainNode.connect(audioContext.destination);
-
-//         // Wet path (reverb)
-//         panNode.connect(convolver);
-//         convolver.connect(wetGainNode);
-//         wetGainNode.connect(audioContext.destination);
-
-//         source.start(audioContext.currentTime);
-
-//         // Visual feedback
-//         setActivePads(prev => new Set([...prev, pad.id]));
-//         setTimeout(() => {
-//           setActivePads(prev => {
-//             const newSet = new Set(prev);
-//             newSet.delete(pad.id);
-//             return newSet;
-//           });
-//         }, 200);
-
-//         const effectsText = padEffect.volume !== undefined || padEffect.pan !== undefined || padEffect.reverb !== undefined 
-//           ? ' (Custom)' : '';
-//         const soundName = soundDescriptions[pad.sound] || 'Drum Sound';
-//         setDisplayDescription(`${soundName} - ${drumMachineTypes[currentType].name}${effectsText}`);
-
-//         if (isRecording) {
-//           setSequence(prev => [...prev, { 
-//             key: pad.id, 
-//             time: Date.now(), 
-//             type: currentType,
-//             effects: { ...padEffect }
-//           }]);
-//         }
-//       } else {
-//         const soundName = soundDescriptions[pad.sound] || 'Drum Sound';
-//         setDisplayDescription(`${soundName} - Loading audio...`);
-//       }
-//     } catch (error) {
-//       console.error('Error playing sound:', error);
-//       setDisplayDescription('Audio not available');
-//     }
-//   }, [getAudioContext, volume, pan, reverb, soundDescriptions, drumMachineTypes, currentType, isRecording, audioBuffers, padEffects, createReverbBuffer, applyTypeEffects]);
-
-//   // Load initial audio files on component mount and type change
-//   useEffect(() => {
-//     const currentTypeData = drumMachineTypes[currentType];
-
-//     currentTypeData.pads.forEach((pad) => {
-//       if (pad.audioUrl) {
-//         const bufferKey = `${currentType}-${pad.id}`;
-//         if (!audioBuffers[bufferKey] && !loadingStatus[bufferKey]) {
-//           loadAudioFromUrl(pad.audioUrl, pad.id, currentType);
-//         }
-//       }
-//     });
-//   }, [currentType, drumMachineTypes, loadAudioFromUrl, audioBuffers, loadingStatus]);
-
-//   // Keyboard handling
-//   useEffect(() => {
-//     const handleKeyDown = (event) => {
-//       const keyMap = {
-//         81: 'Q', 49: '1', 51: '3', 71: 'G', 69: 'E', 56: '8',
-//         68: 'D', 65: 'A', 85: 'U', 88: 'X', 84: 'T', 55: '7',
-//         89: 'Y', 72: 'H', 74: 'J', 75: 'K', 57: '9'
-//       };    
-
-//       if (keyMap[event.keyCode]) {
-//         event.preventDefault();
-//         const currentPads = drumMachineTypes[currentType].pads;
-//         const pad = currentPads.find(p => p.id === keyMap[event.keyCode]);
-//         if (pad) {
-//           playSound(pad);
-//         }
-//       }
-//     };
-
-//     document.addEventListener('keydown', handleKeyDown);
-//     return () => document.removeEventListener('keydown', handleKeyDown);
-//   }, [currentType, drumMachineTypes, playSound]);
-
-//   const toggleRecording = () => {
-//     if (isRecording) {
-//       setIsRecording(false);
-//       setDisplayDescription('Recording stopped');
-//     } else {
-//       setSequence([]);
-//       setIsRecording(true);
-//       setDisplayDescription('Recording started...');
-//     }
-//   };
-
-//   const playSequence = async () => {
-//     if (sequence.length === 0) return;
-
-//     setIsPlaying(true);
-//     setDisplayDescription('Playing sequence...');
-
-//     const startTime = sequence[0].time;
-//     const originalType = currentType;
-
-//     for (let i = 0; i < sequence.length; i++) {
-//       const note = sequence[i];
-//       const delay = note.time - startTime;
-
-//       setTimeout(() => {
-//         if (note.type !== undefined && note.type !== currentType) {
-//           setCurrentType(note.type);
-//         }
-
-//         if (note.effects) {
-//           setPadEffects(prev => ({
-//             ...prev,
-//             [note.key]: note.effects
-//           }));
-//         }
-
-//         const currentPads = drumMachineTypes[note.type || currentType].pads;
-//         const pad = currentPads.find(p => p.id === note.key);
-//         if (pad) {
-//           playSound(pad);
-//         }
-
-//         if (i === sequence.length - 1) {
-//           setIsPlaying(false);
-//           setDisplayDescription('Sequence finished');
-//           setCurrentType(originalType);
-//         }
-//       }, delay / 4);
-//     }
-//   };
-
-//   const clearSequence = () => {
-//     setSequence([]);
-//     setDisplayDescription('Sequence cleared');
-//   };
-
-//   const updatePadEffect = (padId, effectType, value) => {
-//     setPadEffects(prev => ({
-//       ...prev,
-//       [padId]: {
-//         ...prev[padId],
-//         [effectType]: value
-//       }
-//     }));
-//   };
-
-//   const clearPadEffects = (padId) => {
-//     setPadEffects(prev => {
-//       const newEffects = { ...prev };
-//       delete newEffects[padId];
-//       return newEffects;
-//     });
-//   };
-
-//   const currentTypeData = drumMachineTypes[currentType];
-
-//   // Clean Pad Button Component
-//   const PadButton = ({ pad, index, isActive, onClick }) => {
-//     const soundName = soundDescriptions[pad.sound] || 'Drum Sound';
-//     const bufferKey = `${currentType}-${pad.id}`;
-//     const hasAudioFile = audioBuffers[bufferKey];
-//     const loadingState = loadingStatus[bufferKey];
-//     const hasCustomEffects = padEffects[pad.id];
-
-//     return (
-//       <button
-//         className={`w-24 h-24 rounded-xl border-2 flex flex-col items-center justify-center font-bold transition-all duration-200 transform group relative ${
-//           isActive 
-//             ? 'border-white bg-gradient-to-br from-white to-gray-200 text-gray-900 scale-105 shadow-2xl' 
-//             : selectedPad === pad.id
-//             ? 'border-yellow-400 bg-gradient-to-br from-yellow-700/40 to-yellow-800/60 text-white hover:border-yellow-300 hover:scale-102 shadow-lg backdrop-blur-sm'
-//             : 'border-purple-300/60 bg-gradient-to-br from-gray-700/80 to-gray-800/90 text-white hover:border-purple-400 hover:bg-gradient-to-br hover:from-purple-700/40 hover:to-purple-800/60 hover:scale-102 shadow-lg backdrop-blur-sm'
-//         }`}
-//         style={{
-//           boxShadow: isActive 
-//             ? `0 0 25px ${currentTypeData.color}, 0 0 50px ${currentTypeData.color}44, 0 8px 32px rgba(0,0,0,0.4)` 
-//             : selectedPad === pad.id
-//             ? '0 0 15px #fbbf24, 0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)'
-//             : '0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)'
-//         }}
-//         onClick={onClick}
-//         onDoubleClick={() => setSelectedPad(selectedPad === pad.id ? null : pad.id)}
-//         onMouseDown={(e) => e.preventDefault()}
-//         title={`${soundName} (${pad.label}) - ${hasAudioFile ? 'Audio Loaded' : loadingState === 'loading' ? 'Loading...' : 'No Audio'} ${selectedPad === pad.id ? '(Selected for editing)' : '(Double-click to edit effects)'}`}
-//       >
-//         <div className={`text-2xl font-black ${isActive ? 'text-gray-800' : selectedPad === pad.id ? 'text-yellow-200' : 'text-white group-hover:text-purple-200'}`}>
-//           {pad.label}
-//         </div>
-//         <div className={`text-xs font-medium mt-1 ${isActive ? 'text-gray-600' : selectedPad === pad.id ? 'text-yellow-300' : 'text-gray-300 group-hover:text-purple-300'} truncate max-w-20 text-center leading-tight`}>
-//           {soundName.split(' ')[0]}
-//         </div>
-
-//         {/* Audio status indicator */}
-//         <div className="absolute -top-1 -right-1">
-//           {loadingState === 'loading' && (
-//             <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
-//           )}
-//           {loadingState === 'loaded' && (
-//             <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-//           )}
-//           {loadingState === 'error' && (
-//             <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-//           )}
-//           {!loadingState && (
-//             <div className="w-3 h-3 bg-gray-500 rounded-full"></div>
-//           )}
-//         </div>
-
-//         {/* Custom effects indicator */}
-//         {hasCustomEffects && (
-//           <div className="absolute -top-1 -left-1">
-//             <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
-//           </div>
-//         )}
-
-//         {/* Pulse animation when active */}
-//         {isActive && (
-//           <div 
-//             className="absolute inset-0 rounded-xl animate-ping opacity-75"
-//             style={{
-//               border: `2px solid ${currentTypeData.color}`,
-//               backgroundColor: `${currentTypeData.color}22`
-//             }}
-//           />
-//         )}
-//       </button>
-//     );
-//   };
-
-//   return (
-//     <div className="w-full bg-gray-900 text-white">
-//       {/* Top Navigation */}
-//       <div className="flex justify-center items-center py-4 border-b border-gray-700">
-//         <div className="flex space-x-8">
-//           <button className="text-purple-400 border-b-2 border-purple-400 pb-1">
-//             Instrument
-//           </button>
-//           <button className="text-gray-400 hover:text-white">Patterns</button>
-//           <button className="text-gray-400 hover:text-white">Piano Roll</button>
-//           <button className="text-purple-400 font-semibold">Effects</button>
-//         </div>
-//       </div>
-
-//       {/* Type Selector */}
-//       <div className="flex justify-center items-center px-8 py-4">
-//         <div className="flex items-center space-x-4">
-//           <button 
-//             onClick={() => setCurrentType((prev) => (prev - 1 + drumMachineTypes.length) % drumMachineTypes.length)}
-//             className="text-gray-400 hover:text-white text-xl"
-//           >
-//             ←
-//           </button>
-//           <div className="text-center">
-//             <div className="text-2xl" style={{ color: currentTypeData.color }}>{currentTypeData.icon}</div>
-//             <div className="text-white font-medium">{currentTypeData.name}</div>
-//             <div className="text-xs text-gray-400 max-w-32 truncate">{currentTypeData.description}</div>
-//           </div>
-//           <button 
-//             onClick={() => setCurrentType((prev) => (prev + 1) % drumMachineTypes.length)}
-//             className="text-gray-400 hover:text-white text-xl"
-//           >
-//             →
-//           </button>
-//         </div>
-//       </div>
-
-//       {/* Display */}
-//       <div className="text-center py-2">
-//         <div className="bg-black/50 rounded-lg p-3 backdrop-blur-sm inline-block min-w-96">
-//           <p className="text-xl font-mono text-green-400">{displayDescription}</p>
-//           {selectedPad && (
-//             <p className="text-sm text-yellow-400 mt-1">
-//               Editing pad {selectedPad} - Double-click another pad or same pad to change selection
-//             </p>
-//           )}
-//         </div>
-//       </div>
-
-//       {/* Drum Pad Area */}
-//       <div className="flex-1 flex items-center justify-center p-4">
-//         <div 
-//           className="p-8 rounded-2xl"
-//           style={{
-//             background: `linear-gradient(135deg, ${currentTypeData.color}22 0%, ${currentTypeData.color}44 50%, ${currentTypeData.color}33 100%)`,
-//             backdropFilter: 'blur(10px)',
-//             border: `1px solid ${currentTypeData.color}44`
-//           }}
-//         >
-//           {/* 3x3 Grid Layout - First 9 pads */}
-//           <div className="grid grid-cols-3 gap-6 mb-8">
-//             {currentTypeData.pads.slice(0, 9).map((pad, index) => (
-//               <PadButton
-//                 key={pad.id}
-//                 pad={pad}
-//                 index={index}
-//                 isActive={activePads.has(pad.id)}
-//                 onClick={() => playSound(pad)}
-//               />
-//             ))}
-//           </div>
-
-//           {/* Additional pads row */}
-//           {currentTypeData.pads.length > 9 && (
-//             <div className="grid grid-cols-4 gap-4 justify-items-center">
-//               {currentTypeData.pads.slice(9).map((pad, index) => (
-//                 <PadButton
-//                   key={pad.id}
-//                   pad={pad}
-//                   index={index + 9}
-//                   isActive={activePads.has(pad.id)}
-//                   onClick={() => playSound(pad)}
-//                 />
-//               ))}
-//             </div>
-//           )}
-//         </div>
-//       </div>
-
-//       {/* Controls */}
-//       <div className="bg-gray-800/95 backdrop-blur-sm p-4 border-t border-gray-700">
-//         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 max-w-7xl mx-auto">
-//           {/* Global Effects Controls */}
-//           <div className="space-y-3">
-//             <label className="text-white font-semibold text-sm">Global Effects</label>
-//             <div className="flex flex-col space-y-2">
-//               {/* Volume Control */}
-//               <div className="space-y-1">
-//                 <label className="text-gray-300 text-xs">Volume: {Math.round(volume * 100)}%</label>
-//                 <input
-//                   type="range"
-//                   min="0"
-//                   max="1"
-//                   step="0.1"
-//                   value={volume}
-//                   onChange={(e) => setVolume(parseFloat(e.target.value))}
-//                   className="w-full accent-purple-500"
-//                 />
-//               </div>
-
-//               {/* Pan Control */}
-//               <div className="space-y-1">
-//                 <label className="text-gray-300 text-xs">Pan: {pan === 0 ? 'Center' : pan < 0 ? `${Math.abs(Math.round(pan * 100))}% Left` : `${Math.round(pan * 100)}% Right`}</label>
-//                 <input
-//                   type="range"
-//                   min="-1"
-//                   max="1"
-//                   step="0.1"
-//                   value={pan}
-//                   onChange={(e) => setPan(parseFloat(e.target.value))}
-//                   className="w-full accent-blue-500"
-//                 />
-//               </div>
-
-//               {/* Reverb Control */}
-//               <div className="space-y-1">
-//                 <label className="text-gray-300 text-xs">Reverb: {Math.round(reverb * 100)}%</label>
-//                 <input
-//                   type="range"
-//                   min="0"
-//                   max="1"
-//                   step="0.1"
-//                   value={reverb}
-//                   onChange={(e) => setReverb(parseFloat(e.target.value))}
-//                   className="w-full accent-green-500"
-//                 />
-//               </div>
-//             </div>
-//           </div>
-
-//           {/* Individual Pad Effects */}
-//           {selectedPad && (
-//             <div className="space-y-3">
-//               <div className="flex items-center justify-between">
-//                 <label className="text-white font-semibold text-sm">Pad {selectedPad} Effects</label>
-//                 <button
-//                   onClick={() => clearPadEffects(selectedPad)}
-//                   className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs"
-//                 >
-//                   Reset
-//                 </button>
-//               </div>
-
-//               {/* Pad Volume */}
-//               <div className="space-y-1">
-//                 <label className="text-gray-300 text-xs">
-//                   Volume: {padEffects[selectedPad]?.volume !== undefined ? Math.round(padEffects[selectedPad].volume * 100) + '%' : 'Global'}
-//                 </label>
-//                 <input
-//                   type="range"
-//                   min="0"
-//                   max="1"
-//                   step="0.1"
-//                   value={padEffects[selectedPad]?.volume ?? volume}
-//                   onChange={(e) => updatePadEffect(selectedPad, 'volume', parseFloat(e.target.value))}
-//                   className="w-full accent-purple-500"
-//                 />
-//               </div>
-
-//               {/* Pad Pan */}
-//               <div className="space-y-1">
-//                 <label className="text-gray-300 text-xs">
-//                   Pan: {padEffects[selectedPad]?.pan !== undefined 
-//                     ? padEffects[selectedPad].pan === 0 ? 'Center' 
-//                       : padEffects[selectedPad].pan < 0 
-//                         ? `${Math.abs(Math.round(padEffects[selectedPad].pan * 100))}% Left`
-//                         : `${Math.round(padEffects[selectedPad].pan * 100)}% Right`
-//                     : 'Global'}
-//                 </label>
-//                 <input
-//                   type="range"
-//                   min="-1"
-//                   max="1"
-//                   step="0.1"
-//                   value={padEffects[selectedPad]?.pan ?? pan}
-//                   onChange={(e) => updatePadEffect(selectedPad, 'pan', parseFloat(e.target.value))}
-//                   className="w-full accent-blue-500"
-//                 />
-//               </div>
-
-//               {/* Pad Reverb */}
-//               <div className="space-y-1">
-//                 <label className="text-gray-300 text-xs">
-//                   Reverb: {padEffects[selectedPad]?.reverb !== undefined ? Math.round(padEffects[selectedPad].reverb * 100) + '%' : 'Global'}
-//                 </label>
-//                 <input
-//                   type="range"
-//                   min="0"
-//                   max="1"
-//                   step="0.1"
-//                   value={padEffects[selectedPad]?.reverb ?? reverb}
-//                   onChange={(e) => updatePadEffect(selectedPad, 'reverb', parseFloat(e.target.value))}
-//                   className="w-full accent-green-500"
-//                 />
-//               </div>
-//             </div>
-//           )}
-
-//           {/* Recording Controls */}
-//           <div className="space-y-2">
-//             <label className="text-white font-semibold text-sm">Recording</label>
-//             <div className="flex gap-2">
-//               <button
-//                 onClick={toggleRecording}
-//                 className={`px-3 py-1 rounded text-sm font-semibold transition-colors ${
-//                   isRecording
-//                     ? 'bg-red-600 hover:bg-red-700 text-white'
-//                     : 'bg-green-600 hover:bg-green-700 text-white'
-//                 }`}
-//               >
-//                 {isRecording ? '⏹️ Stop' : '🔴 Rec'}
-//               </button>
-//               <button
-//                 onClick={clearSequence}
-//                 className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm font-semibold transition-colors disabled:opacity-50"
-//                 disabled={sequence.length === 0}
-//               >
-//                 🗑️ Clear
-//               </button>
-//             </div>
-//           </div>
-
-//           {/* Playback Controls */}
-//           <div className="space-y-2">
-//             <label className="text-white font-semibold text-sm">Playback</label>
-//             <div className="flex gap-2 items-center">
-//               <button
-//                 onClick={playSequence}
-//                 className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-semibold transition-colors disabled:opacity-50"
-//                 disabled={sequence.length === 0 || isPlaying}
-//               >
-//                 {isPlaying ? '⏸️ Playing...' : '▶️ Play'}
-//               </button>
-//               <span className="text-white text-xs">
-//                 {sequence.length} beats
-//               </span>
-//             </div>
-//           </div>
-//         </div>
-
-//         {/* Type Effects Info */}
-//         <div className="mt-4 p-3 bg-gray-700/50 rounded-lg">
-//           <div className="flex items-center justify-between">
-//             <div className="flex items-center space-x-3">
-//               <span className="text-2xl" style={{ color: currentTypeData.color }}>{currentTypeData.icon}</span>
-//               <div>
-//                 <h3 className="text-white font-semibold">{currentTypeData.name}</h3>
-//                 <p className="text-gray-300 text-sm">{currentTypeData.description}</p>
-//               </div>
-//             </div>
-//             <div className="text-right text-xs text-gray-400">
-//               <div>Bass: {Math.round(currentTypeData.effects.bassBoost * 100)}%</div>
-//               <div>Compression: {Math.round(currentTypeData.effects.compression * 100)}%</div>
-//               <div>Saturation: {Math.round(currentTypeData.effects.saturation * 100)}%</div>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-
-//       {/* Instructions */}
-//       <div className="text-center text-gray-400 text-xs py-2 border-t border-gray-700">
-//         Click pads or use keyboard (Q,1,E,8,D,O,A,U,X,T,J,H,K,Y,9,7) • Double-click pads to edit individual effects • Change drum machine types with arrows • 🟢 Loaded | 🟡 Loading | 🔴 Error | ⚫ No Audio | 🔵 Custom Effects
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default DrumPadMachine;
-
-
-
-
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { setDrumRecordedData, setDrumPlayback, setDrumPlaybackStartTime, addAudioClipToTrack, addTrack } from '../Redux/Slice/studio.slice';
+
+
+const drumMachineTypes = [
+  {
+    name: "Classic 808",
+    icon: "🥁",
+    color: '#7c3aed',
+    description: "Classic analog drum machine sounds",
+    effects: {
+      bassBoost: 1.2,
+      compression: 0.8,
+      saturation: 0.3
+    },
+    pads: [
+      { id: 'Q', sound: 'kick', freq: 50, decay: 0.7, type: 'kick' },
+      { id: 'W', sound: 'snare', freq: 200, decay: 0.3, type: 'snare' },
+      { id: 'E', sound: 'hihat', freq: 8000, decay: 0.05, type: 'hihat' },
+      { id: 'R', sound: 'openhat', freq: 8000, decay: 0.3, type: 'openhat' },
+      { id: 'A', sound: 'clap', freq: 1000, decay: 0.2, type: 'clap' },
+      { id: 'S', sound: 'cowbell', freq: 600, decay: 0.5, type: 'cowbell' },
+      { id: 'D', sound: 'bass', freq: 40, decay: 1.0, type: 'bass' },
+      { id: 'F', sound: 'perc1', freq: 1000, decay: 0.2, type: 'perc1' },
+      { id: 'Z', sound: 'tom', freq: 150, decay: 0.5, type: 'tom' },
+      { id: 'X', sound: 'ride', freq: 3000, decay: 0.7, type: 'ride' },
+      { id: 'C', sound: 'crash', freq: 5000, decay: 1.5, type: 'crash' }
+    ]
+  },
+  {
+    name: "Vintage 909",
+    icon: "🎛️",
+    color: '#dc2626',
+    description: "House and techno drum machine",
+    effects: {
+      bassBoost: 1.0,
+      compression: 0.6,
+      saturation: 0.2
+    },
+    pads: [
+      { id: 'Q', sound: 'kick', freq: 60, decay: 0.5, type: 'kick' },
+      { id: 'W', sound: 'snare', freq: 250, decay: 0.2, type: 'snare' },
+      { id: 'E', sound: 'hihat', freq: 10000, decay: 0.03, type: 'hihat' },
+      { id: 'R', sound: 'openhat', freq: 10000, decay: 0.3, type: 'openhat' },
+      { id: 'A', sound: 'clap', freq: 1200, decay: 0.1, type: 'clap' },
+      { id: 'S', sound: 'rimshot', freq: 3000, decay: 0.05, type: 'rimshot' },
+      { id: 'D', sound: 'perc2', freq: 1500, decay: 0.1, type: 'perc2' },
+      { id: 'F', sound: 'tom', freq: 180, decay: 0.3, type: 'tom' },
+      { id: 'Z', sound: 'crash', freq: 6000, decay: 2.0, type: 'crash' },
+      { id: 'X', sound: 'ride', freq: 4000, decay: 1.2, type: 'ride' },
+      { id: 'C', sound: 'fx1', freq: 2000, decay: 0.6, type: 'fx1' }
+    ]
+  },
+  {
+    name: "Modern Trap",
+    icon: "💎",
+    color: '#059669',
+    description: "Contemporary trap and hip-hop sounds",
+    effects: {
+      bassBoost: 1.5,
+      compression: 1.2,
+      saturation: 0.5
+    },
+    pads: [
+      { id: 'Q', sound: 'kick', freq: 45, decay: 0.8, type: 'kick' },
+      { id: 'W', sound: 'snare', freq: 180, decay: 0.3, type: 'snare' },
+      { id: 'E', sound: 'hihat', freq: 12000, decay: 0.02, type: 'hihat' },
+      { id: 'R', sound: 'openhat', freq: 11000, decay: 0.15, type: 'openhat' },
+      { id: 'A', sound: 'clap', freq: 800, decay: 0.25, type: 'clap' },
+      { id: 'S', sound: 'snap', freq: 700, decay: 0.2, type: 'snap' },
+      { id: 'D', sound: 'bass', freq: 35, decay: 1.2, type: 'bass' },
+      { id: 'F', sound: 'vocal', freq: 440, decay: 0.4, type: 'vocal' },
+      { id: 'Z', sound: 'tom', freq: 140, decay: 0.3, type: 'tom' },
+      { id: 'X', sound: 'fx1', freq: 2000, decay: 1.0, type: 'fx1' },
+      { id: 'C', sound: 'fx2', freq: 1000, decay: 1.5, type: 'fx2' }
+    ]
+
+  },
+  {
+    name: "Acoustic Kit",
+    icon: "🪘",
+    color: '#d97706',
+    description: "Natural acoustic drum sounds",
+    effects: {
+      bassBoost: 0.9,
+      compression: 0.4,
+      saturation: 0.1
+    },
+    pads: [
+      { id: 'Q', sound: 'kick', freq: 65, decay: 0.7, type: 'kick' },
+      { id: 'W', sound: 'snare', freq: 220, decay: 0.2, type: 'snare' },
+      { id: 'E', sound: 'hihat', freq: 9000, decay: 0.04, type: 'hihat' },
+      { id: 'R', sound: 'openhat', freq: 8500, decay: 0.35, type: 'openhat' },
+      { id: 'A', sound: 'clap', freq: 1000, decay: 0.2, type: 'clap' },
+      { id: 'S', sound: 'woodblock', freq: 1500, decay: 0.1, type: 'woodblock' },
+      { id: 'D', sound: 'conga', freq: 700, decay: 0.3, type: 'conga' },
+      { id: 'F', sound: 'bongo', freq: 1200, decay: 0.2, type: 'bongo' },
+      { id: 'Z', sound: 'tom', freq: 160, decay: 0.45, type: 'tom' },
+      { id: 'X', sound: 'ride', freq: 4200, decay: 1.2, type: 'ride' },
+      { id: 'C', sound: 'shaker', freq: 8000, decay: 0.1, type: 'shaker' }
+    ]
+  },
+  {
+    name: "Electro Pop",
+    icon: "⚡",
+    color: '#c2410c',
+    description: "Electronic pop and synth sounds",
+    effects: {
+      bassBoost: 1.1,
+      compression: 0.9,
+      saturation: 0.6
+    },
+    pads: [
+      { id: 'Q', sound: 'kick', freq: 50, decay: 0.5, type: 'kick' },
+      { id: 'W', sound: 'snare', freq: 250, decay: 0.15, type: 'snare' },
+      { id: 'E', sound: 'hihat', freq: 14000, decay: 0.02, type: 'hihat' },
+      { id: 'R', sound: 'openhat', freq: 13000, decay: 0.25, type: 'openhat' },
+      { id: 'A', sound: 'clap', freq: 900, decay: 0.15, type: 'clap' },
+      { id: 'S', sound: 'vocal', freq: 500, decay: 0.3, type: 'vocal' },
+      { id: 'D', sound: 'perc2', freq: 1800, decay: 0.1, type: 'perc2' },
+      { id: 'F', sound: 'laser', freq: 2200, decay: 0.2, type: 'laser' },
+      { id: 'Z', sound: 'crash', freq: 6000, decay: 1.6, type: 'crash' },
+      { id: 'X', sound: 'fx1', freq: 2500, decay: 1.0, type: 'fx1' },
+      { id: 'C', sound: 'rise', freq: 5000, decay: 2.0, type: 'rise' }
+    ]
+  },
+  {
+    name: "Lo-Fi Vinyl",
+    icon: "📀",
+    color: '#7c2d12',
+    description: "Vintage vinyl-sampled drums",
+    effects: {
+      bassBoost: 0.8,
+      compression: 0.5,
+      saturation: 0.4
+    },
+    pads: [
+      { id: 'Q', sound: 'kick', freq: 55, decay: 0.6, type: 'kick' },
+      { id: 'W', sound: 'snare', freq: 190, decay: 0.25, type: 'snare' },
+      { id: 'E', sound: 'hihat', freq: 6000, decay: 0.05, type: 'hihat' },
+      { id: 'R', sound: 'openhat', freq: 5500, decay: 0.4, type: 'openhat' },
+      { id: 'A', sound: 'clap', freq: 700, decay: 0.2, type: 'clap' },
+      { id: 'S', sound: 'vinyl', freq: 2000, decay: 0.6, type: 'vinyl' },
+      { id: 'D', sound: 'glitch', freq: 1800, decay: 0.3, type: 'glitch' },
+      { id: 'F', sound: 'fx2', freq: 1000, decay: 1.5, type: 'fx2' },
+      { id: 'Z', sound: 'tom', freq: 130, decay: 0.5, type: 'tom' },
+      { id: 'X', sound: 'shaker', freq: 5000, decay: 0.1, type: 'shaker' },
+      { id: 'C', sound: 'drop', freq: 800, decay: 2.0, type: 'drop' }
+    ]
+  }
+];
 
 const DrumPadMachine = () => {
   const [currentType, setCurrentType] = useState(0);
@@ -1563,162 +158,200 @@ const DrumPadMachine = () => {
   const [volume, setVolume] = useState(0.7);
   const [pan, setPan] = useState(0);
   const [reverb, setReverb] = useState(0.2);
-  const [isRecording, setIsRecording] = useState(false);
+  // const [isRecording, setIsRecording] = useState(false);
   const [sequence, setSequence] = useState([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedPad, setSelectedPad] = useState(null);
   const [padEffects, setPadEffects] = useState({});
   const audioContextRef = useRef(null);
   const reverbBufferRef = useRef(null);
+  const dispatch = useDispatch();
+  const isRecording = useSelector((state) => state.studio?.isRecording || false);
+  const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
+  const currentTime = useSelector((state) => state.studio?.currentTime || 0);
+  const isPlayingDrumRecording = useSelector((state) => state.studio?.isPlayingDrumRecording || false);
+  const drumPlaybackStartTime = useSelector((state) => state.studio?.drumPlaybackStartTime || null);
+  const tracks = useSelector((state) => state.studio?.tracks || []);
+  const currentTrackId = useSelector((state) => state.studio?.currentTrackId || null);
+
+  // Get the currently selected drum machine
+  const selectedDrumMachine = drumMachineTypes[currentType];
+
+  // Clear drum recorded data when recording starts
+  useEffect(() => {
+    if (isRecording) {
+      // Clear any existing drum recorded data when starting a new recording
+      if (drumRecordedData.length > 0) {
+        dispatch(setDrumRecordedData([]));
+      }
+    }
+  }, [isRecording, dispatch]);
+
+  // Remove the automatic drum track creation - we'll use the selected track instead
+
+  // Drum playback functionality
+  useEffect(() => {
+    if (isPlayingDrumRecording && drumPlaybackStartTime && drumRecordedData.length > 0) {
+      const playbackInterval = setInterval(() => {
+        const currentPlaybackTime = Date.now() - drumPlaybackStartTime;
+
+        // Find drum hits that should be played at this time
+        drumRecordedData.forEach((drumHit) => {
+          const timeDiff = Math.abs(currentPlaybackTime - drumHit.timestamp);
+
+          // Play the drum hit if it's within 50ms of the current playback time
+          if (timeDiff < 50) {
+            // Find the pad that was hit
+            const pad = selectedDrumMachine.pads.find(p => p.id === drumHit.padId);
+            if (pad) {
+              playSound(pad);
+              // console.log(`Playing back: ${drumHit.padId} - ${drumHit.sound} at ${currentPlaybackTime}ms`);
+            }
+          }
+        });
+
+        // Stop playback if we've reached the end
+        const maxTimestamp = Math.max(...drumRecordedData.map(d => d.timestamp));
+        if (currentPlaybackTime > maxTimestamp + 1000) { // Add 1 second buffer
+          dispatch(setDrumPlayback(false));
+          dispatch(setDrumPlaybackStartTime(null));
+        }
+      }, 10); // Check every 10ms for smooth playback
+
+      return () => clearInterval(playbackInterval);
+    }
+  }, [isPlayingDrumRecording, drumPlaybackStartTime, drumRecordedData, selectedDrumMachine, dispatch]);
+
+  // Handle drum playback button click
+  const handleDrumPlayback = () => {
+    if (drumRecordedData.length > 0) {
+      if (isPlayingDrumRecording) {
+        // Stop drum playback
+        dispatch(setDrumPlayback(false));
+        dispatch(setDrumPlaybackStartTime(null));
+      } else {
+        // Start drum playback
+        dispatch(setDrumPlayback(true));
+        dispatch(setDrumPlaybackStartTime(Date.now()));
+      }
+    }
+  };
+
+  // Create continuous drum recording when recording stops
+  useEffect(() => {
+    if (!isRecording && drumRecordedData.length > 0 && currentTrackId) {
+      // Create a single continuous audio blob from all recorded drum data
+      createContinuousDrumAudioBlob(drumRecordedData).then((audioBlob) => {
+        if (audioBlob) {
+          // Calculate the total duration based on the last drum hit
+          const lastDrumHit = drumRecordedData[drumRecordedData.length - 1];
+          const firstDrumHit = drumRecordedData[0];
+          const totalDuration = (lastDrumHit.timestamp - firstDrumHit.timestamp) / 1000 + lastDrumHit.decay * 2;
+
+          // Create a single timeline clip for all drum recordings
+          const drumClip = {
+            id: `drum_recording_${Date.now()}`,
+            name: `Drum Recording (${drumRecordedData.length} hits)`,
+            type: 'drum',
+            startTime: firstDrumHit.currentTime,
+            duration: totalDuration,
+            color: selectedDrumMachine.color,
+            drumData: drumRecordedData, // Store all drum data
+            url: URL.createObjectURL(audioBlob), // Create URL from blob
+            trimStart: 0,
+            trimEnd: totalDuration,
+            soundData: {
+              padId: 'MULTI',
+              sound: 'drum_recording',
+              freq: 0,
+              decay: totalDuration,
+              type: 'drum_recording',
+              drumMachine: selectedDrumMachine.name,
+              effects: selectedDrumMachine.effects,
+              totalHits: drumRecordedData.length
+            }
+          };
+
+          // Add to the currently selected track
+          dispatch(addAudioClipToTrack({
+            trackId: currentTrackId,
+            audioClip: drumClip
+          }));
+
+          // console.log('Created continuous drum recording in track:', currentTrackId, drumClip);
+        }
+      }).catch((error) => {
+        // console.error('Error creating continuous drum audio blob:', error);
+      });
+    }
+  }, [isRecording, drumRecordedData, currentTrackId, selectedDrumMachine]);
+
+  // Function to create continuous audio blob from all drum recordings
+  const createContinuousDrumAudioBlob = async (allDrumData) => {
+    try {
+      const audioContext = getAudioContext();
+      const sampleRate = audioContext.sampleRate;
+
+      // Calculate total duration
+      const firstHit = allDrumData[0];
+      const lastHit = allDrumData[allDrumData.length - 1];
+      const totalDuration = (lastHit.timestamp - firstHit.timestamp) / 1000 + lastHit.decay * 2;
+      const bufferLength = Math.floor(sampleRate * totalDuration);
+
+      // Create audio buffer
+      const audioBuffer = audioContext.createBuffer(1, bufferLength, sampleRate);
+      const channelData = audioBuffer.getChannelData(0);
+
+      // Process each drum hit
+      allDrumData.forEach((drumHit) => {
+        const startTime = (drumHit.timestamp - firstHit.timestamp) / 1000;
+        const startSample = Math.floor(startTime * sampleRate);
+        const duration = drumHit.decay * 2;
+        const numSamples = Math.floor(duration * sampleRate);
+
+        // Generate drum sound for this hit
+        for (let i = 0; i < numSamples && startSample + i < bufferLength; i++) {
+          const t = i / sampleRate;
+          const decay = Math.exp(-t / drumHit.decay);
+          let sample = 0;
+
+          // Generate sound based on drum type
+          switch (drumHit.type) {
+            case 'kick':
+              const frequency = drumHit.freq * Math.exp(-t * 10);
+              sample = Math.sin(2 * Math.PI * frequency * t) * decay * 0.3;
+              break;
+            case 'snare':
+              sample = (Math.random() * 2 - 1) * decay * 0.2;
+              break;
+            case 'hihat':
+              const noise = (Math.random() * 2 - 1) * 0.1;
+              sample = noise * decay;
+              break;
+            default:
+              sample = Math.sin(2 * Math.PI * drumHit.freq * t) * decay * 0.2;
+          }
+
+          // Add to the channel data at the correct position
+          if (startSample + i < bufferLength) {
+            channelData[startSample + i] += sample;
+          }
+        }
+      });
+
+      // Convert to WAV format
+      const wavBuffer = await audioBufferToWav(audioBuffer);
+      const blob = new Blob([wavBuffer], { type: 'audio/wav' });
+
+      return blob;
+    } catch (error) {
+      // console.error('Error creating continuous drum audio:', error);
+      return null;
+    }
+  };
 
   // Define different drum machine types with synthetic sound parameters
-  const drumMachineTypes = [
-    {
-      name: "Classic 808",
-      icon: "🥁",
-      color: '#7c3aed',
-      description: "Classic analog drum machine sounds",
-      effects: {
-        bassBoost: 1.2,
-        compression: 0.8,
-        saturation: 0.3
-      },
-      pads: [
-        { id: 'Q', sound: 'kick', freq: 50, decay: 0.7, type: 'kick' },
-        { id: 'W', sound: 'snare', freq: 200, decay: 0.3, type: 'snare' },
-        { id: 'E', sound: 'hihat', freq: 8000, decay: 0.05, type: 'hihat' },
-        { id: 'R', sound: 'openhat', freq: 8000, decay: 0.3, type: 'openhat' },
-        { id: 'A', sound: 'clap', freq: 1000, decay: 0.2, type: 'clap' },
-        { id: 'S', sound: 'cowbell', freq: 600, decay: 0.5, type: 'cowbell' },
-        { id: 'D', sound: 'bass', freq: 40, decay: 1.0, type: 'bass' },
-        { id: 'F', sound: 'perc1', freq: 1000, decay: 0.2, type: 'perc1' },
-        { id: 'Z', sound: 'tom', freq: 150, decay: 0.5, type: 'tom' },
-        { id: 'X', sound: 'ride', freq: 3000, decay: 0.7, type: 'ride' },
-        { id: 'C', sound: 'crash', freq: 5000, decay: 1.5, type: 'crash' }
-      ]
-    },
-    {
-      name: "Vintage 909",
-      icon: "🎛️",
-      color: '#dc2626',
-      description: "House and techno drum machine",
-      effects: {
-        bassBoost: 1.0,
-        compression: 0.6,
-        saturation: 0.2
-      },
-      pads: [
-        { id: 'Q', sound: 'kick', freq: 60, decay: 0.5, type: 'kick' },
-        { id: 'W', sound: 'snare', freq: 250, decay: 0.2, type: 'snare' },
-        { id: 'E', sound: 'hihat', freq: 10000, decay: 0.03, type: 'hihat' },
-        { id: 'R', sound: 'openhat', freq: 10000, decay: 0.3, type: 'openhat' },
-        { id: 'A', sound: 'clap', freq: 1200, decay: 0.1, type: 'clap' },
-        { id: 'S', sound: 'rimshot', freq: 3000, decay: 0.05, type: 'rimshot' },
-        { id: 'D', sound: 'perc2', freq: 1500, decay: 0.1, type: 'perc2' },
-        { id: 'F', sound: 'tom', freq: 180, decay: 0.3, type: 'tom' },
-        { id: 'Z', sound: 'crash', freq: 6000, decay: 2.0, type: 'crash' },
-        { id: 'X', sound: 'ride', freq: 4000, decay: 1.2, type: 'ride' },
-        { id: 'C', sound: 'fx1', freq: 2000, decay: 0.6, type: 'fx1' }
-      ]
-    },
-    {
-      name: "Modern Trap",
-      icon: "💎",
-      color: '#059669',
-      description: "Contemporary trap and hip-hop sounds",
-      effects: {
-        bassBoost: 1.5,
-        compression: 1.2,
-        saturation: 0.5
-      },
-      pads: [
-        { id: 'Q', sound: 'kick', freq: 45, decay: 0.8, type: 'kick' },
-        { id: 'W', sound: 'snare', freq: 180, decay: 0.3, type: 'snare' },
-        { id: 'E', sound: 'hihat', freq: 12000, decay: 0.02, type: 'hihat' },
-        { id: 'R', sound: 'openhat', freq: 11000, decay: 0.15, type: 'openhat' },
-        { id: 'A', sound: 'clap', freq: 800, decay: 0.25, type: 'clap' },
-        { id: 'S', sound: 'snap', freq: 700, decay: 0.2, type: 'snap' },
-        { id: 'D', sound: 'bass', freq: 35, decay: 1.2, type: 'bass' },
-        { id: 'F', sound: 'vocal', freq: 440, decay: 0.4, type: 'vocal' },
-        { id: 'Z', sound: 'tom', freq: 140, decay: 0.3, type: 'tom' },
-        { id: 'X', sound: 'fx1', freq: 2000, decay: 1.0, type: 'fx1' },
-        { id: 'C', sound: 'fx2', freq: 1000, decay: 1.5, type: 'fx2' }
-      ]
 
-    },
-    {
-      name: "Acoustic Kit",
-      icon: "🪘",
-      color: '#d97706',
-      description: "Natural acoustic drum sounds",
-      effects: {
-        bassBoost: 0.9,
-        compression: 0.4,
-        saturation: 0.1
-      },
-      pads: [
-        { id: 'Q', sound: 'kick', freq: 65, decay: 0.7, type: 'kick' },
-        { id: 'W', sound: 'snare', freq: 220, decay: 0.2, type: 'snare' },
-        { id: 'E', sound: 'hihat', freq: 9000, decay: 0.04, type: 'hihat' },
-        { id: 'R', sound: 'openhat', freq: 8500, decay: 0.35, type: 'openhat' },
-        { id: 'A', sound: 'clap', freq: 1000, decay: 0.2, type: 'clap' },
-        { id: 'S', sound: 'woodblock', freq: 1500, decay: 0.1, type: 'woodblock' },
-        { id: 'D', sound: 'conga', freq: 700, decay: 0.3, type: 'conga' },
-        { id: 'F', sound: 'bongo', freq: 1200, decay: 0.2, type: 'bongo' },
-        { id: 'Z', sound: 'tom', freq: 160, decay: 0.45, type: 'tom' },
-        { id: 'X', sound: 'ride', freq: 4200, decay: 1.2, type: 'ride' },
-        { id: 'C', sound: 'shaker', freq: 8000, decay: 0.1, type: 'shaker' }
-      ]
-    },
-    {
-      name: "Electro Pop",
-      icon: "⚡",
-      color: '#c2410c',
-      description: "Electronic pop and synth sounds",
-      effects: {
-        bassBoost: 1.1,
-        compression: 0.9,
-        saturation: 0.6
-      },
-      pads: [
-        { id: 'Q', sound: 'kick', freq: 50, decay: 0.5, type: 'kick' },
-        { id: 'W', sound: 'snare', freq: 250, decay: 0.15, type: 'snare' },
-        { id: 'E', sound: 'hihat', freq: 14000, decay: 0.02, type: 'hihat' },
-        { id: 'R', sound: 'openhat', freq: 13000, decay: 0.25, type: 'openhat' },
-        { id: 'A', sound: 'clap', freq: 900, decay: 0.15, type: 'clap' },
-        { id: 'S', sound: 'vocal', freq: 500, decay: 0.3, type: 'vocal' },
-        { id: 'D', sound: 'perc2', freq: 1800, decay: 0.1, type: 'perc2' },
-        { id: 'F', sound: 'laser', freq: 2200, decay: 0.2, type: 'laser' },
-        { id: 'Z', sound: 'crash', freq: 6000, decay: 1.6, type: 'crash' },
-        { id: 'X', sound: 'fx1', freq: 2500, decay: 1.0, type: 'fx1' },
-        { id: 'C', sound: 'rise', freq: 5000, decay: 2.0, type: 'rise' }
-      ]
-    },
-    {
-      name: "Lo-Fi Vinyl",
-      icon: "📀",
-      color: '#7c2d12',
-      description: "Vintage vinyl-sampled drums",
-      effects: {
-        bassBoost: 0.8,
-        compression: 0.5,
-        saturation: 0.4
-      },
-      pads: [
-        { id: 'Q', sound: 'kick', freq: 55, decay: 0.6, type: 'kick' },
-        { id: 'W', sound: 'snare', freq: 190, decay: 0.25, type: 'snare' },
-        { id: 'E', sound: 'hihat', freq: 6000, decay: 0.05, type: 'hihat' },
-        { id: 'R', sound: 'openhat', freq: 5500, decay: 0.4, type: 'openhat' },
-        { id: 'A', sound: 'clap', freq: 700, decay: 0.2, type: 'clap' },
-        { id: 'S', sound: 'vinyl', freq: 2000, decay: 0.6, type: 'vinyl' },
-        { id: 'D', sound: 'glitch', freq: 1800, decay: 0.3, type: 'glitch' },
-        { id: 'F', sound: 'fx2', freq: 1000, decay: 1.5, type: 'fx2' },
-        { id: 'Z', sound: 'tom', freq: 130, decay: 0.5, type: 'tom' },
-        { id: 'X', sound: 'shaker', freq: 5000, decay: 0.1, type: 'shaker' },
-        { id: 'C', sound: 'drop', freq: 800, decay: 2.0, type: 'drop' }
-      ]
-    }
-  ];
 
   // const soundDescriptions = {
   //   kick: 'Kick Drum',
@@ -2163,7 +796,7 @@ const DrumPadMachine = () => {
         }]);
       }
     } catch (error) {
-      console.error('Error playing sound:', error);
+      // console.error('Error playing sound:', error);
       setDisplayDescription('Audio not available');
     }
   }, [getAudioContext, volume, pan, reverb, soundDescriptions, drumMachineTypes, currentType, isRecording, padEffects, createReverbBuffer, applyTypeEffects, createSynthSound]);
@@ -2191,79 +824,6 @@ const DrumPadMachine = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [currentType, drumMachineTypes, playSound]);
 
-  // const toggleRecording = () => {
-  //   if (isRecording) {
-  //     setIsRecording(false);
-  //     setDisplayDescription('Recording stopped');
-  //   } else {
-  //     setSequence([]);
-  //     setIsRecording(true);
-  //     setDisplayDescription('Recording started...');
-  //   }
-  // };
-
-  // const playSequence = async () => {
-  //   if (sequence.length === 0) return;
-
-  //   setIsPlaying(true);
-  //   setDisplayDescription('Playing sequence...');
-
-  //   const startTime = sequence[0].time;
-  //   const originalType = currentType;
-
-  //   for (let i = 0; i < sequence.length; i++) {
-  //     const note = sequence[i];
-  //     const delay = note.time - startTime;
-
-  //     setTimeout(() => {
-  //       if (note.type !== undefined && note.type !== currentType) {
-  //         setCurrentType(note.type);
-  //       }
-
-  //       if (note.effects) {
-  //         setPadEffects(prev => ({
-  //           ...prev,
-  //           [note.key]: note.effects
-  //         }));
-  //       }
-
-  //       const currentPads = drumMachineTypes[note.type || currentType].pads;
-  //       const pad = currentPads.find(p => p.id === note.key);
-  //       if (pad) {
-  //         playSound(pad);
-  //       }
-
-  //       if (i === sequence.length - 1) {
-  //         setIsPlaying(false);
-  //         setDisplayDescription('Sequence finished');
-  //         setCurrentType(originalType);
-  //       }
-  //     }, delay / 4);
-  //   }
-  // };
-
-  // const clearSequence = () => {
-  //   setSequence([]);
-  //   setDisplayDescription('Sequence cleared');
-  // };
-
-  // const updatePadEffect = (padId, effectType, value) => {
-  //   setPadEffects(prev => ({
-  //     ...prev,
-  //     [padId]: {
-  //       ...prev[padId],
-  //       [effectType]: value
-  //     }
-  //   }));
-  // };
-
-  // const clearPadEffects = (padId) => {
-  //   setPadEffects(prev => {
-  //     const newEffects = { ...prev };
-  //     delete newEffects[padId];
-  //     return newEffects;
-  //   });
-  // };
 
   const currentTypeData = drumMachineTypes[currentType];
 
@@ -2325,6 +885,143 @@ const DrumPadMachine = () => {
     );
   };
 
+  // When a pad is pressed, record it
+  const handlePadPress = (pad) => {
+    if (isRecording) {
+      const drumData = {
+        timestamp: Date.now(),
+        currentTime: currentTime, // Use Redux currentTime
+        padId: pad.id,
+        sound: pad.sound,
+        freq: pad.freq,
+        decay: pad.decay,
+        type: pad.type,
+        drumMachine: selectedDrumMachine.name, // Current drum machine
+        effects: selectedDrumMachine.effects
+      };
+
+      const updatedData = [...drumRecordedData, drumData];
+      dispatch(setDrumRecordedData(updatedData));
+
+      // Only create timeline clip if a track is selected
+      if (currentTrackId) {
+        // Store drum data for later processing when recording stops
+        // We'll create the audio blob when recording stops
+        // console.log('Drum data recorded:', drumData);
+      } else {
+        // console.log('No track selected. Drum data recorded but not added to timeline.');
+      }
+    }
+
+    // Your existing pad play logic here
+    playSound(pad);
+  };
+
+  // Function to create audio blob for drum hit
+  const createDrumAudioBlob = async (pad) => {
+    try {
+      const audioContext = getAudioContext();
+      const sampleRate = audioContext.sampleRate;
+      const duration = pad.decay * 2; // Duration in seconds
+      const bufferLength = Math.floor(sampleRate * duration);
+
+      // Create audio buffer
+      const audioBuffer = audioContext.createBuffer(1, bufferLength, sampleRate);
+      const channelData = audioBuffer.getChannelData(0);
+
+      // Generate drum sound based on type
+      switch (pad.type) {
+        case 'kick':
+          // Kick drum: low frequency sine wave with decay
+          for (let i = 0; i < bufferLength; i++) {
+            const t = i / sampleRate;
+            const decay = Math.exp(-t / pad.decay);
+            const frequency = pad.freq * Math.exp(-t * 10);
+            channelData[i] = Math.sin(2 * Math.PI * frequency * t) * decay * 0.3;
+          }
+          break;
+
+        case 'snare':
+          // Snare: noise with decay
+          for (let i = 0; i < bufferLength; i++) {
+            const t = i / sampleRate;
+            const decay = Math.exp(-t / pad.decay);
+            channelData[i] = (Math.random() * 2 - 1) * decay * 0.2;
+          }
+          break;
+
+        case 'hihat':
+          // Hi-hat: high frequency noise with short decay
+          for (let i = 0; i < bufferLength; i++) {
+            const t = i / sampleRate;
+            const decay = Math.exp(-t / pad.decay);
+            const noise = (Math.random() * 2 - 1) * 0.1;
+            channelData[i] = noise * decay;
+          }
+          break;
+
+        default:
+          // Default: simple sine wave
+          for (let i = 0; i < bufferLength; i++) {
+            const t = i / sampleRate;
+            const decay = Math.exp(-t / pad.decay);
+            channelData[i] = Math.sin(2 * Math.PI * pad.freq * t) * decay * 0.2;
+          }
+      }
+
+      // Convert to WAV format
+      const wavBuffer = await audioBufferToWav(audioBuffer);
+      const blob = new Blob([wavBuffer], { type: 'audio/wav' });
+
+      return blob;
+    } catch (error) {
+      // console.error('Error creating drum audio:', error);
+      return null;
+    }
+  };
+
+  // Helper function to convert AudioBuffer to WAV
+  const audioBufferToWav = async (buffer) => {
+    const length = buffer.length;
+    const numberOfChannels = buffer.numberOfChannels;
+    const sampleRate = buffer.sampleRate;
+    const arrayBuffer = new ArrayBuffer(44 + length * numberOfChannels * 2);
+    const view = new DataView(arrayBuffer);
+
+    // WAV header
+    const writeString = (offset, string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + length * numberOfChannels * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, numberOfChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * numberOfChannels * 2, true);
+    view.setUint16(32, numberOfChannels * 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, 'data');
+    view.setUint32(40, length * numberOfChannels * 2, true);
+
+    // Write audio data
+    let offset = 44;
+    for (let i = 0; i < length; i++) {
+      for (let channel = 0; channel < numberOfChannels; channel++) {
+        const sample = Math.max(-1, Math.min(1, buffer.getChannelData(channel)[i]));
+        view.setInt16(offset, sample * 0x7FFF, true);
+        offset += 2;
+      }
+    }
+
+    return arrayBuffer;
+  };
+
   return (
     <div className="w-full bg-gray-900 text-white">
       {/* Top Navigation */}
@@ -2374,6 +1071,41 @@ const DrumPadMachine = () => {
         </div>
       </div>
 
+      {/* Playback Controls */}
+      {drumRecordedData.length > 0 && (
+        <div className="text-center py-2">
+          <button
+            onClick={handleDrumPlayback}
+            className={`px-6 py-2 rounded-lg font-medium transition-colors ${isPlayingDrumRecording
+                ? 'bg-red-600 hover:bg-red-700 text-white'
+                : 'bg-green-600 hover:bg-green-700 text-white'
+              }`}
+          >
+            {isPlayingDrumRecording ? '⏹️ Stop Playback' : '▶️ Play Recording'}
+          </button>
+          <p className="text-xs text-gray-400 mt-1">
+            {drumRecordedData.length} drum hits recorded
+          </p>
+        </div>
+      )}
+
+      {/* Track Selection Notification */}
+      {isRecording && (
+        <div className="text-center py-2">
+          {currentTrackId ? (
+            <div className="bg-green-600 text-white px-4 py-2 rounded-lg">
+              <p className="text-sm font-medium">Recording to: {tracks.find(t => t.id === currentTrackId)?.name || 'Unknown Track'}</p>
+              <p className="text-xs opacity-80">Click drum pads to record to timeline</p>
+            </div>
+          ) : (
+            <div className="bg-yellow-600 text-white px-4 py-2 rounded-lg">
+              <p className="text-sm font-medium">⚠️ No track selected</p>
+              <p className="text-xs opacity-80">Select a track in the timeline to record drum data</p>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Drum Pad Area */}
       <div className="flex-1 flex items-center justify-center p-4">
         <div
@@ -2392,9 +1124,34 @@ const DrumPadMachine = () => {
                 pad={pad}
                 index={index}
                 isActive={activePads.has(pad.id)}
-                onClick={() => playSound(pad)}
+                onClick={() => handlePadPress(pad)}
               />
             ))}
+
+            <div className="relative w-80 h-80 flex items-center justify-center group cursor-pointer">
+              {/* Outermost ring - very thin */}
+              <div className="absolute w-80 h-80 rounded-full border border-gray-600/30 transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70"></div>
+
+              {/* Second ring */}
+              <div className="absolute w-64 h-64 rounded-full border border-gray-600/35 transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75"></div>
+
+              {/* Third ring */}
+              <div className="absolute w-48 h-48 rounded-full border border-gray-600/40 transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80"></div>
+
+              {/* Fourth ring */}
+              <div className="absolute w-32 h-32 rounded-full border border-gray-600/45 transition-all duration-300 group-hover:border-gray-500/65 group-active:border-gray-400/85"></div>
+
+              {/* Inner ring */}
+              <div className="absolute w-20 h-20 rounded-full border border-gray-600/50 transition-all duration-300 group-hover:border-gray-500/70 group-active:border-gray-400/90"></div>
+
+              {/* Center circle with number */}
+              <div className="relative w-8 h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95">
+                1
+              </div>
+
+              {/* Subtle hover glow effect */}
+              <div className="absolute inset-0 rounded-full bg-gradient-radial from-white/0 via-white/0 to-transparent transition-all duration-500 group-hover:from-white/3 group-hover:via-white/1"></div>
+            </div>
           </div>
 
           {/* Additional pads row */}
@@ -2406,7 +1163,7 @@ const DrumPadMachine = () => {
                   pad={pad}
                   index={index + 9}
                   isActive={activePads.has(pad.id)}
-                  onClick={() => playSound(pad)}
+                  onClick={() => handlePadPress(pad)}
                 />
               ))}
             </div>
@@ -2414,186 +1171,6 @@ const DrumPadMachine = () => {
         </div>
       </div>
 
-
-      {/* <div className="bg-gray-800/95 backdrop-blur-sm p-4 border-t border-gray-700">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 max-w-7xl mx-auto">
-
-          <div className="space-y-3">
-            <label className="text-white font-semibold text-sm">Global Effects</label>
-            <div className="flex flex-col space-y-2">
-
-              <div className="space-y-1">
-                <label className="text-gray-300 text-xs">Volume: {Math.round(volume * 100)}%</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.1"
-                  value={volume}
-                  onChange={(e) => setVolume(parseFloat(e.target.value))}
-                  className="w-full accent-purple-500"
-                />
-              </div>
-
-
-              <div className="space-y-1">
-                <label className="text-gray-300 text-xs">Pan: {pan === 0 ? 'Center' : pan < 0 ? `${Math.abs(Math.round(pan * 100))}% Left` : `${Math.round(pan * 100)}% Right`}</label>
-                <input
-                  type="range"
-                  min="-1"
-                  max="1"
-                  step="0.1"
-                  value={pan}
-                  onChange={(e) => setPan(parseFloat(e.target.value))}
-                  className="w-full accent-blue-500"
-                />
-              </div>
-
-
-              <div className="space-y-1">
-                <label className="text-gray-300 text-xs">Reverb: {Math.round(reverb * 100)}%</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.1"
-                  value={reverb}
-                  onChange={(e) => setReverb(parseFloat(e.target.value))}
-                  className="w-full accent-green-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {selectedPad && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-white font-semibold text-sm">Pad {selectedPad} Effects</label>
-                <button
-                  onClick={() => clearPadEffects(selectedPad)}
-                  className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs"
-                >
-                  Reset
-                </button>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-gray-300 text-xs">
-                  Volume: {padEffects[selectedPad]?.volume !== undefined ? Math.round(padEffects[selectedPad].volume * 100) + '%' : 'Global'}
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.1"
-                  value={padEffects[selectedPad]?.volume ?? volume}
-                  onChange={(e) => updatePadEffect(selectedPad, 'volume', parseFloat(e.target.value))}
-                  className="w-full accent-purple-500"
-                />
-              </div>
-
-
-              <div className="space-y-1">
-                <label className="text-gray-300 text-xs">
-                  Pan: {padEffects[selectedPad]?.pan !== undefined
-                    ? padEffects[selectedPad].pan === 0 ? 'Center'
-                      : padEffects[selectedPad].pan < 0
-                        ? `${Math.abs(Math.round(padEffects[selectedPad].pan * 100))}% Left`
-                        : `${Math.round(padEffects[selectedPad].pan * 100)}% Right`
-                    : 'Global'}
-                </label>
-                <input
-                  type="range"
-                  min="-1"
-                  max="1"
-                  step="0.1"
-                  value={padEffects[selectedPad]?.pan ?? pan}
-                  onChange={(e) => updatePadEffect(selectedPad, 'pan', parseFloat(e.target.value))}
-                  className="w-full accent-blue-500"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-gray-300 text-xs">
-                  Reverb: {padEffects[selectedPad]?.reverb !== undefined ? Math.round(padEffects[selectedPad].reverb * 100) + '%' : 'Global'}
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.1"
-                  value={padEffects[selectedPad]?.reverb ?? reverb}
-                  onChange={(e) => updatePadEffect(selectedPad, 'reverb', parseFloat(e.target.value))}
-                  className="w-full accent-green-500"
-                />
-              </div>
-            </div>
-          )}
-
-
-          <div className="space-y-2">
-            <label className="text-white font-semibold text-sm">Recording</label>
-            <div className="flex gap-2">
-              <button
-                onClick={toggleRecording}
-                className={`px-3 py-1 rounded text-sm font-semibold transition-colors ${isRecording
-                  ? 'bg-red-600 hover:bg-red-700 text-white'
-                  : 'bg-green-600 hover:bg-green-700 text-white'
-                  }`}
-              >
-                {isRecording ? '⏹️ Stop' : '🔴 Rec'}
-              </button>
-              <button
-                onClick={clearSequence}
-                className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm font-semibold transition-colors disabled:opacity-50"
-                disabled={sequence.length === 0}
-              >
-                🗑️ Clear
-              </button>
-            </div>
-          </div>
-
-
-          <div className="space-y-2">
-            <label className="text-white font-semibold text-sm">Playback</label>
-            <div className="flex gap-2 items-center">
-              <button
-                onClick={playSequence}
-                className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-semibold transition-colors disabled:opacity-50"
-                disabled={sequence.length === 0 || isPlaying}
-              >
-                {isPlaying ? '⏸️ Playing...' : '▶️ Play'}
-              </button>
-              <span className="text-white text-xs">
-                {sequence.length} beats
-              </span>
-            </div>
-          </div>
-        </div>
-
-
-        <div className="mt-4 p-3 bg-gray-700/50 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <span className="text-2xl" style={{ color: currentTypeData.color }}>{currentTypeData.icon}</span>
-              <div>
-                <h3 className="text-white font-semibold">{currentTypeData.name}</h3>
-                <p className="text-gray-300 text-sm">{currentTypeData.description}</p>
-              </div>
-            </div>
-            <div className="text-right text-xs text-gray-400">
-              <div>Bass: {Math.round(currentTypeData.effects.bassBoost * 100)}%</div>
-              <div>Compression: {Math.round(currentTypeData.effects.compression * 100)}%</div>
-              <div>Saturation: {Math.round(currentTypeData.effects.saturation * 100)}%</div>
-            </div>
-          </div>
-        </div>
-      </div> */}
-
-      {/* Instructions */}
-      {/* <div className="text-center text-gray-400 text-xs py-2 border-t border-gray-700">
-        Click pads or use keyboard (Q,1,E,8,D,O,A,U,X,T,J,H,K,Y,9,7) • Double-click pads to edit individual effects • Change drum machine types with arrows • 🔵 Synthetic Audio Ready | 🔵 Custom Effects
-      </div> */}
     </div>
   );
 };

@@ -15,7 +15,7 @@ import { ReactComponent as Tempobutton } from "../../Images/Tempobutton.svg";
 import { ReactComponent as Tick } from "../../Images/Tick.svg";
 import { FaStop } from 'react-icons/fa6';
 import { useDispatch, useSelector } from 'react-redux';
-import { setRecording, togglePlayPause, setCurrentTime, setGlobalVolume, setAllTracksVolume, setMasterVolume, setRecordedData ,setBPM} from '../../Redux/Slice/studio.slice';
+import { setRecording, togglePlayPause, setCurrentTime, setGlobalVolume, setAllTracksVolume, setMasterVolume, setRecordedData ,setBPM, setDrumRecordedData} from '../../Redux/Slice/studio.slice';
 
 const BottomToolbar = () => {
     const [volume1, setVolume1] = useState(50);
@@ -46,6 +46,7 @@ const BottomToolbar = () => {
     const tracks = useSelector((state) => state.studio?.tracks || []);
     const isRecording = useSelector((state) => state.studio?.isRecording || false);
     const recordedData = useSelector((state) => state.studio?.recordedData || []);
+    const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
     const pianoRecord = useSelector((state) => state.studio?.pianoRecord || []);
 
     // Handle volume change for all tracks (wise volume)
@@ -227,46 +228,47 @@ const BottomToolbar = () => {
     // Start recording
     const handleStartRecord = () => {
         dispatch(setRecording(true));
-        dispatch(setRecordedData([])); // Clear previous recorded data
+        dispatch(setRecordedData([])); // Clear timeline data
+        dispatch(setDrumRecordedData([])); // Clear drum data
         setRecordingStartTime(Date.now());
-        console.log("Recording started at:", new Date().toLocaleTimeString());
+        // console.log("Recording started at:", new Date().toLocaleTimeString());
     };
 
     // Stop recording
     const handleStopRecord = () => {
         dispatch(setRecording(false));
-        console.log("Recording stopped at:", new Date().toLocaleTimeString());
-        console.log("Total recorded data:", recordedData);
-        console.log("Piano record data:", pianoRecord);
+        // console.log("Recording stopped at:", new Date().toLocaleTimeString());
+        // console.log("Timeline recorded data:", recordedData);
+        // console.log("Drum recorded data:", drumRecordedData);
     };
 
-    // Collect data while recording
-    useEffect(() => {
-        let interval;
-        if (isRecording && recordingStartTime) {
-            interval = setInterval(() => {
-                const currentData = {
-                    timestamp: Date.now() - recordingStartTime,
-                    currentTime: currentTime,
-                    volume: masterVolume,
-                    isPlaying: isPlaying
-                };
+    // // Collect data while recording
+    // useEffect(() => {
+    //     let interval;
+    //     if (isRecording && recordingStartTime) {
+    //         interval = setInterval(() => {
+    //             const currentData = {
+    //                 timestamp: Date.now() - recordingStartTime,
+    //                 currentTime: currentTime,
+    //                 volume: masterVolume,
+    //                 isPlaying: isPlaying
+    //             };
                 
-                // Update recorded data in Redux
-                const updatedData = [...(Array.isArray(recordedData) ? recordedData : []), currentData];
-                dispatch(setRecordedData(updatedData));
-            }, 1000); // Collect data every 1 second
-        }
-        return () => {
-            if (interval) {
-                clearInterval(interval);
-            }
-        };
-    }, [isRecording, recordingStartTime, currentTime, masterVolume, isPlaying, recordedData, dispatch]);
+    //             // Update recorded data in Redux
+    //             const updatedData = [...(Array.isArray(recordedData) ? recordedData : []), currentData];
+    //             dispatch(setRecordedData(updatedData));
+    //         }, 1000); // Collect data every 1 second
+    //     }
+    //     return () => {
+    //         if (interval) {
+    //             clearInterval(interval);
+    //         }
+    //     };
+    // }, [isRecording, recordingStartTime, currentTime, masterVolume, isPlaying, recordedData, dispatch]);
 
     useEffect(() => {
         if (!isRecording && recordedData.length > 0) {
-            console.log("Total recorded data:", recordedData);
+            // console.log("Total recorded data:", recordedData);
         }
     }, [isRecording, recordedData]);
 

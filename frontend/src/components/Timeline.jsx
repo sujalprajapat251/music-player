@@ -83,32 +83,32 @@ const ResizableSectionLabel = ({ section, audioDuration, selectedGrid, timelineC
       if (isDragging || type === 'drag') {
         // Handle dragging (moving the entire section)
         const sectionDuration = section.endTime - section.startTime;
-        const newStartTime = Math.max(0, Math.min(audioDuration - sectionDuration, 
+        const newStartTime = Math.max(0, Math.min(audioDuration - sectionDuration,
           dragStartRef.current.startPosition + deltaTime));
         const snappedStartTime = snapToGrid(newStartTime);
         const newEndTime = Math.min(audioDuration, snappedStartTime + sectionDuration);
-        
+
         // Calculate new width and position
         const newWidth = ((newEndTime - snappedStartTime) / audioDuration) * dragStartRef.current.timelineWidth;
         const newPosition = (snappedStartTime / audioDuration) * 100;
-        
+
         onResize(section.id, newWidth, snappedStartTime, newEndTime, newPosition);
       } else if (isResizing || type.startsWith('resize')) {
         // Handle resizing
         if (isResizing === 'resize-start' || type === 'resize-start') {
-          const newStartTime = Math.max(0, Math.min(section.endTime - 0.1, 
+          const newStartTime = Math.max(0, Math.min(section.endTime - 0.1,
             dragStartRef.current.startPosition + deltaTime));
           const snappedStartTime = snapToGrid(newStartTime);
           const newWidth = ((section.endTime - snappedStartTime) / audioDuration) * dragStartRef.current.timelineWidth;
           const newPosition = (snappedStartTime / audioDuration) * 100;
-          
+
           onResize(section.id, newWidth, snappedStartTime, section.endTime, newPosition);
         } else if (isResizing === 'resize-end' || type === 'resize-end') {
-          const newEndTime = Math.max(section.startTime + 0.1, Math.min(audioDuration, 
+          const newEndTime = Math.max(section.startTime + 0.1, Math.min(audioDuration,
             section.endTime + deltaTime));
           const snappedEndTime = snapToGrid(newEndTime);
           const newWidth = ((snappedEndTime - section.startTime) / audioDuration) * dragStartRef.current.timelineWidth;
-          
+
           onResize(section.id, newWidth, section.startTime, snappedEndTime, section.position);
         }
       }
@@ -169,10 +169,10 @@ const ResizableSectionLabel = ({ section, audioDuration, selectedGrid, timelineC
         >
           <img src={LeftSize} alt="" />
         </div>
-        
+
         {/* Section name */}
         <span style={{ flex: 1, textAlign: "center" }}>{section.name}</span>
-        
+
         {/* Right resize handle */}
         <div
           style={{
@@ -340,7 +340,7 @@ const AudioClip = ({
   frozen = false,
   gridSpacing = 0.25,
 }) => {
-  console.log('AudioClip render:', { clip, trackId });
+  // console.log('AudioClip render:', { clip, trackId });
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
   const isInitialized = useRef(false);
@@ -381,7 +381,7 @@ const AudioClip = ({
 
         const errorHandler = (error) => {
           if (isMounted) {
-            console.error("WaveSurfer error:", error);
+            // console.error("WaveSurfer error:", error);
           }
         };
 
@@ -393,7 +393,7 @@ const AudioClip = ({
 
       } catch (error) {
         if (isMounted) {
-          console.error("Failed to create WaveSurfer instance:", error);
+          // console.error("Failed to create WaveSurfer instance:", error);
         }
       }
     };
@@ -471,13 +471,13 @@ const AudioClip = ({
     }
   }, [clip.id, onPositionChange, timelineWidthPerSecond, gridSpacing]);
 
-  console.log('AudioClip render details:', {
-    clipUrl: clip.url,
-    clipDuration: clip.duration,
-    clipTrimStart: clip.trimStart,
-    clipTrimEnd: clip.trimEnd,
-    clipStartTime: clip.startTime
-  });
+  // console.log('AudioClip render details:', {
+  //   clipUrl: clip.url,
+  //   clipDuration: clip.duration,
+  //   clipTrimStart: clip.trimStart,
+  //   clipTrimEnd: clip.trimEnd,
+  //   clipStartTime: clip.startTime
+  // });
 
   const width = (clip.duration || 1) * timelineWidthPerSecond;
   const actualTrimEnd = clip.trimEnd || clip.duration;
@@ -523,12 +523,12 @@ const AudioClip = ({
       {/* Waveform with clip-path to show only trimmed portion */}
       {(() => {
         const shouldRender = clip.url && clip.duration > 0;
-        console.log('Waveform render condition:', {
-          shouldRender,
-          hasUrl: !!clip.url,
-          duration: clip.duration,
-          condition: `${!!clip.url} && ${clip.duration} > 0`
-        });
+        // console.log('Waveform render condition:', {
+        //   shouldRender,
+        //   hasUrl: !!clip.url,
+        //   duration: clip.duration,
+        //   condition: `${!!clip.url} && ${clip.duration} > 0`
+        // });
         return shouldRender;
       })() && (
           <>
@@ -544,6 +544,26 @@ const AudioClip = ({
                 clipPath: `inset(0 ${(1 - (actualTrimEnd / clip.duration)) * 100}% 0 ${((clip.trimStart || 0) / clip.duration) * 100}%)`,
               }}
             />
+
+            {/* Drum clip indicator */}
+            {clip.type === 'drum' && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "2px",
+                  left: "2px",
+                  background: "rgba(0,0,0,0.7)",
+                  color: "white",
+                  padding: "2px 4px",
+                  borderRadius: "4px",
+                  fontSize: "8px",
+                  fontWeight: "bold",
+                  zIndex: 15,
+                }}
+              >
+                🥁 {clip.soundData?.totalHits ? `${clip.soundData.totalHits} hits` : (clip.soundData?.padId || 'DRUM')}
+              </div>
+            )}
 
             {/* Trim Handles */}
             <ResizableTrimHandle
@@ -612,7 +632,7 @@ const TimelineTrack = ({
   frozen = false,
   gridSpacing = 0.25,
 }) => {
-  console.log('TimelineTrack render:', { trackId, audioClips: track.audioClips, track });
+  // console.log('TimelineTrack render:', { trackId, audioClips: track.audioClips, track });
 
   return (
     <div
@@ -625,7 +645,9 @@ const TimelineTrack = ({
     >
       {/* Render each audio clip in the track */}
       {track.audioClips && track.audioClips.map((clip) => {
-        console.log('Rendering clip:', clip);
+        // console.log('Rendering clip:', clip);
+        
+        // All clips (including drum clips) use the same AudioClip component
         return (
           <AudioClip
             key={clip.id}
@@ -847,6 +869,28 @@ const LoopBar = ({
 };
 
 const Timeline = () => {
+  // Define drum machine types for drum recording display
+  const drumMachineTypes = [
+    {
+      name: "Classic 808",
+      color: '#7c3aed',
+    },
+    {
+      name: "Vintage 909", 
+      color: '#dc2626',
+    },
+    {
+      name: "Modern Trap",
+      color: '#059669',
+    },
+    {
+      name: "Acoustic Kit",
+      color: '#d97706',
+    }
+  ];
+
+  const dispatch = useDispatch();
+
   const svgRef = useRef(null);
   const lastReduxUpdateRef = useRef(0);
   const lastPlayerUpdateRef = useRef(0);
@@ -855,7 +899,7 @@ const Timeline = () => {
   const isDragging = useRef(false);
   const animationFrameId = useRef(null);
   const playbackStartRef = useRef({ systemTime: 0, audioTime: 0 });
-  
+
   const [players, setPlayers] = useState([]);
   const [waveSurfers, setWaveSurfers] = useState([]);
   const [loopStart, setLoopStart] = useState(0);
@@ -894,32 +938,33 @@ const Timeline = () => {
 
 
 
-  const dispatch = useDispatch();
   const tracks = useSelector((state) => state.studio?.tracks || []);
   const trackHeight = useSelector((state) => state.studio?.trackHeight || 100);
+  const recordedData = useSelector((state) => state.studio?.recordedData || []);
 
   // Debug: Log tracks state
-  console.log('Current tracks state:', tracks);
+  // console.log('Current tracks state:', tracks);
+  // console.log('Recorded data in Timeline:', recordedData);
   const sidebarScrollOffset = useSelector((state) => state.studio?.sidebarScrollOffset || 0);
   const soloTrackId = useSelector((state) => state.studio.soloTrackId);
   const sectionLabels = useSelector((state) => state.studio?.sectionLabels || []);
-  console.log("sectionLabels", sectionLabels);
+  // console.log("sectionLabels", sectionLabels);
 
   const timelineWidthPerSecond = 100;
 
-// Mute functionality
- 
-useEffect(() => {
-  players.forEach(playerObj => {
-    const track = tracks.find(t => t.id === playerObj.trackId);
-    const isMuted = soloTrackId
-      ? soloTrackId !== track.id
-      : track.muted;
-    if (playerObj.player && track) {
-      playerObj.player.volume.value = isMuted ? -Infinity : 0;
-    }
-  });
-}, [tracks, players, soloTrackId]);
+  // Mute functionality
+
+  useEffect(() => {
+    players.forEach(playerObj => {
+      const track = tracks.find(t => t.id === playerObj.trackId);
+      const isMuted = soloTrackId
+        ? soloTrackId !== track.id
+        : track.muted;
+      if (playerObj.player && track) {
+        playerObj.player.volume.value = isMuted ? -Infinity : 0;
+      }
+    });
+  }, [tracks, players, soloTrackId]);
 
 
   // Get audio state from Redux
@@ -935,12 +980,19 @@ useEffect(() => {
 
   const bpm = useSelector((state) => state.studio?.bpm ?? 120);
 
-  const ORIGINAL_BPM = 120; 
+  const ORIGINAL_BPM = 120;
 
 
   const pianoRecording = useSelector((state) => state.studio.pianoRecord);
   const currentTrackId = useSelector((state) => state.studio.currentTrackId);
   const lastProcessedRef = useRef(null);
+
+  function generateRandomHexColor() {
+    let randomNumber = Math.floor(Math.random() * 16777215);
+    let hexColor = randomNumber.toString(16);
+    hexColor = hexColor.padStart(6, '0');
+    return `#${hexColor}`;
+  }
 
   useEffect(() => {
     if (pianoRecording instanceof Blob && currentTrackId && pianoRecording !== lastProcessedRef.current) {
@@ -952,12 +1004,6 @@ useEffect(() => {
         const audio = new Audio();
         audio.src = url;
 
-        function generateRandomHexColor() {
-          let randomNumber = Math.floor(Math.random() * 16777215);
-          let hexColor = randomNumber.toString(16);
-          hexColor = hexColor.padStart(6, '0');
-          return `#${hexColor}`;
-        }
 
         audio.oncanplaythrough = () => {
           const newColor = generateRandomHexColor();
@@ -975,14 +1021,14 @@ useEffect(() => {
             },
           }));
 
-          console.log("Track updated with recording:", { url, duration });
+          // console.log("Track updated with recording:", { url, duration });
         };
 
         audio.onerror = (err) => {
-          console.error("Audio load error:", err);
+          // console.error("Audio load error:", err);
         };
       }).catch((err) => {
-        console.error("Failed to decode audio:", err);
+        // console.error("Failed to decode audio:", err);
       });
     }
   }, [pianoRecording, currentTrackId]);
@@ -1040,7 +1086,7 @@ useEffect(() => {
         const masterVolumeDb = (masterVolume - 100) * 0.6;
         const trackVolumeDb = (track.volume - 100) * 0.6;
         const combinedVolumeDb = masterVolumeDb + trackVolumeDb;
-        
+
         // Apply the combined volume
         playerObj.player.volume.value = combinedVolumeDb;
       }
@@ -1183,16 +1229,16 @@ useEffect(() => {
       if (isCancelled) return;
 
       const player = new Player(audioBuffer).toDestination();
-      
+
       // Find the track to get its volume
       const track = tracks.find(t => t.id === clip.trackId);
       const trackVolume = track?.volume || 80;
-      
+
       // Calculate combined volume: master volume + track volume
       const masterVolumeDb = (masterVolume - 100) * 0.6;
       const trackVolumeDb = (trackVolume - 100) * 0.6;
       const combinedVolumeDb = masterVolumeDb + trackVolumeDb;
-      
+
       // Set player volume to combined volume
       player.volume.value = combinedVolumeDb;
 
@@ -1233,7 +1279,7 @@ useEffect(() => {
       if (error.name === 'AbortError' || isCancelled) {
         return;
       }
-      console.error("Error loading audio:", error);
+      // console.error("Error loading audio:", error);
     }
   }, [masterVolume, tracks, trackHeight]);
 
@@ -1249,7 +1295,7 @@ useEffect(() => {
             try {
               playerObj.player.stop();
             } catch (error) {
-              console.log("Stop error (can be ignored):", error);
+              // console.log("Stop error (can be ignored):", error);
             }
           }
         });
@@ -1286,7 +1332,7 @@ useEffect(() => {
                 try {
                   playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
                 } catch (error) {
-                  console.log("Start error:", error);
+                  // console.log("Start error:", error);
                 }
               }
             }
@@ -1294,7 +1340,7 @@ useEffect(() => {
         });
       }
     } catch (error) {
-      console.error("Error during play/pause:", error);
+      // console.error("Error during play/pause:", error);
     }
   };
 
@@ -1340,7 +1386,7 @@ useEffect(() => {
           try {
             playerObj.player.stop();
           } catch (error) {
-            console.log("Stop during seek error (can be ignored):", error);
+            // console.log("Stop during seek error (can be ignored):", error);
           }
         }
       });
@@ -1365,7 +1411,7 @@ useEffect(() => {
               try {
                 playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
               } catch (error) {
-                console.log("Start during seek error:", error);
+                // console.log("Start during seek error:", error);
               }
             }
           }
@@ -1428,7 +1474,7 @@ useEffect(() => {
                   try {
                     playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
                   } catch (error) {
-                    console.log("Clip start error during loop:", error);
+                    // console.log("Clip start error during loop:", error);
                   }
                 }
               }
@@ -1495,7 +1541,7 @@ useEffect(() => {
                     playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
                   }
                 } catch (error) {
-                  console.log("Clip start error during animation:", error);
+                  // console.log("Clip start error during animation:", error);
                 }
               }
             }
@@ -1688,7 +1734,7 @@ useEffect(() => {
                   try {
                     playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
                   } catch (error) {
-                    console.log("Start error:", error);
+                    // console.log("Start error:", error);
                   }
                 }
               }
@@ -1701,13 +1747,13 @@ useEffect(() => {
               try {
                 playerObj.player.stop();
               } catch (error) {
-                console.log("Stop error (can be ignored):", error);
+                // console.log("Stop error (can be ignored):", error);
               }
             }
           });
         }
       } catch (error) {
-        console.error("Error handling Redux play/pause:", error);
+        // console.error("Error handling Redux play/pause:", error);
       }
     };
 
@@ -1776,21 +1822,21 @@ useEffect(() => {
     e.preventDefault();
     e.stopPropagation();
 
-    console.log('=== DROP EVENT TRIGGERED ===');
-    console.log('DataTransfer types:', e.dataTransfer.types);
-    console.log('DataTransfer items:', e.dataTransfer.items);
-    console.log('DataTransfer files:', e.dataTransfer.files);
+    // console.log('=== DROP EVENT TRIGGERED ===');
+    // console.log('DataTransfer types:', e.dataTransfer.types);
+    // console.log('DataTransfer items:', e.dataTransfer.items);
+    // console.log('DataTransfer files:', e.dataTransfer.files);
 
     try {
       const data = e.dataTransfer.getData('text/plain');
-      console.log('Dropped data:', data);
+      // console.log('Dropped data:', data);
 
       if (data) {
         const soundItem = JSON.parse(data);
-        console.log('Parsed sound item:', soundItem);
+        // console.log('Parsed sound item:', soundItem);
 
         if (!soundItem.soundfile) {
-          console.error('No soundfile found in dropped item');
+          // console.error('No soundfile found in dropped item');
           return;
         }
 
@@ -1800,7 +1846,7 @@ useEffect(() => {
         const duration = audioDuration;
         const rawDropTime = (x / width) * duration;
 
-        console.log('Drop coordinates:', { x, width, duration, rawDropTime });
+        // console.log('Drop coordinates:', { x, width, duration, rawDropTime });
 
         // Grid snapping for drop position
         const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
@@ -1811,7 +1857,7 @@ useEffect(() => {
         };
 
         const dropTime = snapToGrid(rawDropTime);
-        console.log('Snapped drop time:', dropTime);
+        // console.log('Snapped drop time:', dropTime);
 
         const url = `${IMAGE_URL}uploads/soundfile/${soundItem.soundfile}`;
         let audioDurationSec = null;
@@ -1821,9 +1867,9 @@ useEffect(() => {
           const audioContext = new (window.AudioContext || window.webkitAudioContext)();
           const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
           audioDurationSec = audioBuffer.duration;
-          console.log('Audio duration:', audioDurationSec);
+          // console.log('Audio duration:', audioDurationSec);
         } catch (err) {
-          console.error('Error fetching or decoding audio for duration:', err);
+          // console.error('Error fetching or decoding audio for duration:', err);
           // Use a default duration if we can't get the actual duration
           audioDurationSec = 5; // 5 seconds default
         }
@@ -1832,14 +1878,14 @@ useEffect(() => {
         const trackElement = e.target.closest('[data-track-id]');
         const trackId = trackElement ? trackElement.getAttribute('data-track-id') : null;
 
-        console.log('Drop detection:', {
-          trackElement: !!trackElement,
-          trackId,
-          target: e.target,
-          currentTarget: e.currentTarget,
-          targetClasses: e.target.className,
-          targetTagName: e.target.tagName
-        });
+        // console.log('Drop detection:', {
+        //   trackElement: !!trackElement,
+        //   trackId,
+        //   target: e.target,
+        //   currentTarget: e.currentTarget,
+        //   targetClasses: e.target.className,
+        //   targetTagName: e.target.tagName
+        // });
 
         // If we're dropping on the timeline container itself (not on a track), create a new track
         const isDroppingOnTimeline = e.target === timelineContainerRef.current ||
@@ -1862,7 +1908,7 @@ useEffect(() => {
             soundData: soundItem
           };
 
-          console.log('Adding clip to existing track:', trackId, newClip);
+          // console.log('Adding clip to existing track:', trackId, newClip);
           dispatch(addAudioClipToTrack({
             trackId: trackId,
             audioClip: newClip
@@ -1889,16 +1935,16 @@ useEffect(() => {
             audioClips: [newClip]
           };
 
-          console.log('Creating new track:', newTrack);
+          // console.log('Creating new track:', newTrack);
           dispatch(addTrack(newTrack));
         } else {
-          console.log('Drop not on timeline or track, ignoring');
+          // console.log('Drop not on timeline or track, ignoring');
         }
       } else {
-        console.log('No data found in drop event');
+        // console.log('No data found in drop event');
       }
     } catch (error) {
-      console.error('Error processing dropped item:', error);
+      // console.error('Error processing dropped item:', error);
     }
   }, [audioDuration, dispatch, trackHeight, selectedGrid, selectedTime]);
 
@@ -2009,32 +2055,32 @@ useEffect(() => {
         break;
       case 'editName':
         // Implement edit name functionality
-        console.log('Edit name for track:', trackId);
+        // console.log('Edit name for track:', trackId);
         break;
       case 'splitRegion':
         // Implement split region functionality
-        console.log('Split region for track:', trackId);
+        // console.log('Split region for track:', trackId);
         break;
       case 'muteRegion':
         // Implement mute region functionality
         dispatch(toggleMuteTrack(trackId));
-        console.log('Mute region for track:', trackId);
+        // console.log('Mute region for track:', trackId);
         break;
       case 'changePitch':
         // Implement change pitch functionality
-        console.log('Change pitch for track:', trackId);
+        // console.log('Change pitch for track:', trackId);
         break;
       case 'vocalCleanup':
         // Implement vocal cleanup functionality
-        console.log('Vocal cleanup for track:', trackId);
+        // console.log('Vocal cleanup for track:', trackId);
         break;
       case 'vocalTuner':
         // Implement vocal tuner functionality
-        console.log('Vocal tuner for track:', trackId);
+        // console.log('Vocal tuner for track:', trackId);
         break;
       case 'voiceTransform':
         // Implement voice transform functionality
-        console.log('Voice transform for track:', trackId);
+        // console.log('Voice transform for track:', trackId);
         break;
       case 'volumeUp':
         const currentVolumeUp = track.volume || 80;
@@ -2089,22 +2135,22 @@ useEffect(() => {
         break;
       case 'effects':
         // Implement effects functionality
-        console.log('Effects for track:', trackId);
+        // console.log('Effects for track:', trackId);
         break;
       case 'matchProjectKey':
         // Implement match project key functionality
-        console.log('Match project key for track:', trackId);
+        // console.log('Match project key for track:', trackId);
         break;
       case 'addToLoopLibrary':
         // Implement add to loop library functionality
-        console.log('Add to loop library for track:', trackId);
+        // console.log('Add to loop library for track:', trackId);
         break;
       case 'openInSampler':
         // Implement open in sampler functionality
-        console.log('Open in sampler for track:', trackId);
+        // console.log('Open in sampler for track:', trackId);
         break;
       default:
-        console.log('Unknown action:', action);
+        // console.log('Unknown action:', action);
     }
   }, [contextMenu, tracks, clipboard, dispatch, currentTime]);
 
@@ -2306,34 +2352,18 @@ useEffect(() => {
   // }, []);
 
   const handleDrumRecordingComplete = async (blob) => {
-    const url = URL.createObjectURL(blob);
-    let audioDurationSec = null;
-    try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const arrayBuffer = await blob.arrayBuffer();
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-      audioDurationSec = audioBuffer.duration;
-    } catch (err) {
-      console.error('Error decoding drum audio:', err);
-    }
-
     const newTrack = {
-      id: Date.now(),
-      name: 'Drum Recording',
-      url,
-      color: '#FFD700',
-      height: 100, // or your default
-      startTime: 0,
-      duration: audioDurationSec,
-      trimStart: 0,
-      trimEnd: audioDurationSec,
-      soundData: { type: 'drum' }
+      id: Date.now().toString(),
+      name: `Drum Track ${tracks.length + 1}`,
+      type: 'drum',
+      color: generateRandomHexColor(),
+      volume: 80,
+      audioClips: []
     };
-
     dispatch(addTrack(newTrack));
   };
 
-  const recordedData = useSelector((state) => state.studio?.recordedData || []);
+
   // Rename submit handler
   const handleRenameSubmit = () => {
     if (renameSectionId && renameValue.trim()) {
@@ -2360,6 +2390,40 @@ useEffect(() => {
       setResizeValue("");
     }
   };
+
+  const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
+
+  // Function to play drum sound (this will be called from drum clips)
+  const playDrumSound = (drumData) => {
+    // This function will be called when timeline plays drum clips
+    // console.log('Timeline playing drum sound:', drumData);
+    // You can add actual sound playback logic here
+  };
+
+  // Check for drum clips at current timeline position and play them
+  useEffect(() => {
+    if (isPlaying && currentTime > 0) {
+      // Check all tracks for drum clips at the current time
+      tracks.forEach(track => {
+        if (track.audioClips) {
+          track.audioClips.forEach(clip => {
+            if (clip.type === 'drum') {
+              // Check if the current time is within the clip's time range
+              const clipStart = clip.startTime;
+              const clipEnd = clip.startTime + clip.duration;
+              
+              if (currentTime >= clipStart && currentTime <= clipEnd) {
+                // Play the drum sound
+                if (clip.soundData) {
+                  playDrumSound(clip.soundData);
+                }
+              }
+            }
+          });
+        }
+      });
+    }
+  }, [isPlaying, currentTime, tracks]);
 
   return (
     <>
@@ -2445,6 +2509,73 @@ useEffect(() => {
               />
             ))}
 
+            {/* Recorded Data Display */}
+            {recordedData && recordedData.length > 0 && (
+              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 50 }}>
+                {/* Recorded Data Markers */}
+                {recordedData.map((rec, idx) => (
+                  <div
+                    key={`recorded-${idx}`}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: `${(rec.currentTime / audioDuration) * 100}%`,
+                      width: "6px",
+                      height: "100%",
+                      background: "#FF6767",
+                      opacity: 0.8,
+                      zIndex: 51,
+                      borderRadius: "2px",
+                      boxShadow: "0 0 4px rgba(255, 103, 103, 0.6)"
+                    }}
+                    title={`Recorded at ${rec.currentTime.toFixed(2)}s - Volume: ${rec.volume} - Playing: ${rec.isPlaying ? 'Yes' : 'No'}`}
+                  />
+                ))}
+
+                {/* Recorded Data Region (if multiple data points) */}
+                {recordedData.length > 1 && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: `${(recordedData[0].currentTime / audioDuration) * 100}%`,
+                      width: `${((recordedData[recordedData.length - 1].currentTime - recordedData[0].currentTime) / audioDuration) * 100}%`,
+                      height: "100%",
+                      background: "rgba(255, 103, 103, 0.1)",
+                      border: "1px solid rgba(255, 103, 103, 0.3)",
+                      zIndex: 49,
+                      pointerEvents: "none",
+                    }}
+                    title="Recorded region"
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Drum Recorded Data Display */}
+            {drumRecordedData && drumRecordedData.length > 0 && (
+              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 52 }}>
+                {drumRecordedData.map((drumRec, idx) => (
+                  <div
+                    key={`drum-recorded-${idx}`}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: `${(drumRec.currentTime / audioDuration) * 100}%`,
+                      width: "8px",
+                      height: "100%",
+                      // background: drumMachineTypes.find(dm => dm.name === drumRec.drumMachine)?.color || "#FF6767", 
+                      opacity: 0.9,
+                      zIndex: 53,
+                      borderRadius: "4px",
+                      // boxShadow: "0 0 6px rgba(255, 103, 103, 0.8)"
+                    }}
+                    title={`Drum: ${drumRec.padId} (${drumRec.sound}) - ${drumRec.drumMachine} - ${drumRec.currentTime.toFixed(2)}s`}
+                  />
+                ))}
+              </div>
+            )}
+
             <style>
               {`
                 @keyframes sectionLabelAppear {
@@ -2489,7 +2620,7 @@ useEffect(() => {
 
               {/* Tracks */}
               {tracks.map((track, index) => {
-                console.log('Rendering track:', { track, index });
+                // console.log('Rendering track:', { track, index });
                 return (
                   <div
                     key={track.id}
@@ -2670,7 +2801,7 @@ useEffect(() => {
           const file = e.target.files[0];
           if (file) {
             // handle file here
-            console.log("Selected file:", file);
+            // console.log("Selected file:", file);
           }
         }}
       />
