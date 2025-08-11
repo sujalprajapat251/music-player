@@ -1,155 +1,14 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setDrumRecordedData, setDrumPlayback, setDrumPlaybackStartTime, addAudioClipToTrack, addTrack } from '../Redux/Slice/studio.slice';
-
-
-const drumMachineTypes = [
-  {
-    name: "Classic 808",
-    icon: "🥁",
-    color: '#7c3aed',
-    description: "Classic analog drum machine sounds",
-    effects: {
-      bassBoost: 1.2,
-      compression: 0.8,
-      saturation: 0.3
-    },
-    pads: [
-      { id: 'Q', sound: 'kick', freq: 50, decay: 0.7, type: 'kick' },
-      { id: 'W', sound: 'snare', freq: 200, decay: 0.3, type: 'snare' },
-      { id: 'E', sound: 'hihat', freq: 8000, decay: 0.05, type: 'hihat' },
-      { id: 'R', sound: 'openhat', freq: 8000, decay: 0.3, type: 'openhat' },
-      { id: 'A', sound: 'clap', freq: 1000, decay: 0.2, type: 'clap' },
-      { id: 'S', sound: 'cowbell', freq: 600, decay: 0.5, type: 'cowbell' },
-      { id: 'D', sound: 'bass', freq: 40, decay: 1.0, type: 'bass' },
-      { id: 'F', sound: 'perc1', freq: 1000, decay: 0.2, type: 'perc1' },
-      { id: 'Z', sound: 'tom', freq: 150, decay: 0.5, type: 'tom' },
-      { id: 'X', sound: 'ride', freq: 3000, decay: 0.7, type: 'ride' },
-      { id: 'C', sound: 'crash', freq: 5000, decay: 1.5, type: 'crash' }
-    ]
-  },
-  {
-    name: "Vintage 909",
-    icon: "🎛️",
-    color: '#dc2626',
-    description: "House and techno drum machine",
-    effects: {
-      bassBoost: 1.0,
-      compression: 0.6,
-      saturation: 0.2
-    },
-    pads: [
-      { id: 'Q', sound: 'kick', freq: 60, decay: 0.5, type: 'kick' },
-      { id: 'W', sound: 'snare', freq: 250, decay: 0.2, type: 'snare' },
-      { id: 'E', sound: 'hihat', freq: 10000, decay: 0.03, type: 'hihat' },
-      { id: 'R', sound: 'openhat', freq: 10000, decay: 0.3, type: 'openhat' },
-      { id: 'A', sound: 'clap', freq: 1200, decay: 0.1, type: 'clap' },
-      { id: 'S', sound: 'rimshot', freq: 3000, decay: 0.05, type: 'rimshot' },
-      { id: 'D', sound: 'perc2', freq: 1500, decay: 0.1, type: 'perc2' },
-      { id: 'F', sound: 'tom', freq: 180, decay: 0.3, type: 'tom' },
-      { id: 'Z', sound: 'crash', freq: 6000, decay: 2.0, type: 'crash' },
-      { id: 'X', sound: 'ride', freq: 4000, decay: 1.2, type: 'ride' },
-      { id: 'C', sound: 'fx1', freq: 2000, decay: 0.6, type: 'fx1' }
-    ]
-  },
-  {
-    name: "Modern Trap",
-    icon: "💎",
-    color: '#059669',
-    description: "Contemporary trap and hip-hop sounds",
-    effects: {
-      bassBoost: 1.5,
-      compression: 1.2,
-      saturation: 0.5
-    },
-    pads: [
-      { id: 'Q', sound: 'kick', freq: 45, decay: 0.8, type: 'kick' },
-      { id: 'W', sound: 'snare', freq: 180, decay: 0.3, type: 'snare' },
-      { id: 'E', sound: 'hihat', freq: 12000, decay: 0.02, type: 'hihat' },
-      { id: 'R', sound: 'openhat', freq: 11000, decay: 0.15, type: 'openhat' },
-      { id: 'A', sound: 'clap', freq: 800, decay: 0.25, type: 'clap' },
-      { id: 'S', sound: 'snap', freq: 700, decay: 0.2, type: 'snap' },
-      { id: 'D', sound: 'bass', freq: 35, decay: 1.2, type: 'bass' },
-      { id: 'F', sound: 'vocal', freq: 440, decay: 0.4, type: 'vocal' },
-      { id: 'Z', sound: 'tom', freq: 140, decay: 0.3, type: 'tom' },
-      { id: 'X', sound: 'fx1', freq: 2000, decay: 1.0, type: 'fx1' },
-      { id: 'C', sound: 'fx2', freq: 1000, decay: 1.5, type: 'fx2' }
-    ]
-
-  },
-  {
-    name: "Acoustic Kit",
-    icon: "🪘",
-    color: '#d97706',
-    description: "Natural acoustic drum sounds",
-    effects: {
-      bassBoost: 0.9,
-      compression: 0.4,
-      saturation: 0.1
-    },
-    pads: [
-      { id: 'Q', sound: 'kick', freq: 65, decay: 0.7, type: 'kick' },
-      { id: 'W', sound: 'snare', freq: 220, decay: 0.2, type: 'snare' },
-      { id: 'E', sound: 'hihat', freq: 9000, decay: 0.04, type: 'hihat' },
-      { id: 'R', sound: 'openhat', freq: 8500, decay: 0.35, type: 'openhat' },
-      { id: 'A', sound: 'clap', freq: 1000, decay: 0.2, type: 'clap' },
-      { id: 'S', sound: 'woodblock', freq: 1500, decay: 0.1, type: 'woodblock' },
-      { id: 'D', sound: 'conga', freq: 700, decay: 0.3, type: 'conga' },
-      { id: 'F', sound: 'bongo', freq: 1200, decay: 0.2, type: 'bongo' },
-      { id: 'Z', sound: 'tom', freq: 160, decay: 0.45, type: 'tom' },
-      { id: 'X', sound: 'ride', freq: 4200, decay: 1.2, type: 'ride' },
-      { id: 'C', sound: 'shaker', freq: 8000, decay: 0.1, type: 'shaker' }
-    ]
-  },
-  {
-    name: "Electro Pop",
-    icon: "⚡",
-    color: '#c2410c',
-    description: "Electronic pop and synth sounds",
-    effects: {
-      bassBoost: 1.1,
-      compression: 0.9,
-      saturation: 0.6
-    },
-    pads: [
-      { id: 'Q', sound: 'kick', freq: 50, decay: 0.5, type: 'kick' },
-      { id: 'W', sound: 'snare', freq: 250, decay: 0.15, type: 'snare' },
-      { id: 'E', sound: 'hihat', freq: 14000, decay: 0.02, type: 'hihat' },
-      { id: 'R', sound: 'openhat', freq: 13000, decay: 0.25, type: 'openhat' },
-      { id: 'A', sound: 'clap', freq: 900, decay: 0.15, type: 'clap' },
-      { id: 'S', sound: 'vocal', freq: 500, decay: 0.3, type: 'vocal' },
-      { id: 'D', sound: 'perc2', freq: 1800, decay: 0.1, type: 'perc2' },
-      { id: 'F', sound: 'laser', freq: 2200, decay: 0.2, type: 'laser' },
-      { id: 'Z', sound: 'crash', freq: 6000, decay: 1.6, type: 'crash' },
-      { id: 'X', sound: 'fx1', freq: 2500, decay: 1.0, type: 'fx1' },
-      { id: 'C', sound: 'rise', freq: 5000, decay: 2.0, type: 'rise' }
-    ]
-  },
-  {
-    name: "Lo-Fi Vinyl",
-    icon: "📀",
-    color: '#7c2d12',
-    description: "Vintage vinyl-sampled drums",
-    effects: {
-      bassBoost: 0.8,
-      compression: 0.5,
-      saturation: 0.4
-    },
-    pads: [
-      { id: 'Q', sound: 'kick', freq: 55, decay: 0.6, type: 'kick' },
-      { id: 'W', sound: 'snare', freq: 190, decay: 0.25, type: 'snare' },
-      { id: 'E', sound: 'hihat', freq: 6000, decay: 0.05, type: 'hihat' },
-      { id: 'R', sound: 'openhat', freq: 5500, decay: 0.4, type: 'openhat' },
-      { id: 'A', sound: 'clap', freq: 700, decay: 0.2, type: 'clap' },
-      { id: 'S', sound: 'vinyl', freq: 2000, decay: 0.6, type: 'vinyl' },
-      { id: 'D', sound: 'glitch', freq: 1800, decay: 0.3, type: 'glitch' },
-      { id: 'F', sound: 'fx2', freq: 1000, decay: 1.5, type: 'fx2' },
-      { id: 'Z', sound: 'tom', freq: 130, decay: 0.5, type: 'tom' },
-      { id: 'X', sound: 'shaker', freq: 5000, decay: 0.1, type: 'shaker' },
-      { id: 'C', sound: 'drop', freq: 800, decay: 2.0, type: 'drop' }
-    ]
-  }
-];
+import Pattern from './Pattern';
+import { 
+  drumMachineTypes, 
+  soundDescriptions, 
+  createSynthSound, 
+  createDrumData, 
+  getAudioContext 
+} from '../Utils/drumMachineUtils';
 
 const DrumPadMachine = () => {
   const [currentType, setCurrentType] = useState(0);
@@ -163,6 +22,7 @@ const DrumPadMachine = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedPad, setSelectedPad] = useState(null);
   const [padEffects, setPadEffects] = useState({});
+  const [activeView, setActiveView] = useState('instrument'); // 'instrument', 'patterns', 'piano', 'effects'
   const audioContextRef = useRef(null);
   const reverbBufferRef = useRef(null);
   const dispatch = useDispatch();
@@ -174,9 +34,11 @@ const DrumPadMachine = () => {
   const tracks = useSelector((state) => state.studio?.tracks || []);
   const currentTrackId = useSelector((state) => state.studio?.currentTrackId || null);
 
+
   // Get the currently selected drum machine
   const selectedDrumMachine = drumMachineTypes[currentType];
 
+  
   // Clear drum recorded data when recording starts
   useEffect(() => {
     if (isRecording) {
@@ -289,7 +151,7 @@ const DrumPadMachine = () => {
   // Function to create continuous audio blob from all drum recordings
   const createContinuousDrumAudioBlob = async (allDrumData) => {
     try {
-      const audioContext = getAudioContext();
+      const audioContext = getAudioContext(audioContextRef);
       const sampleRate = audioContext.sampleRate;
 
       // Calculate total duration
@@ -375,34 +237,34 @@ const DrumPadMachine = () => {
   // Initialize Web Audio API
 
 
-  const soundDescriptions = {
-    kick: "Kick Drum (Low-end punch)",
-    snare: "Snare Drum (Sharp attack)",
-    hihat: "Closed Hi-Hat (Short & tight)",
-    openhat: "Open Hi-Hat (Sizzly)",
-    clap: "Clap (Snappy)",
-    rimshot: "Rimshot (Sharp side-stick)",
-    perc1: "Percussion Hit (General)",
-    perc2: "Metallic Perc (Ping)",
-    bass: "808 Bass (Low rumble)",
-    tom: "Tom Drum (Mid-punch)",
-    crash: "Crash Cymbal (Washy)",
-    ride: "Ride Cymbal (Sustained)",
-    cowbell: "Cowbell (Metal click)",
-    shaker: "Shaker (Rhythmic noise)",
-    woodblock: "Wood Block (Thock)",
-    conga: "Conga (Hand drum)",
-    bongo: "Bongo (High-pitched hand drum)",
-    vocal: "Vocal FX (Chops or shout)",
-    fx1: "Effect Hit (Sweep / Boom)",
-    fx2: "Reverse FX (Whoosh / Delay tail)",
-    snap: "Finger Snap",
-    laser: "Laser Shot FX",
-    glitch: "Glitch FX",
-    vinyl: "Vinyl Scratch",
-    rise: "Riser FX",
-    drop: "Drop Impact"
-  };
+  // const soundDescriptions = {
+  //   kick: "Kick Drum (Low-end punch)",
+  //   snare: "Snare Drum (Sharp attack)",
+  //   hihat: "Closed Hi-Hat (Short & tight)",
+  //   openhat: "Open Hi-Hat (Sizzly)",
+  //   clap: "Clap (Snappy)",
+  //   rimshot: "Rimshot (Sharp side-stick)",
+  //   perc1: "Percussion Hit (General)",
+  //   perc2: "Metallic Perc (Ping)",
+  //   bass: "808 Bass (Low rumble)",
+  //   tom: "Tom Drum (Mid-punch)",
+  //   crash: "Crash Cymbal (Washy)",
+  //   ride: "Ride Cymbal (Sustained)",
+  //   cowbell: "Cowbell (Metal click)",
+  //   shaker: "Shaker (Rhythmic noise)",
+  //   woodblock: "Wood Block (Thock)",
+  //   conga: "Conga (Hand drum)",
+  //   bongo: "Bongo (High-pitched hand drum)",
+  //   vocal: "Vocal FX (Chops or shout)",
+  //   fx1: "Effect Hit (Sweep / Boom)",
+  //   fx2: "Reverse FX (Whoosh / Delay tail)",
+  //   snap: "Finger Snap",
+  //   laser: "Laser Shot FX",
+  //   glitch: "Glitch FX",
+  //   vinyl: "Vinyl Scratch",
+  //   rise: "Riser FX",
+  //   drop: "Drop Impact"
+  // };
 
 
 
@@ -419,7 +281,7 @@ const DrumPadMachine = () => {
 
     const audioContext = getAudioContext();
     const length = audioContext.sampleRate * 2;
-    const buffer = audioContext.createBuffer(2, length, audioContext.sampleRate);
+    const buffer = audioContext.createBuffer(2, length, audioContext.sampleRate);     
 
     for (let channel = 0; channel < 2; channel++) {
       const channelData = buffer.getChannelData(channel);
@@ -511,7 +373,7 @@ const DrumPadMachine = () => {
 
         const noise = audioContext.createBufferSource();
         const gain = audioContext.createGain();
-        const filter = audioContext.createBiquadFilter();
+        const filter = audioContext.createBiquadFilter(); 
 
         noise.buffer = noiseBuffer;
 
@@ -682,7 +544,7 @@ const DrumPadMachine = () => {
 
   // Apply drum machine type effects to audio
   const applyTypeEffects = useCallback((audioNode, typeEffects) => {
-    const audioContext = getAudioContext();
+    const audioContext = getAudioContext(audioContextRef);
 
     // Create EQ for bass boost
     const lowShelf = audioContext.createBiquadFilter();
@@ -716,12 +578,12 @@ const DrumPadMachine = () => {
     compressor.connect(waveshaper);
 
     return waveshaper;
-  }, [getAudioContext]);
+  }, []);
 
   // Play sound with effects
   const playSound = useCallback((pad) => {
     try {
-      const audioContext = getAudioContext();
+      const audioContext = getAudioContext(audioContextRef);
 
       if (audioContext.state === 'suspended') {
         audioContext.resume();
@@ -733,7 +595,7 @@ const DrumPadMachine = () => {
       const effectiveReverb = padEffect.reverb !== undefined ? padEffect.reverb : reverb;
       const currentTypeEffects = drumMachineTypes[currentType].effects;
 
-      // Create synthetic sound
+      // Create synthetic sound using shared function
       const synthSource = createSynthSound(pad, audioContext);
 
       // Create audio nodes
@@ -799,7 +661,7 @@ const DrumPadMachine = () => {
       // console.error('Error playing sound:', error);
       setDisplayDescription('Audio not available');
     }
-  }, [getAudioContext, volume, pan, reverb, soundDescriptions, drumMachineTypes, currentType, isRecording, padEffects, createReverbBuffer, applyTypeEffects, createSynthSound]);
+  }, [volume, pan, reverb, soundDescriptions, drumMachineTypes, currentType, isRecording, padEffects, createReverbBuffer, applyTypeEffects]);
 
   // Keyboard handling
   useEffect(() => {
@@ -888,17 +750,7 @@ const DrumPadMachine = () => {
   // When a pad is pressed, record it
   const handlePadPress = (pad) => {
     if (isRecording) {
-      const drumData = {
-        timestamp: Date.now(),
-        currentTime: currentTime, // Use Redux currentTime
-        padId: pad.id,
-        sound: pad.sound,
-        freq: pad.freq,
-        decay: pad.decay,
-        type: pad.type,
-        drumMachine: selectedDrumMachine.name, // Current drum machine
-        effects: selectedDrumMachine.effects
-      };
+      const drumData = createDrumData(pad, selectedDrumMachine, currentTime);
 
       const updatedData = [...drumRecordedData, drumData];
       dispatch(setDrumRecordedData(updatedData));
@@ -920,7 +772,7 @@ const DrumPadMachine = () => {
   // Function to create audio blob for drum hit
   const createDrumAudioBlob = async (pad) => {
     try {
-      const audioContext = getAudioContext();
+      const audioContext = getAudioContext(audioContextRef);
       const sampleRate = audioContext.sampleRate;
       const duration = pad.decay * 2; // Duration in seconds
       const bufferLength = Math.floor(sampleRate * duration);
@@ -1027,150 +879,190 @@ const DrumPadMachine = () => {
       {/* Top Navigation */}
       <div className="flex justify-center items-center py-4 border-b border-gray-700">
         <div className="flex space-x-8">
-          <button className="text-purple-400 border-b-2 border-purple-400 pb-1">
+          <button 
+            className={`pb-1 transition-colors ${activeView === 'instrument' 
+              ? 'text-purple-400 border-b-2 border-purple-400' 
+              : 'text-gray-400 hover:text-white'}`}
+            onClick={() => setActiveView('instrument')}
+          >
             Instrument
           </button>
-          <button className="text-gray-400 hover:text-white">Patterns</button>
-          <button className="text-gray-400 hover:text-white">Piano Roll</button>
-          <button className="text-purple-400 font-semibold">Effects</button>
+          <button 
+            className={`pb-1 transition-colors ${activeView === 'patterns' 
+              ? 'text-purple-400 border-b-2 border-purple-400' 
+              : 'text-gray-400 hover:text-white'}`}
+            onClick={() => setActiveView('patterns')}
+          >
+            Patterns
+          </button>
+          <button 
+            className={`pb-1 transition-colors ${activeView === 'piano' 
+              ? 'text-purple-400 border-b-2 border-purple-400' 
+              : 'text-gray-400 hover:text-white'}`}
+            onClick={() => setActiveView('piano')}
+          >
+            Piano Roll
+          </button>
+          <button 
+            className={`pb-1 transition-colors ${activeView === 'effects' 
+              ? 'text-purple-400 border-b-2 border-purple-400' 
+              : 'text-gray-400 hover:text-white'}`}
+            onClick={() => setActiveView('effects')}
+          >
+            Effects
+          </button>
         </div>
       </div>
 
-      {/* Type Selector */}
-      <div className="flex justify-center items-center px-8 py-4">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={() => setCurrentType((prev) => (prev - 1 + drumMachineTypes.length) % drumMachineTypes.length)}
-            className="text-gray-400 hover:text-white text-xl"
-          >
-            ←
-          </button>
-          <div className="text-center">
-            <div className="text-2xl" style={{ color: currentTypeData.color }}>{currentTypeData.icon}</div>
-            <div className="text-white font-medium">{currentTypeData.name}</div>
-            <div className="text-xs text-gray-400 max-w-32 truncate">{currentTypeData.description}</div>
+      {/* Render different views based on activeView */}
+      {activeView === 'patterns' ? (
+        <Pattern />
+      ) : activeView === 'instrument' ? (
+        <>
+          {/* Type Selector */}
+          <div className="flex justify-center items-center px-8 py-4">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setCurrentType((prev) => (prev - 1 + drumMachineTypes.length) % drumMachineTypes.length)}
+                className="text-gray-400 hover:text-white text-xl"
+              >
+                ←
+              </button>
+              <div className="text-center">
+                <div className="text-2xl" style={{ color: currentTypeData.color }}>{currentTypeData.icon}</div>
+                <div className="text-white font-medium">{currentTypeData.name}</div>
+                <div className="text-xs text-gray-400 max-w-32 truncate">{currentTypeData.description}</div>
+              </div>
+              <button
+                onClick={() => setCurrentType((prev) => (prev + 1) % drumMachineTypes.length)}
+                className="text-gray-400 hover:text-white text-xl"
+              >
+                →
+              </button>
+            </div>
           </div>
-          <button
-            onClick={() => setCurrentType((prev) => (prev + 1) % drumMachineTypes.length)}
-            className="text-gray-400 hover:text-white text-xl"
-          >
-            →
-          </button>
-        </div>
-      </div>
 
-      {/* Display */}
-      <div className="text-center py-2">
-        <div className="bg-black/50 rounded-lg p-3 backdrop-blur-sm inline-block min-w-96">
-          <p className="text-xl font-mono text-green-400">{displayDescription}</p>
-          {selectedPad && (
-            <p className="text-sm text-yellow-400 mt-1">
-              Editing pad {selectedPad} - Double-click another pad or same pad to change selection
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Playback Controls */}
-      {drumRecordedData.length > 0 && (
-        <div className="text-center py-2">
-          <button
-            onClick={handleDrumPlayback}
-            className={`px-6 py-2 rounded-lg font-medium transition-colors ${isPlayingDrumRecording
-                ? 'bg-red-600 hover:bg-red-700 text-white'
-                : 'bg-green-600 hover:bg-green-700 text-white'
-              }`}
-          >
-            {isPlayingDrumRecording ? '⏹️ Stop Playback' : '▶️ Play Recording'}
-          </button>
-          <p className="text-xs text-gray-400 mt-1">
-            {drumRecordedData.length} drum hits recorded
-          </p>
-        </div>
-      )}
-
-      {/* Track Selection Notification */}
-      {isRecording && (
-        <div className="text-center py-2">
-          {currentTrackId ? (
-            <div className="bg-green-600 text-white px-4 py-2 rounded-lg">
-              <p className="text-sm font-medium">Recording to: {tracks.find(t => t.id === currentTrackId)?.name || 'Unknown Track'}</p>
-              <p className="text-xs opacity-80">Click drum pads to record to timeline</p>
+          {/* Display */}
+          <div className="text-center py-2">
+            <div className="bg-black/50 rounded-lg p-3 backdrop-blur-sm inline-block min-w-96">
+              <p className="text-xl font-mono text-green-400">{displayDescription}</p>
+              {selectedPad && (
+                <p className="text-sm text-yellow-400 mt-1">
+                  Editing pad {selectedPad} - Double-click another pad or same pad to change selection
+                </p>
+              )}
             </div>
-          ) : (
-            <div className="bg-yellow-600 text-white px-4 py-2 rounded-lg">
-              <p className="text-sm font-medium">⚠️ No track selected</p>
-              <p className="text-xs opacity-80">Select a track in the timeline to record drum data</p>
+          </div>
+
+          {/* Playback Controls */}
+          {drumRecordedData.length > 0 && (
+            <div className="text-center py-2">
+              <button
+                onClick={handleDrumPlayback}
+                className={`px-6 py-2 rounded-lg font-medium transition-colors ${isPlayingDrumRecording
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-green-600 hover:bg-green-700 text-white'
+                  }`}
+              >
+                {isPlayingDrumRecording ? '⏹️ Stop Playback' : '▶️ Play Recording'}
+              </button>
+              <p className="text-xs text-gray-400 mt-1">
+                {drumRecordedData.length} drum hits recorded
+              </p>
             </div>
           )}
-        </div>
-      )}
 
-      {/* Drum Pad Area */}
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div
-          className="p-8 rounded-2xl"
-          style={{
-            background: `linear-gradient(135deg, ${currentTypeData.color}22 0%, ${currentTypeData.color}44 50%, ${currentTypeData.color}33 100%)`,
-            backdropFilter: 'blur(10px)',
-            border: `1px solid ${currentTypeData.color}44`
-          }}
-        >
-          {/* 3x3 Grid Layout - First 9 pads */}
-          <div className="grid grid-cols-3 gap-6 mb-8">
-            {currentTypeData.pads.slice(0, 9).map((pad, index) => (
-              <PadButton
-                key={pad.id}
-                pad={pad}
-                index={index}
-                isActive={activePads.has(pad.id)}
-                onClick={() => handlePadPress(pad)}
-              />
-            ))}
+          {/* Track Selection Notification */}
+          {isRecording && (
+            <div className="text-center py-2">
+              {currentTrackId ? (
+                <div className="bg-green-600 text-white px-4 py-2 rounded-lg">
+                  <p className="text-sm font-medium">Recording to: {tracks.find(t => t.id === currentTrackId)?.name || 'Unknown Track'}</p>
+                  <p className="text-xs opacity-80">Click drum pads to record to timeline</p>
+                </div>
+              ) : (
+                <div className="bg-yellow-600 text-white px-4 py-2 rounded-lg">
+                  <p className="text-sm font-medium">⚠️ No track selected</p>
+                  <p className="text-xs opacity-80">Select a track in the timeline to record drum data</p>
+                </div>
+              )}
+            </div>
+          )}
 
-            <div className="relative w-80 h-80 flex items-center justify-center group cursor-pointer">
-              {/* Outermost ring - very thin */}
-              <div className="absolute w-80 h-80 rounded-full border border-gray-600/30 transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70"></div>
+          {/* Drum Pad Area */}
+          <div className="flex-1 flex items-center justify-center p-4">
+            <div
+              className="p-8 rounded-2xl"
+              style={{
+                background: `linear-gradient(135deg, ${currentTypeData.color}22 0%, ${currentTypeData.color}44 50%, ${currentTypeData.color}33 100%)`,
+                backdropFilter: 'blur(10px)',
+                border: `1px solid ${currentTypeData.color}44`
+              }}
+            >
+              {/* 3x3 Grid Layout - First 9 pads */}
+              <div className="grid grid-cols-3 gap-6 mb-8">
+                {currentTypeData.pads.slice(0, 9).map((pad, index) => (
+                  <PadButton
+                    key={pad.id}
+                    pad={pad}
+                    index={index}
+                    isActive={activePads.has(pad.id)}
+                    onClick={() => handlePadPress(pad)}
+                  />
+                ))}
 
-              {/* Second ring */}
-              <div className="absolute w-64 h-64 rounded-full border border-gray-600/35 transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75"></div>
+                <div className="relative w-80 h-80 flex items-center justify-center group cursor-pointer">
+                  {/* Outermost ring - very thin */}
+                  <div className="absolute w-80 h-80 rounded-full border border-gray-600/30 transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70"></div>
 
-              {/* Third ring */}
-              <div className="absolute w-48 h-48 rounded-full border border-gray-600/40 transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80"></div>
+                  {/* Second ring */}
+                  <div className="absolute w-64 h-64 rounded-full border border-gray-600/35 transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75"></div>
 
-              {/* Fourth ring */}
-              <div className="absolute w-32 h-32 rounded-full border border-gray-600/45 transition-all duration-300 group-hover:border-gray-500/65 group-active:border-gray-400/85"></div>
+                  {/* Third ring */}
+                  <div className="absolute w-48 h-48 rounded-full border border-gray-600/40 transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80"></div>
 
-              {/* Inner ring */}
-              <div className="absolute w-20 h-20 rounded-full border border-gray-600/50 transition-all duration-300 group-hover:border-gray-500/70 group-active:border-gray-400/90"></div>
+                  {/* Fourth ring */}
+                  <div className="absolute w-32 h-32 rounded-full border border-gray-600/45 transition-all duration-300 group-hover:border-gray-500/65 group-active:border-gray-400/85"></div>
 
-              {/* Center circle with number */}
-              <div className="relative w-8 h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95">
-                1
+                  {/* Inner ring */}
+                  <div className="absolute w-20 h-20 rounded-full border border-gray-600/50 transition-all duration-300 group-hover:border-gray-500/70 group-active:border-gray-400/90"></div>
+
+                  {/* Center circle with number */}
+                  <div className="relative w-8 h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95">
+                    1
+                  </div>
+
+                  {/* Subtle hover glow effect */}
+                  <div className="absolute inset-0 rounded-full bg-gradient-radial from-white/0 via-white/0 to-transparent transition-all duration-500 group-hover:from-white/3 group-hover:via-white/1"></div>
+                </div>
               </div>
 
-              {/* Subtle hover glow effect */}
-              <div className="absolute inset-0 rounded-full bg-gradient-radial from-white/0 via-white/0 to-transparent transition-all duration-500 group-hover:from-white/3 group-hover:via-white/1"></div>
+              {/* Additional pads row */}
+              {currentTypeData.pads.length > 9 && (
+                <div className="grid grid-cols-4 gap-4 justify-items-center">
+                  {currentTypeData.pads.slice(9).map((pad, index) => (
+                    <PadButton
+                      key={pad.id}
+                      pad={pad}
+                      index={index + 9}
+                      isActive={activePads.has(pad.id)}
+                      onClick={() => handlePadPress(pad)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Additional pads row */}
-          {currentTypeData.pads.length > 9 && (
-            <div className="grid grid-cols-4 gap-4 justify-items-center">
-              {currentTypeData.pads.slice(9).map((pad, index) => (
-                <PadButton
-                  key={pad.id}
-                  pad={pad}
-                  index={index + 9}
-                  isActive={activePads.has(pad.id)}
-                  onClick={() => handlePadPress(pad)}
-                />
-              ))}
-            </div>
-          )}
+        </>
+      ) : activeView === 'piano' ? (
+        <div className="flex items-center justify-center h-64">
+          <p className="text-gray-400 text-lg">Piano Roll View - Coming Soon</p>
         </div>
-      </div>
-
+      ) : activeView === 'effects' ? (
+        <div className="flex items-center justify-center h-64">
+          <p className="text-gray-400 text-lg">Effects View - Coming Soon</p>
+        </div>
+      ) : null}
     </div>
   );
 };
