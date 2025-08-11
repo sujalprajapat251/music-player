@@ -4,7 +4,7 @@ import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
 import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel } from "../Redux/Slice/studio.slice";
 import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM } from "../Redux/Slice/grid.slice";
-import { setAudioDuration as setLoopAudioDuration, toggleLoopEnabled, setLoopEnd, setLoopRange } from "../Redux/Slice/loop.slice";
+import { setAudioDuration as setLoopAudioDuration, toggleLoopEnabled, setLoopEnd, setLoopRange, selectIsLoopEnabled } from "../Redux/Slice/loop.slice";
 import { getGridSpacing, getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
 import { IMAGE_URL } from "../Utils/baseUrl";
 import { getNextTrackColor } from "../Utils/colorUtils";
@@ -31,6 +31,7 @@ import LoopBar from "./LoopBar";
 import TimelineTrack from "./TimelineTrack";
 import ResizableSectionLabel from "./ResizableSectionLabel";
 import { useSectionLabels } from "../hooks/useSectionLabels";
+import { toggleEffectsOffcanvas } from "../Redux/Slice/effects.slice";
 
 const Timeline = () => {
   // Define drum machine types for drum recording display
@@ -1860,7 +1861,7 @@ const Timeline = () => {
               </div>
             )}
           </div>
-          <div className={`w-[30px] h-[30px] flex items-center justify-center rounded-full ${isLoopEnabled ? 'bg-[#FF8014]' : 'hover:bg-[#1F1F1F]'}`} onClick={() => setIsLoopEnabled(!isLoopEnabled)}>
+          <div className={`w-[30px] h-[30px] flex items-center justify-center rounded-full ${isLoopEnabled ? 'bg-[#FF8014]' : 'hover:bg-[#1F1F1F]'}`} onClick={() => selectIsLoopEnabled(!isLoopEnabled)}>
             <img src={reverceIcon} alt="Reverse" />
           </div>
         </div>
