@@ -1284,67 +1284,6 @@ const Timeline = () => {
     }
   }, [masterVolume, tracks, trackHeight]);
 
-  // Fixed playback logic to respect trim boundaries
-  const handlePlayPause = async () => {
-    try {
-      await start();
-
-      if (isPlaying) {
-        // Stop all players
-        players.forEach((playerObj) => {
-          if (playerObj?.player && typeof playerObj.player.start === 'function') {
-            try {
-              playerObj.player.stop();
-            } catch (error) {
-              // console.log("Stop error (can be ignored):", error);
-            }
-          }
-        });
-        dispatch(setPlaying(false));
-      } else {
-        // Stop all players before starting
-        players.forEach((playerObj) => {
-          if (playerObj?.player && typeof playerObj.player.stop === 'function') {
-            try {
-              playerObj.player.stop();
-            } catch (error) {
-              // ignore
-            }
-          }
-        });
-        dispatch(setPlaying(true));
-        playbackStartRef.current = {
-          systemTime: Date.now(),
-          audioTime: currentTime,
-        };
-        // Start only those players that should play at the current time
-        players.forEach((playerObj) => {
-          if (playerObj?.player && typeof playerObj.player.start === 'function') {
-            const clipStartTime = playerObj.startTime || 0;
-            const trimStart = playerObj.trimStart || 0;
-            const trimEnd = playerObj.trimEnd || playerObj.duration;
-            const trimmedClipStart = clipStartTime;
-            const trimmedClipEnd = clipStartTime + (trimEnd - trimStart);
-            if (currentTime >= trimmedClipStart && currentTime < trimmedClipEnd) {
-              const offsetInTrimmedRegion = currentTime - trimmedClipStart;
-              const startOffsetInOriginalAudio = trimStart + offsetInTrimmedRegion;
-              const remainingTrimmedDuration = (trimEnd - trimStart) - offsetInTrimmedRegion;
-              if (remainingTrimmedDuration > 0) {
-                try {
-                  playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
-                } catch (error) {
-                  // console.log("Start error:", error);
-                }
-              }
-            }
-          }
-        });
-      }
-    } catch (error) {
-      // console.error("Error during play/pause:", error);
-    }
-  };
-
   // Fixed seek logic to respect trim boundaries
   const movePlayhead = (e) => {
     if (!timelineContainerRef.current) return;
@@ -2363,8 +2302,6 @@ const Timeline = () => {
     };
     dispatch(addTrack(newTrack));
   };
-
-
   // Rename submit handler
   const handleRenameSubmit = () => {
     if (renameSectionId && renameValue.trim()) {
@@ -2756,7 +2693,7 @@ const Timeline = () => {
               </div>
             )}
           </div>
-          <div className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full" onClick={() => setIsLoopEnabled(!isLoopEnabled)}>
+          <div className={`w-[30px] h-[30px] flex items-center justify-center rounded-full ${isLoopEnabled ? 'bg-[#FF8014]' : 'hover:bg-[#1F1F1F]'}`} onClick={() => setIsLoopEnabled(!isLoopEnabled)}>
             <img src={reverceIcon} alt="Reverse" />
           </div>
         </div>
@@ -2801,8 +2738,8 @@ const Timeline = () => {
         onChange={(e) => {
           const file = e.target.files[0];
           if (file) {
-            // handle file here
-            // console.log("Selected file:", file);
+            // handle file hereDr
+            console.log("Selected file:", file);
           }
         }}
       />
@@ -2900,6 +2837,7 @@ const Timeline = () => {
           </div>
         </div>
       </Dialog>
+
     </>
   );
 };

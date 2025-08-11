@@ -8,11 +8,11 @@ import TrashIcon from '../Images/trash.svg'
 import FreezeIcon from '../Images/freeze.svg'
 import waveIcon from '../Images/wave.svg'
 import { useDispatch, useSelector } from "react-redux";
-import { updateTrack , renameTrack, removeTrack, freezeTrack, duplicateTrack, updateTrackAudio, exportTrack } from "../Redux/Slice/studio.slice";
+import { updateTrack, renameTrack, removeTrack, freezeTrack, duplicateTrack, updateTrackAudio, exportTrack } from "../Redux/Slice/studio.slice";
 const MENU_COLORS = [
   "#F05959", "#49B1A5", "#C579C8", "#5572F9",
   "#25A6CA", "#C059F0", "#4CAA47", "#F0F059",
-  "#F09859" , "#8C8484"
+  "#F09859", "#8C8484"
 ];
 
 const TrackMenu = ({ trackId, color, onRename }) => {
@@ -22,9 +22,9 @@ const TrackMenu = ({ trackId, color, onRename }) => {
   const menuRef = useRef();
   const fileInputRef = useRef();
   const dispatch = useDispatch();
-  
+
   // Get track data to check frozen state
-  const track = useSelector((state) => 
+  const track = useSelector((state) =>
     state.studio.tracks.find(t => t.id === trackId)
   );
   const isFrozen = track?.frozen || false;
@@ -87,7 +87,7 @@ const TrackMenu = ({ trackId, color, onRename }) => {
     try {
       // Create object URL for the file
       const url = URL.createObjectURL(file);
-      
+
       // Get audio duration
       let duration = null;
       try {
@@ -131,33 +131,33 @@ const TrackMenu = ({ trackId, color, onRename }) => {
       // Fetch the audio data
       const response = await fetch(track.url);
       const audioBlob = await response.blob();
-      
+
       // Create a new blob with the appropriate MIME type
       const exportBlob = new Blob([audioBlob], { type: 'audio/wav' });
-      
+
       // Create download link
       const downloadUrl = URL.createObjectURL(exportBlob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      
+
       // Set filename based on track name and export type
-      const filename = includeEffects 
+      const filename = includeEffects
         ? `${track.name || 'track'}_with_effects.wav`
         : `${track.name || 'track'}_no_effects.wav`;
-      
+
       link.download = filename;
-      
+
       // Trigger download
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Clean up
       URL.revokeObjectURL(downloadUrl);
-      
+
       // Dispatch export action for tracking
       dispatch(exportTrack({ trackId, exportType: includeEffects ? 'with_effects' : 'no_effects' }));
-      
+
       setOpen(false);
       setSubmenu(null);
     } catch (error) {
@@ -180,67 +180,71 @@ const TrackMenu = ({ trackId, color, onRename }) => {
             position: "absolute",
             top: "100%",
             left: 0,
-            background: "#232323",
+            background: "#1F1F1F",
             color: "#fff",
-            borderRadius: 10,
+            borderRadius: "4px",
             boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
             minWidth: 300,
             zIndex: 9999,
-            padding: 8,
+            // padding: 8,
             fontFamily: "inherit",
             marginTop: 4
           }}
         >
-          <div style={{ fontSize: 13, color: "#aaa", marginBottom: 8 }}>Menu</div>
           <MenuItem
             icon={<img src={PencilIcon} alt="Rename" style={{ width: 16, height: 16, filter: "invert(1)" }} />}
             label="Rename"
             onClick={onRename}
+            className="py-2 px-3"
           />
-          <MenuItem 
-            icon={<img src={DuplicateIcon} alt="Duplicate track" style={{ width: 16, height: 16, filter: "invert(1)" }} />} 
-            label="Duplicate track" 
+          <MenuItem
+            icon={<img src={DuplicateIcon} alt="Duplicate track" style={{ width: 16, height: 16, filter: "invert(1)" }} />}
+            label="Duplicate track"
             onClick={handleDuplicateTrack}
+            className="py-2 px-3"
           />
-          <MenuItem 
-            icon={<img src={TrashIcon} alt="Delete track" style={{ width: 16, height: 16, filter: "invert(1)" }} />} 
-            label="Delete track" 
+          <MenuItem
+            icon={<img src={TrashIcon} alt="Delete track" style={{ width: 16, height: 16, filter: "invert(1)" }} />}
+            label="Delete track"
             onClick={() => {
-                if (isShiftPressed) {
-                    // If Shift is pressed, delete without confirmation
-                    dispatch(removeTrack(trackId));
-                    setOpen(false);
-                } else {
-                        dispatch(removeTrack(trackId));
-                        setOpen(false);                  
-                }
+              if (isShiftPressed) {
+                // If Shift is pressed, delete without confirmation
+                dispatch(removeTrack(trackId));
+                setOpen(false);
+              } else {
+                dispatch(removeTrack(trackId));
+                setOpen(false);
+              }
             }}
+            className="py-2 px-3"
           />
-          <MenuItem 
+          <MenuItem
             icon={
-              <img 
-                src={FreezeIcon} 
-                alt="Freeze track" 
-                style={{ 
-                  width: 16, 
-                  height: 16, 
+              <img
+                src={FreezeIcon}
+                alt="Freeze track"
+                style={{
+                  width: 16,
+                  height: 16,
                   filter: isFrozen ? "invert(1) brightness(1.5)" : "invert(1)",
                   opacity: isFrozen ? 1 : 0.7
-                }} 
+                }}
               />
-            } 
+            }
             label={`${isFrozen ? 'Unfreeze' : 'Freeze'} track (Free up CPU)`}
             onClick={handleFreezeTrack}
             style={{
               color: isFrozen ? "#4CAF50" : "#fff",
               fontWeight: isFrozen ? "bold" : "normal"
             }}
+            className="py-2 px-3"
           />
           <div style={{ borderTop: "1px solid #333", margin: "8px 0" }} />
-          <MenuItem 
-            icon={<img src={importIcon} alt="Import" style={{ width: 16, height: 16, filter: "invert(1)" }} />} 
-            label="Import Audio" 
+          <MenuItem
+            icon={<img src={importIcon} alt="Import" style={{ width: 16, height: 16, filter: "invert(1)" }} />}
+            label="Import"
             onClick={handleImportAudio}
+            className="py-2 px-3"
           />
           <input
             type="file"
@@ -254,39 +258,39 @@ const TrackMenu = ({ trackId, color, onRename }) => {
             label="Export"
             onClick={() => setSubmenu(submenu === "export" ? null : "export")}
             hasArrow
+            className="py-2 px-3"
           />
           <MenuItem
             icon={<span style={{ display: "inline-block", width: 12, height: 12, background: color, borderRadius: 2 }} />}
             label="Color"
             onClick={() => setSubmenu(submenu === "color" ? null : "color")}
             hasArrow
+            className="py-2 px-3"
           />
 
-                     {/* Export Submenu */}
-           {submenu === "export" && (
-             <div style={{
-               position: "absolute", left: "100%", top: 250, background: "#232323", borderRadius: 8, minWidth: 300, zIndex: 10000, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", marginLeft: 4
-             }}>
-                <div className="mt-2 ms-3" style={{ fontSize: 13, color: "#aaa" }}>Export As</div>
-               <MenuItem 
-                 icon={<img src={waveIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)" }} />} 
-                 label="WAV audio file" 
-                 onClick={() => handleExportTrack(true)} 
-               />
-               <MenuItem 
-                 icon={<img src={waveIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)" }} />} 
-                 label="WAV audio file (no effects)" 
-                 onClick={() => handleExportTrack(false)} 
-               />
-             </div>
-           )}
+          {/* Export Submenu */}
+          {submenu === "export" && (
+            <div style={{
+              position: "absolute", left: "100%", top: 250, background: "#232323", minWidth: 300, zIndex: 10000, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", marginLeft: 4
+            }}>
+              <MenuItem
+                icon={<img src={waveIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)" }} />}
+                label="WAV audio file"
+                onClick={() => handleExportTrack(true)}
+              />
+              <MenuItem
+                icon={<img src={waveIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)" }} />}
+                label="WAV audio file (no effects)"
+                onClick={() => handleExportTrack(false)}
+              />
+            </div>
+          )}
 
           {/* Color Submenu */}
           {submenu === "color" && (
             <div style={{
-              position: "absolute", left: "100%", top: 280, background: "#232323", borderRadius: 8, minWidth: 200, zIndex: 10000, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", padding: 12, marginLeft: 4
+              position: "absolute", left: "100%", top: 280, background: "#232323", minWidth: 200, zIndex: 10000, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", padding: 12, marginLeft: 4
             }}>
-              <div style={{ fontSize: 13, color: "#aaa", marginBottom: 8 }}>Color</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {MENU_COLORS.map((menuColor) => (
                   <div
