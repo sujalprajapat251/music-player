@@ -30,6 +30,9 @@ const initialState = {
   drumRecordedData: [], // Store drum pad recordings
   isPlayingDrumRecording: false, // Track if playing back drum recording
   drumPlaybackStartTime: null, // Track when drum playback started
+  // TimelineTrack specific state
+  selectedClipId: null,
+  selectedTrackId: null,
 };
 
 const studioSlice = createSlice({
@@ -40,7 +43,6 @@ const studioSlice = createSlice({
       state.tracks = action.payload;
     },
     addTrack: (state, action) => {
-      // console.log('addTrack action:', action.payload);
       // Ensure new tracks have frozen property, audioClips array, and a unique color
       const track = { 
         ...action.payload, 
@@ -50,7 +52,6 @@ const studioSlice = createSlice({
         color: action.payload.color || getNextTrackColor(), // Assign unique color
         audioClips: action.payload.audioClips || [] // Array to hold multiple audio clips
       };
-      // console.log('Adding track to state:', track);
       state.tracks.push(track);
     },
     updateTrack: (state, action) => {
@@ -62,12 +63,8 @@ const studioSlice = createSlice({
     },
     // New action to add audio clip to existing track
     addAudioClipToTrack: (state, action) => {
-      // console.log('addAudioClipToTrack action:', action.payload);
       const { trackId, audioClip } = action.payload;
-      // console.log('Current tracks:', state.tracks.map(t => ({ id: t.id, type: typeof t.id })));
-      // console.log('Looking for trackId:', trackId, 'type:', typeof trackId);
       const trackIndex = state.tracks.findIndex(track => track.id == trackId); // Use == for type coercion
-      // console.log('Found track index:', trackIndex, 'for trackId:', trackId);
       if (trackIndex !== -1) {
         if (!state.tracks[trackIndex].audioClips) {
           state.tracks[trackIndex].audioClips = [];
@@ -77,7 +74,6 @@ const studioSlice = createSlice({
           color: audioClip.color || state.tracks[trackIndex].color || '#FFB6C1', // Use track's color as fallback
           ...audioClip
         };
-        // console.log('Adding clip to track:', newClip);
         state.tracks[trackIndex].audioClips.push(newClip);
       }
     },
@@ -228,7 +224,12 @@ const studioSlice = createSlice({
     // Section labels actions
     addSectionLabel: (state, action) => {
       const newSection = {
-        id: Date.now(),
+        id: Date.now() + Math.random(), // Ensure unique ID
+        startTime: 0,
+        endTime: 10,
+        position: 0,
+        width: 100,
+        name: 'New Section',
         ...action.payload
       };
       state.sectionLabels.push(newSection);
@@ -246,6 +247,30 @@ const studioSlice = createSlice({
     },
     setSectionLabels: (state, action) => {
       state.sectionLabels = action.payload;
+    },
+    // New action for resizing section labels
+    resizeSectionLabel: (state, action) => {
+      const { sectionId, newWidth, newStartTime, newEndTime, newPosition } = action.payload;
+      const sectionIndex = state.sectionLabels.findIndex(section => section.id === sectionId);
+      if (sectionIndex !== -1) {
+        const section = state.sectionLabels[sectionIndex];
+        section.width = newWidth;
+        section.startTime = newStartTime;
+        section.endTime = newEndTime;
+        section.position = newPosition || (newStartTime / state.audioDuration) * 100;
+      }
+    },
+    // New action for moving section labels
+    moveSectionLabel: (state, action) => {
+      const { sectionId, newStartTime, newEndTime, newPosition } = action.payload;
+      const sectionIndex = state.sectionLabels.findIndex(section => section.id === sectionId);
+      if (sectionIndex !== -1) {
+        const section = state.sectionLabels[sectionIndex];
+        const duration = section.endTime - section.startTime;
+        section.startTime = newStartTime;
+        section.endTime = newEndTime || (newStartTime + duration);
+        section.position = newPosition || (newStartTime / state.audioDuration) * 100;
+      }
     },
     // Audio playback actions
     setPlaying: (state, action) => {
@@ -287,6 +312,37 @@ const studioSlice = createSlice({
     setDrumPlaybackStartTime: (state, action) => {
       state.drumPlaybackStartTime = action.payload;
     },
+    // TimelineTrack specific actions
+    setSelectedClip: (state, action) => {
+      state.selectedClipId = action.payload;
+    },
+    setSelectedTrack: (state, action) => {
+      state.selectedTrackId = action.payload;
+    },
+    updateClipPosition: (state, action) => {
+      const { trackId, clipId, startTime } = action.payload;
+      const trackIndex = state.tracks.findIndex(track => track.id === trackId);
+      if (trackIndex !== -1 && state.tracks[trackIndex].audioClips) {
+        const clipIndex = state.tracks[trackIndex].audioClips.findIndex(clip => clip.id === clipId);
+        if (clipIndex !== -1) {
+          state.tracks[trackIndex].audioClips[clipIndex].startTime = startTime;
+        }
+      }
+    },
+    updateClipTrim: (state, action) => {
+      const { trackId, clipId, trimStart, trimEnd, newStartTime } = action.payload;
+      const trackIndex = state.tracks.findIndex(track => track.id === trackId);
+      if (trackIndex !== -1 && state.tracks[trackIndex].audioClips) {
+        const clipIndex = state.tracks[trackIndex].audioClips.findIndex(clip => clip.id === clipId);
+        if (clipIndex !== -1) {
+          const clip = state.tracks[trackIndex].audioClips[clipIndex];
+          if (trimStart !== undefined) clip.trimStart = trimStart;
+          if (trimEnd !== undefined) clip.trimEnd = trimEnd;
+          if (newStartTime !== undefined) clip.startTime = newStartTime;
+        }
+      }
+    },
+    
   },
 });
 
@@ -318,6 +374,8 @@ export const {
   updateSectionLabel,
   removeSectionLabel,
   setSectionLabels,
+  resizeSectionLabel,
+  moveSectionLabel,
   setPlaying,
   setCurrentTime,
   setAudioDuration,
@@ -329,6 +387,10 @@ export const {
   setDrumRecordedData,
   setDrumPlayback,
   setDrumPlaybackStartTime,
+  setSelectedClip,
+  setSelectedTrack,
+  updateClipPosition,
+  updateClipTrim,
 } = studioSlice.actions;
 
 export default studioSlice.reducer;
