@@ -112,6 +112,7 @@ const Timeline = () => {
   const tracks = useSelector((state) => state.studio?.tracks || []);
   const trackHeight = useSelector((state) => state.studio?.trackHeight || 100);
   const recordedData = useSelector((state) => state.studio?.recordedData || []);
+  const isRecording = useSelector((state) => state.studio?.isRecording || false);
 
 
   const sidebarScrollOffset = useSelector((state) => state.studio?.sidebarScrollOffset || 0);
@@ -1557,7 +1558,7 @@ const Timeline = () => {
           padding: "0",
           color: "white",
           background: "transparent",
-          // height: "100%",
+          height: "100%",
           marginRight: showOffcanvas ? "23vw" : 0,
         }}
         className="relative overflow-hidden"
@@ -1572,18 +1573,20 @@ const Timeline = () => {
             style={{
               minWidth: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`,
               position: "relative",
-              // height: "100vh",
+              height: "100vh",
             }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
             {/* Timeline Header */}
-            <div style={{ height: "100px", borderBottom: "1px solid #1414141A", position: "relative", top: 0, zIndex: 20, background: "#141414" }}>
+            <div
+              style={{ height: "100px", borderBottom: "1px solid #1414141A", position: "relative", top: 0, zIndex: 20, background: "#141414" }}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+            >
               <svg
                 ref={svgRef}
                 width="100%"
@@ -1661,6 +1664,7 @@ const Timeline = () => {
             {/* Drum Recorded Data Display */}
             {drumRecordedData && drumRecordedData.length > 0 && (
               <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 52 }}>
+                {/* Hit markers */}
                 {drumRecordedData.map((drumRec, idx) => (
                   <div
                     key={`drum-recorded-${idx}`}
@@ -1670,15 +1674,43 @@ const Timeline = () => {
                       left: `${(drumRec.currentTime / audioDuration) * 100}%`,
                       width: "8px",
                       height: "100%",
-                      // background: drumMachineTypes.find(dm => dm.name === drumRec.drumMachine)?.color || "#FF6767", 
                       opacity: 0.9,
                       zIndex: 53,
                       borderRadius: "4px",
-                      // boxShadow: "0 0 6px rgba(255, 103, 103, 0.8)"
                     }}
                     title={`Drum: ${drumRec.padId} (${drumRec.sound}) - ${drumRec.drumMachine} - ${drumRec.currentTime.toFixed(2)}s`}
                   />
                 ))}
+
+                {/* Background region after recording stops */}
+                {!isRecording && drumRecordedData.length > 1 && (() => {
+                  const first = drumRecordedData[0];
+                  const last = drumRecordedData[drumRecordedData.length - 1];
+                  const start = Math.max(0, first.currentTime || 0);
+                  const end = Math.max(start, last.currentTime || start);
+                  const leftPct = (start / audioDuration) * 100;
+                  const widthPct = ((end - start) / audioDuration) * 100;
+                  const drumMachineName = first?.drumMachine;
+                  const dmColor = drumMachineTypes.find(dm => dm.name === drumMachineName)?.color || '#FF8014';
+                  return (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: `${leftPct}%`,
+                        width: `${widthPct}%`,
+                        height: '100%',
+                        background: `${dmColor}22`,
+                        border: `1px solid ${dmColor}55`,
+                        borderRadius: '4px',
+                        boxShadow: `0 0 8px ${dmColor}33`,
+                        pointerEvents: 'none',
+                        zIndex: 52,
+                      }}
+                      title={`Drum recording region (${start.toFixed(2)}s - ${end.toFixed(2)}s)`}
+                    />
+                  );
+                })()}
               </div>
             )}
 

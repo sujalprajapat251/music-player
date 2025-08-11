@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import WaveSurfer from "wavesurfer.js";
 import { Rnd } from "react-rnd";
 import reverceIcon from "../Images/reverce.svg";
+import { useSelector } from 'react-redux';
 
 // Custom Resizable Trim Handle Component
 const ResizableTrimHandle = ({
@@ -393,6 +394,15 @@ const AudioClip = ({
   );
 };
 
+const NOTE_HEIGHT = 8; // px per note row
+const MIDI_MIN = 21; // A0
+const MIDI_MAX = 108; // C8
+
+function midiToY(midi) {
+  // 88-key piano: A0 (21) at bottom, C8 (108) at top
+  return (MIDI_MAX - midi) * NOTE_HEIGHT;
+}
+
 // Main TimelineTrack Component
 const TimelineTrack = ({
   track,
@@ -409,6 +419,12 @@ const TimelineTrack = ({
   frozen = false,
   gridSpacing = 0.25,
 }) => {
+  // Get piano notes from Redux
+  const pianoNotes = useSelector((state) => state.studio.pianoNotes);
+  const pianoRecordingClip = useSelector((state) => state.studio.pianoRecordingClip);
+  // Only show piano roll for 'Keys' tracks or if track.name === 'Keys'
+  const isPianoTrack = track.type === 'Keys' || track.name === 'Keys';
+
   return (
     <div
       style={{
@@ -418,6 +434,51 @@ const TimelineTrack = ({
         background: "transparent",
       }}
     >
+      {/* Background for last recording region */}
+      {isPianoTrack && pianoRecordingClip && pianoRecordingClip.start != null && pianoRecordingClip.end != null && (
+        <div
+          style={{
+            position: 'absolute',
+            left: (pianoRecordingClip.start * timelineWidthPerSecond),
+            top: 0,
+            width: Math.max(0, (pianoRecordingClip.end - pianoRecordingClip.start)) * timelineWidthPerSecond,
+            height: height,
+            background:'red', // translucent
+            border: `1px solid ${(pianoRecordingClip.color || '#AD00FF')}55`,
+            borderRadius: 6,
+            zIndex: 4,
+            pointerEvents: 'none'
+          }}
+        />
+      )}
+      {/* Render piano roll if this is a piano track and there are notes */}
+      {isPianoTrack && pianoNotes && pianoNotes.length > 0 && (
+        <div style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
+          {pianoNotes.map((note, idx) => {
+            // Only show notes in MIDI range
+            if (note.midiNumber < MIDI_MIN || note.midiNumber > MIDI_MAX) return null;
+            return (
+              <div
+                key={idx}
+                style={{
+                  position: 'absolute',
+                  left: `${(note.startTime || 0) * timelineWidthPerSecond}px`,
+                  top: midiToY(note.midiNumber) % height,
+                  width: `${(note.duration || 0.2) * timelineWidthPerSecond}px`,
+                  height: `${NOTE_HEIGHT}px`,
+                  background: '#FFFFFF',
+                  borderRadius: 2,
+                  opacity: 0.95,
+                  zIndex: 20,
+                  pointerEvents: 'none',
+                  boxShadow: '0 0 1px rgba(255,255,255,0.9)'
+                }}
+                title={`Note: ${note.note} (MIDI ${note.midiNumber})`}
+              />
+            );
+          })}
+        </div>
+      )}
       {/* Render each audio clip in the track */}
       {track.audioClips && track.audioClips.map((clip) => {
         return (

@@ -18,7 +18,7 @@ import Am7 from "../Images/am7.svg";
 import { FaPlus, FaStop } from "react-icons/fa6";
 import music from "../Images/playingsounds.svg";
 import BottomToolbar from './Layout/BottomToolbar';
-import { setRecordingAudio } from '../Redux/Slice/studio.slice';
+import { setRecordingAudio, addPianoNote, clearPianoNotes } from '../Redux/Slice/studio.slice';
 import PianoRolls from './PianoRolls';
 import * as Tone from "tone";
 
@@ -405,6 +405,7 @@ const Pianodemo = ({ onClose }) => {
     const selectedInstrument = INSTRUMENTS[currentInstrumentIndex].id;
 
     const getIsRecording = useSelector((state) => state.studio.isRecording);
+    const timelineCurrentTime = useSelector((state) => state.studio.currentTime);
 
     // / Add this function to create reverb impulse response (add before the Pianodemo component)
     const createImpulseResponse = (audioContext, duration, decay, reverse = false) => {
@@ -645,6 +646,27 @@ const Pianodemo = ({ onClose }) => {
 
 
 
+    // === NOTE RECORDING FOR PIANO ROLL ===
+    const [noteOnTimes, setNoteOnTimes] = useState({}); // midiNumber -> Tone.now() at note-on
+    const [recordBase, setRecordBase] = useState({ toneStart: 0, timelineStart: 0 });
+
+    // Clear notes and capture base times when recording starts
+    useEffect(() => {
+        if (getIsRecording) {
+            dispatch(clearPianoNotes());
+            setNoteOnTimes({});
+            setRecordBase({ toneStart: Tone.now(), timelineStart: timelineCurrentTime || 0 });
+        }
+    }, [getIsRecording, dispatch, timelineCurrentTime]);
+
+    const midiToNote = (midiNumber) => {
+        const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const octave = Math.floor(midiNumber / 12) - 1;
+        const note = noteNames[midiNumber % 12];
+        return `${note}${octave}`;
+    };
+
+    // Modified playNote and stopNote for recording (aligned to timeline)
     const playNote = (midiNumber) => {
         setRecordedNotes((prevNotes) => [
             ...prevNotes,
@@ -653,6 +675,9 @@ const Pianodemo = ({ onClose }) => {
         if (pianoRef.current) {
             const audioNode = pianoRef.current.play(midiNumber);
             activeAudioNodes.current[midiNumber] = audioNode;
+        }
+        if (getIsRecording) {
+            setNoteOnTimes((prev) => ({ ...prev, [midiNumber]: Tone.now() }));
         }
     };
 
@@ -664,6 +689,24 @@ const Pianodemo = ({ onClose }) => {
         if (activeAudioNodes.current[midiNumber]) {
             activeAudioNodes.current[midiNumber].stop();
             delete activeAudioNodes.current[midiNumber];
+        }
+        if (getIsRecording && noteOnTimes[midiNumber] !== undefined) {
+            const noteOnTone = noteOnTimes[midiNumber];
+            const endTone = Tone.now();
+            const duration = Math.max(0, endTone - noteOnTone);
+            const startTime = (recordBase.timelineStart || 0) + Math.max(0, noteOnTone - (recordBase.toneStart || 0));
+            dispatch(addPianoNote({
+                midiNumber,
+                note: midiToNote(midiNumber),
+                velocity: 1,
+                startTime,
+                duration,
+            }));
+            setNoteOnTimes((prev) => {
+                const copy = { ...prev };
+                delete copy[midiNumber];
+                return copy;
+            });
         }
     };
 

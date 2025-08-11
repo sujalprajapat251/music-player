@@ -2,8 +2,8 @@ import { createSlice } from '@reduxjs/toolkit';
 import { getGridDivisions, getGridSpacing, snapToGrid } from '../../Utils/gridUtils';
 
 const initialState = {
-  selectedGrid: "1/4",
-  selectedTime: "4/4",
+  selectedGrid: "1/1",
+  selectedTime: "3/4",
   selectedRuler: "Beats",
 };
 

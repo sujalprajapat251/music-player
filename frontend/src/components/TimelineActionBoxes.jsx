@@ -23,6 +23,9 @@ const TimelineActionBoxes = ({ onAction }) => (
       flexDirection: "column",
       justifyContent:"center",
       alignItems:"center",
+      width:"1600px",
+      minHeight: "400px",
+      marginTop: "100px",
       width:"calc(100vw - 300px)",
       gap: "32px"
     }}

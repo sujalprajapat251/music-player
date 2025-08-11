@@ -12,6 +12,8 @@ const initialState = {
   trackEffects: {}, // Store effects for each track
   frozenTrackData: {}, // Store processed audio data for frozen tracks
   pianoRecord: [],
+  pianoNotes: [], // <-- Add this line for piano roll note data
+  pianoRecordingClip: null, // transient info for background of last recording
   isRecording: false,
   newtrackType: '',
   currentTrackId: null,
@@ -342,6 +344,18 @@ const studioSlice = createSlice({
         }
       }
     },
+    addPianoNote: (state, action) => {
+      state.pianoNotes.push(action.payload);
+    },
+    setPianoNotes: (state, action) => {
+      state.pianoNotes = action.payload;
+    },
+    clearPianoNotes: (state) => {
+      state.pianoNotes = [];
+    },
+    setPianoRecordingClip: (state, action) => {
+      state.pianoRecordingClip = action.payload; // {start, end, color}
+    },
     
   },
 });
@@ -391,6 +405,10 @@ export const {
   setSelectedTrack,
   updateClipPosition,
   updateClipTrim,
+  addPianoNote, // <-- Export new actions
+  setPianoNotes,
+  clearPianoNotes,
+  setPianoRecordingClip,
 } = studioSlice.actions;
 
 export default studioSlice.reducer;
