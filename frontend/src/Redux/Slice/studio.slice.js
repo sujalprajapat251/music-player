@@ -27,6 +27,9 @@ const initialState = {
   recordedData: [], // New state for recorded data
   masterVolume: 80 ,// Master volume control
   bpm: 120,   
+  drumRecordedData: [], // Store drum pad recordings
+  isPlayingDrumRecording: false, // Track if playing back drum recording
+  drumPlaybackStartTime: null, // Track when drum playback started
 };
 
 const studioSlice = createSlice({
@@ -37,7 +40,7 @@ const studioSlice = createSlice({
       state.tracks = action.payload;
     },
     addTrack: (state, action) => {
-      console.log('addTrack action:', action.payload);
+      // console.log('addTrack action:', action.payload);
       // Ensure new tracks have frozen property, audioClips array, and a unique color
       const track = { 
         ...action.payload, 
@@ -47,7 +50,7 @@ const studioSlice = createSlice({
         color: action.payload.color || getNextTrackColor(), // Assign unique color
         audioClips: action.payload.audioClips || [] // Array to hold multiple audio clips
       };
-      console.log('Adding track to state:', track);
+      // console.log('Adding track to state:', track);
       state.tracks.push(track);
     },
     updateTrack: (state, action) => {
@@ -59,12 +62,12 @@ const studioSlice = createSlice({
     },
     // New action to add audio clip to existing track
     addAudioClipToTrack: (state, action) => {
-      console.log('addAudioClipToTrack action:', action.payload);
+      // console.log('addAudioClipToTrack action:', action.payload);
       const { trackId, audioClip } = action.payload;
-      console.log('Current tracks:', state.tracks.map(t => ({ id: t.id, type: typeof t.id })));
-      console.log('Looking for trackId:', trackId, 'type:', typeof trackId);
+      // console.log('Current tracks:', state.tracks.map(t => ({ id: t.id, type: typeof t.id })));
+      // console.log('Looking for trackId:', trackId, 'type:', typeof trackId);
       const trackIndex = state.tracks.findIndex(track => track.id == trackId); // Use == for type coercion
-      console.log('Found track index:', trackIndex, 'for trackId:', trackId);
+      // console.log('Found track index:', trackIndex, 'for trackId:', trackId);
       if (trackIndex !== -1) {
         if (!state.tracks[trackIndex].audioClips) {
           state.tracks[trackIndex].audioClips = [];
@@ -74,7 +77,7 @@ const studioSlice = createSlice({
           color: audioClip.color || state.tracks[trackIndex].color || '#FFB6C1', // Use track's color as fallback
           ...audioClip
         };
-        console.log('Adding clip to track:', newClip);
+        // console.log('Adding clip to track:', newClip);
         state.tracks[trackIndex].audioClips.push(newClip);
       }
     },
@@ -275,7 +278,15 @@ const studioSlice = createSlice({
         state.tracks[trackIndex].volume = Math.max(0, Math.min(100, volume));
       }
     },
-    
+    setDrumRecordedData: (state, action) => {
+      state.drumRecordedData = action.payload;
+    },
+    setDrumPlayback: (state, action) => {
+      state.isPlayingDrumRecording = action.payload;
+    },
+    setDrumPlaybackStartTime: (state, action) => {
+      state.drumPlaybackStartTime = action.payload;
+    },
   },
 });
 
@@ -315,6 +326,9 @@ export const {
   setMasterVolume,
   setBPM,
   setTrackVolume,
+  setDrumRecordedData,
+  setDrumPlayback,
+  setDrumPlaybackStartTime,
 } = studioSlice.actions;
 
 export default studioSlice.reducer;
