@@ -12,7 +12,7 @@ import piano from "../Images/piano.svg";
 import Drumkit from "../Images/Drumgroup.svg";
 import { useTheme } from '../Utils/ThemeContext';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsOffcanvas } from '../Redux/Slice/effects.slice';
+import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsOffcanvas, showEffectsTwo } from '../Redux/Slice/effects.slice';
 import audioEffectsPlayer from '../components/AudioEffectsPlayer';
 
 // Import effect images
@@ -616,7 +616,7 @@ const Effects2 = () => {
                     <div className='flex p-3 bg-[#1F1F1F]'>
                         <div className="w-[50px]  flex items-center px-1md600:px-2">
                             <div>
-                                <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => {dispatch(setShowEffectsOffcanvas(false)); dispatch(setShowEffectsOffcanvas(false))}} />
+                                <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => {dispatch(setShowEffectsOffcanvas(false)); dispatch(setShowEffectsOffcanvas(false)); dispatch(showEffectsTwo(false))}} />
                             </div>
                         </div>
                         <div className="w-full flex space-x-2 sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center">
