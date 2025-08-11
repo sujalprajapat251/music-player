@@ -1558,7 +1558,7 @@ const Timeline = () => {
           color: "white",
           background: "transparent",
           // height: "100%",
-          marginRight: showOffcanvas || showOffcanvas ? "23vw" : 0,
+          marginRight: showOffcanvas ? "23vw" : 0,
         }}
         className="relative overflow-hidden"
       >
