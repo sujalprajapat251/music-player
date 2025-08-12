@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import WaveSurfer from "wavesurfer.js";
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
-import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel } from "../Redux/Slice/studio.slice";
+import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack } from "../Redux/Slice/studio.slice";
 import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM } from "../Redux/Slice/grid.slice";
-import { setAudioDuration as setLoopAudioDuration, toggleLoopEnabled, setLoopEnd, setLoopRange, selectIsLoopEnabled } from "../Redux/Slice/loop.slice";
-import { getGridSpacing, getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
+import { getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
 import { IMAGE_URL } from "../Utils/baseUrl";
 import { getNextTrackColor } from "../Utils/colorUtils";
 import magnetIcon from "../Images/magnet.svg";
@@ -15,83 +15,694 @@ import fxIcon from "../Images/fx.svg";
 import offce from "../Images/offce.svg";
 import GridSetting from "./GridSetting";
 import MusicOff from "./MusicOff";
+import { Rnd } from "react-rnd";
+import rightSize from '../Images/right-size.svg'
+import LeftSize from '../Images/left-size.svg'
 import WaveMenu from "./WaveMenu";
-import Effects from './Effects'
 import MySection from "./MySection";
 import TimelineActionBoxes from "./TimelineActionBoxes";
 import AddNewTrackModel from "./AddNewTrackModel";
 import Piano from "./Piano";
 import WavEncoder from 'wav-encoder';
 import Drum from './Drum';
-import Pianodemo from "./Piano";
-import SectionContextMenu from "./SectionContextMenu";
-import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
-import close from '../Images/close.svg';
-import LoopBar from "./LoopBar";
-import TimelineTrack from "./TimelineTrack";
-import ResizableSectionLabel from "./ResizableSectionLabel";
-import { useSectionLabels } from "../hooks/useSectionLabels";
-import { toggleEffectsOffcanvas } from "../Redux/Slice/effects.slice";
+
+// Custom Resizable Trim Handle Component
+const ResizableTrimHandle = ({
+  type, // 'start' or 'end'
+  position,
+  onResize,
+  isDragging,
+  onDragStart,
+  onDragEnd,
+  trackDuration,
+  trackWidth,
+  trimEnd,
+  gridSpacing = 0.25 // Default to 1/4 beat grid
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const dragStartRef = useRef({ startX: 0, startPosition: 0 });
+
+  // Grid snapping function
+  const snapToGrid = useCallback((time) => {
+    if (!gridSpacing || gridSpacing <= 0) return time;
+
+    const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+    return Math.max(0, Math.min(trackDuration, gridPosition));
+  }, [gridSpacing, trackDuration]);
+
+  const handleMouseDown = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    dragStartRef.current = {
+      startX: e.clientX,
+      startPosition: position
+    };
+
+    onDragStart(type);
+
+    const handleMouseMove = (moveEvent) => {
+      const deltaX = moveEvent.clientX - dragStartRef.current.startX;
+      const deltaTime = (deltaX / trackWidth) * trackDuration;
+      const rawPosition = Math.max(0, Math.min(trackDuration, dragStartRef.current.startPosition + deltaTime));
+
+      // Snap to grid
+      const snappedPosition = snapToGrid(rawPosition);
+
+      onResize(type, snappedPosition);
+    };
+
+    const handleMouseUp = () => {
+      onDragEnd();
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [position, onResize, onDragStart, onDragEnd, type, trackDuration, trackWidth, snapToGrid]);
+
+  // Calculate position relative to the visible track portion
+  const actualTrimEnd = trimEnd || trackDuration;
+
+  let handlePosition;
+  if (type === 'start') {
+    handlePosition = '0%';
+  } else {
+    handlePosition = '100%';
+  }
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: type === 'start' ? handlePosition : 'auto',
+        right: type === 'end' ? '0%' : 'auto',
+        top: 0,
+        width: "24px",
+        height: "100%",
+        cursor: "ew-resize",
+        zIndex: 15,
+        transform: "translateX(-12px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+      onMouseDown={handleMouseDown}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Invisible expanded hit area */}
+      <div
+        style={{
+          position: "absolute",
+          width: "32px",
+          height: "100%",
+          left: "0px",
+          top: 0,
+        }}
+      />
+
+      {/* Red background container */}
+      <div
+        style={{
+          width: "24px",
+          height: "100%",
+          background: "transparent",
+          transition: isDragging ? "none" : "all 0.2s ease",
+          position: "relative",
+          display: "flex",
+          alignItems: "end",
+          justifyContent: "end",
+        }}
+      >
+        {/* Chevron icon in bracket */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#000000 ",
+            fontSize: "14px",
+            fontWeight: "bold",
+            fontFamily: "monospace",
+            position: "absolute",
+            left: "14px",
+            bottom: "0px"
+          }}
+        >
+          {type === 'start' ? '[>' : '<]'}
+        </div>
+      </div>
+
+    </div>
+  );
+};
+
+// Individual Audio Clip Component
+const AudioClip = ({
+  clip,
+  onReady,
+  height,
+  trackId,
+  onTrimChange,
+  onPositionChange,
+  onContextMenu,
+  onSelect,
+  isSelected = false,
+  timelineWidthPerSecond = 100,
+  frozen = false,
+  gridSpacing = 0.25,
+}) => {
+  console.log('AudioClip render:', { clip, trackId });
+  const waveformRef = useRef(null);
+  const wavesurfer = useRef(null);
+  const isInitialized = useRef(false);
+  const [isDraggingTrim, setIsDraggingTrim] = useState(null);
+
+  useEffect(() => {
+    if (!waveformRef.current || !clip.url || isInitialized.current) return;
+
+    let isMounted = true;
+
+    const initWaveSurfer = async () => {
+      try {
+        if (wavesurfer.current) {
+          wavesurfer.current.destroy();
+          wavesurfer.current = null;
+        }
+
+        if (!isMounted) return;
+
+        wavesurfer.current = WaveSurfer.create({
+          container: waveformRef.current,
+          waveColor: frozen ? "#666666" : "#ffffff",
+          progressColor: frozen ? "#999999" : "#ffffff",
+          height: height - 8,
+          barWidth: 2,
+          responsive: true,
+          minPxPerSec: 50,
+          normalize: true,
+        });
+
+        if (!isMounted) return;
+
+        const readyHandler = () => {
+          if (isMounted && onReady && wavesurfer.current) {
+            onReady(wavesurfer.current, { ...clip, trackId });
+          }
+        };
+
+        const errorHandler = (error) => {
+          if (isMounted) {
+            console.error("WaveSurfer error:", error);
+          }
+        };
+
+        wavesurfer.current.on("ready", readyHandler);
+        wavesurfer.current.on("error", errorHandler);
+
+        wavesurfer.current.load(clip.url);
+        isInitialized.current = true;
+
+      } catch (error) {
+        if (isMounted) {
+          console.error("Failed to create WaveSurfer instance:", error);
+        }
+      }
+    };
+
+    initWaveSurfer();
+
+    return () => {
+      isMounted = false;
+      isInitialized.current = false;
+      if (wavesurfer.current) {
+        try {
+          wavesurfer.current.destroy();
+        } catch (error) {
+          // Silently ignore cleanup errors
+        }
+        wavesurfer.current = null;
+      }
+    };
+  }, [clip.id, frozen, clip.url]);
+
+  const handleTrimResize = useCallback((type, newPosition) => {
+    if (frozen) return;
+
+    if (!onTrimChange || !clip.duration) return;
+
+    const currentTrimStart = clip.trimStart || 0;
+    const currentTrimEnd = clip.trimEnd || clip.duration;
+
+    const snapToGrid = (time) => {
+      if (!gridSpacing || gridSpacing <= 0) return time;
+      const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+      return Math.max(0, Math.min(clip.duration, gridPosition));
+    };
+
+    if (type === 'start') {
+      const snappedPosition = snapToGrid(newPosition);
+      const newTrimStart = Math.max(0, Math.min(snappedPosition, currentTrimEnd - gridSpacing));
+      const trimStartDelta = newTrimStart - currentTrimStart;
+      const newStartTime = clip.startTime + trimStartDelta;
+
+      onTrimChange(clip.id, {
+        trimStart: newTrimStart,
+        trimEnd: currentTrimEnd,
+        newStartTime: Math.max(0, newStartTime)
+      });
+    } else if (type === 'end') {
+      const snappedPosition = snapToGrid(newPosition);
+      const newTrimEnd = Math.max(currentTrimStart + gridSpacing, Math.min(snappedPosition, clip.duration));
+      onTrimChange(clip.id, { trimStart: currentTrimStart, trimEnd: newTrimEnd });
+    }
+  }, [clip, onTrimChange, gridSpacing, frozen]);
+
+  const handleDragStart = useCallback((type) => {
+    if (frozen) return;
+    setIsDraggingTrim(type);
+  }, [frozen]);
+
+  const handleDragEnd = useCallback(() => {
+    setIsDraggingTrim(null);
+  }, []);
+
+  const handleDragStop = useCallback((e, d) => {
+    const rawStartTime = Math.max(0, d.x / timelineWidthPerSecond);
+
+    const snapToGrid = (time) => {
+      if (!gridSpacing || gridSpacing <= 0) return time;
+      const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+      return Math.max(0, gridPosition);
+    };
+
+    const snappedStartTime = snapToGrid(rawStartTime);
+
+    if (onPositionChange) {
+      onPositionChange(clip.id, snappedStartTime);
+    }
+  }, [clip.id, onPositionChange, timelineWidthPerSecond, gridSpacing]);
+
+  console.log('AudioClip render details:', {
+    clipUrl: clip.url,
+    clipDuration: clip.duration,
+    clipTrimStart: clip.trimStart,
+    clipTrimEnd: clip.trimEnd,
+    clipStartTime: clip.startTime
+  });
+
+  const width = (clip.duration || 1) * timelineWidthPerSecond;
+  const actualTrimEnd = clip.trimEnd || clip.duration;
+  const visibleWidth = ((actualTrimEnd - (clip.trimStart || 0)) / clip.duration) * width;
+  const rndX = (clip.startTime || 0) * timelineWidthPerSecond;
+
+  return (
+    <Rnd
+      size={{
+        width: visibleWidth,
+        height: height
+      }}
+      position={{
+        x: rndX,
+        y: 0
+      }}
+      onDragStop={handleDragStop}
+      enableResizing={false}
+      dragAxis="x"
+      bounds="parent"
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect && onSelect(clip);
+      }}
+      onContextMenu={(e) => onContextMenu && onContextMenu(e, trackId, clip.id)}
+      style={{
+        background: clip.color || "transparent",
+        borderRadius: '8px',
+        border: isSelected
+          ? "2px solid #AD00FF"
+          : isDraggingTrim
+            ? "2px solid #AD00FF"
+            : "1px solid rgba(255,255,255,0.1)",
+        boxShadow: isSelected || isDraggingTrim
+          ? "0 4px 20px rgba(173,0,255,0.3)"
+          : "none",
+        transition: isDraggingTrim ? "none" : "all 0.2s ease",
+        overflow: "hidden",
+        zIndex: 10,
+        position: "relative",
+      }}
+    >
+      {/* Waveform with clip-path to show only trimmed portion */}
+      {(() => {
+        const shouldRender = clip.url && clip.duration > 0;
+        console.log('Waveform render condition:', {
+          shouldRender,
+          hasUrl: !!clip.url,
+          duration: clip.duration,
+          condition: `${!!clip.url} && ${clip.duration} > 0`
+        });
+        return shouldRender;
+      })() && (
+          <>
+            <div
+              ref={waveformRef}
+              style={{
+                width: `${width}px`,
+                height: "100%",
+                position: "absolute",
+                top: 0,
+                left: `-${((clip.trimStart || 0) / clip.duration) * width}px`,
+                zIndex: 1,
+                clipPath: `inset(0 ${(1 - (actualTrimEnd / clip.duration)) * 100}% 0 ${((clip.trimStart || 0) / clip.duration) * 100}%)`,
+              }}
+            />
+
+            {/* Trim Handles */}
+            <ResizableTrimHandle
+              type="start"
+              position={clip.trimStart || 0}
+              onResize={handleTrimResize}
+              isDragging={isDraggingTrim === 'start'}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              trackDuration={clip.duration}
+              trackWidth={width}
+              trimStart={clip.trimStart || 0}
+              trimEnd={actualTrimEnd}
+              gridSpacing={gridSpacing}
+            />
+
+            <ResizableTrimHandle
+              type="end"
+              position={actualTrimEnd}
+              onResize={handleTrimResize}
+              isDragging={isDraggingTrim === 'end'}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              trackDuration={clip.duration}
+              trackWidth={width}
+              trimStart={clip.trimStart || 0}
+              trimEnd={actualTrimEnd}
+              gridSpacing={gridSpacing}
+            />
+
+            {/* Remove button */}
+            <div
+              style={{
+                position: "absolute",
+                top: "2px",
+                right: "2px",
+                width: "16px",
+                height: "16px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                zIndex: 20,
+              }}
+            >
+              <img src={reverceIcon} alt="" />
+            </div>
+          </>
+        )}
+    </Rnd>
+  );
+};
+
+const TimelineTrack = ({
+  track,
+  onReady,
+  height,
+  trackId,
+  onTrimChange,
+  onPositionChange,
+  onRemoveClip,
+  onContextMenu,
+  onSelect,
+  selectedClipId,
+  timelineWidthPerSecond = 100,
+  frozen = false,
+  gridSpacing = 0.25,
+}) => {
+  console.log('TimelineTrack render:', { trackId, audioClips: track.audioClips, track });
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        height: height,
+        background: "transparent",
+      }}
+    >
+      {/* Render each audio clip in the track */}
+      {track.audioClips && track.audioClips.map((clip) => {
+        console.log('Rendering clip:', clip);
+        return (
+          <AudioClip
+            key={clip.id}
+            clip={clip}
+            onReady={onReady}
+            height={height}
+            trackId={trackId}
+            onTrimChange={onTrimChange}
+            onPositionChange={onPositionChange}
+            onRemoveClip={onRemoveClip}
+            timelineWidthPerSecond={timelineWidthPerSecond}
+            frozen={frozen}
+            gridSpacing={gridSpacing}
+            onContextMenu={onContextMenu}
+            onSelect={onSelect}
+            isSelected={selectedClipId === clip.id}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
+// Loop Bar Component
+const LoopBar = ({
+  audioDuration,
+  loopStart,
+  loopEnd,
+  onLoopChange,
+  gridSpacing = 0.25,
+  isLoopEnabled = false
+}) => {
+  const [isDraggingStart, setIsDraggingStart] = useState(false);
+  const [isDraggingEnd, setIsDraggingEnd] = useState(false);
+  const [isDraggingLoop, setIsDraggingLoop] = useState(false);
+  const dragStartRef = useRef({ startX: 0, startLoopStart: 0, startLoopEnd: 0 });
+
+  // Grid snapping function
+  const snapToGrid = useCallback((time) => {
+    if (!gridSpacing || gridSpacing <= 0) return time;
+    const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+    return Math.max(0, Math.min(audioDuration, gridPosition));
+  }, [gridSpacing, audioDuration]);
+
+  const handleMouseDown = useCallback((e, type) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const rect = e.currentTarget.closest('.loop-bar-container').getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const width = rect.width;
+    const duration = audioDuration;
+
+    if (width <= 0 || duration <= 0) return;
+
+    const rawTime = (x / width) * duration;
+    const time = Math.max(0, Math.min(duration, rawTime));
+
+    dragStartRef.current = {
+      startX: e.clientX,
+      startLoopStart: loopStart,
+      startLoopEnd: loopEnd
+    };
+
+    if (type === 'start') {
+      setIsDraggingStart(true);
+      const snappedTime = snapToGrid(time);
+      onLoopChange(snappedTime, loopEnd);
+    } else if (type === 'end') {
+      setIsDraggingEnd(true);
+      const snappedTime = snapToGrid(time);
+      onLoopChange(loopStart, snappedTime);
+    } else if (type === 'loop') {
+      setIsDraggingLoop(true);
+    }
+
+    const handleMouseMove = (moveEvent) => {
+      const deltaX = moveEvent.clientX - dragStartRef.current.startX;
+      const deltaTime = (deltaX / width) * duration;
+
+      if (type === 'start') {
+        const newStart = Math.max(0, Math.min(loopEnd - gridSpacing, dragStartRef.current.startLoopStart + deltaTime));
+        const snappedStart = snapToGrid(newStart);
+        onLoopChange(snappedStart, loopEnd);
+      } else if (type === 'end') {
+        const newEnd = Math.max(loopStart + gridSpacing, Math.min(duration, dragStartRef.current.startLoopEnd + deltaTime));
+        const snappedEnd = snapToGrid(newEnd);
+        onLoopChange(loopStart, snappedEnd);
+      } else if (type === 'loop') {
+        const loopWidth = loopEnd - loopStart;
+        const newStart = Math.max(0, Math.min(duration - loopWidth, dragStartRef.current.startLoopStart + deltaTime));
+        const snappedStart = snapToGrid(newStart);
+        const snappedEnd = Math.min(duration, snappedStart + loopWidth);
+        onLoopChange(snappedStart, snappedEnd);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingStart(false);
+      setIsDraggingEnd(false);
+      setIsDraggingLoop(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [loopStart, loopEnd, audioDuration, onLoopChange, snapToGrid, gridSpacing]);
+
+  const startPosition = (loopStart / audioDuration) * 100;
+  const endPosition = (loopEnd / audioDuration) * 100;
+  const loopWidth = endPosition - startPosition;
+
+  return (
+    <div
+      className="loop-bar-container"
+      style={{
+        position: "absolute",
+        top: "80px", // Position right below the timeline ruler
+        left: 0,
+        width: "100%",
+        height: "30px",
+        background: "transparent",
+        zIndex: 25,
+        pointerEvents: "auto"
+      }}
+    >
+      {/* Loop Bar Background Track */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: "8px",
+          width: "100%",
+          height: "17px",
+          background: "#141414",
+          borderRadius: "2px",
+          border: "1px solid #444",
+          cursor: "pointer"
+        }}
+        onMouseDown={(e) => handleMouseDown(e, 'loop')}
+      />
+
+      {/* Loop Region */}
+      <div
+        style={{
+          position: "absolute",
+          left: `${startPosition}%`,
+          top: "8px",
+          width: `${loopWidth}%`,
+          height: "18px",
+          background: isLoopEnabled
+            ? "linear-gradient(90deg, #FF8C00 0%, #FF6B35 100%)"
+            : "linear-gradient(90deg, #FF8C00AA 0%, #FF6B35AA 100%)",
+          borderRadius: "4px",
+          border: `2px solid ${isLoopEnabled ? "#FF8C00" : "#FF8C0080"}`,
+          cursor: "move",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: isLoopEnabled
+            ? "0 2px 8px rgba(255, 140, 0, 0.4)"
+            : "0 1px 4px rgba(255, 140, 0, 0.2)",
+          transition: "all 0.2s ease"
+        }}
+        onMouseDown={(e) => handleMouseDown(e, 'loop')}
+      >
+        {/* Loop Start Handle */}
+        <div
+          style={{
+            position: "absolute",
+            left: "0px",
+            top: "-4px",
+            width: "12px",
+            height: "22px",
+            cursor: "ew-resize",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onMouseDown={(e) => handleMouseDown(e, 'start')}
+        >
+          <img src={LeftSize} alt="" />
+        </div>
+
+        {/* Loop End Handle */}
+        <div
+          style={{
+            position: "absolute",
+            right: "0px",
+            top: "-4px",
+            width: "12px",
+            height: "22px",
+            cursor: "ew-resize",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onMouseDown={(e) => handleMouseDown(e, 'end')}
+        >
+          <img src={rightSize} alt="" />
+        </div>
+
+        {/* Loop Icon */}
+        <div
+          style={{
+            color: "white",
+            fontSize: "10px",
+            fontWeight: "bold",
+            textShadow: "0 1px 2px rgba(0,0,0,0.5)"
+          }}
+        >
+          <img src={reverceIcon} alt="" />
+        </div>
+      </div>
+
+    </div>
+  );
+};
 
 const Timeline = () => {
-  // Define drum machine types for drum recording display
-  const drumMachineTypes = [
-    {
-      name: "Classic 808",
-      color: '#7c3aed',
-    },
-    {
-      name: "Vintage 909", 
-      color: '#dc2626',
-    },
-    {
-      name: "Modern Trap",
-      color: '#059669',
-    },
-    {
-      name: "Acoustic Kit",
-      color: '#d97706',
-    }
-  ];
-
-  const dispatch = useDispatch();
-
-  const svgRef = useRef(null);
-  const lastReduxUpdateRef = useRef(0);
-  const lastPlayerUpdateRef = useRef(0);
-  const fileInputRef = useRef(null);
-  const timelineContainerRef = useRef(null);
-  const isDragging = useRef(false);
-  const animationFrameId = useRef(null);
-  const playbackStartRef = useRef({ systemTime: 0, audioTime: 0 });
-  const audioContextRef = useRef(null);
-  
   const [players, setPlayers] = useState([]);
   const [waveSurfers, setWaveSurfers] = useState([]);
+  const [loopStart, setLoopStart] = useState(0);
+  const [loopEnd, setLoopEnd] = useState(10);
+  const [isLoopEnabled, setIsLoopEnabled] = useState(false);
   const [localCurrentTime, setLocalCurrentTime] = useState(0);
+  const svgRef = useRef(null);
+  const timelineContainerRef = useRef(null);
+  const playbackStartRef = useRef({ systemTime: 0, audioTime: 0 });
+  const lastReduxUpdateRef = useRef(0);
+  const lastPlayerUpdateRef = useRef(0);
   const [showGridSetting, setShowGridSetting] = useState(false);
   const [showOffcanvas, setShowOffcanvas] = useState(false);
+  const isDragging = useRef(false);
+  const animationFrameId = useRef(null);
   const [clipboard, setClipboard] = useState(null);
   const [selectedTrackId, setSelectedTrackId] = useState(null);
   const [selectedClipId, setSelectedClipId] = useState(null);
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
+  const fileInputRef = useRef(null);
   const [showPiano, setShowPiano] = useState(false);
-  const [renameSectionId, setRenameSectionId] = useState(null);
-  const [renameValue, setRenameValue] = useState("");
-  const [renameModal, setRenameModal] = useState(false);
-  const [resizeSectionId, setResizeSectionId] = useState(null);
-  const [resizeValue, setResizeValue] = useState("");
-  const [resizeModal, setResizeModal] = useState(false);
-  const [volumeIndicator, setVolumeIndicator] = useState({ show: false, volume: 0, trackName: '' });
- 
 
-
-  const getAudioContext = useCallback(() => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    return audioContextRef.current;
-  }, []);
   // Context menu state
   const [contextMenu, setContextMenu] = useState({
     isOpen: false,
@@ -100,28 +711,33 @@ const Timeline = () => {
     clipId: null
   });
 
-  // Section label context menu state
-  const [sectionContextMenu, setSectionContextMenu] = useState({
-    isOpen: false,
-    position: { x: 0, y: 0 },
-    sectionId: null
-  });
 
 
-
+  const dispatch = useDispatch();
   const tracks = useSelector((state) => state.studio?.tracks || []);
   const trackHeight = useSelector((state) => state.studio?.trackHeight || 100);
-  const recordedData = useSelector((state) => state.studio?.recordedData || []);
-  const isRecording = useSelector((state) => state.studio?.isRecording || false);
 
-
+  // Debug: Log tracks state
+  console.log('Current tracks state:', tracks);
   const sidebarScrollOffset = useSelector((state) => state.studio?.sidebarScrollOffset || 0);
   const soloTrackId = useSelector((state) => state.studio.soloTrackId);
-  
-  // Use custom hook for section labels management
-  const { sectionLabels, resizeSection } = useSectionLabels();
+  const sectionLabels = useSelector((state) => state.studio?.sectionLabels || []);
+  console.log("sectionLabels", sectionLabels);
 
   const timelineWidthPerSecond = 100;
+
+  // Get audio state from Redux
+  const isPlaying = useSelector((state) => state.studio?.isPlaying || false);
+  const currentTime = useSelector((state) => state.studio?.currentTime || 0);
+  const audioDuration = useSelector((state) => state.studio?.audioDuration || 150);
+
+  // Grid settings from Redux
+  const { selectedGrid, selectedTime, selectedRuler } = useSelector(selectGridSettings);
+
+  // Add masterVolume selector after other selectors
+  const masterVolume = useSelector((state) => state.studio?.masterVolume ?? 80);
+
+
 
   // Mute functionality
 
@@ -137,109 +753,6 @@ const Timeline = () => {
     });
   }, [tracks, players, soloTrackId]);
 
-
-  // Get audio state from Redux
-  const isPlaying = useSelector((state) => state.studio?.isPlaying || false);
-  const currentTime = useSelector((state) => state.studio?.currentTime || 0);
-  const audioDuration = useSelector((state) => state.studio?.audioDuration || 150);
-
-  // Grid settings from Redux
-  const { selectedGrid, selectedTime, selectedRuler } = useSelector(selectGridSettings);
-
-  // Loop settings from Redux
-  const { loopStart, loopEnd, isLoopEnabled } = useSelector((state) => state.loop);
-
-  // Add masterVolume selector after other selectors
-  const masterVolume = useSelector((state) => state.studio?.masterVolume ?? 80);
-
-  const bpm = useSelector((state) => state.studio?.bpm ?? 120);
-
-  const ORIGINAL_BPM = 120;
-
-
-  const pianoRecording = useSelector((state) => state.studio.pianoRecord);
-  const currentTrackId = useSelector((state) => state.studio.currentTrackId);
-  const lastProcessedRef = useRef(null);
-
-  function generateRandomHexColor() {
-    let randomNumber = Math.floor(Math.random() * 16777215);
-    let hexColor = randomNumber.toString(16);
-    hexColor = hexColor.padStart(6, '0');
-    return `#${hexColor}`;
-  }
-
-  useEffect(() => {
-    if (pianoRecording instanceof Blob && currentTrackId && pianoRecording !== lastProcessedRef.current) {
-      lastProcessedRef.current = pianoRecording;
-      getAudioDuration(pianoRecording).then((duration) => {
-        // Ensure the blob is fully usable
-        const url = URL.createObjectURL(pianoRecording);
-
-        const audio = new Audio();
-        audio.src = url;
-
-
-        audio.oncanplaythrough = () => {
-          const newColor = generateRandomHexColor();
-
-          dispatch(updateTrackAudio({
-            trackId: currentTrackId,
-            audioData: {
-              url,
-              duration,
-              color: newColor,
-              trimStart: 0,
-              trimEnd: duration,
-              name: "Piano Recording",
-              frozen: false,
-            },
-          }));
-
-        };
-
-        audio.onerror = (err) => {
-          // console.error("Audio load error:", err);
-        };
-      }).catch((err) => {
-        // console.error("Failed to decode audio:", err);
-      });
-    }
-  }, [pianoRecording, currentTrackId]);
-
-
-  const getAudioDuration = async (blob) => {
-    const arrayBuffer = await blob.arrayBuffer();
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-    return audioBuffer.duration;
-  };
-
-  const getTrackType = useSelector((state) => state.studio.newtrackType);
-  console.log("=======0",getTrackType)
-
-
-  // Mute functionality
-
-  useEffect(() => {
-    players.forEach(playerObj => {
-      const track = tracks.find(t => t.id === playerObj.trackId);
-      const isMuted = soloTrackId
-        ? soloTrackId !== track.id
-        : track.muted;
-      if (playerObj.player && track) {
-        if (isMuted) {
-          playerObj.player.volume.value = -Infinity;
-        } else {
-          // Calculate combined volume: master volume + track volume
-          const masterVolumeDb = (masterVolume - 100) * 0.6;
-          const trackVolumeDb = (track.volume - 100) * 0.6;
-          const combinedVolumeDb = masterVolumeDb + trackVolumeDb;
-          playerObj.player.volume.value = combinedVolumeDb;
-        }
-      }
-    });
-  }, [tracks, players, soloTrackId, masterVolume]);
-
   // After the mute functionality useEffect (line ~758), add a new useEffect for masterVolume
   useEffect(() => {
     // Convert masterVolume (0-100) to dB: 0 = -60dB, 100 = 0dB
@@ -251,23 +764,21 @@ const Timeline = () => {
     });
   }, [masterVolume, players]);
 
-  // Individual track volume control
-  useEffect(() => {
-    players.forEach(playerObj => {
-      const track = tracks.find(t => t.id === playerObj.trackId);
-      if (playerObj.player && track && typeof playerObj.player.volume === 'object') {
-        // Calculate combined volume: master volume + track volume
-        const masterVolumeDb = (masterVolume - 100) * 0.6;
-        const trackVolumeDb = (track.volume - 100) * 0.6;
-        const combinedVolumeDb = masterVolumeDb + trackVolumeDb;
+  // Loop change handler
+  const handleLoopChange = useCallback((newStart, newEnd) => {
+    const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
+    const snapToGrid = (time) => {
+      if (!gridSpacing || gridSpacing <= 0) return time;
+      const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+      return Math.max(0, Math.min(audioDuration, gridPosition));
+    };
 
-        // Apply the combined volume
-        playerObj.player.volume.value = combinedVolumeDb;
-      }
-    });
-  }, [tracks, players, masterVolume]);
+    const snappedStart = snapToGrid(newStart);
+    const snappedEnd = snapToGrid(Math.max(snappedStart + gridSpacing, newEnd));
 
-
+    setLoopStart(snappedStart);
+    setLoopEnd(snappedEnd);
+  }, [audioDuration, selectedGrid, selectedTime]);
 
   // Handle clip position changes (drag) with grid snapping
   const handleTrackPositionChange = useCallback((trackId, clipId, newStartTime) => {
@@ -363,43 +874,43 @@ const Timeline = () => {
 
   const handleReady = useCallback(async (wavesurfer, clip) => {
     if (!clip || !clip.url) return;
-  
+
+    let isCancelled = false;
+
     try {
-      const audioContext = getAudioContext();
-      
-      // Check if we already have this player
-      const existingPlayer = players.find(p => p.trackId === clip.trackId && p.clipId === clip.id);
-      if (existingPlayer) {
-        return; // Don't create duplicate players
-      }
-  
-      const response = await fetch(clip.url);
+      const controller = new AbortController();
+
+      const response = await fetch(clip.url, {
+        signal: controller.signal
+      });
+
+      if (isCancelled) return;
+
       if (!response.ok) {
         throw new Error(`Failed to fetch audio: ${response.statusText}`);
       }
-  
-      const arrayBuffer = await response.arrayBuffer();
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-  
-      const player = new Player(audioBuffer).toDestination();
 
-      // Find the track to get its volume
-      const track = tracks.find(t => t.id === clip.trackId);
-      const trackVolume = track?.volume || 80;
-      
-      // Calculate combined volume
-      const masterVolumeDb = (masterVolume - 100) * 0.6;
-      const trackVolumeDb = (trackVolume - 100) * 0.6;
-      const combinedVolumeDb = masterVolumeDb + trackVolumeDb;
-      
-      player.volume.value = combinedVolumeDb;
-  
+      const arrayBuffer = await response.arrayBuffer();
+
+      if (isCancelled) return;
+
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+      if (isCancelled) return;
+
+      const player = new Player(audioBuffer).toDestination();
+      // Set player volume to masterVolume
+      const volumeDb = (masterVolume - 100) * 0.6;
+      player.volume.value = volumeDb;
+
+      // Get the actual duration from the clip data or audio buffer
       const clipDuration = clip.duration || audioBuffer.duration;
       const trimStart = clip.trimStart || 0;
       const trimEnd = clip.trimEnd || clipDuration;
-  
+
       setPlayers((prev) => {
-        const filtered = prev.filter(p => !(p.trackId === clip.trackId && p.clipId === clip.id));
+        const existingIndex = prev.findIndex(p => p.trackId === clip.trackId && p.clipId === clip.id);
         const playerData = {
           player,
           trackId: clip.trackId,
@@ -410,18 +921,89 @@ const Timeline = () => {
           trimEnd: trimEnd,
           originalDuration: audioBuffer.duration
         };
-        return [...filtered, playerData];
+
+        if (existingIndex !== -1) {
+          const newPlayers = [...prev];
+          newPlayers[existingIndex] = playerData;
+          return newPlayers;
+        } else {
+          return [...prev, playerData];
+        }
       });
-  
+
       setWaveSurfers((prev) => {
         if (prev.find(ws => ws === wavesurfer)) return prev;
         return [...prev, wavesurfer];
       });
-  
+
+      const duration = wavesurfer.getDuration();
+      if (duration > 0 && !isCancelled) {
+        setAudioDuration((prev) => Math.max(prev, duration));
+      }
     } catch (error) {
+      if (error.name === 'AbortError' || isCancelled) {
+        return;
+      }
       console.error("Error loading audio:", error);
     }
-  }, [masterVolume, tracks, players, getAudioContext]);
+  }, [masterVolume, tracks, trackHeight]);
+
+  // Fixed playback logic to respect trim boundaries
+  const handlePlayPause = async () => {
+    try {
+      await start();
+
+      if (isPlaying) {
+        // Stop all players
+        players.forEach((playerObj) => {
+          if (playerObj?.player && typeof playerObj.player.stop === 'function') {
+            try {
+              playerObj.player.stop();
+            } catch (error) {
+              console.log("Stop error (can be ignored):", error);
+            }
+          }
+        });
+        dispatch(setPlaying(false));
+      } else {
+        dispatch(setPlaying(true));
+        playbackStartRef.current = {
+          systemTime: Date.now(),
+          audioTime: currentTime,
+        };
+
+        // Start players that should be playing at current time
+        players.forEach((playerObj) => {
+          if (playerObj?.player && typeof playerObj.player.start === 'function') {
+            const clipStartTime = playerObj.startTime || 0;
+            const trimStart = playerObj.trimStart || 0;
+            const trimEnd = playerObj.trimEnd || playerObj.duration;
+
+            // Calculate timeline positions for trimmed audio
+            const trimmedClipStart = clipStartTime;
+            const trimmedClipEnd = clipStartTime + (trimEnd - trimStart);
+
+            // Only start if current time is within the trimmed region
+            if (currentTime >= trimmedClipStart && currentTime < trimmedClipEnd) {
+              const offsetInTrimmedRegion = currentTime - trimmedClipStart;
+              const startOffsetInOriginalAudio = trimStart + offsetInTrimmedRegion;
+              const remainingTrimmedDuration = (trimEnd - trimStart) - offsetInTrimmedRegion;
+
+              if (remainingTrimmedDuration > 0) {
+                try {
+                  playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
+                } catch (error) {
+                  console.log("Start error:", error);
+                }
+              }
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error during play/pause:", error);
+    }
+  };
 
   // Fixed seek logic to respect trim boundaries
   const movePlayhead = (e) => {
@@ -465,7 +1047,7 @@ const Timeline = () => {
           try {
             playerObj.player.stop();
           } catch (error) {
-            // Stop during seek error can be ignored
+            console.log("Stop during seek error (can be ignored):", error);
           }
         }
       });
@@ -487,11 +1069,11 @@ const Timeline = () => {
             const remainingTrimmedDuration = (trimEnd - trimStart) - offsetInTrimmedRegion;
 
             if (remainingTrimmedDuration > 0) {
-                              try {
-                  playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
-                } catch (error) {
-                  // Start during seek error can be ignored
-                }
+              try {
+                playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
+              } catch (error) {
+                console.log("Start during seek error:", error);
+              }
             }
           }
         }
@@ -507,14 +1089,14 @@ const Timeline = () => {
   // Fixed animation loop to respect trim boundaries and looping
   useEffect(() => {
     let localAnimationId = null;
-  
+
     if (isPlaying) {
       const updateLoop = () => {
         if (!isPlaying) return;
-  
+
         const elapsedTime = (Date.now() - playbackStartRef.current.systemTime) / 1000;
         let newTime = playbackStartRef.current.audioTime + elapsedTime;
-  
+
         // Handle looping
         if (isLoopEnabled && newTime >= loopEnd) {
           newTime = loopStart;
@@ -522,7 +1104,7 @@ const Timeline = () => {
             systemTime: Date.now(),
             audioTime: loopStart,
           };
-  
+
           // Stop all players and restart them at loop start
           players.forEach((playerObj) => {
             if (playerObj?.player && typeof playerObj.player.stop === 'function') {
@@ -533,28 +1115,28 @@ const Timeline = () => {
               }
             }
           });
-  
+
           // Restart clips that should be playing at loop start
           players.forEach((playerObj) => {
             if (playerObj?.player && typeof playerObj.player.start === 'function') {
               const clipStartTime = playerObj.startTime || 0;
               const trimStart = playerObj.trimStart || 0;
               const trimEnd = playerObj.trimEnd || playerObj.duration;
-  
+
               const trimmedClipStart = clipStartTime;
               const trimmedClipEnd = clipStartTime + (trimEnd - trimStart);
-  
+
               if (loopStart >= trimmedClipStart && loopStart < trimmedClipEnd) {
                 const offsetInTrimmedRegion = loopStart - trimmedClipStart;
                 const startOffsetInOriginalAudio = trimStart + offsetInTrimmedRegion;
                 const remainingTrimmedDuration = (trimEnd - trimStart) - offsetInTrimmedRegion;
-  
+
                 if (remainingTrimmedDuration > 0) {
-                                  try {
-                  playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
-                } catch (error) {
-                  // Clip start error during loop can be ignored
-                }
+                  try {
+                    playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
+                  } catch (error) {
+                    console.log("Clip start error during loop:", error);
+                  }
                 }
               }
             }
@@ -573,29 +1155,29 @@ const Timeline = () => {
           });
           return;
         }
-  
-        // Update local state for smooth animation (this runs every frame)
+
+        // Update local state for smooth animation
         setLocalCurrentTime(newTime);
-  
-        // CRITICAL: Drastically reduce Redux updates to prevent lag
+
+        // Throttle Redux updates to improve performance (update every 60ms instead of every frame)
         const reduxUpdateTime = Date.now();
-        if (!lastReduxUpdateRef.current || reduxUpdateTime - lastReduxUpdateRef.current > 500) { // Changed from 120ms to 500ms
+        if (!lastReduxUpdateRef.current || reduxUpdateTime - lastReduxUpdateRef.current > 60) {
           dispatch(setCurrentTime(newTime));
           lastReduxUpdateRef.current = reduxUpdateTime;
         }
-  
-        // CRITICAL: Reduce player state checks to prevent audio stuttering
+
+        // Update each clip based on trim boundaries (throttled to improve performance)
         const playerUpdateTime = Date.now();
-        if (!lastPlayerUpdateRef.current || playerUpdateTime - lastPlayerUpdateRef.current > 300) { // Changed from 100ms to 300ms
+        if (!lastPlayerUpdateRef.current || playerUpdateTime - lastPlayerUpdateRef.current > 100) {
           players.forEach((playerObj) => {
             if (playerObj?.player) {
               const clipStartTime = playerObj.startTime || 0;
               const trimStart = playerObj.trimStart || 0;
               const trimEnd = playerObj.trimEnd || playerObj.duration;
-  
+
               const trimmedClipStart = clipStartTime;
               const trimmedClipEnd = clipStartTime + (trimEnd - trimStart);
-  
+
               // Stop clip if playhead moves beyond the trimmed end
               if (newTime >= trimmedClipEnd && playerObj.player.state === 'started') {
                 try {
@@ -604,7 +1186,7 @@ const Timeline = () => {
                   // Silently ignore stop errors
                 }
               }
-  
+
               // Start clip if playhead enters the trimmed region
               const previousTime = playbackStartRef.current.audioTime + ((elapsedTime - 1 / 60));
               if (previousTime < trimmedClipStart &&
@@ -615,25 +1197,25 @@ const Timeline = () => {
                   const offsetInTrimmedRegion = newTime - trimmedClipStart;
                   const startOffsetInOriginalAudio = trimStart + offsetInTrimmedRegion;
                   const remainingTrimmedDuration = (trimEnd - trimStart) - offsetInTrimmedRegion;
-  
+
                   if (remainingTrimmedDuration > 0) {
                     playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
                   }
                 } catch (error) {
-                  // Clip start error during animation can be ignored
+                  console.log("Clip start error during animation:", error);
                 }
               }
             }
           });
           lastPlayerUpdateRef.current = playerUpdateTime;
         }
-  
+
         localAnimationId = requestAnimationFrame(updateLoop);
       };
-  
+
       localAnimationId = requestAnimationFrame(updateLoop);
     }
-  
+
     return () => {
       if (localAnimationId) {
         cancelAnimationFrame(localAnimationId);
@@ -641,37 +1223,7 @@ const Timeline = () => {
     };
   }, [isPlaying, audioDuration, players, isLoopEnabled, loopStart, loopEnd]);
 
-  const debouncedVolumeUpdate = useMemo(() => {
-    const updateVolumes = () => {
-      players.forEach(playerObj => {
-        const track = tracks.find(t => t.id === playerObj.trackId);
-        if (playerObj.player && track && typeof playerObj.player.volume === 'object') {
-          const isMuted = soloTrackId
-            ? soloTrackId !== track.id
-            : track.muted;
-          
-          if (isMuted) {
-            playerObj.player.volume.value = -Infinity;
-          } else {
-            const masterVolumeDb = (masterVolume - 100) * 0.6;
-            const trackVolumeDb = (track.volume - 100) * 0.6;
-            const combinedVolumeDb = masterVolumeDb + trackVolumeDb;
-            playerObj.player.volume.value = combinedVolumeDb;
-          }
-        }
-      });
-    };
-  
-    let timeoutId;
-    return () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(updateVolumes, 16); // ~60fps debounce
-    };
-  }, [players, tracks, soloTrackId, masterVolume]);
-  
-  useEffect(() => {
-    debouncedVolumeUpdate();
-  }, [debouncedVolumeUpdate]);
+
 
   const renderRuler = useCallback(() => {
     if (!svgRef.current) return;
@@ -843,7 +1395,7 @@ const Timeline = () => {
                   try {
                     playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
                   } catch (error) {
-                    // Start error can be ignored
+                    console.log("Start error:", error);
                   }
                 }
               }
@@ -856,13 +1408,13 @@ const Timeline = () => {
               try {
                 playerObj.player.stop();
               } catch (error) {
-                // Stop error can be ignored
+                console.log("Stop error (can be ignored):", error);
               }
             }
           });
         }
       } catch (error) {
-        // console.error("Error handling Redux play/pause:", error);
+        console.error("Error handling Redux play/pause:", error);
       }
     };
 
@@ -873,20 +1425,13 @@ const Timeline = () => {
   useEffect(() => {
     if (audioDuration > 0) {
       if (loopEnd > audioDuration) {
-        dispatch(setLoopEnd(audioDuration));
+        setLoopEnd(audioDuration);
       } else if (loopEnd === 10 && audioDuration > 10) {
         // Initialize loop end to a reasonable value when audio loads
-        dispatch(setLoopEnd(Math.min(30, audioDuration)));
+        setLoopEnd(Math.min(30, audioDuration));
       }
     }
-  }, [audioDuration, loopEnd, dispatch]);
-
-  // Sync audio duration to loop slice
-  useEffect(() => {
-    if (audioDuration > 0) {
-      dispatch(setLoopAudioDuration(audioDuration));
-    }
-  }, [audioDuration, dispatch]);
+  }, [audioDuration, loopEnd]);
 
   useEffect(() => {
     return () => {
@@ -938,18 +1483,21 @@ const Timeline = () => {
     e.preventDefault();
     e.stopPropagation();
 
-
+    console.log('=== DROP EVENT TRIGGERED ===');
+    console.log('DataTransfer types:', e.dataTransfer.types);
+    console.log('DataTransfer items:', e.dataTransfer.items);
+    console.log('DataTransfer files:', e.dataTransfer.files);
 
     try {
       const data = e.dataTransfer.getData('text/plain');
-
+      console.log('Dropped data:', data);
 
       if (data) {
         const soundItem = JSON.parse(data);
-        
+        console.log('Parsed sound item:', soundItem);
 
         if (!soundItem.soundfile) {
-          // console.error('No soundfile found in dropped item');
+          console.error('No soundfile found in dropped item');
           return;
         }
 
@@ -959,6 +1507,7 @@ const Timeline = () => {
         const duration = audioDuration;
         const rawDropTime = (x / width) * duration;
 
+        console.log('Drop coordinates:', { x, width, duration, rawDropTime });
 
         // Grid snapping for drop position
         const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
@@ -969,6 +1518,7 @@ const Timeline = () => {
         };
 
         const dropTime = snapToGrid(rawDropTime);
+        console.log('Snapped drop time:', dropTime);
 
         const url = `${IMAGE_URL}uploads/soundfile/${soundItem.soundfile}`;
         let audioDurationSec = null;
@@ -978,8 +1528,9 @@ const Timeline = () => {
           const audioContext = new (window.AudioContext || window.webkitAudioContext)();
           const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
           audioDurationSec = audioBuffer.duration;
+          console.log('Audio duration:', audioDurationSec);
         } catch (err) {
-          // console.error('Error fetching or decoding audio for duration:', err);
+          console.error('Error fetching or decoding audio for duration:', err);
           // Use a default duration if we can't get the actual duration
           audioDurationSec = 5; // 5 seconds default
         }
@@ -987,6 +1538,15 @@ const Timeline = () => {
         // Check if we're dropping on an existing track or creating a new one
         const trackElement = e.target.closest('[data-track-id]');
         const trackId = trackElement ? trackElement.getAttribute('data-track-id') : null;
+
+        console.log('Drop detection:', {
+          trackElement: !!trackElement,
+          trackId,
+          target: e.target,
+          currentTarget: e.currentTarget,
+          targetClasses: e.target.className,
+          targetTagName: e.target.tagName
+        });
 
         // If we're dropping on the timeline container itself (not on a track), create a new track
         const isDroppingOnTimeline = e.target === timelineContainerRef.current ||
@@ -1009,7 +1569,7 @@ const Timeline = () => {
             soundData: soundItem
           };
 
-  
+          console.log('Adding clip to existing track:', trackId, newClip);
           dispatch(addAudioClipToTrack({
             trackId: trackId,
             audioClip: newClip
@@ -1036,16 +1596,16 @@ const Timeline = () => {
             audioClips: [newClip]
           };
 
-
+          console.log('Creating new track:', newTrack);
           dispatch(addTrack(newTrack));
         } else {
-  
+          console.log('Drop not on timeline or track, ignoring');
         }
       } else {
-
+        console.log('No data found in drop event');
       }
     } catch (error) {
-      // console.error('Error processing dropped item:', error);
+      console.error('Error processing dropped item:', error);
     }
   }, [audioDuration, dispatch, trackHeight, selectedGrid, selectedTime]);
 
@@ -1059,26 +1619,6 @@ const Timeline = () => {
       position: { x: e.clientX, y: e.clientY },
       trackId: trackId,
       clipId: clipId
-    });
-  }, []);
-
-  // Section label context menu handlers
-  const handleSectionContextMenu = useCallback((e, sectionId) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    setSectionContextMenu({
-      isOpen: true,
-      position: { x: e.clientX, y: e.clientY },
-      sectionId: sectionId
-    });
-  }, []);
-
-  const handleSectionContextMenuClose = useCallback(() => {
-    setSectionContextMenu({
-      isOpen: false,
-      position: { x: 0, y: 0 },
-      sectionId: null
     });
   }, []);
 
@@ -1099,6 +1639,7 @@ const Timeline = () => {
 
     const track = tracks.find(t => t.id === trackId);
     if (!track) return;
+
     // Always find the clip if clipId is provided
     const clip = clipId ? track.audioClips?.find(c => c.id === clipId) : undefined;
 
@@ -1126,7 +1667,7 @@ const Timeline = () => {
           dispatch(removeAudioClip({ trackId, clipId }));
           break;
         default:
-
+          
           break;
       }
       return;
@@ -1156,44 +1697,32 @@ const Timeline = () => {
         break;
       case 'editName':
         // Implement edit name functionality
+        console.log('Edit name for track:', trackId);
         break;
       case 'splitRegion':
         // Implement split region functionality
+        console.log('Split region for track:', trackId);
         break;
       case 'muteRegion':
         // Implement mute region functionality
         dispatch(toggleMuteTrack(trackId));
+        console.log('Mute region for track:', trackId);
         break;
       case 'changePitch':
         // Implement change pitch functionality
+        console.log('Change pitch for track:', trackId);
         break;
       case 'vocalCleanup':
         // Implement vocal cleanup functionality
+        console.log('Vocal cleanup for track:', trackId);
         break;
       case 'vocalTuner':
         // Implement vocal tuner functionality
+        console.log('Vocal tuner for track:', trackId);
         break;
       case 'voiceTransform':
         // Implement voice transform functionality
-        break;
-      case 'volumeUp':
-        const currentVolumeUp = track.volume || 80;
-        const newVolumeUp = Math.min(100, currentVolumeUp + 10);
-        dispatch(setTrackVolume({ trackId, volume: newVolumeUp }));
-        setVolumeIndicator({ show: true, volume: newVolumeUp, trackName: track.name || 'Track' });
-        setTimeout(() => setVolumeIndicator({ show: false, volume: 0, trackName: '' }), 2000);
-        break;
-      case 'volumeDown':
-        const currentVolumeDown = track.volume || 80;
-        const newVolumeDown = Math.max(0, currentVolumeDown - 10);
-        dispatch(setTrackVolume({ trackId, volume: newVolumeDown }));
-        setVolumeIndicator({ show: true, volume: newVolumeDown, trackName: track.name || 'Track' });
-        setTimeout(() => setVolumeIndicator({ show: false, volume: 0, trackName: '' }), 2000);
-        break;
-      case 'volumeReset':
-        dispatch(setTrackVolume({ trackId, volume: 80 }));
-        setVolumeIndicator({ show: true, volume: 80, trackName: track.name || 'Track' });
-        setTimeout(() => setVolumeIndicator({ show: false, volume: 0, trackName: '' }), 2000);
+        console.log('Voice transform for track:', trackId);
         break;
       case 'reverse':
         (async () => {
@@ -1229,64 +1758,24 @@ const Timeline = () => {
         break;
       case 'effects':
         // Implement effects functionality
+        console.log('Effects for track:', trackId);
         break;
       case 'matchProjectKey':
         // Implement match project key functionality
+        console.log('Match project key for track:', trackId);
         break;
       case 'addToLoopLibrary':
         // Implement add to loop library functionality
+        console.log('Add to loop library for track:', trackId);
         break;
       case 'openInSampler':
         // Implement open in sampler functionality
+        console.log('Open in sampler for track:', trackId);
         break;
       default:
-        // Unknown action
+        console.log('Unknown action:', action);
     }
   }, [contextMenu, tracks, clipboard, dispatch, currentTime]);
-
-  // Section label context menu action handler
-  const handleSectionContextMenuAction = useCallback((action) => {
-    const sectionId = sectionContextMenu.sectionId;
-    if (!sectionId) return;
-
-    const section = sectionLabels.find(s => s.id === sectionId);
-    if (!section) return;
-
-    switch (action) {
-      case 'rename':
-        setRenameSectionId(sectionId);
-        setRenameValue(section.name);
-        setRenameModal(true);
-        break;
-      case 'resize':
-        setResizeSectionId(sectionId);
-        setResizeValue(section.width ? String(Math.round(section.width)) : "");
-        setResizeModal(true);
-        break;
-      case 'delete':
-        dispatch(removeSectionLabel(sectionId));
-        break;
-      case 'copy':
-        setClipboard({ type: 'section', section: { ...section } });
-        break;
-      case 'loop':
-        dispatch(setLoopRange({ start: section.startTime, end: section.endTime }));
-        break;
-      case 'createSectionAfter':
-        const newSection = {
-          id: Date.now() + Math.random(),
-          name: 'New Section',
-          startTime: section.endTime,
-          endTime: Math.min(audioDuration, section.endTime + (section.endTime - section.startTime)),
-          position: (section.endTime / audioDuration) * 100,
-          width: section.width
-        };
-        dispatch(addSectionLabel(newSection));
-        break;
-      default:
-
-    }
-  }, [sectionContextMenu, sectionLabels, dispatch, audioDuration]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -1309,162 +1798,86 @@ const Timeline = () => {
         e.preventDefault();
         handleContextMenuAction('muteRegion', selectedTrackId, selectedClipId);
       }
-      // Volume control shortcuts
-      else if (e.key === 'ArrowUp' && (e.ctrlKey || e.altKey)) {
-        e.preventDefault();
-        const selectedTrack = tracks.find(t => t.id === selectedTrackId);
-        if (selectedTrack) {
-          const newVolume = Math.min(100, (selectedTrack.volume || 80) + 5);
-          dispatch(setTrackVolume({ trackId: selectedTrackId, volume: newVolume }));
-          setVolumeIndicator({ show: true, volume: newVolume, trackName: selectedTrack.name || 'Track' });
-          setTimeout(() => setVolumeIndicator({ show: false, volume: 0, trackName: '' }), 2000);
-        }
-      } else if (e.key === 'ArrowDown' && (e.ctrlKey || e.altKey)) {
-        e.preventDefault();
-        const selectedTrack = tracks.find(t => t.id === selectedTrackId);
-        if (selectedTrack) {
-          const newVolume = Math.max(0, (selectedTrack.volume || 80) - 5);
-          dispatch(setTrackVolume({ trackId: selectedTrackId, volume: newVolume }));
-          setVolumeIndicator({ show: true, volume: newVolume, trackName: selectedTrack.name || 'Track' });
-          setTimeout(() => setVolumeIndicator({ show: false, volume: 0, trackName: '' }), 2000);
-        }
-      }
       // Add more shortcuts as needed
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedTrackId, selectedClipId, handleContextMenuAction, tracks, dispatch]);
+  }, [selectedTrackId, selectedClipId, handleContextMenuAction]);
 
-  const renderGridLines = useMemo(() => {
-  // Early return if required dependencies are not available
-  if (!timelineContainerRef.current || !audioDuration || tracks.length === 0) {
-    return [];
-  }
+  const renderGridLines = () => {
+    const gridLines = [];
+    const width = timelineContainerRef.current?.clientWidth || 600;
+    const duration = audioDuration;
 
-  const gridLines = [];
-  const width = timelineContainerRef.current.clientWidth;
-  const duration = audioDuration;
+    if (width <= 0 || duration <= 0) return gridLines;
 
-  // Validate dimensions
-  if (width <= 0 || duration <= 0) return [];
+    const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
+    const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
 
-  // Get grid spacing with proper error handling
-  let gridSpacing;
-  try {
-    gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
-  } catch (error) {
-    console.warn('Invalid grid spacing configuration:', error);
-    gridSpacing = 1; // fallback to 1 second
-  }
+    // Calculate the total height of all tracks
+    const totalTracksHeight = tracks.length > 0 ? trackHeight * tracks.length : 0;
 
-  if (gridSpacing <= 0) return [];
+    for (let time = 0; time <= duration; time += gridSpacing) {
+      const x = xScale(time);
 
-  const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
-  const totalTracksHeight = trackHeight * tracks.length;
+      // Determine line importance based on time signature
+      const secondsPerBeat = 0.5; // Fixed at 120 BPM equivalent
+      const { beats } = parseTimeSignature(selectedTime);
+      const secondsPerBar = secondsPerBeat * beats;
 
-  // Calculate grid parameters with error handling
-  let secondsPerBeat = 0.5;
-  let beats = 4;
-  
-  try {
-    const timeSignature = parseTimeSignature(selectedTime);
-    beats = timeSignature.beats || 4;
-    // You might want to make secondsPerBeat configurable based on tempo
-    // secondsPerBeat = 60 / (tempo || 120); // 120 BPM default
-  } catch (error) {
-    console.warn('Invalid time signature:', error);
-  }
+      const isBarStart = Math.abs(time % secondsPerBar) < 0.01;
+      const isMainBeat = Math.abs(time % secondsPerBeat) < 0.01;
+      const isHalfBeat = Math.abs(time % (secondsPerBeat / 2)) < 0.01;
+      const isQuarterBeat = Math.abs(time % (secondsPerBeat / 4)) < 0.01;
 
-  const secondsPerBar = secondsPerBeat * beats;
+      let lineColor = "#FFFFFF1A";
+      let lineWidth = 1;
+      let lineOpacity = 0.3;
 
-  // Optimize grid line calculation
-  const maxGridLines = Math.min(Math.ceil(duration / gridSpacing), 2000);
-  const tolerance = gridSpacing * 0.001; // More precise tolerance
+      if (isBarStart) {
+        lineColor = "#FFFFFF50";
+        lineWidth = 2;
+        lineOpacity = 0.8;
+      } else if (isMainBeat) {
+        lineColor = "#FFFFFF40";
+        lineWidth = 1.5;
+        lineOpacity = 0.6;
+      } else if (isHalfBeat) {
+        lineColor = "#FFFFFF30";
+        lineWidth = 1.2;
+        lineOpacity = 0.4;
+      } else if (isQuarterBeat) {
+        lineColor = "#FFFFFF25";
+        lineWidth = 1;
+        lineOpacity = 0.35;
+      }
 
-  for (let i = 0; i <= maxGridLines; i++) {
-    const time = i * gridSpacing;
-    if (time > duration) break;
-    
-    const x = Math.round(xScale(time)); // Round to prevent sub-pixel rendering
-
-    // More accurate beat/bar detection
-    const timeInBar = time % secondsPerBar;
-    const timeInBeat = time % secondsPerBeat;
-
-    const isBarStart = timeInBar < tolerance;
-    const isMainBeat = !isBarStart && timeInBeat < tolerance;
-    const isSubdivision = !isBarStart && !isMainBeat;
-
-    // Define grid line styles
-    let lineStyle;
-    if (isBarStart) {
-      lineStyle = {
-        background: "#FFFFFF50",
-        width: 2,
-        opacity: 0.7,
-        zIndex: 3
-      };
-    } else if (isMainBeat) {
-      lineStyle = {
-        background: "#FFFFFF40",
-        width: 1,
-        opacity: 0.5,
-        zIndex: 2
-      };
-    } else if (isSubdivision) {
-      lineStyle = {
-        background: "#FFFFFF25",
-        width: 1,
-        opacity: 0.25,
-        zIndex: 1
-      };
-    } else {
-      continue; // Skip lines that don't match any category
-    }
-
-    // Only render lines within visible bounds
-    if (x >= -lineStyle.width && x <= width + lineStyle.width) {
       gridLines.push(
         <div
-          key={`grid-${time.toFixed(3)}`} // Use time-based key for consistency
-          className="timeline-grid-line" // Add class for easier styling/debugging
+          key={`grid-${time}`}
           style={{
             position: "absolute",
-            left: x,
-            top: 0,
-            width: lineStyle.width,
-            height: totalTracksHeight,
-            background: lineStyle.background,
-            opacity: lineStyle.opacity,
-            zIndex: lineStyle.zIndex,
+            left: `${x}px`,
+            top: "0px", // Start from the top of tracks container
+            width: `${lineWidth}px`,
+            height: `${totalTracksHeight}px`, // Extend through all tracks
+            background: lineColor,
+            opacity: lineOpacity,
+            zIndex: 1,
             pointerEvents: "none",
-            transform: "translateZ(0)", // Force GPU acceleration
           }}
         />
       );
     }
-  }
-
-  return gridLines;
-}, [
-  // Include all dependencies to prevent stale closures
-  audioDuration, 
-  selectedGrid, 
-  selectedTime, 
-  tracks.length, 
-  trackHeight,
-  timelineContainerRef.current?.clientWidth // Track width changes
-]);
-
-
+    return gridLines;
+  };
 
 
   // Calculate playhead position in pixels for smoother animation
   const playheadPosition = useMemo(() => {
     return localCurrentTime * timelineWidthPerSecond;
   }, [localCurrentTime, timelineWidthPerSecond]);
- 
 
   // Handler for TimelineActionBoxes
   const handleAction = (action) => {
@@ -1480,77 +1893,50 @@ const Timeline = () => {
     // Add more actions as needed
   };
 
+  // useEffect(() => {
+  //   const handleGlobalClick = (e) => {
+  //     // Clear selection if clicking outside of tracks and clips
+  //     const isTrackClick = e.target.closest('[data-track-id]');
+  //     const isClipClick = e.target.closest('[data-rnd]');
+
+  //     if (!isTrackClick && !isClipClick) {
+  //       setSelectedTrackId(null);
+  //       setSelectedClipId(null);
+  //     }
+  //   };
+
+  //   document.addEventListener('click', handleGlobalClick);
+  //   return () => document.removeEventListener('click', handleGlobalClick);
+  // }, []);
+
+  
   const handleDrumRecordingComplete = async (blob) => {
+    const url = URL.createObjectURL(blob);
+    let audioDurationSec = null;
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const arrayBuffer = await blob.arrayBuffer();
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      audioDurationSec = audioBuffer.duration;
+    } catch (err) {
+      console.error('Error decoding drum audio:', err);
+    }
+
     const newTrack = {
-      id: Date.now().toString(),
-      name: `Drum Track ${tracks.length + 1}`,
-      type: 'drum',
-      color: generateRandomHexColor(),
-      volume: 80,
-      audioClips: []
+      id: Date.now(),
+      name: 'Drum Recording',
+      url,
+      color: '#FFD700',
+      height: 100, // or your default
+      startTime: 0,
+      duration: audioDurationSec,
+      trimStart: 0,
+      trimEnd: audioDurationSec,
+      soundData: { type: 'drum' }
     };
+
     dispatch(addTrack(newTrack));
   };
-  // Rename submit handler
-  const handleRenameSubmit = () => {
-    if (renameSectionId && renameValue.trim()) {
-      dispatch(updateSectionLabel({
-        id: renameSectionId,
-        updates: { name: renameValue.trim() }
-      }));
-      setRenameModal(false);
-      setRenameSectionId(null);
-      setRenameValue("");
-    }
-  };
-
-  // Resize submit handler
-  const handleResizeSubmit = () => {
-    const widthNum = parseInt(resizeValue, 10);
-    if (resizeSectionId && widthNum > 0) {
-      dispatch(updateSectionLabel({
-        id: resizeSectionId,
-        updates: { width: widthNum }
-      }));
-      setResizeModal(false);
-      setResizeSectionId(null);
-      setResizeValue("");
-    }
-  };
-
-  const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
-
-  // Function to play drum sound (this will be called from drum clips)
-  const playDrumSound = (drumData) => {
-    // This function will be called when timeline plays drum clips
-    // console.log('Timeline playing drum sound:', drumData);
-    // You can add actual sound playback logic here
-  };
-
-  // Check for drum clips at current timeline position and play them
-  useEffect(() => {
-    if (isPlaying && currentTime > 0) {
-      // Check all tracks for drum clips at the current time
-      tracks.forEach(track => {
-        if (track.audioClips) {
-          track.audioClips.forEach(clip => {
-            if (clip.type === 'drum') {
-              // Check if the current time is within the clip's time range
-              const clipStart = clip.startTime;
-              const clipEnd = clip.startTime + clip.duration;
-              
-              if (currentTime >= clipStart && currentTime <= clipEnd) {
-                // Play the drum sound
-                if (clip.soundData) {
-                  playDrumSound(clip.soundData);
-                }
-              }
-            }
-          });
-        }
-      });
-    }
-  }, [isPlaying, currentTime, tracks]);
 
   return (
     <>
@@ -1576,18 +1962,16 @@ const Timeline = () => {
               position: "relative",
               height: "100vh",
             }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
             {/* Timeline Header */}
-            <div
-              style={{ height: "100px", borderBottom: "1px solid #1414141A", position: "relative", top: 0, zIndex: 20, background: "#141414" }}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-            >
+            <div style={{ height: "100px", borderBottom: "1px solid #1414141A", position: "relative", top: 0, zIndex: 20, background: "#141414" }}>
               <svg
                 ref={svgRef}
                 width="100%"
@@ -1597,7 +1981,16 @@ const Timeline = () => {
             </div>
 
             {/* Loop Bar - positioned right below timeline header */}
-            <LoopBar />
+            <LoopBar
+              audioDuration={audioDuration}
+              loopStart={loopStart}
+              loopEnd={loopEnd}
+              onLoopChange={handleLoopChange}
+              timelineWidthPerSecond={timelineWidthPerSecond}
+              gridSpacing={getGridSpacingWithTimeSignature(selectedGrid, selectedTime)}
+              currentTime={currentTime}
+              isLoopEnabled={isLoopEnabled}
+            />
 
             {/* My Section - positioned below loop bar */}
             <MySection
@@ -1608,113 +2001,32 @@ const Timeline = () => {
 
             {/* Section Labels - display all saved section labels */}
             {sectionLabels.map((section) => (
-              <ResizableSectionLabel
+              <div
                 key={section.id}
-                section={section}
-                audioDuration={audioDuration}
-                selectedGrid={selectedGrid}
-                timelineContainerRef={timelineContainerRef}
-                onResize={resizeSection}
-                onContextMenu={handleSectionContextMenu}
-              />
+                style={{
+                  position: "absolute",
+                  top: "120px", // Position below MySection label (75px + 35px + 10px gap)
+                  left: `${section.position}%`,
+                  width: "100px",
+                  height: "25px",
+                  background: "linear-gradient(90deg, #FF8C00 0%, #FF6B35 100%)",
+                  borderRadius: "4px",
+                  padding: "3px 10px 0 10px",
+                  color: "white",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  border: "1px solid #FF6B35",
+                  textAlign: "center",
+                  transform: "translateX(-50%)",
+                  zIndex: 8,
+                  pointerEvents: "none",
+                  boxShadow: "0 2px 8px rgba(255, 140, 0, 0.4)",
+                  animation: "sectionLabelAppear 0.3s ease-out",
+                }}
+              >
+                {section.name}
+              </div>
             ))}
-
-            {/* Recorded Data Display */}
-            {recordedData && recordedData.length > 0 && (
-              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 50 }}>
-                {/* Recorded Data Markers */}
-                {recordedData.map((rec, idx) => (
-                  <div
-                    key={`recorded-${idx}`}
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: `${(rec.currentTime / audioDuration) * 100}%`,
-                      width: "6px",
-                      height: "100%",
-                      background: "#FF6767",
-                      opacity: 0.8,
-                      zIndex: 51,
-                      borderRadius: "2px",
-                      boxShadow: "0 0 4px rgba(255, 103, 103, 0.6)"
-                    }}
-                    title={`Recorded at ${rec.currentTime.toFixed(2)}s - Volume: ${rec.volume} - Playing: ${rec.isPlaying ? 'Yes' : 'No'}`}
-                  />
-                ))}
-
-                {/* Recorded Data Region (if multiple data points) */}
-                {recordedData.length > 1 && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: `${(recordedData[0].currentTime / audioDuration) * 100}%`,
-                      width: `${((recordedData[recordedData.length - 1].currentTime - recordedData[0].currentTime) / audioDuration) * 100}%`,
-                      height: "100%",
-                      background: "rgba(255, 103, 103, 0.1)",
-                      border: "1px solid rgba(255, 103, 103, 0.3)",
-                      zIndex: 49,
-                      pointerEvents: "none",
-                    }}
-                    title="Recorded region"
-                  />
-                )}
-              </div>
-            )}
-            {console.log("=-=-=-=-=-=-=-=-",drumRecordedData)}
-
-            {/* Drum Recorded Data Display */}
-            {drumRecordedData && drumRecordedData.length > 0 && (
-              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 52 }}>
-                {/* Hit markers */}
-                {drumRecordedData.map((drumRec, idx) => (
-                  <div
-                    key={`drum-recorded-${idx}`}
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: `${(drumRec.currentTime / audioDuration) * 100}%`,
-                      width: "8px",
-                      height: "100%",
-                      opacity: 0.9,
-                      zIndex: 53,
-                      borderRadius: "4px",
-                    }}
-                    title={`Drum: ${drumRec.padId} (${drumRec.sound}) - ${drumRec.drumMachine} - ${drumRec.currentTime.toFixed(2)}s`}
-                  />
-                ))}
-
-                {/* Background region after recording stops */}
-                {!isRecording && drumRecordedData.length > 1 && (() => {
-                  const first = drumRecordedData[0];
-                  const last = drumRecordedData[drumRecordedData.length - 1];
-                  const start = Math.max(0, first.currentTime || 0);
-                  const end = Math.max(start, last.currentTime || start);
-                  const leftPct = (start / audioDuration) * 100;
-                  const widthPct = ((end - start) / audioDuration) * 100;
-                  const drumMachineName = first?.drumMachine;
-                  const dmColor = drumMachineTypes.find(dm => dm.name === drumMachineName)?.color || '#FF8014';
-                  return (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: `${leftPct}%`,
-                        width: `${widthPct}%`,
-                        height: '100%',
-                        background: `${dmColor}22`,
-                        border: `1px solid ${dmColor}55`,
-                        borderRadius: '4px',
-                        boxShadow: `0 0 8px ${dmColor}33`,
-                        pointerEvents: 'none',
-                        zIndex: 52,
-                      }}
-                      title={`Drum recording region (${start.toFixed(2)}s - ${end.toFixed(2)}s)`}
-                    />
-                  );
-                })()}
-              </div>
-            )}
 
             <style>
               {`
@@ -1760,7 +2072,7 @@ const Timeline = () => {
 
               {/* Tracks */}
               {tracks.map((track, index) => {
-        
+                console.log('Rendering track:', { track, index });
                 return (
                   <div
                     key={track.id}
@@ -1864,7 +2176,7 @@ const Timeline = () => {
                   pointerEvents: "none",
                 }}
               >
-                {renderGridLines}
+                {renderGridLines()}
               </div>
             )}
           </div>
@@ -1895,7 +2207,7 @@ const Timeline = () => {
               </div>
             )}
           </div>
-          <div className={`w-[30px] h-[30px] flex items-center justify-center rounded-full ${isLoopEnabled ? 'bg-[#FF8014]' : 'hover:bg-[#1F1F1F]'}`} onClick={() => selectIsLoopEnabled(!isLoopEnabled)}>
+          <div className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full" onClick={() => setIsLoopEnabled(!isLoopEnabled)}>
             <img src={reverceIcon} alt="Reverse" />
           </div>
         </div>
@@ -1909,20 +2221,9 @@ const Timeline = () => {
             <img src={offce} alt="Off canvas" />
           </div>
           <div className="bg-[#1F1F1F] w-[40px] h-[40px] flex items-center justify-center rounded-full mt-2">
-            <img src={fxIcon} alt="Effects" onClick={() => dispatch(toggleEffectsOffcanvas())}/>
+            <img src={fxIcon} alt="Effects" />
           </div>
         </div>
-
-        {/* Volume Indicator */}
-        {volumeIndicator.show && (
-          <div className="absolute top-[50%] left-[50%] transform -translate-x-1/2 -translate-y-1/2 z-50 bg-[#1F1F1F] border border-[#444] rounded-lg px-4 py-3 shadow-lg">
-            <div className="text-white text-center">
-              <div className="text-sm opacity-80">{volumeIndicator.trackName}</div>
-              <div className="text-2xl font-bold">{volumeIndicator.volume}%</div>
-              <div className="text-xs opacity-60 mt-1">Volume</div>
-            </div>
-          </div>
-        )}
 
       </div>
 
@@ -1941,11 +2242,11 @@ const Timeline = () => {
           const file = e.target.files[0];
           if (file) {
             // handle file here
+            console.log("Selected file:", file);
           }
         }}
       />
       <MusicOff showOffcanvas={showOffcanvas} setShowOffcanvas={setShowOffcanvas} />
-      <Effects showOffcanvas={showOffcanvas} setShowOffcanvas={setShowOffcanvas}/>
 
       {/* Context Menu */}
       <WaveMenu
@@ -1955,90 +2256,10 @@ const Timeline = () => {
         onAction={handleContextMenuAction}
       />
 
-      {/* Section Context Menu */}
-      <SectionContextMenu
-        isOpen={sectionContextMenu.isOpen}
-        position={sectionContextMenu.position}
-        onClose={handleSectionContextMenuClose}
-        onAction={handleSectionContextMenuAction}
-      />
-
       {/* Piano Component */}
-      {showPiano || getTrackType == "Keys" &&  (
+      {showPiano && (
         <Piano onClose={() => setShowPiano(false)} />
       )}
-
-      {/* Rename Section Modal */}
-      <Dialog open={renameModal} onClose={() => setRenameModal(false)} className="relative z-10">
-        <DialogBackdrop transition className="fixed backdrop-blur-sm inset-0 bg-black/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in" />
-        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
-            <DialogPanel transition className="relative transform overflow-hidden rounded-[4px] bg-[#1F1F1F] text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 w-full xs:max-w-[340px] sm:max-w-[400px] md:max-w-lg xl:max-w-xl  data-closed:sm:translate-y-0 data-closed:sm:scale-95">
-              <div className="md:px-[10px] px-[20px]">
-                <div className="md:py-[20px] py-[10px] md:px-[10px] bg-[#1F1F1F] border-b-[0.5px] border-b-[#FFFFFF1A]">
-                  <div className="flex justify-between items-center">
-                    <div className="sm:text-xl text-lg font-[600] text-[#fff]">Rename Section</div>
-                    <img src={close} alt="" onClick={() => setRenameModal(false)} className="cursor-pointer" />
-                  </div>
-                </div>
-                <div className="md:pt-[20px] md:pb-[30px] py-[20px] md:w-[400px] m-auto">
-                  <div className=''>
-                    <div className='text-sm text-[#FFFFFF] font-[400] mb-[10px]'>Name</div>
-                    <input
-                      type="text"
-                      value={renameValue}
-                      onChange={e => setRenameValue(e.target.value)}
-                      onKeyPress={e => { if (e.key === 'Enter') handleRenameSubmit(); }}
-                      className='text-[#FFFFFF99] rounded-[4px] w-full md:p-[11px] p-[8px] bg-[#FFFFFF0F] border-[0.5px] border-[#14141499]'
-                    />
-                  </div>
-                  <div className="text-center md:pt-[40px] pt-[20px]">
-                    <button className="d_btn d_cancelbtn sm:me-7 me-5" onClick={() => setRenameModal(false)}>Cancel</button>
-                    <button className="d_btn d_createbtn" onClick={handleRenameSubmit}>Rename</button>
-                  </div>
-                </div>
-              </div>
-            </DialogPanel>
-          </div>
-        </div>
-      </Dialog>
-
-      {/* Resize Section Modal */}
-      <Dialog open={resizeModal} onClose={() => setResizeModal(false)} className="relative z-10">
-        <DialogBackdrop transition className="fixed backdrop-blur-sm inset-0 bg-black/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in" />
-        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
-            <DialogPanel transition className="relative transform overflow-hidden rounded-[4px] bg-[#1F1F1F] text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 w-full xs:max-w-[340px] sm:max-w-[400px] md:max-w-lg xl:max-w-xl  data-closed:sm:translate-y-0 data-closed:sm:scale-95">
-              <div className="md:px-[10px] px-[20px]">
-                <div className="md:py-[20px] py-[10px] md:px-[10px] bg-[#1F1F1F] border-b-[0.5px] border-b-[#FFFFFF1A]">
-                  <div className="flex justify-between items-center">
-                    <div className="sm:text-xl text-lg font-[600] text-[#fff]">Resize Section</div>
-                    <img src={close} alt="" onClick={() => setResizeModal(false)} className="cursor-pointer" />
-                  </div>
-                </div>
-                <div className="md:pt-[20px] md:pb-[30px] py-[20px] md:w-[400px] m-auto">
-                  <div className=''>
-                    <div className='text-sm text-[#FFFFFF] font-[400] mb-[10px]'>Width (px)</div>
-                    <input
-                      type="number"
-                      min={10}
-                      value={resizeValue}
-                      onChange={e => setResizeValue(e.target.value)}
-                      onKeyPress={e => { if (e.key === 'Enter') handleResizeSubmit(); }}
-                      className='text-[#FFFFFF99] rounded-[4px] w-full md:p-[11px] p-[8px] bg-[#FFFFFF0F] border-[0.5px] border-[#14141499]'
-                    />
-                  </div>
-                  <div className="text-center md:pt-[40px] pt-[20px]">
-                    <button className="d_btn d_cancelbtn sm:me-7 me-5" onClick={() => setResizeModal(false)}>Cancel</button>
-                    <button className="d_btn d_createbtn" onClick={handleResizeSubmit}>Resize</button>
-                  </div>
-                </div>
-              </div>
-            </DialogPanel>
-          </div>
-        </div>
-      </Dialog>
-
     </>
   );
 };
