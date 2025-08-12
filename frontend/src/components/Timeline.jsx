@@ -215,6 +215,7 @@ const Timeline = () => {
   };
 
   const getTrackType = useSelector((state) => state.studio.newtrackType);
+  console.log("=======0",getTrackType)
 
 
   // Mute functionality
@@ -1660,6 +1661,7 @@ const Timeline = () => {
                 )}
               </div>
             )}
+            {console.log("=-=-=-=-=-=-=-=-",drumRecordedData)}
 
             {/* Drum Recorded Data Display */}
             {drumRecordedData && drumRecordedData.length > 0 && (
@@ -1924,7 +1926,7 @@ const Timeline = () => {
 
       </div>
 
-      {/* <Drum onDrumRecordingComplete={handleDrumRecordingComplete} /> */}
+      <Drum onDrumRecordingComplete={handleDrumRecordingComplete} />
 
       {/* Add Track Modal */}
       {showAddTrackModal && (
@@ -1939,7 +1941,6 @@ const Timeline = () => {
           const file = e.target.files[0];
           if (file) {
             // handle file here
-
           }
         }}
       />
