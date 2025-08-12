@@ -35,6 +35,10 @@ const initialState = {
   // TimelineTrack specific state
   selectedClipId: null,
   selectedTrackId: null,
+  // Key and Scale Selection state
+  selectedKey: null,
+  selectedScale: null,
+  highlightedPianoKeys: [], // Array of MIDI note numbers to highlight
 };
 
 const studioSlice = createSlice({
@@ -357,6 +361,25 @@ const studioSlice = createSlice({
       state.pianoRecordingClip = action.payload; // {start, end, color}
     },
     
+    // Key and Scale Selection actions
+    setSelectedKey: (state, action) => {
+      state.selectedKey = action.payload;
+    },
+    
+    setSelectedScale: (state, action) => {
+      state.selectedScale = action.payload;
+    },
+    
+    setHighlightedPianoKeys: (state, action) => {
+      state.highlightedPianoKeys = action.payload;
+    },
+    
+    clearKeyScaleSelection: (state) => {
+      state.selectedKey = null;
+      state.selectedScale = null;
+      state.highlightedPianoKeys = [];
+    },
+    
   },
 });
 
@@ -409,6 +432,10 @@ export const {
   setPianoNotes,
   clearPianoNotes,
   setPianoRecordingClip,
+  setSelectedKey,
+  setSelectedScale,
+  setHighlightedPianoKeys,
+  clearKeyScaleSelection,
 } = studioSlice.actions;
 
 export default studioSlice.reducer;
