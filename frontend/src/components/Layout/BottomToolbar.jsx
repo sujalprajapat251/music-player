@@ -27,7 +27,8 @@ import {
   setSelectedKey,
   setSelectedScale,
   setHighlightedPianoKeys,
-  clearKeyScaleSelection
+  clearKeyScaleSelection,
+  setMetronomeSound
 } from '../../Redux/Slice/studio.slice';
 
 const BottomToolbar = () => {
@@ -49,6 +50,7 @@ const BottomToolbar = () => {
     const [isVolumeChanging, setIsVolumeChanging] = useState(false);
     const [isCounting, setIsCounting] = useState(false);
     const [countInNumber, setCountInNumber] = useState(null);
+    const [isIconActive, setIsIconActive] = useState(false);
 
     const dispatch = useDispatch();
     
@@ -306,6 +308,7 @@ const BottomToolbar = () => {
     }, []);
 
     const handleMenuItemSelect = (qualityId, qualityLabel) => {
+        dispatch(setMetronomeSound(qualityLabel));
         setSelectedMenuitems(qualityLabel);
         setIsOpen2(false)
     };
@@ -319,6 +322,37 @@ const BottomToolbar = () => {
 
     const [recordingStartTime, setRecordingStartTime] = useState(null);
 
+    const selectedSound = useSelector(state => state.studio.selectedSound);
+    const audioRef = useRef(null);
+    const useMetronomePlayer = (selectedSound) => {
+    
+        // Update audio whenever selectedSound changes
+        useEffect(() => {
+            audioRef.current = new Audio(`/Audio/metronome/${selectedSound.toLowerCase()}.wav`);
+            audioRef.current.volume = volume1 / 100;
+        }, [selectedSound]);
+    
+        const playTick = () => {
+            if (!isIconActive) return;
+            if (audioRef.current) {
+                audioRef.current.currentTime = 0;
+                audioRef.current.play().catch(() => {}); // prevent AbortError
+            }
+        };
+    
+        const stopTick = () => {
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current.currentTime = 0;
+            }
+        };
+    
+        return { playTick, stopTick };
+    };
+
+    const { playTick, stopTick } = useMetronomePlayer(selectedSound);
+    const tickIntervalRef = useRef(null);
+
     // Start recording
     const handleStartRecord = () => {
         if (selectedCountIn === "Off") {
@@ -327,6 +361,9 @@ const BottomToolbar = () => {
             dispatch(setDrumRecordedData([])); // Clear drum data
             setRecordingStartTime(Date.now());
             handlePlayPause();
+            tickIntervalRef.current = setInterval(() => {
+                playTick();
+            }, 600);
           } else {
             startCountIn();
           }        
@@ -340,6 +377,11 @@ const BottomToolbar = () => {
         // console.log("Recording stopped at:", new Date().toLocaleTimeString());
         // console.log("Timeline recorded data:", recordedData);
         // console.log("Drum recorded data:", drumRecordedData);
+        if (tickIntervalRef.current) {
+            clearInterval(tickIntervalRef.current);
+            tickIntervalRef.current = null;
+        }
+        stopTick();
     };
 
     const startCountIn = () => {
@@ -354,6 +396,9 @@ const BottomToolbar = () => {
         const interval = setInterval(() => {
           currentBeat++;
           if (currentBeat > totalBeats) {
+            tickIntervalRef.current = setInterval(() => {
+                playTick();
+            }, 600);
             dispatch(setRecording(true));
             clearInterval(interval);
             setIsCounting(false);
@@ -364,6 +409,14 @@ const BottomToolbar = () => {
           }
         }, 600); // adjust for BPM
       };
+
+    const handleMetronomeVolume = (e) => {
+        const newVolume = e.target.value;
+        setVolume1(newVolume);
+        if (audioRef.current) {
+            audioRef.current.volume = newVolume / 100;
+        }
+    };
 
     // // Collect data while recording
     // useEffect(() => {
@@ -474,10 +527,10 @@ const BottomToolbar = () => {
                     </div>
 
                     <div className="flex gap-1 sm:gap-2 lg:gap-3">
-                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2" onClick={handleMoveStart}>
+                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2 cursor-pointer" onClick={handleMoveStart}>
                             <img src={media1} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </div>
-                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2"  onClick={handleMoveBackward}>
+                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2 cursor-pointer"  onClick={handleMoveBackward}>
                             <img src={media2} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </div>
                         <button 
@@ -486,7 +539,7 @@ const BottomToolbar = () => {
                         >
                             <img src={isPlaying ? pauseIcon : media3} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </button>
-                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2"  onClick={handleMoveForward}>
+                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2 cursor-pointer"  onClick={handleMoveForward}>
                             <img src={media4} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </div>
                     </div>
@@ -681,13 +734,16 @@ const BottomToolbar = () => {
                         </div>
                     </div>
 
-                    <div className="" onClick={() => { setIsIconDropdownOpen(!isIconDropdownOpen); setIsOpen2(!isOpen2) }}>
+                    <div className="">
                         <div className="relative flex gap-2 md:gap-3" ref={menuDropdownRef}>
-                            <div className="items-center rounded-full bg-primary-dark dark:bg-primary-light p-[2px] sm:p-1 md:p-2" >
-                                <img src={isDark ? darkStrange : Strange} className="w-[9px] h-[9px] sm:w-[10px] sm:h-[10px] md:w-[12px] md:h-[14px] lg:w-[14px] lg:h-[16px]" />
+                            <div className='flex items-center justify-between rounded-full hover:bg-gray-700'>
+                                <div onClick={() => setIsIconActive(!isIconActive)} className={`items-center rounded-full p-[2px] sm:p-1 md:p-2 cursor-pointer ${isIconActive ? "bg-primary-dark dark:bg-primary-light" : "bg-[#b5b5b5]"}`}>
+                                    <img src={isDark ? darkStrange : Strange} className="w-[9px] h-[9px] sm:w-[10px] sm:h-[10px] md:w-[12px] md:h-[14px] lg:w-[14px] lg:h-[16px]" />
+                                </div>
+                                <div className='mx-2 cursor-pointer' onClick={() => { setIsIconDropdownOpen(!isIconDropdownOpen); setIsOpen2(!isOpen2) }}>
+                                    <IoIosArrowDown className={`text-[#14141499] dark:text-[#FFFFFF99] transition-transform my-auto  duration-300 ${isIconDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
+                                </div>
                             </div>
-                            <IoIosArrowDown className={`text-[#14141499] dark:text-[#FFFFFF99] transition-transform my-auto  duration-300 ${isIconDropdownOpen ? 'rotate-180' : 'rotate-0'}`}
-                            />
 
                             {isOpen2 && (
                                 <div className="absolute -top-[310px] left-[-40px] md600:-top-[380px] md600:left-[25px] lg:-top-[410px] lg:left-[35px] transform -translate-x-1/2 w-40 md600:w-44 lg:w-56 bg-primary-light dark:bg-primary-dark rounded-lg shadow-2xl p-1 z-50">
@@ -723,7 +779,7 @@ const BottomToolbar = () => {
                                                 min="0"
                                                 max="100"
                                                 value={volume1}
-                                                onChange={(e) => setVolume1(e.target.value)}
+                                                onChange={handleMetronomeVolume}
                                                 className="w-full h-1 lg:h-2 bg-[#2B2B2B]  rounded-lg appearance-none cursor-pointer slider outline-none focus:outline-none"
                                                 style={{
                                                     background: isDark

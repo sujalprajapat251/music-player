@@ -76,18 +76,65 @@ const AddNewTrackModel = ({ onClose }) => {
     onClose();
   };
 
+  const getAudioDuration = async (blob) => {
+    const arrayBuffer = await blob.arrayBuffer();
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    return audioBuffer.duration;
+  };
+
+  function generateRandomHexColor() {
+    let randomNumber = Math.floor(Math.random() * 16777215);
+    let hexColor = randomNumber.toString(16);
+    hexColor = hexColor.padStart(6, '0');
+    return `#${hexColor}`;
+  }
+
   // Add audio track
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const newTrack = {
-      id: Date.now(),
-      name: file.name,
-      url: URL.createObjectURL(file),
-      color: getNextTrackColor(), // Use unique color for each new track
-      height: trackHeight,
-    };
-    dispatch(addTrack(newTrack));
+    // const newTrack = {
+    //   id: Date.now(),
+    //   name: file.name,
+    //   url: URL.createObjectURL(file),
+    //   color: getNextTrackColor(), // Use unique color for each new track
+    //   height: trackHeight,
+    // };
+    // dispatch(addTrack(newTrack));
+    // onClose();
+
+    try {
+      const blob = file;
+      const url = URL.createObjectURL(blob);
+      const duration = await getAudioDuration(blob);
+
+      const trackColor = generateRandomHexColor();
+      const newClip = {
+        id: Date.now() + Math.random(),
+        name: file.name,
+        url,
+        duration,
+        trimStart: 0,
+        trimEnd: duration,
+        startTime: 0,
+        color: trackColor,
+      };
+
+      const newTrack = {
+        id: Date.now() + Math.random(),
+        name: file.name,
+        color: trackColor,
+        volume: 80,
+        audioClips: [newClip],
+      };
+
+      dispatch(addTrack(newTrack));
+    } catch (err) {
+      // Failed to import audio file
+    } finally {
+      e.target.value = '';
+    }
     onClose();
   };
 
