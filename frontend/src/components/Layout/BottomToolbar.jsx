@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { RxZoomIn, RxZoomOut } from "react-icons/rx";
 import { HiOutlineSpeakerWave } from "react-icons/hi2";
 import media1 from "../../Images/media1Icon.svg";
@@ -19,7 +19,7 @@ import {
   setRecording, 
   togglePlayPause, 
   setCurrentTime,
-  setAllTracksVolume, 
+  setAllTracksVolume,   
   setMasterVolume, 
   setRecordedData,
   setBPM, 
@@ -29,6 +29,7 @@ import {
   setHighlightedPianoKeys,
   clearKeyScaleSelection
 } from '../../Redux/Slice/studio.slice';
+import { zoomIn, zoomOut, selectGridSettings, resetZoom } from '../../Redux/Slice/grid.slice';
 
 const BottomToolbar = () => {
     const [volume1, setVolume1] = useState(50);
@@ -49,6 +50,7 @@ const BottomToolbar = () => {
     const [isVolumeChanging, setIsVolumeChanging] = useState(false);
     const [isCounting, setIsCounting] = useState(false);
     const [countInNumber, setCountInNumber] = useState(null);
+    const [isZooming, setIsZooming] = useState(false);
 
     const dispatch = useDispatch();
     
@@ -67,6 +69,9 @@ const BottomToolbar = () => {
     // Get key and scale selection from Redux
     const reduxSelectedKey = useSelector((state) => state.studio?.selectedKey || null);
     const reduxSelectedScale = useSelector((state) => state.studio?.selectedScale || null);
+
+    // Get grid settings from Redux
+    const { selectedGrid, zoomLevel } = useSelector(selectGridSettings);
 
     // Sync local state with Redux state
     useEffect(() => {
@@ -88,6 +93,24 @@ const BottomToolbar = () => {
         setTimeout(() => {
             setIsVolumeChanging(false);
         }, 500);
+    };
+
+    // Handle zoom in with visual feedback
+    const handleZoomIn = () => {
+        setIsZooming(true);
+        dispatch(zoomIn());
+        setTimeout(() => {
+            setIsZooming(false);
+        }, 300);
+    };
+
+    // Handle zoom out with visual feedback
+    const handleZoomOut = () => {
+        setIsZooming(true);
+        dispatch(zoomOut());
+        setTimeout(() => {
+            setIsZooming(false);
+        }, 300);
     };
 
     // Format time for display
@@ -141,6 +164,18 @@ const BottomToolbar = () => {
                     event.preventDefault();
                     handlePlayPause();
                     break;
+                case '+':
+                    if (event.ctrlKey || event.metaKey) {
+                        event.preventDefault();
+                        handleZoomIn();
+                    }
+                    break;
+                case '-':
+                    if (event.ctrlKey || event.metaKey) {
+                        event.preventDefault();
+                        handleZoomOut();
+                    }
+                    break;
                 default:
                     break;
             }
@@ -162,12 +197,17 @@ const BottomToolbar = () => {
     }, []);
 
     const handleIncrement = () => {
-        setTempo(prev => Math.min(prev + 1, 200)); // Max 200 BPM
+        setTempo(prev => Math.min(prev + 1, 300));
     };
 
     const handleDecrement = () => {
-        setTempo(prev => Math.max(prev - 1, 60)); // Min 60 BPM
+        setTempo(prev => Math.max(prev - 1, 60)); 
     };
+
+    const handleRandomTempo = () => {
+        const randomTempo = Math.floor(Math.random() * (300 - 60 + 1)) + 60;
+        setTempo(randomTempo);
+    }
 
     const handleApply2 = () => {
         setAppliedTempo(tempo);
@@ -175,9 +215,15 @@ const BottomToolbar = () => {
         dispatch(setBPM(tempo));
     };
 
+    // Calculate tempo ratio for display
+    const tempoRatio = useMemo(() => {
+        const originalBPM = 120;
+        return tempo / originalBPM;
+    }, [tempo]);
+
     const handleTempoInputChange = (e) => {
         const value = parseInt(e.target.value) || 60;
-        setTempo(Math.min(Math.max(value, 60), 200));
+        setTempo(Math.min(Math.max(value, 60), 300));
     };
 
     const keys = ["C", "D", "E", "F", "G", "A", "B"];
@@ -474,19 +520,20 @@ const BottomToolbar = () => {
                     </div>
 
                     <div className="flex gap-1 sm:gap-2 lg:gap-3">
-                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2" onClick={handleMoveStart}>
+                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2 hover:bg-[#1414142A] dark:hover:bg-[#2F2F2F] cursor-pointer" onClick={handleMoveStart} title='Go to start'>
                             <img src={media1} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </div>
-                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2"  onClick={handleMoveBackward}>
+                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2 hover:bg-[#1414142A] dark:hover:bg-[#2F2F2F] cursor-pointer"  onClick={handleMoveBackward} title='Rewind [Arrow left]'>
                             <img src={media2} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </div>
                         <button 
                             onClick={handlePlayPause}
                             className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2 cursor-pointer hover:bg-[#1414142A] dark:hover:bg-[#2F2F2F] transition-colors"
+                            title='Play / Pause [Space]'
                         >
                             <img src={isPlaying ? pauseIcon : media3} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </button>
-                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2"  onClick={handleMoveForward}>
+                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2 hover:bg-[#1414142A] dark:hover:bg-[#2F2F2F] cursor-pointer"  onClick={handleMoveForward} title='Fast forward [Arrow right]'>
                             <img src={media4} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </div>
                     </div>
@@ -623,7 +670,7 @@ const BottomToolbar = () => {
                                     {/* Circular Metronome Button */}
                                     <div className="flex justify-center mb-2 md600:mb-3">
                                         <button
-                                            onClick={handleIncrement}
+                                            onClick={handleRandomTempo}
                                         >
                                             {/* Metronome Icon */}
                                             <Tempobutton className=' w-10 h-10 md600:w-14 md600:h-14 lg:w-16 lg:h-16 text-secondary-light dark:text-secondary-dark' />
@@ -653,7 +700,7 @@ const BottomToolbar = () => {
                                                 value={tempo}
                                                 onChange={handleTempoInputChange}
                                                 min="60"
-                                                max="200"
+                                                max="300"
                                                 className="bg-[#E5E5E5] dark:bg-[#262529] text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px] font-light text-center rounded-lg w-12 md600:w-16 py-1 md600:py-2 outline-none border-none"
                                             />
                                         </div>
@@ -767,8 +814,16 @@ const BottomToolbar = () => {
                 </div>
 
                 <div className='flex sm:gap-2 md:gap-3 lg:gap-5 2xl:gap-7 items-center '>
-                    <RxZoomIn className='text-[#14141499] dark:text-[#FFFFFF99] cursor-pointer  md:text-[20px] lg:text-[24px] hidden md600:block' />
-                    <RxZoomOut className='text-[#14141499] dark:text-[#FFFFFF99] cursor-pointer  md:text-[20px] lg:text-[24px] hidden md600:block' />
+                    <RxZoomIn 
+                        className={`text-[#14141499] dark:text-[#FFFFFF99] cursor-pointer md:text-[20px] lg:text-[24px] hidden md600:block hover:text-[#141414] dark:hover:text-[#FFFFFF] transition-colors ${isZooming ? 'text-blue-500' : ''}`}
+                        onClick={handleZoomIn}
+                        title="Zoom In (Ctrl + +)"
+                    />
+                    <RxZoomOut 
+                        className={`text-[#14141499] dark:text-[#FFFFFF99] cursor-pointer md:text-[20px] lg:text-[24px] hidden md600:block hover:text-[#141414] dark:hover:text-[#FFFFFF] transition-colors ${isZooming ? 'text-blue-500' : ''}`}
+                        onClick={handleZoomOut}
+                        title="Zoom Out (Ctrl + -)"
+                    />
                 </div>
 
 
@@ -800,5 +855,3 @@ const BottomToolbar = () => {
 }
 
 export default BottomToolbar
-
-

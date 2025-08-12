@@ -3,7 +3,7 @@ import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
 import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel } from "../Redux/Slice/studio.slice";
-import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM } from "../Redux/Slice/grid.slice";
+import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM, zoomIn, zoomOut, resetZoom } from "../Redux/Slice/grid.slice";
 import { setAudioDuration as setLoopAudioDuration, toggleLoopEnabled, setLoopEnd, setLoopRange, selectIsLoopEnabled } from "../Redux/Slice/loop.slice";
 import { getGridSpacing, getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
 import { IMAGE_URL } from "../Utils/baseUrl";
@@ -84,8 +84,6 @@ const Timeline = () => {
   const [resizeModal, setResizeModal] = useState(false);
   const [volumeIndicator, setVolumeIndicator] = useState({ show: false, volume: 0, trackName: '' });
  
-
-
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
@@ -107,13 +105,10 @@ const Timeline = () => {
     sectionId: null
   });
 
-
-
   const tracks = useSelector((state) => state.studio?.tracks || []);
   const trackHeight = useSelector((state) => state.studio?.trackHeight || 100);
   const recordedData = useSelector((state) => state.studio?.recordedData || []);
   const isRecording = useSelector((state) => state.studio?.isRecording || false);
-
 
   const sidebarScrollOffset = useSelector((state) => state.studio?.sidebarScrollOffset || 0);
   const soloTrackId = useSelector((state) => state.studio.soloTrackId);
@@ -121,7 +116,10 @@ const Timeline = () => {
   // Use custom hook for section labels management
   const { sectionLabels, resizeSection } = useSectionLabels();
 
-  const timelineWidthPerSecond = 100;
+  // Get zoom level from Redux and calculate timeline width
+  const { zoomLevel } = useSelector(selectGridSettings);
+  const baseTimelineWidthPerSecond = 100; // Base width per second
+  const timelineWidthPerSecond = baseTimelineWidthPerSecond * zoomLevel; // Apply zoom level
 
   // Mute functionality
 
@@ -156,6 +154,10 @@ const Timeline = () => {
 
   const ORIGINAL_BPM = 120;
 
+  // Add tempo ratio calculation
+  const tempoRatio = useMemo(() => {
+    return bpm / ORIGINAL_BPM;
+  }, [bpm]);
 
   const pianoRecording = useSelector((state) => state.studio.pianoRecord);
   const currentTrackId = useSelector((state) => state.studio.currentTrackId);
@@ -215,8 +217,6 @@ const Timeline = () => {
   };
 
   const getTrackType = useSelector((state) => state.studio.newtrackType);
-  console.log("=======0",getTrackType)
-
 
   // Mute functionality
 
@@ -393,6 +393,9 @@ const Timeline = () => {
       const combinedVolumeDb = masterVolumeDb + trackVolumeDb;
       
       player.volume.value = combinedVolumeDb;
+
+      // Set playback rate based on tempo
+      player.playbackRate = tempoRatio;
   
       const clipDuration = clip.duration || audioBuffer.duration;
       const trimStart = clip.trimStart || 0;
@@ -408,7 +411,8 @@ const Timeline = () => {
           duration: clipDuration,
           trimStart: trimStart,
           trimEnd: trimEnd,
-          originalDuration: audioBuffer.duration
+          originalDuration: audioBuffer.duration,
+          playbackRate: tempoRatio // Store the playback rate
         };
         return [...filtered, playerData];
       });
@@ -421,7 +425,7 @@ const Timeline = () => {
     } catch (error) {
       console.error("Error loading audio:", error);
     }
-  }, [masterVolume, tracks, players, getAudioContext]);
+  }, [masterVolume, tracks, players, getAudioContext, tempoRatio]);
 
   // Fixed seek logic to respect trim boundaries
   const movePlayhead = (e) => {
@@ -512,8 +516,9 @@ const Timeline = () => {
       const updateLoop = () => {
         if (!isPlaying) return;
   
+        // Adjust elapsed time based on tempo ratio
         const elapsedTime = (Date.now() - playbackStartRef.current.systemTime) / 1000;
-        let newTime = playbackStartRef.current.audioTime + elapsedTime;
+        let newTime = playbackStartRef.current.audioTime + (elapsedTime * tempoRatio);
   
         // Handle looping
         if (isLoopEnabled && newTime >= loopEnd) {
@@ -606,7 +611,7 @@ const Timeline = () => {
               }
   
               // Start clip if playhead enters the trimmed region
-              const previousTime = playbackStartRef.current.audioTime + ((elapsedTime - 1 / 60));
+              const previousTime = playbackStartRef.current.audioTime + ((elapsedTime - 1 / 60) * tempoRatio);
               if (previousTime < trimmedClipStart &&
                 newTime >= trimmedClipStart &&
                 newTime < trimmedClipEnd &&
@@ -639,7 +644,7 @@ const Timeline = () => {
         cancelAnimationFrame(localAnimationId);
       }
     };
-  }, [isPlaying, audioDuration, players, isLoopEnabled, loopStart, loopEnd]);
+  }, [isPlaying, audioDuration, players, isLoopEnabled, loopStart, loopEnd, tempoRatio]);
 
   const debouncedVolumeUpdate = useMemo(() => {
     const updateVolumes = () => {
@@ -678,15 +683,17 @@ const Timeline = () => {
 
     const svg = d3.select(svgRef.current);
     const svgNode = svgRef.current;
-    const width = svgNode.clientWidth || 600;
+    // Use the zoomed timeline width instead of container width
+    const timelineWidth = Math.max(audioDuration, 12) * timelineWidthPerSecond;
     const axisY = 80;
     const duration = audioDuration;
 
     svg.selectAll("*").remove();
 
-    if (width <= 0 || duration <= 0) return;
+    if (timelineWidth <= 0 || duration <= 0) return;
 
-    const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
+    // Use the zoomed timeline width for the scale
+    const xScale = d3.scaleLinear().domain([0, duration]).range([0, timelineWidth]);
 
     // Use time signature-aware grid spacing
     const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
@@ -794,15 +801,15 @@ const Timeline = () => {
       .append("line")
       .attr("x1", 0)
       .attr("y1", axisY)
-      .attr("x2", width)
+      .attr("x2", timelineWidth)
       .attr("y2", axisY)
       .attr("stroke", "white")
       .attr("stroke-width", 1);
-  }, [audioDuration, selectedGrid, selectedTime, selectedRuler]);
+  }, [audioDuration, selectedGrid, selectedTime, selectedRuler, timelineWidthPerSecond]);
 
   useEffect(() => {
     renderRuler();
-  }, [renderRuler, audioDuration, selectedGrid, selectedTime, selectedRuler]);
+  }, [renderRuler, audioDuration, selectedGrid, selectedTime, selectedRuler, timelineWidthPerSecond, zoomLevel]);
 
   // Sync local state with Redux state
   useEffect(() => {
@@ -867,7 +874,7 @@ const Timeline = () => {
     };
 
     handleReduxPlayPause();
-  }, [isPlaying, currentTime, players]);
+  }, [isPlaying, currentTime, players, tempoRatio]);
 
   // Update loop end when audio duration changes
   useEffect(() => {
@@ -923,6 +930,21 @@ const Timeline = () => {
   const handleMouseUp = useCallback(() => {
     isDragging.current = false;
   }, []);
+
+  // Handle wheel zoom
+  const handleWheel = useCallback((e) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault(); // Prevent default browser zoom
+      
+      if (e.deltaY < 0) {
+        // Scroll up - zoom in
+        dispatch(zoomIn());
+      } else {
+        // Scroll down - zoom out
+        dispatch(zoomOut());
+      }
+    }
+  }, [dispatch]);
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
@@ -1343,11 +1365,12 @@ const Timeline = () => {
   }
 
   const gridLines = [];
-  const width = timelineContainerRef.current.clientWidth;
+  // Use the actual timeline width that changes with zoom, not the container width
+  const timelineWidth = Math.max(audioDuration, 12) * timelineWidthPerSecond;
   const duration = audioDuration;
 
   // Validate dimensions
-  if (width <= 0 || duration <= 0) return [];
+  if (timelineWidth <= 0 || duration <= 0) return [];
 
   // Get grid spacing with proper error handling
   let gridSpacing;
@@ -1360,7 +1383,8 @@ const Timeline = () => {
 
   if (gridSpacing <= 0) return [];
 
-  const xScale = d3.scaleLinear().domain([0, duration]).range([0, width]);
+  // Use the zoomed timeline width for the scale
+  const xScale = d3.scaleLinear().domain([0, duration]).range([0, timelineWidth]);
   const totalTracksHeight = trackHeight * tracks.length;
 
   // Calculate grid parameters with error handling
@@ -1423,8 +1447,8 @@ const Timeline = () => {
       continue; // Skip lines that don't match any category
     }
 
-    // Only render lines within visible bounds
-    if (x >= -lineStyle.width && x <= width + lineStyle.width) {
+    // Only render lines within visible bounds (use timeline width)
+    if (x >= -lineStyle.width && x <= timelineWidth + lineStyle.width) {
       gridLines.push(
         <div
           key={`grid-${time.toFixed(3)}`} // Use time-based key for consistency
@@ -1454,7 +1478,8 @@ const Timeline = () => {
   selectedTime, 
   tracks.length, 
   trackHeight,
-  timelineContainerRef.current?.clientWidth // Track width changes
+  timelineWidthPerSecond, // Add zoom-dependent timeline width
+  zoomLevel // Add zoom level dependency
 ]);
 
 
@@ -1552,6 +1577,23 @@ const Timeline = () => {
     }
   }, [isPlaying, currentTime, tracks]);
 
+  // Add useEffect to update playback rates when BPM changes
+  // useEffect(() => {
+  //   players.forEach(playerObj => {
+  //     if (playerObj.player && typeof playerObj.player.playbackRate !== 'undefined') {
+  //       playerObj.player.playbackRate = tempoRatio;
+  //     }
+  //   });
+
+  //   // Update stored playback rates in players state
+  //   setPlayers((prev) => {
+  //     return prev.map(playerObj => ({
+  //       ...playerObj,
+  //       playbackRate: tempoRatio
+  //     }));
+  //   });
+  // }, [tempoRatio, players]);
+
   return (
     <>
       <div
@@ -1575,10 +1617,12 @@ const Timeline = () => {
               minWidth: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`,
               position: "relative",
               height: "100vh",
+              transition: "min-width 0.2s ease-in-out", // Smooth transition for zoom
             }}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
+            onWheel={handleWheel}
           >
             {/* Timeline Header */}
             <div
@@ -1590,9 +1634,9 @@ const Timeline = () => {
             >
               <svg
                 ref={svgRef}
-                width="100%"
+                width={`${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`}
                 height="100%"
-                style={{ color: "white", width: "100%", background: "#141414" }}
+                style={{ color: "white", background: "#141414" }}
               />
             </div>
 
@@ -1661,7 +1705,6 @@ const Timeline = () => {
                 )}
               </div>
             )}
-            {console.log("=-=-=-=-=-=-=-=-",drumRecordedData)}
 
             {/* Drum Recorded Data Display */}
             {drumRecordedData && drumRecordedData.length > 0 && (
@@ -1870,8 +1913,6 @@ const Timeline = () => {
           </div>
         </div>
 
-
-
         {/* Top right controls */}
         <div className="flex gap-2 absolute top-[60px] right-[10px] -translate-x-1/2 bg-[#141414] z-30">
           <div className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full">
@@ -1895,7 +1936,7 @@ const Timeline = () => {
               </div>
             )}
           </div>
-          <div className={`w-[30px] h-[30px] flex items-center justify-center rounded-full ${isLoopEnabled ? 'bg-[#FF8014]' : 'hover:bg-[#1F1F1F]'}`} onClick={() => selectIsLoopEnabled(!isLoopEnabled)}>
+          <div className={`w-[30px] h-[30px] flex items-center justify-center rounded-full ${isLoopEnabled ? 'bg-[#FF8014]' : 'hover:bg-[#1F1F1F]'}`} onClick={() => dispatch(toggleLoopEnabled())}>
             <img src={reverceIcon} alt="Reverse" />
           </div>
         </div>

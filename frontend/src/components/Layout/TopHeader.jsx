@@ -714,11 +714,11 @@ const TopHeader = () => {
                         <IoIosShareAlt className="text-secondary-dark dark:text-secondary-light xl:text-[18px]" />
                         <p className="text-secondary-dark dark:text-secondary-light text-[12px] hidden md:block">Share</p>
                     </div>
-
-                    <div className="text-center hidden xl:block">
+                                
+                    <Link to='/project' className="text-center hidden xl:block">
                         <RxExit className='text-secondary-light dark:text-secondary-dark xl:text-[14px]' />
                         <p className="text-secondary-light dark:text-secondary-dark text-[10px]">Exit</p>
-                    </div>
+                    </Link>
                 </div>
             </div>
 

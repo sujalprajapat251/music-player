@@ -5,6 +5,7 @@ const initialState = {
   selectedGrid: "1/1",
   selectedTime: "3/4",
   selectedRuler: "Beats",
+  zoomLevel: 1, 
 };
 
 const gridSlice = createSlice({
@@ -26,6 +27,19 @@ const gridSlice = createSlice({
       if (time !== undefined) state.selectedTime = time;
       if (ruler !== undefined) state.selectedRuler = ruler;
     },
+    // Modified zoom actions to change timeline width
+    zoomIn: (state) => {
+      state.zoomLevel = Math.min(state.zoomLevel + 0.25, 7);
+    },
+    zoomOut: (state) => {
+      state.zoomLevel = Math.max(state.zoomLevel - 0.25, 0.25); 
+    },
+    setZoomLevel: (state, action) => {
+      state.zoomLevel = Math.max(0.25, Math.min(7, action.payload)); 
+    },
+    resetZoom: (state) => {
+      state.zoomLevel = 1; 
+    },
   },
 });
 
@@ -34,7 +48,11 @@ export const {
   setSelectedGrid, 
   setSelectedTime, 
   setSelectedRuler,
-  updateGridSettings 
+  updateGridSettings,
+  zoomIn,
+  zoomOut,
+  setZoomLevel,
+  resetZoom
 } = gridSlice.actions;
 
 // Export selectors
@@ -42,6 +60,7 @@ export const selectGridSettings = (state) => ({
   selectedGrid: state.grid.selectedGrid,
   selectedTime: state.grid.selectedTime,
   selectedRuler: state.grid.selectedRuler,
+  zoomLevel: state.grid.zoomLevel,
 });
 
 export default gridSlice.reducer; 
