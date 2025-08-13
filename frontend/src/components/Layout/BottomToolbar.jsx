@@ -39,7 +39,7 @@ const BottomToolbar = () => {
     const [isOpen1, setIsOpen1] = useState(false);
     const [isOpen2, setIsOpen2] = useState(false);
     const [selectedMode, setSelectedMode] = useState("");
-    const [selectedKey, setSelectedKey] = useState("");
+    const [selectedKey, setSelectedKeyLocal] = useState("");
     const keyDropdownRef = useRef(null);
     const tempoDropdownRef = useRef(null);
     const menuDropdownRef = useRef(null);
@@ -62,6 +62,10 @@ const BottomToolbar = () => {
     const audioDuration = useSelector((state) => state.studio?.audioDuration || 150);
     const masterVolume = useSelector((state) => state.studio?.masterVolume || 80);
     const tracks = useSelector((state) => state.studio?.tracks || []);
+    const isRecording = useSelector((state) => state.studio?.isRecording || false);
+    const recordedData = useSelector((state) => state.studio?.recordedData || []);
+    const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
+    const pianoRecord = useSelector((state) => state.studio?.pianoRecord || []);
     
     // Get key and scale selection from Redux
     const reduxSelectedKey = useSelector((state) => state.studio?.selectedKey || null);
@@ -295,8 +299,10 @@ const BottomToolbar = () => {
     };
 
     const { isDark } = useTheme();
+    const [recordingStartTime, setRecordingStartTime] = useState(null);
 
-    const [isRecording, setIsRecording] = useState(false);
+
+    const [isRecording1, setIsRecording1] = useState(false);
 
     const selectedSound = useSelector(state => state.studio.selectedSound);
     const audioRef = useRef(null);
@@ -346,12 +352,12 @@ const BottomToolbar = () => {
         // console.log("Recording started at:", new Date().toLocaleTimeString());
     };
     const hendleRecord = () => {
-        setIsRecording(true);
+        setIsRecording1(true);
         dispatch(setRecording(true));
     }
 
     const hendleStopRecord = () => {
-        setIsRecording(false);
+        setIsRecording1(false);
         dispatch(setRecording(false));
         handlePlayPause();
         // console.log("Recording stopped at:", new Date().toLocaleTimeString());
