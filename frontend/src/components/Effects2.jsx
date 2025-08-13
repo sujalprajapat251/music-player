@@ -12,7 +12,7 @@ import piano from "../Images/piano.svg";
 import Drumkit from "../Images/Drumgroup.svg";
 import { useTheme } from '../Utils/ThemeContext';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsOffcanvas, showEffectsTwo } from '../Redux/Slice/effects.slice';
+import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
 import audioEffectsPlayer from '../components/AudioEffectsPlayer';
 
 // Import effect images
@@ -373,7 +373,7 @@ const Effects2 = () => {
 
     // Get effects state from Redux
     const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas } = useSelector((state) => state.effects);
-    // console.log("activeEffects", activeEffects, "showEffectsLibrary", showEffectsLibrary,);
+    console.log("activeEffects", activeEffects, "showEffectsLibrary", showEffectsLibrary,);
 
 
     // Local state for effects library
@@ -586,8 +586,8 @@ const Effects2 = () => {
 
 
             <div
-                className="z-40 w-full h-full transition-transform"
-                tabIndex="-1"
+                class="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[270px] sm:bottom-[337px] md600:bottom-[363px] md:bottom-[450px]  lg:bottom-[483px] xl:bottom-[492px] 2xl:bottom-[516px]"
+                tabindex="-1"
                 aria-labelledby="drawer-swipe-label"
                 onDragOver={(e) => {
                     e.preventDefault(); e.dataTransfer.dropEffect = 'copy';
@@ -613,19 +613,17 @@ const Effects2 = () => {
                 }}
             >
                 <div className="  border-b border-[#FFFFFF1A] h-full">
-                    <div className='flex p-3 bg-[#1F1F1F]'>
-                        <div className="w-[50px]  flex items-center px-1md600:px-2">
-                            <div>
-                                <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => {dispatch(setShowEffectsOffcanvas(false)); dispatch(setShowEffectsOffcanvas(false)); dispatch(showEffectsTwo(false))}} />
-                            </div>
+                    <div className=" bg-[#1F1F1F] flex items-center px-1md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
+                        <div>
+                            <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => setShowOffcanvas(false)} />
                         </div>
-                        <div className="w-full flex space-x-2 sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center">
-                            {['Instruments', 'Effects'].map((tab) => (
-                                <button key={tab} onClick={() => setActiveTab(tab)} className={`text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white' : 'text-gray-400 hover:text-white'}`}>
-                                    {tab}
-                                </button>
-                            ))}
-                        </div>
+                    </div>
+                    <div className=" bg-[#1F1F1F] flex space-x-2 pb-3 sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3">
+                        {['Instruments', 'Effects'].map((tab) => (
+                            <button key={tab} onClick={() => setActiveTab(tab)} className={`text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white' : 'text-gray-400 hover:text-white'}`}>
+                                {tab}
+                            </button>
+                        ))}
                     </div>
 
                     {/* Instrument Selector and Audio Knobs - Only show when Instruments tab is active */}
@@ -689,7 +687,7 @@ const Effects2 = () => {
                                     </div>
                                 </div>
 
-                                <div className='bg-[#141414] py-1 sm:py-3 md:py-4 lg:py-5 max-w-full md600:w-full md600:justify-center flex items-center overflow-auto'>
+                                <div className='bg-[#141414] mx-2 py-1 sm:py-3 md:py-4 lg:py-5 max-w-full md600:w-full md600:justify-center flex items-center overflow-auto'>
                                     <div className="flex gap-1 sm:gap-3 md:gap-4 lg:gap-5 justify-center mx-2 sm:mx-3">
                                         <div className="pe-2 sm:pe-3 md:pe-4 lg:pe-5 border-r border-[#FFFFFF99] max-h-[130px] sm:max-h-[180px] md:max-h-[247px] lg:max-h-[245px] xl:max-h-[252px] overflow-y-auto w-full">
                                             {effects?.map((effect) => (
@@ -869,7 +867,7 @@ const Effects2 = () => {
                                     }
                                 }}
                             >
-                                <div className="flex items-center justify-center p-2 sm:p-4 min-w-max">
+                                <div className="flex items-center justify-center p-2 sm:p-4 min-w-max bg-black">
                                     <div className="flex gap-2 sm:gap-4 min-w-max">
                                         {activeEffects.map((effect) => (
                                             <div key={effect.instanceId} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-white flex flex-col shrink-0">

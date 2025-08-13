@@ -83,7 +83,8 @@ const Effects = () => {
     const [isPlaying, setIsPlaying] = useState(false);
     const category = useSelector((state) => state.category?.category || []);
 
-    const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas, showEffectsTwoState } = useSelector((state) => state.effects);
+    const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas, showEffectsTwo, showEffectsTwoState } = useSelector((state) => state.effects);
+    console.log("hhhh", showEffectsTwoState);
 
     useEffect(() => {
         dispatch(getAllCategory());
