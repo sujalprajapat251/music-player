@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
-import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel } from "../Redux/Slice/studio.slice";
-import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM, zoomIn, zoomOut, resetZoom } from "../Redux/Slice/grid.slice";
+import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio } from "../Redux/Slice/studio.slice";
+import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM,zoomIn, zoomOut, resetZoom } from "../Redux/Slice/grid.slice";
 import { setAudioDuration as setLoopAudioDuration, toggleLoopEnabled, setLoopEnd, setLoopRange, selectIsLoopEnabled } from "../Redux/Slice/loop.slice";
 import { getGridSpacing, getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
 import { IMAGE_URL } from "../Utils/baseUrl";
@@ -32,6 +32,7 @@ import TimelineTrack from "./TimelineTrack";
 import ResizableSectionLabel from "./ResizableSectionLabel";
 import { useSectionLabels } from "../hooks/useSectionLabels";
 import { toggleEffectsOffcanvas } from "../Redux/Slice/effects.slice";
+import EditTrackNameModal from "./EditTrackNameModal";
 
 const Timeline = () => {
   // Define drum machine types for drum recording display
@@ -83,7 +84,8 @@ const Timeline = () => {
   const [resizeValue, setResizeValue] = useState("");
   const [resizeModal, setResizeModal] = useState(false);
   const [volumeIndicator, setVolumeIndicator] = useState({ show: false, volume: 0, trackName: '' });
- 
+  const [edirNameModel, setEdirNameModel] = useState(false);
+
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
@@ -1147,6 +1149,10 @@ const Timeline = () => {
         case 'delete':
           dispatch(removeAudioClip({ trackId, clipId }));
           break;
+        case 'editName':
+          setEdirNameModel(true);
+          // Implement edit name functionality
+          break;
         default:
 
           break;
@@ -1577,25 +1583,17 @@ const Timeline = () => {
     }
   }, [isPlaying, currentTime, tracks]);
 
-  // Add useEffect to update playback rates when BPM changes
-  // useEffect(() => {
-  //   players.forEach(playerObj => {
-  //     if (playerObj.player && typeof playerObj.player.playbackRate !== 'undefined') {
-  //       playerObj.player.playbackRate = tempoRatio;
-  //     }
-  //   });
-
-  //   // Update stored playback rates in players state
-  //   setPlayers((prev) => {
-  //     return prev.map(playerObj => ({
-  //       ...playerObj,
-  //       playbackRate: tempoRatio
-  //     }));
-  //   });
-  // }, [tempoRatio, players]);
+  const handleSave = (name) => {
+    console.log("get name ::: > ", name);
+  };
 
   return (
     <>
+      <EditTrackNameModal
+        isOpen={edirNameModel}
+        onClose={() => setEdirNameModel(false)}
+        onSave={handleSave}
+      />
       <div
         style={{
           padding: "0",
@@ -1978,10 +1976,39 @@ const Timeline = () => {
         type="file"
         ref={fileInputRef}
         style={{ display: "none" }}
-        onChange={(e) => {
+        onChange={async (e) => {
           const file = e.target.files[0];
-          if (file) {
-            // handle file here
+          if (!file) return;
+          try {
+            const blob = file;
+            const url = URL.createObjectURL(blob);
+            const duration = await getAudioDuration(blob);
+
+            const trackColor = generateRandomHexColor();
+            const newClip = {
+              id: Date.now() + Math.random(),
+              name: file.name,
+              url,
+              duration,
+              trimStart: 0,
+              trimEnd: duration,
+              startTime: 0,
+              color: trackColor,
+            };
+
+            const newTrack = {
+              id: Date.now() + Math.random(),
+              name: file.name,
+              color: trackColor,
+              volume: 80,
+              audioClips: [newClip],
+            };
+
+            dispatch(addTrack(newTrack));
+          } catch (err) {
+            // Failed to import audio file
+          } finally {
+            e.target.value = '';
           }
         }}
       />

@@ -141,7 +141,7 @@ const Sidebar2 = () => {
                           }}
                         />
                       ) : (
-                        <span className={`font-bold text-sm truncate ${track.frozen ? 'text-[#4CAF50]' : 'text-white'
+                        <span className={`font-bold text-sm truncate flex-[0_0_auto] overflow-hidden whitespace-normal break-all w-[120px] [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical] ${track.frozen ? 'text-[#4CAF50]' : 'text-white'
                           }`}>
                           {track.name || `Track ${idx + 1}`}
                         </span>

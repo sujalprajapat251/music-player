@@ -39,6 +39,7 @@ const initialState = {
   selectedKey: null,
   selectedScale: null,
   highlightedPianoKeys: [], // Array of MIDI note numbers to highlight
+  selectedSound: 'Click',
 };
 
 const studioSlice = createSlice({
@@ -379,7 +380,9 @@ const studioSlice = createSlice({
       state.selectedScale = null;
       state.highlightedPianoKeys = [];
     },
-    
+    setMetronomeSound(state, action) {
+      state.selectedSound = action.payload;
+    },
   },
 });
 
@@ -436,6 +439,7 @@ export const {
   setSelectedScale,
   setHighlightedPianoKeys,
   clearKeyScaleSelection,
+  setMetronomeSound
 } = studioSlice.actions;
 
 export default studioSlice.reducer;
