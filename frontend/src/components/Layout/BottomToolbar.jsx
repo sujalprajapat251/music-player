@@ -244,14 +244,76 @@ const BottomToolbar = () => {
 
     const handleKeySelect = (key) => {
         setSelectedKey(key);
+        setSelectedKeyLocal(key);
+        dispatch(setSelectedKey(key));
+    };
+
+    const handleScaleSelect = (scale) => {
+        setSelectedMode(scale);
+        dispatch(setSelectedScale(scale));
+    };
+
+    const calculateHighlightedKeys = (key, scale) => {
+        if (!key || !scale) {
+            console.warn('❌ Missing key or scale for calculation');
+            return [];
+        }
+        
+        // Define the scale patterns (intervals from root note)
+        const scalePatterns = {
+            'Major': [0, 2, 4, 5, 7, 9, 11], // Whole, Whole, Half, Whole, Whole, Whole, Half
+            'Minor': [0, 2, 3, 5, 7, 8, 10]  // Whole, Half, Whole, Whole, Half, Whole, Whole
+        };
+        
+        // Define the note values (C=0, C#=1, D=2, D#=3, E=4, F=5, F#=6, G=7, G#=8, A=9, A#=10, B=11)
+        const noteValues = {
+            'C': 0, 'C#': 1, 'D': 2, 'Dᵇ': 1, 'D#': 3, 'E': 4, 'Eᵇ': 3, 'F': 5, 'F#': 6, 
+            'G': 7, 'G#': 8, 'A': 9, 'Aᵇ': 8, 'B': 11, 'Bᵇ': 10
+        };
+        
+        const rootNote = noteValues[key];
+        if (rootNote === undefined) {
+            console.warn(`❌ Unknown key: ${key}`);
+            return [];
+        }
+        
+        const pattern = scalePatterns[scale];
+        if (!pattern) {
+            console.warn(`❌ Unknown scale: ${scale}`);
+            return [];
+        }
+        
+        // Calculate highlighted keys across multiple octaves (C0 to C8)
+        const highlightedKeys = [];
+        const startOctave = 0;
+        const endOctave = 8;
+        
+        for (let octave = startOctave; octave <= endOctave; octave++) {
+            pattern.forEach(interval => {
+                const midiNote = (octave * 12) + rootNote + interval;
+                // Ensure we're within valid MIDI range (0-127)
+                if (midiNote >= 0 && midiNote <= 127) {
+                    highlightedKeys.push(midiNote);
+                }
+            });
+        }
+        
+        // Sort keys for better performance
+        highlightedKeys.sort((a, b) => a - b);
+        return highlightedKeys;
     };
 
     const handleApply = () => {
         if (selectedKey) {
+            const highlightedKeys = calculateHighlightedKeys(selectedKey, selectedMode);
             setAppliedSelection({
-                key: selectedKey
-                // mode: selectedMode
+                key: selectedKey,
+                scale: selectedMode
             });
+            // Dispatch to Redux
+            dispatch(setSelectedKey(selectedKey));
+            dispatch(setSelectedScale(selectedMode));
+            dispatch(setHighlightedPianoKeys(highlightedKeys));
             setIsOpen(false); // Close the dropdown after applying
         }
     };
@@ -259,6 +321,8 @@ const BottomToolbar = () => {
     const handleClear = () => {
         setSelectedKey(null);
         setSelectedMode(""); // or whatever your default is
+        setSelectedKeyLocal(null);
+        dispatch(clearKeyScaleSelection());
         setAppliedSelection(null); // Clear the applied selection too
     };
 
@@ -458,20 +522,42 @@ const BottomToolbar = () => {
                         />
                     </div>
                     <p className="text-secondary-light dark:text-secondary-dark sm:text-[10px] md:text-[16px] lg:text-[18px] self-center hidden sm:block w-[60px]">{formatTime(currentTime)}</p>
-                    {isRecording ? (<button onClick={hendleStopRecord} className="cursor-pointer">
-                        
-                        <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
+                    <div className="relative flex flex-col items-center">
+                        {isCounting && (
+                            <div className="absolute top-[-100px] flex flex-col items-center bg-[#1f1f1f] text-white px-8 py-5 rounded-lg shadow-lg">
+                                <div className="text-lg font-bold">{countInNumber}</div>
+                                <div className="flex gap-2 mt-2">
+                                    {[1, 2, 3, 4].map((dot) => (
+                                    <span
+                                        key={dot}
+                                        className={`w-3 h-3 rounded-full transform transition-all duration-300 ease-in-out ${
+                                        dot === countInNumber ? "bg-pink-500 scale-[1.5]" : "bg-pink-900 scale-100"
+                                        }`}
+                                    ></span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        {isRecording ? (<button onClick={hendleStopRecord} className="cursor-pointer">                        
+                            <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
                                 <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[16px]"><FaStop /></p>
                             </div>
-                    </button>
-                    ) :
-                        (<button onClick={hendleRecord} className="cursor-pointer">
-                            <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
-                                <p className="rounded-full p-[3px] sm:p-[3px] lg:p-2 bg-[#FF6767]"></p>
-                                <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px]">Rec</p>
-                            </div>
-                        </button>)
-                    }
+                            </button>
+                        ) :
+                        (<button onClick={() => {
+                                if (!tracks || tracks.length === 0) {
+                                  alert("Please Add New Track !");
+                                } else {
+                                  handleStartRecord();
+                                }
+                              }} className="cursor-pointer">
+                                <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
+                                    <p className="rounded-full p-[3px] sm:p-[3px] lg:p-2 bg-[#FF6767]"></p>
+                                    <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px]">Rec</p>
+                                </div>
+                            </button>
+                        )}
+                    </div>
                     <div className="flex gap-1 sm:gap-2 lg:gap-3">
                         <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2 hover:bg-[#1414142A] dark:hover:bg-[#2F2F2F] cursor-pointer" onClick={handleMoveStart} title='Go to start'>
                             <img src={media1} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
@@ -500,7 +586,7 @@ const BottomToolbar = () => {
                             >
                                 <p className="sm:text-[8px] lg:text-[12px] text-[#14141499] dark:text-[#FFFFFF99] hidden sm:block">
                                     Key <span className="text-secondary-light dark:text-secondary-dark">
-                                        {appliedSelection ? `${appliedSelection.key}` : '-'}
+                                        {appliedSelection ? `${appliedSelection.key} ${appliedSelection.scale}` : '-'}
                                     </span>
                                 </p>
                             </button>
@@ -511,7 +597,7 @@ const BottomToolbar = () => {
                                     {/* Mode Selection */}
                                     <div className="flex gap-1 mb-2  md600:gap-2 md600:mb-3 lg:gap-3 lg:mb-4">
                                         <button
-                                            onClick={() => setSelectedMode("Major")}
+                                            onClick={() => handleScaleSelect("Major")}
                                             className={`px-3 text-[8px] md600:px-4 py-1 md600:text-[10px] lg:px-5 rounded-full lg:text-[12px] border border-[#1414141A] dark:border-[#FFFFFF1A] transition-colors ${selectedMode === "Major"
                                                 ? "bg-primary-dark dark:bg-primary-light text-secondary-dark dark:text-secondary-light"
                                                 : "bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-secondary-dark hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"
@@ -520,7 +606,7 @@ const BottomToolbar = () => {
                                             Major
                                         </button>
                                         <button
-                                            onClick={() => setSelectedMode("Minor")}
+                                            onClick={() => handleScaleSelect("Minor")}
                                             className={`px-3 text-[8px] md600:px-4 py-1 md600:text-[10px] lg:px-5 rounded-full lg:text-[12px] border border-[#1414141A] dark:border-[#FFFFFF1A] transition-colors ${selectedMode === "Minor"
                                                 ? "bg-primary-dark dark:bg-primary-light text-secondary-dark dark:text-secondary-light"
                                                 : "bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-secondary-dark hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"

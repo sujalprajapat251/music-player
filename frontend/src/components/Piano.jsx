@@ -708,7 +708,87 @@ const Pianodemo = ({ onClose }) => {
 
     // ****************** Chords *****************
 
+    const highlightedPianoKeys = useSelector((state) => state.studio?.highlightedPianoKeys || []);    
 
+    // Debug logging for piano functions
+    const debugPlayNote = (midiNumber) => {
+        playNote(midiNumber);
+    };
+
+    const debugStopNote = (midiNumber) => {
+        stopNote(midiNumber);
+    };
+
+    // Simple Piano Component with Highlighting - No interference with original functionality
+    const SimplePiano = ({ noteRange, playNote, stopNote, keyboardShortcuts, sectionIndex }) => {
+        const pianoRef = useRef(null);
+        
+        // Function to highlight keys based on selected scale
+        const highlightKeys = () => {
+            if (!pianoRef.current || highlightedPianoKeys.length === 0) return;
+            
+            // Remove previous highlighting
+            const allKeys = pianoRef.current.querySelectorAll('.ReactPiano__Key--natural, .ReactPiano__Key--accidental');
+            allKeys.forEach(key => key.classList.remove('highlighted'));
+            
+            // Add highlighting to selected scale keys
+            let highlightedCount = 0;
+            highlightedPianoKeys.forEach(midiNumber => {
+                if (midiNumber >= noteRange.first && midiNumber <= noteRange.last) {
+                    // Find the key element by data attribute or position
+                    const keyIndex = midiNumber - noteRange.first;
+                    const keyElement = allKeys[keyIndex];
+                    if (keyElement) {
+                        keyElement.classList.add('highlighted');
+                        highlightedCount++;
+                    }
+                }
+            });
+        };
+        
+        // Highlight keys when component mounts or highlighting changes
+        useEffect(() => {
+            // Small delay to ensure piano is rendered
+            const timer = setTimeout(highlightKeys, 100);
+            return () => clearTimeout(timer);
+        }, [highlightedPianoKeys, noteRange]);
+        
+        return (
+            <div className="relative h-[93%]" ref={pianoRef}>
+                {/* Original Piano Component - Keep all original functionality */}
+                <Piano
+                    noteRange={noteRange}
+                    playNote={playNote}
+                    stopNote={stopNote}
+                    keyboardShortcuts={keyboardShortcuts}
+                />
+                
+                {/* CSS for highlighting selected scale keys */}
+                <style jsx>{`
+                    .ReactPiano__Keyboard{
+                      background-color: #c7c7c7;
+                    }
+
+                    .ReactPiano__Key--natural,
+                    .ReactPiano__Key--accidental {
+                        transition: all 0.3s ease;
+                    }
+
+                    .ReactPiano__Key--natural:hover {
+                        background-color: #cececf !important;
+                    }
+                    
+                    .ReactPiano__Key--natural.highlighted {
+                        border-bottom: 7px solid #36075f !important;
+                    }
+
+                    .ReactPiano__Key--accidental.highlighted {
+                        border-bottom: 7px solid #8b5cf6 !important;
+                    }
+                `}</style>
+            </div>
+        );
+    };
 
     return (
         <>
@@ -907,11 +987,12 @@ const Pianodemo = ({ onClose }) => {
                                                         >
                                                             {pianoSections.map((section, index) => (
                                                                 <div key={index} className="w-full flex-shrink-0">
-                                                                    <Piano
-                                                                        noteRange={{ first: section.first, last: section.last }}
-                                                                        playNote={playNote}
-                                                                        stopNote={stopNote}
+                                                                    <SimplePiano
+                                                                        noteRange={{ first: section.first, last: section.last }}                                                                        
+                                                                        playNote={debugPlayNote}
+                                                                        stopNote={debugStopNote}
                                                                         keyboardShortcuts={index === activePianoSection ? getKeyboardShortcutsForSection(index) : []}
+                                                                        sectionIndex={index}
                                                                     />
                                                                 </div>
                                                             ))}
