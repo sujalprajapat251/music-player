@@ -261,39 +261,39 @@ const BottomToolbar = () => {
             console.warn('❌ Missing key or scale for calculation');
             return [];
         }
-        
+
 
         // Define the scale patterns (intervals from root note)
         const scalePatterns = {
             'Major': [0, 2, 4, 5, 7, 9, 11], // Whole, Whole, Half, Whole, Whole, Whole, Half
             'Minor': [0, 2, 3, 5, 7, 8, 10]  // Whole, Half, Whole, Whole, Half, Whole, Whole
         };
-        
+
         // Define the note values (C=0, C#=1, D=2, D#=3, E=4, F=5, F#=6, G=7, G#=8, A=9, A#=10, B=11)
         const noteValues = {
-            'C': 0, 'C#': 1, 'D': 2, 'Dᵇ': 1, 'D#': 3, 'E': 4, 'Eᵇ': 3, 'F': 5, 'F#': 6, 
+            'C': 0, 'C#': 1, 'D': 2, 'Dᵇ': 1, 'D#': 3, 'E': 4, 'Eᵇ': 3, 'F': 5, 'F#': 6,
             'G': 7, 'G#': 8, 'A': 9, 'Aᵇ': 8, 'B': 11, 'Bᵇ': 10
         };
-        
+
         const rootNote = noteValues[key];
         if (rootNote === undefined) {
             console.warn(`❌ Unknown key: ${key}`);
             return [];
         }
-        
+
 
         const pattern = scalePatterns[scale];
         if (!pattern) {
             console.warn(`❌ Unknown scale: ${scale}`);
             return [];
         }
-        
+
 
         // Calculate highlighted keys across multiple octaves (C0 to C8)
         const highlightedKeys = [];
         const startOctave = 0;
         const endOctave = 8;
-        
+
 
         for (let octave = startOctave; octave <= endOctave; octave++) {
             pattern.forEach(interval => {
@@ -304,7 +304,7 @@ const BottomToolbar = () => {
                 }
             });
         }
-        
+
 
         // Sort keys for better performance
         highlightedKeys.sort((a, b) => a - b);
@@ -560,7 +560,7 @@ const BottomToolbar = () => {
 
                         {isRecording ? (
                             <button onClick={handleStopRecord} className="cursor-pointer">
-                                <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
+                                <div className="flex justify-center gap-1 sm:gap-2 items-center rounded-2xl bg-red-500 py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3 w-[70px]">
                                     <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[16px]"><FaStop /></p>
                                 </div>
                             </button>
