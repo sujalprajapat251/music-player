@@ -10,7 +10,7 @@ import { ReactComponent as Track8 } from '../Images/track8.svg'
 import { ReactComponent as ImpIcon } from '../Images/import.svg'
 import { ReactComponent as Loop } from '../Images/loop.svg'
 import { useDispatch } from "react-redux";
-import { addTrack, setTrackType } from "../Redux/Slice/studio.slice";
+import { addTrack, setCurrentTrackId, setTrackType } from "../Redux/Slice/studio.slice";
 import { getNextTrackColor } from "../Utils/colorUtils";
 
 const instrumentOptions = [
@@ -73,6 +73,7 @@ const AddNewTrackModel = ({ onClose }) => {
     };
     dispatch(addTrack(newTrack));
     dispatch(setTrackType(option.label));
+    dispatch(setCurrentTrackId(newTrack.id));
     onClose();
   };
 
