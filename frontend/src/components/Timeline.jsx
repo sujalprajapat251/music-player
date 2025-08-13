@@ -3,7 +3,7 @@ import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
 import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio } from "../Redux/Slice/studio.slice";
-import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM,zoomIn, zoomOut, resetZoom } from "../Redux/Slice/grid.slice";
+import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM, zoomIn, zoomOut, resetZoom } from "../Redux/Slice/grid.slice";
 import { setAudioDuration as setLoopAudioDuration, toggleLoopEnabled, setLoopEnd, setLoopRange, selectIsLoopEnabled } from "../Redux/Slice/loop.slice";
 import { getGridSpacing, getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
 import { IMAGE_URL } from "../Utils/baseUrl";
@@ -118,7 +118,6 @@ const Timeline = () => {
   // Use custom hook for section labels management
   const { sectionLabels, resizeSection } = useSectionLabels();
 
-  // Get zoom level from Redux and calculate timeline width
   const { zoomLevel } = useSelector(selectGridSettings);
   const baseTimelineWidthPerSecond = 100; // Base width per second
   const timelineWidthPerSecond = baseTimelineWidthPerSecond * zoomLevel; // Apply zoom level

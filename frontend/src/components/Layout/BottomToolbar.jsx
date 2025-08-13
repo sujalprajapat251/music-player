@@ -15,20 +15,20 @@ import { ReactComponent as Tempobutton } from "../../Images/Tempobutton.svg";
 import { ReactComponent as Tick } from "../../Images/Tick.svg";
 import { FaStop } from 'react-icons/fa6';
 import { useDispatch, useSelector } from 'react-redux';
-import { 
-  setRecording, 
-  togglePlayPause, 
-  setCurrentTime,
-  setAllTracksVolume,   
-  setMasterVolume, 
-  setRecordedData,
-  setBPM, 
-  setDrumRecordedData,
-  setSelectedKey,
-  setSelectedScale,
-  setHighlightedPianoKeys,
-  clearKeyScaleSelection,
-  setMetronomeSound
+import {
+    setRecording,
+    togglePlayPause,
+    setCurrentTime,
+    setAllTracksVolume,
+    setMasterVolume,
+    setRecordedData,
+    setBPM,
+    setDrumRecordedData,
+    setSelectedKey,
+    setSelectedScale,
+    setHighlightedPianoKeys,
+    clearKeyScaleSelection,
+    setMetronomeSound
 } from '../../Redux/Slice/studio.slice';
 import { zoomIn, zoomOut, selectGridSettings, resetZoom } from '../../Redux/Slice/grid.slice';
 
@@ -45,56 +45,34 @@ const BottomToolbar = () => {
     const menuDropdownRef = useRef(null);
     const [appliedSelection, setAppliedSelection] = useState(null);
     const [tempo, setTempo] = useState(120);
-    const [appliedTempo, setAppliedTempo] = useState(0);
+    const [appliedTempo, setAppliedTempo] = useState(120);
     const [selectedMenuitems, setSelectedMenuitems] = useState('Click');
     const [selectedCountIn, setSelectedCountIn] = useState('2 bars');
     const [isVolumeChanging, setIsVolumeChanging] = useState(false);
     const [isCounting, setIsCounting] = useState(false);
     const [countInNumber, setCountInNumber] = useState(null);
-    const [isZooming, setIsZooming] = useState(false);
     const [isIconActive, setIsIconActive] = useState(false);
+    const [isZooming, setIsZooming] = useState(false);
 
     const dispatch = useDispatch();
-    
+
     // Get play/pause state from Redux
     const isPlaying = useSelector((state) => state.studio?.isPlaying || false);
     const currentTime = useSelector((state) => state.studio?.currentTime || 0);
     const audioDuration = useSelector((state) => state.studio?.audioDuration || 150);
     const masterVolume = useSelector((state) => state.studio?.masterVolume || 80);
+    const bpm = useSelector(state => state.studio.bpm);
     const tracks = useSelector((state) => state.studio?.tracks || []);
     const isRecording = useSelector((state) => state.studio?.isRecording || false);
     const recordedData = useSelector((state) => state.studio?.recordedData || []);
     const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
     const pianoRecord = useSelector((state) => state.studio?.pianoRecord || []);
-    
+
     // Get key and scale selection from Redux
     const reduxSelectedKey = useSelector((state) => state.studio?.selectedKey || null);
     const reduxSelectedScale = useSelector((state) => state.studio?.selectedScale || null);
 
-    // Get grid settings from Redux
     const { selectedGrid, zoomLevel } = useSelector(selectGridSettings);
-
-    // Sync local state with Redux state
-    useEffect(() => {
-        if (reduxSelectedKey !== null) {
-            setSelectedKeyLocal(reduxSelectedKey);
-        }
-        if (reduxSelectedScale !== null) {
-            setSelectedMode(reduxSelectedScale);
-        }
-    }, [reduxSelectedKey, reduxSelectedScale]);
-
-    // Handle volume change for all tracks (wise volume)
-    const handleVolumeChange = (newVolume) => {
-        setIsVolumeChanging(true);
-        dispatch(setMasterVolume(parseInt(newVolume)));
-        // dispatch(setAllTracksVolume(parseInt(newVolume)));
-        
-        // Reset the visual feedback after a short delay
-        setTimeout(() => {
-            setIsVolumeChanging(false);
-        }, 500);
-    };
 
     // Handle zoom in with visual feedback
     const handleZoomIn = () => {
@@ -112,6 +90,30 @@ const BottomToolbar = () => {
         setTimeout(() => {
             setIsZooming(false);
         }, 300);
+    };
+
+
+
+    // Sync local state with Redux state
+    useEffect(() => {
+        if (reduxSelectedKey !== null) {
+            setSelectedKeyLocal(reduxSelectedKey);
+        }
+        if (reduxSelectedScale !== null) {
+            setSelectedMode(reduxSelectedScale);
+        }
+    }, [reduxSelectedKey, reduxSelectedScale]);
+
+    // Handle volume change for all tracks (wise volume)
+    const handleVolumeChange = (newVolume) => {
+        setIsVolumeChanging(true);
+        dispatch(setMasterVolume(parseInt(newVolume)));
+        // dispatch(setAllTracksVolume(parseInt(newVolume)));
+
+        // Reset the visual feedback after a short delay
+        setTimeout(() => {
+            setIsVolumeChanging(false);
+        }, 500);
     };
 
     // Format time for display
@@ -202,7 +204,7 @@ const BottomToolbar = () => {
     };
 
     const handleDecrement = () => {
-        setTempo(prev => Math.max(prev - 1, 60)); 
+        setTempo(prev => Math.max(prev - 1, 60));
     };
 
     const handleRandomTempo = () => {
@@ -213,6 +215,7 @@ const BottomToolbar = () => {
     const handleApply2 = () => {
         setAppliedTempo(tempo);
         setIsOpen1(false);
+        dispatch(setBPM(tempo));
     };
 
     // Calculate tempo ratio for display
@@ -225,7 +228,6 @@ const BottomToolbar = () => {
         const value = parseInt(e.target.value) || 60;
         setTempo(Math.min(Math.max(value, 60), 300));
     };
-
 
     const keys = ["C", "D", "E", "F", "G", "A", "B"];
     const sharpKeys = ["Dᵇ", "Eᵇ"];
@@ -243,22 +245,87 @@ const BottomToolbar = () => {
     }, []);
 
     const handleKeySelect = (key) => {
-        setSelectedKey(key);
+        setSelectedKeyLocal(key);
+        dispatch(setSelectedKey(key));
+    };
+
+    const handleScaleSelect = (scale) => {
+        setSelectedMode(scale);
+        dispatch(setSelectedScale(scale));
+    };
+
+    // Function to calculate highlighted piano keys based on key and scale
+    const calculateHighlightedKeys = (key, scale) => {
+        if (!key || !scale) {
+            console.warn('❌ Missing key or scale for calculation');
+            return [];
+        }
+
+        // Define the scale patterns (intervals from root note)
+        const scalePatterns = {
+            'Major': [0, 2, 4, 5, 7, 9, 11], // Whole, Whole, Half, Whole, Whole, Whole, Half
+            'Minor': [0, 2, 3, 5, 7, 8, 10]  // Whole, Half, Whole, Whole, Half, Whole, Whole
+        };
+
+        // Define the note values (C=0, C#=1, D=2, D#=3, E=4, F=5, F#=6, G=7, G#=8, A=9, A#=10, B=11)
+        const noteValues = {
+            'C': 0, 'C#': 1, 'D': 2, 'Dᵇ': 1, 'D#': 3, 'E': 4, 'Eᵇ': 3, 'F': 5, 'F#': 6,
+            'G': 7, 'G#': 8, 'A': 9, 'Aᵇ': 8, 'B': 11, 'Bᵇ': 10
+        };
+
+        const rootNote = noteValues[key];
+        if (rootNote === undefined) {
+            console.warn(`❌ Unknown key: ${key}`);
+            return [];
+        }
+
+        const pattern = scalePatterns[scale];
+        if (!pattern) {
+            console.warn(`❌ Unknown scale: ${scale}`);
+            return [];
+        }
+
+        // Calculate highlighted keys across multiple octaves (C0 to C8)
+        const highlightedKeys = [];
+        const startOctave = 0;
+        const endOctave = 8;
+
+        for (let octave = startOctave; octave <= endOctave; octave++) {
+            pattern.forEach(interval => {
+                const midiNote = (octave * 12) + rootNote + interval;
+                // Ensure we're within valid MIDI range (0-127)
+                if (midiNote >= 0 && midiNote <= 127) {
+                    highlightedKeys.push(midiNote);
+                }
+            });
+        }
+
+        // Sort keys for better performance
+        highlightedKeys.sort((a, b) => a - b);
+        return highlightedKeys;
     };
 
     const handleApply = () => {
-        if (selectedKey) {
+        if (selectedKey && selectedMode) {
+            const highlightedKeys = calculateHighlightedKeys(selectedKey, selectedMode);
+
             setAppliedSelection({
-                key: selectedKey
-                // mode: selectedMode
+                key: selectedKey,
+                scale: selectedMode
             });
+
+            // Dispatch to Redux
+            dispatch(setSelectedKey(selectedKey));
+            dispatch(setSelectedScale(selectedMode));
+            dispatch(setHighlightedPianoKeys(highlightedKeys));
+
             setIsOpen(false); // Close the dropdown after applying
         }
     };
 
     const handleClear = () => {
-        setSelectedKey(null);
-        setSelectedMode(""); // or whatever your default is
+        setSelectedKeyLocal(null);
+        dispatch(clearKeyScaleSelection());
         setAppliedSelection(null); // Clear the applied selection too
     };
 
@@ -270,7 +337,7 @@ const BottomToolbar = () => {
         { id: 'Clave', label: 'Clave' }
     ];
 
-    
+
     const menu1 = [
         { id: '2 bars', label: '2 bars' },
         { id: '1 bar', label: '1 bar' },
@@ -292,43 +359,41 @@ const BottomToolbar = () => {
         setSelectedMenuitems(qualityLabel);
         setIsOpen2(false)
     };
-    
+
     const handleCountInSelect = (qualityId, qualityLabel) => {
         setSelectedCountIn(qualityLabel);
         setIsOpen2(false)
     };
 
     const { isDark } = useTheme();
+
     const [recordingStartTime, setRecordingStartTime] = useState(null);
-
-
-    const [isRecording1, setIsRecording1] = useState(false);
 
     const selectedSound = useSelector(state => state.studio.selectedSound);
     const audioRef = useRef(null);
     const useMetronomePlayer = (selectedSound) => {
-    
+
         // Update audio whenever selectedSound changes
         useEffect(() => {
             audioRef.current = new Audio(`/Audio/metronome/${selectedSound.toLowerCase()}.wav`);
             audioRef.current.volume = volume1 / 100;
         }, [selectedSound]);
-    
+
         const playTick = () => {
             if (!isIconActive) return;
             if (audioRef.current) {
                 audioRef.current.currentTime = 0;
-                audioRef.current.play().catch(() => {}); // prevent AbortError
+                audioRef.current.play().catch(() => { }); // prevent AbortError
             }
         };
-    
+
         const stopTick = () => {
             if (audioRef.current) {
                 audioRef.current.pause();
                 audioRef.current.currentTime = 0;
             }
         };
-    
+
         return { playTick, stopTick };
     };
 
@@ -346,18 +411,14 @@ const BottomToolbar = () => {
             tickIntervalRef.current = setInterval(() => {
                 playTick();
             }, 600);
-          } else {
+        } else {
             startCountIn();
-          }        
+        }
         // console.log("Recording started at:", new Date().toLocaleTimeString());
     };
-    const hendleRecord = () => {
-        setIsRecording1(true);
-        dispatch(setRecording(true));
-    }
 
-    const hendleStopRecord = () => {
-        setIsRecording1(false);
+    // Stop recording
+    const handleStopRecord = () => {
         dispatch(setRecording(false));
         handlePlayPause();
         // console.log("Recording stopped at:", new Date().toLocaleTimeString());
@@ -378,23 +439,23 @@ const BottomToolbar = () => {
         let currentBeat = 1;
         setIsCounting(true);
         setCountInNumber(currentBeat);
-    
+
         const interval = setInterval(() => {
-          currentBeat++;
-          if (currentBeat > totalBeats) {
-            tickIntervalRef.current = setInterval(() => {
-                playTick();
-            }, 600);
-            dispatch(setRecording(true));
-            clearInterval(interval);
-            setIsCounting(false);
-            setCountInNumber(null);
-            handlePlayPause();
-          } else {
-            setCountInNumber(((currentBeat - 1) % beats) + 1);
-          }
+            currentBeat++;
+            if (currentBeat > totalBeats) {
+                tickIntervalRef.current = setInterval(() => {
+                    playTick();
+                }, 600);
+                dispatch(setRecording(true));
+                clearInterval(interval);
+                setIsCounting(false);
+                setCountInNumber(null);
+                handlePlayPause();
+            } else {
+                setCountInNumber(((currentBeat - 1) % beats) + 1);
+            }
         }, 600); // adjust for BPM
-      };
+    };
 
     const handleMetronomeVolume = (e) => {
         const newVolume = e.target.value;
@@ -415,7 +476,7 @@ const BottomToolbar = () => {
     //                 volume: masterVolume,
     //                 isPlaying: isPlaying
     //             };
-                
+
     //             // Update recorded data in Redux
     //             const updatedData = [...(Array.isArray(recordedData) ? recordedData : []), currentData];
     //             dispatch(setRecordedData(updatedData));
@@ -458,35 +519,74 @@ const BottomToolbar = () => {
                         />
                     </div>
                     <p className="text-secondary-light dark:text-secondary-dark sm:text-[10px] md:text-[16px] lg:text-[18px] self-center hidden sm:block w-[60px]">{formatTime(currentTime)}</p>
-                    {isRecording ? (<button onClick={hendleStopRecord} className="cursor-pointer">
+                    {/* {isRecording ? (<button onClick={handleStopRecord} className="cursor-pointer">
                         
                         <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
                                 <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[16px]"><FaStop /></p>
                             </div>
                     </button>
                     ) :
-                        (<button onClick={hendleRecord} className="cursor-pointer">
+                        (<button onClick={handleStartRecord} className="cursor-pointer">
                             <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
                                 <p className="rounded-full p-[3px] sm:p-[3px] lg:p-2 bg-[#FF6767]"></p>
                                 <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px]">Rec</p>
                             </div>
                         </button>)
-                    }
+                    } */}
+
+                    <div className="relative flex flex-col items-center">
+                        {isCounting && (
+                            <div className="absolute top-[-100px] flex flex-col items-center bg-[#1f1f1f] text-white px-8 py-5 rounded-lg shadow-lg">
+                                <div className="text-lg font-bold">{countInNumber}</div>
+                                <div className="flex gap-2 mt-2">
+                                    {[1, 2, 3, 4].map((dot) => (
+                                        <span
+                                            key={dot}
+                                            className={`w-3 h-3 rounded-full transform transition-all duration-300 ease-in-out ${dot === countInNumber ? "bg-pink-500 scale-[1.5]" : "bg-pink-900 scale-100"
+                                                }`}
+                                        ></span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {isRecording ? (
+                            <button onClick={handleStopRecord} className="cursor-pointer">
+                                <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
+                                    <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[16px]"><FaStop /></p>
+                                </div>
+                            </button>
+                        ) : (
+                            <button onClick={() => {
+                                if (!tracks || tracks.length === 0) {
+                                    alert("Please Add New Track !");
+                                } else {
+                                    handleStartRecord();
+                                }
+                            }} className="cursor-pointer">
+                                <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
+                                    <p className="rounded-full p-[3px] sm:p-[3px] lg:p-2 bg-[#FF6767]"></p>
+                                    <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px]">Rec</p>
+                                </div>
+                            </button>
+                        )}
+                    </div>
+
                     <div className="flex gap-1 sm:gap-2 lg:gap-3">
                         <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2 hover:bg-[#1414142A] dark:hover:bg-[#2F2F2F] cursor-pointer" onClick={handleMoveStart} title='Go to start'>
                             <img src={media1} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </div>
-                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2 hover:bg-[#1414142A] dark:hover:bg-[#2F2F2F] cursor-pointer"  onClick={handleMoveBackward} title='Rewind [Arrow left]'>
+                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2 hover:bg-[#1414142A] dark:hover:bg-[#2F2F2F] cursor-pointer" onClick={handleMoveBackward} title='Rewind [Arrow left]'>
                             <img src={media2} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </div>
-                        <button 
+                        <button
                             onClick={handlePlayPause}
                             className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2 cursor-pointer hover:bg-[#1414142A] dark:hover:bg-[#2F2F2F] transition-colors"
                             title='Play / Pause [Space]'
                         >
                             <img src={isPlaying ? pauseIcon : media3} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </button>
-                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2 hover:bg-[#1414142A] dark:hover:bg-[#2F2F2F] cursor-pointer"  onClick={handleMoveForward} title='Fast forward [Arrow right]'>
+                        <div className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2 hover:bg-[#1414142A] dark:hover:bg-[#2F2F2F] cursor-pointer" onClick={handleMoveForward} title='Fast forward [Arrow right]'>
                             <img src={media4} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </div>
                     </div>
@@ -500,7 +600,7 @@ const BottomToolbar = () => {
                             >
                                 <p className="sm:text-[8px] lg:text-[12px] text-[#14141499] dark:text-[#FFFFFF99] hidden sm:block">
                                     Key <span className="text-secondary-light dark:text-secondary-dark">
-                                        {appliedSelection ? `${appliedSelection.key}` : '-'}
+                                        {appliedSelection ? `${appliedSelection.key} ${appliedSelection.scale}` : '-'}
                                     </span>
                                 </p>
                             </button>
@@ -511,7 +611,7 @@ const BottomToolbar = () => {
                                     {/* Mode Selection */}
                                     <div className="flex gap-1 mb-2  md600:gap-2 md600:mb-3 lg:gap-3 lg:mb-4">
                                         <button
-                                            onClick={() => setSelectedMode("Major")}
+                                            onClick={() => handleScaleSelect("Major")}
                                             className={`px-3 text-[8px] md600:px-4 py-1 md600:text-[10px] lg:px-5 rounded-full lg:text-[12px] border border-[#1414141A] dark:border-[#FFFFFF1A] transition-colors ${selectedMode === "Major"
                                                 ? "bg-primary-dark dark:bg-primary-light text-secondary-dark dark:text-secondary-light"
                                                 : "bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-secondary-dark hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"
@@ -520,7 +620,7 @@ const BottomToolbar = () => {
                                             Major
                                         </button>
                                         <button
-                                            onClick={() => setSelectedMode("Minor")}
+                                            onClick={() => handleScaleSelect("Minor")}
                                             className={`px-3 text-[8px] md600:px-4 py-1 md600:text-[10px] lg:px-5 rounded-full lg:text-[12px] border border-[#1414141A] dark:border-[#FFFFFF1A] transition-colors ${selectedMode === "Minor"
                                                 ? "bg-primary-dark dark:bg-primary-light text-secondary-dark dark:text-secondary-light"
                                                 : "bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-secondary-dark hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"
@@ -770,12 +870,12 @@ const BottomToolbar = () => {
                 </div>
 
                 <div className='flex sm:gap-2 md:gap-3 lg:gap-5 2xl:gap-7 items-center '>
-                    <RxZoomIn 
+                    <RxZoomIn
                         className={`text-[#14141499] dark:text-[#FFFFFF99] cursor-pointer md:text-[20px] lg:text-[24px] hidden md600:block hover:text-[#141414] dark:hover:text-[#FFFFFF] transition-colors ${isZooming ? 'text-blue-500' : ''}`}
                         onClick={handleZoomIn}
                         title="Zoom In (Ctrl + +)"
                     />
-                    <RxZoomOut 
+                    <RxZoomOut
                         className={`text-[#14141499] dark:text-[#FFFFFF99] cursor-pointer md:text-[20px] lg:text-[24px] hidden md600:block hover:text-[#141414] dark:hover:text-[#FFFFFF] transition-colors ${isZooming ? 'text-blue-500' : ''}`}
                         onClick={handleZoomOut}
                         title="Zoom Out (Ctrl + -)"
@@ -811,3 +911,4 @@ const BottomToolbar = () => {
 }
 
 export default BottomToolbar
+
