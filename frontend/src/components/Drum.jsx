@@ -304,49 +304,56 @@ const DrumPadMachine = ({ onClose }) => {
   // Create continuous drum recording when recording stops
   useEffect(() => {
     if (!isRecording && drumRecordedData.length > 0 && currentTrackId) {
-      // Create a single continuous audio blob from all recorded drum data
-      createContinuousDrumAudioBlob(drumRecordedData).then((audioBlob) => {
-        if (audioBlob) {
-          // Calculate the total duration based on the last drum hit
-          const lastDrumHit = drumRecordedData[drumRecordedData.length - 1];
-          const firstDrumHit = drumRecordedData[0];
-          const totalDuration = (lastDrumHit.timestamp - firstDrumHit.timestamp) / 1000 + lastDrumHit.decay * 2;
+      // Add a small delay to ensure Timeline has rendered the data
+      const processTimeout = setTimeout(() => {
+        createContinuousDrumAudioBlob(drumRecordedData).then((audioBlob) => {
+          if (audioBlob) {
+            // Calculate the total duration based on the last drum hit
+            const lastDrumHit = drumRecordedData[drumRecordedData.length - 1];
+            const firstDrumHit = drumRecordedData[0];
+            const totalDuration = (lastDrumHit.timestamp - firstDrumHit.timestamp) / 1000 + lastDrumHit.decay * 2;
 
-          // Create a single timeline clip for all drum recordings
-          const drumClip = {
-            id: `drum_recording_${Date.now()}`,
-            name: `Drum Recording (${drumRecordedData.length} hits)`,
-            type: 'drum',
-            startTime: firstDrumHit.currentTime,
-            duration: totalDuration,
-            color: selectedDrumMachine.color,
-            drumData: drumRecordedData, // Store all drum data
-            url: URL.createObjectURL(audioBlob), // Create URL from blob
-            trimStart: 0,
-            trimEnd: totalDuration,
-            soundData: {
-              padId: 'MULTI',
-              sound: 'drum_recording',
-              freq: 0,
-              decay: totalDuration,
-              type: 'drum_recording',
-              drumMachine: selectedDrumMachine.name,
-              effects: selectedDrumMachine.effects,
-              totalHits: drumRecordedData.length
-            }
-          };
+            // Create a single timeline clip for all drum recordings
+            const drumClip = {
+              id: `drum_recording_${Date.now()}`,
+              name: `Drum Recording (${drumRecordedData.length} hits)`,
+              type: 'drum',
+              startTime: firstDrumHit.currentTime,
+              duration: totalDuration,
+              color: selectedDrumMachine.color,
+              drumData: drumRecordedData, // Store all drum data
+              url: URL.createObjectURL(audioBlob), // Create URL from blob
+              trimStart: 0,
+              trimEnd: totalDuration,
+              soundData: {
+                padId: 'MULTI',
+                sound: 'drum_recording',
+                freq: 0,
+                decay: totalDuration,
+                type: 'drum_recording',
+                drumMachine: selectedDrumMachine.name,
+                effects: selectedDrumMachine.effects,
+                totalHits: drumRecordedData.length
+              }
+            };
 
-          // Add to the currently selected track
-          dispatch(addAudioClipToTrack({
-            trackId: currentTrackId,
-            audioClip: drumClip
-          }));
+            // Add to the currently selected track
+            dispatch(addAudioClipToTrack({
+              trackId: currentTrackId,
+              audioClip: drumClip
+            }));
 
-          // console.log('Created continuous drum recording in track:', currentTrackId, drumClip);
-        }
-      }).catch((error) => {
-        // console.error('Error creating continuous drum audio blob:', error);
-      });
+            // Only clear drum data after successful track creation
+            setTimeout(() => {
+              dispatch(setDrumRecordedData([]));
+            }, 500); // Give Timeline time to display
+          }
+        }).catch((error) => {
+          // console.error('Error creating continuous drum audio blob:', error);
+        });
+      }, 200); // Small delay to ensure Timeline renders first
+
+      return () => clearTimeout(processTimeout);
     }
   }, [isRecording, drumRecordedData, currentTrackId, selectedDrumMachine]);
 
@@ -1171,7 +1178,7 @@ const DrumPadMachine = ({ onClose }) => {
     <>
       {showOffcanvas3 === true && (
         <>
-          <div className="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px]  lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[610px]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
+          <div className="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px]  lg:bottom-[530px] xl:bottom-[545px] 2xl:bottom-[563px] 3xl:bottom-[610px]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
             {/* Static Navbar with Tabs */}
             <div className="  border-b border-[#FFFFFF1A] h-full">
               <div className=" bg-[#1F1F1F] flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
@@ -1257,10 +1264,10 @@ const DrumPadMachine = ({ onClose }) => {
 
                       <div className='items-center '>
                         <div className='border rounded-lg border-[#FFFFFF1A]'>
-                          <p className="text-[#FFFFFF] text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
+                          <p className="text-[#FFFFFF] text-center  text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
                         </div>
-                        <p className="text-white text-[10px]  px-2 md600:px-3 md:px-4 lg:px-4 py-1">Auto-quantize</p>
-                        <div className="border  border-[#FFFFFF1A] mt-2 py-1 px-6" onClick={() => { setIsIconDropdownOpen(!isIconDropdownOpen); setIsOpen2(!isOpen2) }}>
+                        <p className="text-white text-center text-[10px]  px-2 md600:px-3 md:px-4 lg:px-4 py-1 mt-2">Auto-quantize</p>
+                        <div className="border  border-[#FFFFFF1A] mt-1 py-1 px-6" onClick={() => { setIsIconDropdownOpen(!isIconDropdownOpen); setIsOpen2(!isOpen2) }}>
                           <div className="relative flex gap-2 md:gap-3" ref={menuDropdownRef}>
                             <div className="items-center rounded-full " >
                               <span className="text-[#14141499] dark:text-[#FFFFFF99] text-[10px] md600:text-[12px] lg:text-[14px]">{selectedMenuitems}</span>
@@ -1305,31 +1312,31 @@ const DrumPadMachine = ({ onClose }) => {
 
 
                     {/* Drum Pad Area */}
-                    <div className="flex-1 flex items-center justify-center p-4 relative  bg-black" >
+                    <div className="flex-1 flex items-center justify-center 3xl:p-4 relative  bg-black" >
                       <div
-                        className="p-8 rounded-2xl relative w-full h-[400px]"
+                        className="xl:p-8 rounded-2xl relative w-full h-[400px]"
                       >
-                        {/* Kick Drum - Largest disk */}
                         <div
-                          className="absolute left-[30%] top-[16%] cursor-pointer z-20"
+                          className="absolute md:left-[32%] md:top-[12%] lg:left-[20%] lg:top-[12%] xl:left-[25%] xl:top-[15%] 2xl:left-[23%] 2xl:top-[15%] 3xl:left-[30%] 3xl:top-[16%] cursor-pointer z-20"
                           style={pressedKeys.has('Q') ? styles.pressed : {}}
                           onClick={() => handlePadPress(currentTypeData.pads[0])}
                         >
                           <div className="relative flex items-center justify-center group">
                             <div
-                              className="absolute w-40 h-40 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]"
+                              className="absolute md:w-28 md:h-28 lg:w-32 lg:h-32 3xl:w-40 3xl:h-40 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]"
+
                               style={pressedKeys.has('Q') ? styles.pressedRings : {}}
                             ></div>
                             <div
-                              className="absolute w-32 h-32 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/65 group-active:border-gray-400/85 bg-[#3D3B3A]"
+                              className="absolute md:w-20 md:h-20 lg:w-24 lg:h-24 3xl:w-32 3xl:h-32 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/65 group-active:border-gray-400/85 bg-[#3D3B3A]"
                               style={pressedKeys.has('Q') ? styles.pressedRings : {}}
                             ></div>
                             <div
-                              className="absolute w-20 h-20 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/70 group-active:border-gray-400/90 bg-[#3D3B3A]"
+                              className="absolute md:w-12 md:h-12 lg:w-16 lg:h-16 3xl:w-20 3xl:h-20 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/70 group-active:border-gray-400/90 bg-[#3D3B3A]"
                               style={pressedKeys.has('Q') ? styles.pressedRings : {}}
                             ></div>
                             <div
-                              className="relative w-8 h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95"
+                              className="relative md:w-4 md:h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95"
                               style={pressedKeys.has('Q') ? styles.pressedButton : {}}
                             >
                               Q
@@ -1339,15 +1346,16 @@ const DrumPadMachine = ({ onClose }) => {
 
                         {/* Snare - Medium-large disk */}
                         <div
-                          className="absolute left-[37%] top-[25%] cursor-pointer z-10"
+                          className="absolute md:left-[45%] md:top-[16%] lg:left-[30%] lg:top-[18%] xl:left-[34%] xl:top-[20%] 2xl:left-[31%] 2xl:top-[20%] 3xl:left-[37%] 3xl:top-[25%] cursor-pointer z-10"
+
                           style={pressedKeys.has('W') ? styles.pressedButton : {}}
                           onClick={() => handlePadPress(currentTypeData.pads[1])}
                         >
-                          <div className="relative w flex items-center justify-center group">
-                            <div className="absolute w-40 h-40 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70 bg-[#3D3B3A]" style={pressedKeys.has('W') ? styles.pressedButton : {}} ></div>
-                            <div className="absolute w-36 h-36 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('W') ? styles.pressedButton : {}} ></div>
-                            <div className="absolute w-16 h-16 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('W') ? styles.pressedButton : {}} ></div>
-                            <div className="relative w-8 h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('W') ? styles.pressedButton : {}} >
+                          <div className="relative flex items-center justify-center group">
+                            <div className="absolute md:w-28 md:h-28 lg:w-32 lg:h-32 3xl:w-40 3xl:h-40 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70 bg-[#3D3B3A]" style={pressedKeys.has('W') ? styles.pressedButton : {}} ></div>
+                            <div className="absolute md:w-24 md:h-24 lg:w-28 lg:h-28 3xl:w-36 3xl:h-36 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('W') ? styles.pressedButton : {}} ></div>
+                            <div className="absolute md:w-12 md:h-12 lg:w-16 lg:h-16 3xl:w-20 3xl:h-20 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('W') ? styles.pressedButton : {}} ></div>
+                            <div className="relative md:w-4 md:h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('W') ? styles.pressedButton : {}} >
                               W
                             </div>
                           </div>
@@ -1355,15 +1363,16 @@ const DrumPadMachine = ({ onClose }) => {
 
                         {/* Hi-hat - Small disk */}
                         <div
-                          className="absolute right-[53.5%] top-[25%] cursor-pointer z-20"
+                          className="absolute md:right-[39%] md:top-[17%] lg:right-[55%] lg:top-[18%] xl:right-[55%] xl:top-[20%] 2xl:right-[59%] 2xl:top-[20%] 3xl:right-[53.5%] 3xl:top-[25%] cursor-pointer z-20"
+
                           style={pressedKeys.has('E') ? styles.pressedButton : {}}
                           onClick={() => handlePadPress(currentTypeData.pads[2])}
                         >
                           <div className="relative  flex items-center justify-center group">
-                            <div className="absolute w-40 h-40 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70 bg-[#3D3B3A]" style={pressedKeys.has('E') ? styles.pressedButton : {}} ></div>
-                            <div className="absolute w-36 h-36 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('E') ? styles.pressedButton : {}} ></div>
-                            <div className="absolute w-16 h-16 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('E') ? styles.pressedButton : {}} ></div>
-                            <div className="relative w-8 h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('E') ? styles.pressedButton : {}} >
+                            <div className="absolute md:w-28 md:h-28 lg:w-32 lg:h-32 3xl:w-40 3xl:h-40 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70 bg-[#3D3B3A]" style={pressedKeys.has('E') ? styles.pressedButton : {}} ></div>
+                            <div className="absolute md:w-24 md:h-24 lg:w-28 lg:h-28 3xl:w-36 3xl:h-36 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('E') ? styles.pressedButton : {}} ></div>
+                            <div className="absolute md:w-12 md:h-12 lg:w-16 lg:h-16 3xl:w-16 3xl:h-16 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('E') ? styles.pressedButton : {}} ></div>
+                            <div className="relative md:w-4 md:h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('E') ? styles.pressedButton : {}} >
                               E
                             </div>
                           </div>
@@ -1371,14 +1380,15 @@ const DrumPadMachine = ({ onClose }) => {
 
                         {/* Clap - Medium disk */}
                         <div
-                          className="absolute left-[41%] top-[58%] cursor-pointer z-0"
+                          className="absolute md:left-[52%] md:top-[37%] lg:left-[36%] lg:top-[48%] xl:left-[38%] xl:top-[50%] 2xl:left-[35%] 2xl:top-[50%] 3xl:left-[41%] 3xl:top-[58%] cursor-pointer z-0"
+
                           style={pressedKeys.has('R') ? styles.pressedButton : {}}
                           onClick={() => handlePadPress(currentTypeData.pads[3])}
                         >
                           <div className="relative  flex items-center justify-center group">
-                            <div className="absolute w-52 h-52 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70 bg-[#3D3B3A]" style={pressedKeys.has('R') ? styles.pressedButton : {}}></div>
-                            <div className="absolute w-28 h-28 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('R') ? styles.pressedButton : {}}></div>
-                            <div className="relative w-8 h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('R') ? styles.pressedButton : {}}>
+                            <div className="absolute md:w-44 md:h-44 lg:w-48 lg:h-48 3xl:w-52 3xl:h-52 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70 bg-[#3D3B3A]" style={pressedKeys.has('R') ? styles.pressedButton : {}}></div>
+                            <div className="absolute md:w-20 md:h-20 lg:w-24 lg:h-24 3xl:w-28 3xl:h-28 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('R') ? styles.pressedButton : {}}></div>
+                            <div className="relative md:w-4 md:h-4 lg:w-8 lg:h-8 3xl:w-8 3xl:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('R') ? styles.pressedButton : {}}>
                               R
                             </div>
                           </div>
@@ -1386,45 +1396,48 @@ const DrumPadMachine = ({ onClose }) => {
 
 
                         <div
-                          className="absolute left-[24.7%] top-[44%] cursor-pointer z-30"
+                          className="absolute md:left-[22%] md:top-[30%] lg:left-[9.7%] lg:top-[30%] xl:left-[16.7%] xl:top-[33%] 2xl:left-[15.7%] 2xl:top-[32%] 3xl:left-[24.7%] 3xl:top-[44%] cursor-pointer z-30"
+
                           style={pressedKeys.has('A') ? styles.pressedButton : {}}
                           onClick={() => handlePadPress(currentTypeData.pads[4])}
                         >
                           <div className="relative flex items-center justify-center group ">
-                            <div className="absolute w-40 h-40 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('A') ? styles.pressedButton : {}}></div>
-                            <div className="absolute w-32 h-32 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/65 group-active:border-gray-400/85 bg-[#3D3B3A]" style={pressedKeys.has('A') ? styles.pressedButton : {}}></div>
-                            <div className="absolute w-20 h-20 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/70 group-active:border-gray-400/90 bg-[#3D3B3A]" style={pressedKeys.has('A') ? styles.pressedButton : {}}></div>
-                            <div className="relative w-8 h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('A') ? styles.pressedButton : {}}>
+                            <div className="absolute md:w-32 md:h-32 lg:w-36 lg:h-36 3xl:w-40 3xl:h-40 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('A') ? styles.pressedButton : {}}></div>
+                            <div className="absolute md:w-24 md:h-24 lg:w-28 lg:h-28 3xl:w-32 3xl:h-32 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/65 group-active:border-gray-400/85 bg-[#3D3B3A]" style={pressedKeys.has('A') ? styles.pressedButton : {}}></div>
+                            <div className="absolute md:w-16 md:h-16 lg:w-20 lg:h-20 3xl:w-20 3xl:h-20 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/70 group-active:border-gray-400/90 bg-[#3D3B3A]" style={pressedKeys.has('A') ? styles.pressedButton : {}}></div>
+                            <div className="relative md:w-4 md:h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('A') ? styles.pressedButton : {}}>
                               A
                             </div>
                           </div>
                         </div>
 
                         <div
-                          className="absolute left-[32%] top-[53%] cursor-pointer z-10"
+                          className="absolute md:left-[35%] md:top-[38%] lg:left-[21%] lg:top-[43.5%] xl:left-[26%] xl:top-[44.5%] 2xl:left-[24%] 2xl:top-[45.5%] 3xl:left-[32%] 3xl:top-[53%] cursor-pointer z-10"
+
+
                           style={pressedKeys.has('S') ? styles.pressedButton : {}}
                           onClick={() => handlePadPress(currentTypeData.pads[5])}
                         >
-                          <div className="relative w flex items-center justify-center group">
-                            <div className="absolute w-48 h-48 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70 bg-[#3D3B3A]" style={pressedKeys.has('S') ? styles.pressedButton : {}}></div>
-                            <div className="absolute w-44 h-44 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('S') ? styles.pressedButton : {}}></div>
-                            <div className="absolute w-20 h-20 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('S') ? styles.pressedButton : {}}></div>
-                            <div className="relative w-8 h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('S') ? styles.pressedButton : {}}>
+                          <div className="relative flex items-center justify-center group">
+                            <div className="absolute md:w-36 md:h-36 lg:w-44 lg:h-44 3xl:w-48 3xl:h-48 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70 bg-[#3D3B3A]" style={pressedKeys.has('S') ? styles.pressedButton : {}}></div>
+                            <div className="absolute md:w-32 md:h-32 lg:w-40 lg:h-40 3xl:w-44 3xl:h-44 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('S') ? styles.pressedButton : {}}></div>
+                            <div className="absolute md:w-12 md:h-12 lg:w-16 lg:h-16 3xl:w-20 3xl:h-20 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('S') ? styles.pressedButton : {}}></div>
+                            <div className="relative md:w-4 md:h-4 lg:w-8 lg:h-8 3xl:w-8 3xl:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('S') ? styles.pressedButton : {}}>
                               S
                             </div>
                           </div>
                         </div>
 
                         <div
-                          className="absolute right-[48%] top-[55.5%] cursor-pointer z-20"
+                          className="absolute md:right-[29%] md:top-[38.5%] lg:right-[46%] lg:top-[42.5%] xl:right-[48%] xl:top-[44.5%] 2xl:right-[52%] 2xl:top-[45.5%] 3xl:right-[48%] 3xl:top-[55.5%] cursor-pointer z-20"
                           style={pressedKeys.has('F') ? styles.pressedButton : {}}
                           onClick={() => handlePadPress(currentTypeData.pads[6])}
                         >
-                          <div className="relative w flex items-center justify-center group">
-                            <div className="absolute w-48 h-48 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70 bg-[#3D3B3A]" style={pressedKeys.has('F') ? styles.pressedButton : {}}></div>
-                            <div className="absolute w-44 h-44 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('F') ? styles.pressedButton : {}}></div>
-                            <div className="absolute w-20 h-20 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('F') ? styles.pressedButton : {}}></div>
-                            <div className="relative w-8 h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('F') ? styles.pressedButton : {}}>
+                          <div className="relative  flex items-center justify-center group">
+                            <div className="absolute md:w-36 md:h-36 lg:w-44 lg:h-44 3xl:w-48 3xl:h-48 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70 bg-[#3D3B3A]" style={pressedKeys.has('F') ? styles.pressedButton : {}}></div>
+                            <div className="absolute md:w-32 md:h-32 lg:w-40 lg:h-40 3xl:w-44 3xl:h-44 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('F') ? styles.pressedButton : {}}></div>
+                            <div className="absolute md:w-12 md:h-12 lg:w-16 lg:h-16 3xl:w-20 3xl:h-20 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('F') ? styles.pressedButton : {}}></div>
+                            <div className="relative md:w-4 md:h-4 lg:w-8 lg:h-8  bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('F') ? styles.pressedButton : {}}>
                               F
                             </div>
                           </div>
@@ -1432,16 +1445,15 @@ const DrumPadMachine = ({ onClose }) => {
 
 
                         <div
-                          className="absolute right-[47%] top-[17%] cursor-pointer z-20"
+                          className="absolute md:right-[28%] md:top-[12%] lg:right-[45%] lg:top-[12%] xl:right-[47%] xl:top-[14%] 2xl:right-[52%] 2xl:top-[14%] 3xl:right-[47%] 3xl:top-[17%] cursor-pointer z-20"
                           style={pressedKeys.has('Z') ? styles.pressedButton : {}}
-
                           onClick={() => handlePadPress(currentTypeData.pads[7])}
                         >
                           <div className="relative  flex items-center justify-center group">
-                            <div className="absolute w-40 h-40 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70 bg-[#3D3B3A]" style={pressedKeys.has('Z') ? styles.pressedButton : {}}></div>
-                            <div className="absolute w-36 h-36 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('Z') ? styles.pressedButton : {}}></div>
-                            <div className="absolute w-16 h-16 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('Z') ? styles.pressedButton : {}}></div>
-                            <div className="relative w-8 h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('Z') ? styles.pressedButton : {}}>
+                            <div className="absolute md:w-28 md:h-28 lg:w-32 lg:h-32 3xl:w-40 3xl:h-40 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70 bg-[#3D3B3A]" style={pressedKeys.has('Z') ? styles.pressedButton : {}}></div>
+                            <div className="absolute md:w-20 md:h-20 lg:w-24 lg:h-24 3xl:w-32 3xl:h-32 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('Z') ? styles.pressedButton : {}}></div>
+                            <div className="absolute md:w-12 md:h-12 lg:w-16 lg:h-16 3xl:w-16 3xl:h-16 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('Z') ? styles.pressedButton : {}}></div>
+                            <div className="relative md:w-4 md:h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('Z') ? styles.pressedButton : {}}>
                               Z
                             </div>
                           </div>
@@ -1449,47 +1461,43 @@ const DrumPadMachine = ({ onClose }) => {
 
 
                         <div
-                          className="absolute right-[25%] top-[25%] cursor-pointer z-20"
+                          className="absolute md:right-[12%] md:top-[20%] lg:right-[12%] lg:top-[20%] xl:right-[20%] xl:top-[22%] 2xl:right-[20%] 2xl:top-[20%] 3xl:right-[25%] 3xl:top-[25%] cursor-pointer z-20 hidden lg:block"
                           onClick={() => handlePadPress(currentTypeData.pads[8])}
                           style={pressedKeys.has('X') ? styles.pressedButton : {}}
-
                         >
                           <div className="relative  flex items-center justify-center group">
-                            <div className="absolute w-24 h-24 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('X') ? styles.pressedButton : {}}></div>
-                            <div className="absolute w-16 h-16 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('X') ? styles.pressedButton : {}}></div>
-                            <div className="relative w-8 h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('X') ? styles.pressedButton : {}}>
+                            <div className="absolute md:w-20 md:h-20 lg:w-24 lg:h-24  rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('X') ? styles.pressedButton : {}}></div>
+                            <div className="absolute md:w-12 md:h-12 lg:w-16 lg:h-16  rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('X') ? styles.pressedButton : {}}></div>
+                            <div className="relative md:w-4 md:h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('X') ? styles.pressedButton : {}}>
                               X
                             </div>
                           </div>
                         </div>
 
-
                         <div
-                          className="absolute right-[25%] top-[55%] cursor-pointer z-20"
+                          className="absolute md:right-[12%] md:top-[50.5%] lg:right-[12%] lg:top-[50.5%] xl:right-[20%] xl:top-[52%] 2xl:right-[20%] 2xl:top-[52%] 3xl:right-[25%] 3xl:top-[55%] cursor-pointer z-20 hidden lg:block"
                           onClick={() => handlePadPress(currentTypeData.pads[9])}
                           style={pressedKeys.has('C') ? styles.pressedButton : {}}
-
                         >
                           <div className="relative  flex items-center justify-center group">
-                            <div className="absolute w-24 h-24 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('C') ? styles.pressedButton : {}}></div>
-                            <div className="absolute w-16 h-16 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('C') ? styles.pressedButton : {}}></div>
-                            <div className="relative w-8 h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('C') ? styles.pressedButton : {}}>
+                            <div className="absolute md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('C') ? styles.pressedButton : {}}></div>
+                            <div className="absolute md:w-12 md:h-12 lg:w-16 lg:h-16 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('C') ? styles.pressedButton : {}}></div>
+                            <div className="relative md:w-4 md:h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('C') ? styles.pressedButton : {}}>
                               C
                             </div>
                           </div>
                         </div>
 
                         <div
-                          className="absolute right-[42%] top-[38%] cursor-pointer z-30"
+                          className="absolute md:right-[17%] md:top-[30%] lg:right-[35%] lg:top-[25.5%] xl:right-[39%] xl:top-[30%] 2xl:right-[45%] 2xl:top-[30%] 3xl:right-[42%] 3xl:top-[38%] cursor-pointer z-30"
                           onClick={() => handlePadPress(currentTypeData.pads[10])}
                           style={pressedKeys.has('D') ? styles.pressedButton : {}}
-
                         >
                           <div className="relative flex items-center justify-center group ">
-                            <div className="absolute w-40 h-40 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('D') ? styles.pressedButton : {}}></div>
-                            <div className="absolute w-32 h-32 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/65 group-active:border-gray-400/85 bg-[#3D3B3A]" style={pressedKeys.has('D') ? styles.pressedButton : {}}></div>
-                            <div className="absolute w-20 h-20 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/70 group-active:border-gray-400/90 bg-[#3D3B3A]" style={pressedKeys.has('D') ? styles.pressedButton : {}}></div>
-                            <div className="relative w-8 h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('D') ? styles.pressedButton : {}}>
+                            <div className="absolute md:w-32 md:h-32 lg:w-36 lg:h-36 3xl:w-40 3xl:h-40 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('D') ? styles.pressedButton : {}}></div>
+                            <div className="absolute md:w-24 md:h-24 lg:w-28 lg:h-28 3xl:w-32 3xl:h-32 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/65 group-active:border-gray-400/85 bg-[#3D3B3A]" style={pressedKeys.has('D') ? styles.pressedButton : {}}></div>
+                            <div className="absolute md:w-16 md:h-16 lg:w-20 lg:h-20 3xl:w-24 3xl:h-24 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/70 group-active:border-gray-400/90 bg-[#3D3B3A]" style={pressedKeys.has('D') ? styles.pressedButton : {}}></div>
+                            <div className="relative md:w-4 md:h-4 lg:w-8 lg:h-8  bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('D') ? styles.pressedButton : {}}>
                               D
                             </div>
                           </div>
@@ -1498,9 +1506,6 @@ const DrumPadMachine = ({ onClose }) => {
                         {/* Add more pads with different positions and sizes */}
                       </div>
                     </div>
-
-
-
 
                   </>
                 )}
