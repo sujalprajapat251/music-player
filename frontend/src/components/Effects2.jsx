@@ -14,6 +14,7 @@ import { useTheme } from '../Utils/ThemeContext';
 import { useDispatch, useSelector } from 'react-redux';
 import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
 import audioEffectsPlayer from '../components/AudioEffectsPlayer';
+import { showEffectsTwo } from '../Redux/Slice/effects.slice';
 
 // Import effect images
 // import Bitcrushar from "../Images/Bitcrushar.svg";

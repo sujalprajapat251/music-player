@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setDrumRecordedData, setDrumPlayback, setDrumPlaybackStartTime, addAudioClipToTrack, addTrack } from '../Redux/Slice/studio.slice';
+import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
 import Pattern from './Pattern';
 import {
   drumMachineTypes,
@@ -204,7 +205,10 @@ const DrumPadMachine = ({ onClose }) => {
   const menuDropdownRef = useRef(null);
   const [selectedMenuitems, setSelectedMenuitems] = useState('Off');
   const [isSavePresetDropdownOpen, setIsSavePresetDropdownOpen] = useState(false);
-
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isProcessingDrop, setIsProcessingDrop] = useState(false);
+  const [effectsSearchTerm, setEffectsSearchTerm] = useState('');
+  const [selectedEffectCategory, setSelectedEffectCategory] = useState(null);
 
   const [currentType, setCurrentType] = useState(0);
   const [activePads, setActivePads] = useState(new Set());
@@ -229,7 +233,8 @@ const DrumPadMachine = ({ onClose }) => {
   const drumPlaybackStartTime = useSelector((state) => state.studio?.drumPlaybackStartTime || null);
   const tracks = useSelector((state) => state.studio?.tracks || []);
   const currentTrackId = useSelector((state) => state.studio?.currentTrackId || null);
-
+  const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas } = useSelector((state) => state.effects);
+  console.log("activeEffects", activeEffects, "showEffectsLibrary", showEffectsLibrary,);
 
   const currentTypeData = drumMachineTypes[currentType];
   console.log('currentTypeData', currentTypeData);
@@ -1173,12 +1178,62 @@ const DrumPadMachine = ({ onClose }) => {
   };
 
 
+  const handleAddEffectFromLibrary = (effect) => {
+    console.log('handleAddEffectFromLibrary called with:', effect);
+
+    // Prevent duplicate additions during drag operations
+    if (isProcessingDrop) {
+      console.log('Already processing a drop, skipping duplicate');
+      return;
+    }
+
+    setIsProcessingDrop(true);
+    dispatch(addEffect(effect));
+    dispatch(setShowEffectsLibrary(false));
+    setEffectsSearchTerm('');
+    setSelectedEffectCategory(null);
+
+    // Reset the flag after a short delay
+    setTimeout(() => {
+      setIsProcessingDrop(false);
+    }, 100);
+  };
+
+  const handlePlusButtonClick = () => {
+    dispatch(toggleEffectsOffcanvas());
+  };
+
+
 
   return (
     <>
       {showOffcanvas3 === true && (
         <>
-          <div className="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[390px] sm:bottom-[390px] md600:bottom-[450px]  lg:bottom-[530px] xl:bottom-[545px] 2xl:bottom-[563px] 3xl:bottom-[610px]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
+          <div className="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[390px] sm:bottom-[390px] md600:bottom-[450px]  lg:bottom-[530px] xl:bottom-[545px] 2xl:bottom-[563px] 3xl:bottom-[610px]"
+            tabindex="-1"
+            aria-labelledby="drawer-swipe-label"
+            onDragOver={(e) => {
+              e.preventDefault(); e.dataTransfer.dropEffect = 'copy';
+              if (activeView === 'Effects') {
+                setIsDragOver(true);
+              }
+            }}
+            onDragLeave={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget)) {
+                setIsDragOver(false);
+              }
+            }}
+            onDrop={(e) => {
+              e.preventDefault(); setIsDragOver(false);
+              if (activeView === 'Effects') {
+                try {
+                  const effectData = JSON.parse(e.dataTransfer.getData('application/json'));
+                  handleAddEffectFromLibrary(effectData);
+                } catch (error) {
+                  console.error('Error parsing dropped effect data:', error);
+                }
+              }
+            }}>
             {/* Static Navbar with Tabs */}
             <div className="  border-b border-[#FFFFFF1A] h-full">
               <div className=" bg-[#1F1F1F] flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
@@ -1510,7 +1565,7 @@ const DrumPadMachine = ({ onClose }) => {
 
                 {activeView === 'Patterns' && (
                   <>dfgfg
-                  </>
+                  </> 
                 )}
 
                 {activeView === 'Piano Roll' && (
@@ -1518,10 +1573,99 @@ const DrumPadMachine = ({ onClose }) => {
                 )}
 
                 {activeView === 'Effects' && (
-                  <div className="w-full h-[400px] md:h-[500px] lg:h-[250px] flex items-center justify-center">
-                    <div className="text-center">
-                      <h3 className="text-white text-xl font-semibold mb-4">Effects Tab</h3>
-                      <p className="text-gray-400">Audio effects and processing will be here</p>
+                  <div className={`w-full overflow-x-auto transition-all duration-200 ${isDragOver ? 'bg-[#409C9F] bg-opacity-10' : ''}`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = 'copy';
+                      setIsDragOver(true);
+                      console.log('Drag over Effects tab');
+                    }}
+                    onDragLeave={(e) => {
+                      if (!e.currentTarget.contains(e.relatedTarget)) {
+                        setIsDragOver(false);
+                        console.log('Drag leave Effects tab');
+                      }
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsDragOver(false);
+                      console.log('Drop on Effects tab');
+                      try {
+                        const effectData = JSON.parse(e.dataTransfer.getData('application/json'));
+                        console.log('Dropped effect data:', effectData);
+                        handleAddEffectFromLibrary(effectData);
+                      } catch (error) {
+                        console.error('Error parsing dropped effect data:', error);
+                      }
+                    }}
+                  >
+                    <div className="flex items-center justify-center p-2 sm:p-4 min-w-max bg-black">
+                      <div className="flex gap-2 sm:gap-4 min-w-max">
+                        {activeEffects.map((effect) => (
+                          <div key={effect.instanceId} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-white flex flex-col shrink-0">
+                            <div className="flex-1 w-full flex items-center justify-center">
+                              {effect.component ? (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  {React.createElement(effect.component)}
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-center h-full">
+                                  <p className="text-gray-400 text-sm">No component available</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        {activeEffects.length < effectsLibrary?.length && (
+                          <div className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-white cursor-pointer hover:bg-[#2a2a2a] transition-colors shrink-0 border-2 border-dashed border-gray-600"
+                            onClick={handlePlusButtonClick}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.dataTransfer.dropEffect = 'copy';
+                              e.currentTarget.style.borderColor = '#409C9F';
+                              e.currentTarget.style.backgroundColor = '#2a2a2a';
+                            }}
+                            onDragLeave={(e) => {
+                              e.currentTarget.style.borderColor = '#6B7280';
+                              e.currentTarget.style.backgroundColor = '#1a1a1a';
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              e.currentTarget.style.borderColor = '#6B7280';
+                              e.currentTarget.style.backgroundColor = '#1a1a1a';
+                              try {
+                                const effectData = JSON.parse(e.dataTransfer.getData('application/json'));
+                                handleAddEffectFromLibrary(effectData);
+                              } catch (error) {
+                                console.error('Error parsing dropped effect data:', error);
+                              }
+                            }}
+                          >
+                            <div className="w-14 h-14 bg-white text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
+                            <p className="text-center text-sm leading-snug">Drop effects here or<br />select from library</p>
+                          </div>
+                        )}
+                        {Array.from({ length: 4 - activeEffects.length - 1 }, (_, index) => (
+                          <div key={index} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl shrink-0 border-2 border-dashed border-gray-600"
+                            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; e.currentTarget.style.borderColor = '#409C9F'; e.currentTarget.style.backgroundColor = '#2a2a2a'; }}
+                            onDragLeave={(e) => { e.currentTarget.style.borderColor = '#4B5563'; e.currentTarget.style.backgroundColor = '#1a1a1a'; }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              e.currentTarget.style.borderColor = '#4B5563';
+                              e.currentTarget.style.backgroundColor = '#1a1a1a';
+                              try {
+                                const effectData = JSON.parse(e.dataTransfer.getData('application/json'));
+                                handleAddEffectFromLibrary(effectData);
+                              } catch (error) {
+                                console.error('Error parsing dropped effect data:', error);
+                              }
+                            }}
+                          ></div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
