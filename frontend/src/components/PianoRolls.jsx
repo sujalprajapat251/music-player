@@ -7,7 +7,7 @@ import * as d3 from 'd3';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectGridSettings } from '../Redux/Slice/grid.slice';
 import { setPlaying, setCurrentTime as setStudioCurrentTime } from '../Redux/Slice/studio.slice';
-import { getGridDivisions, parseTimeSignature } from '../Utils/gridUtils';
+import { getGridDivisions, parseTimeSignature, getGridSpacingWithTimeSignature } from '../Utils/gridUtils';
 import { FaPaste, FaRegCopy } from 'react-icons/fa';
 import { MdDelete } from "react-icons/md";
 import { IoCutOutline } from 'react-icons/io5';
@@ -40,7 +40,6 @@ const PianoRolls = () => {
     const wrapperRef = useRef();
     const timelineHeaderRef = useRef();
     const timelineContainerRef = useRef();
-    const [scale, setScale] = useState(8); // Zoom scale
     
     // Get zoom level from Redux to match Timeline.jsx
     const { zoomLevel } = useSelector(selectGridSettings);
@@ -55,15 +54,17 @@ const PianoRolls = () => {
     const studioBpm = useSelector((state) => state.studio?.bpm ?? 120);
     const [scrollLeft, setScrollLeft] = useState(0); // Horizontal scroll position
 
+    const pianoRecording = useSelector((state) => state.studio.pianoRecord);
+    console.log('pianoRecording ::: > ', pianoRecording)
+
     const baseWidth = 1000;  // Increased base width for more content
     const height = 600;
     const rowHeight = 30;
     const audioDuration = 1 * 60; // Default duration in seconds
-    const pixelsPerSecond = 50; // Increased spacing between seconds
 
     // get data from redux
     const track = useSelector((state)=>state.studio.tracks)
-    console.log('track',audio);
+    // console.log('track',audio);
     // Get grid settings from Redux
     const { selectedGrid, selectedTime, selectedRuler } = useSelector(selectGridSettings);
 
@@ -71,10 +72,8 @@ const PianoRolls = () => {
         if (!timelineHeaderRef.current) return;
     
         const svg = d3.select(timelineHeaderRef.current);
-        const svgNode = timelineHeaderRef.current;
-        if (scale <= 2) {
-            setScale(2);
-        }
+        
+        // Use the exact same width calculation as Timeline.jsx
         const width = Math.max(audioDuration, 12) * timelineWidthPerSecond;
         const axisY = 80; // Center of the header
         const duration = audioDuration;
@@ -85,10 +84,9 @@ const PianoRolls = () => {
     
         // Use shared X position function
         const xForTime = d3.scaleLinear().domain([0, duration]).range([0, width]);
-        // const labelInterval = 1; // Changed from 2 to 1 to show every second
-    
-        const gridDivisions = getGridDivisions(selectedGrid, selectedTime);
-        // const gridSpacing = 1 / gridDivisions;
+        
+        // Use the exact same grid spacing calculation as Timeline.jsx
+        const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
         const gridColor = "#FFFFFF";
 
         let labelInterval;
@@ -113,7 +111,7 @@ const PianoRolls = () => {
             .attr("stroke-width", 1);
         const addedLabels = new Set();
         // Draw tick marks and labels
-        for (let time = 0; time <= duration; time += gridDivisions) {
+        for (let time = 0; time <= duration; time += gridSpacing) {
             const x = xForTime(time);
       
             // Determine tick importance based on time signature
@@ -195,13 +193,13 @@ const PianoRolls = () => {
               }
             }
           }
-    }, [audioDuration, selectedGrid, scale, baseWidth]);
+    }, [audioDuration, selectedGrid, selectedTime, selectedRuler, timelineWidthPerSecond]);
 
     useEffect(() => {
         renderRuler();
     }, [renderRuler, audioDuration, selectedGrid, timelineWidthPerSecond]);
 
-    const drawGrid = (zoomScale) => {
+    const drawGrid = useCallback(() => {
         const svg = d3.select(svgRef.current);
         const group = svg.select('g');
         group.selectAll('*').remove();
@@ -212,29 +210,39 @@ const PianoRolls = () => {
         svg.attr('width', width).attr('height', height);
 
         // Get grid divisions from Redux to match timeline
-        const gridDivisions = getGridDivisions(selectedGrid);
-        const gridSpacing = 1 / gridDivisions;
+        const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
         const duration = audioDuration;
+        
         // Use shared X position function
         const xForTime = (t) => getXForTime(t, duration, width);
 
         // Vertical lines - aligned with timeline tick marks
         for (let time = 0; time <= duration; time += gridSpacing) {
             const x = xForTime(time);
-            const isMainBeat = Math.abs(time - Math.round(time)) < 0.01;
-            const isHalfBeat = Math.abs(time - Math.round(time * 2) / 2) < 0.01;
-            const isQuarterBeat = Math.abs(time - Math.round(time * 4) / 4) < 0.01;
+            
+            // Use the exact same beat detection logic as Timeline.jsx
+            const secondsPerBeat = 0.5; // Fixed at 120 BPM equivalent
+            const { beats } = parseTimeSignature(selectedTime);
+            const secondsPerBar = secondsPerBeat * beats;
+            
+            const timeInBar = time % secondsPerBar;
+            const timeInBeat = time % secondsPerBeat;
+            
+            const tolerance = gridSpacing * 0.001; // Same tolerance as Timeline.jsx
+            const isBarStart = timeInBar < tolerance;
+            const isMainBeat = !isBarStart && timeInBeat < tolerance;
+            const isSubdivision = !isBarStart && !isMainBeat;
 
             let strokeColor = '#ffffff15';
             let strokeWidth = 1;
 
-            if (isMainBeat) {
+            if (isBarStart) {
                 strokeColor = '#ffffff44';
                 strokeWidth = 1.5;
-            } else if (isHalfBeat) {
+            } else if (isMainBeat) {
                 strokeColor = '#ffffff30';
                 strokeWidth = 1.2;
-            } else if (isQuarterBeat) {
+            } else if (isSubdivision) {
                 strokeColor = '#ffffff20';
                 strokeWidth = 1;
             }
@@ -274,19 +282,13 @@ const PianoRolls = () => {
                     .attr('text-anchor', 'middle');
             }
         }
-    };
+    }, [audioDuration, selectedGrid, selectedTime, timelineWidthPerSecond]);
 
     useEffect(() => {
-        drawGrid(scale);
-    }, [scale, selectedGrid]);
+        drawGrid();
+    }, [drawGrid, selectedGrid, timelineWidthPerSecond]);
 
-    const handleZoomIn = () => {
-        setScale((prev) => Math.min(prev + 0.25, 8));
-    };
 
-    const handleZoomOut = () => {
-        setScale((prev) => Math.max(prev - 0.25, 0.5));
-    };
 
     // Handle horizontal scroll
     const handleScroll = (e) => {
@@ -301,30 +303,27 @@ const PianoRolls = () => {
 
     // Handle Ctrl + scroll wheel for zoom
     const handleWheel = (e) => {
-        if (e.ctrlKey) {
+        if (e.ctrlKey || e.metaKey) {
             e.preventDefault(); // Prevent default browser zoom
 
             if (e.deltaY < 0) {
                 // Scroll up - zoom in
-                handleZoomIn();
+                // This will be handled by Timeline.jsx
             } else {
                 // Scroll down - zoom out
-                handleZoomOut();
+                // This will be handled by Timeline.jsx
             }
         }
     };
 
-    // Calculate playhead position
-
-
+    // Calculate playhead position - use the same calculation as Timeline.jsx
     const computeSnappedTimeFromEvent = (e) => {
         if (!timelineHeaderRef.current) return;
         const rect = timelineHeaderRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const width = Math.max(audioDuration, 12) * timelineWidthPerSecond;
         const rawTime = (x / width) * audioDuration;
-        const gridDivisions = getGridDivisions(selectedGrid);
-        const gridSpacing = 1 / gridDivisions;
+        const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
         const snappedTime = Math.max(0, Math.min(audioDuration, Math.round(rawTime / gridSpacing) * gridSpacing));
         return snappedTime;
     };
@@ -413,7 +412,9 @@ const PianoRolls = () => {
         const rect = svgRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        const start = x / (GRID_UNIT * 2 * scale);
+        
+        // Use the exact same time calculation as Timeline.jsx
+        const start = x / timelineWidthPerSecond;
         const noteIndex = Math.floor(y / 30);
         // Remove restriction: allow adding anywhere
         if (noteIndex >= 0 && noteIndex < NOTES.length) {
@@ -485,23 +486,60 @@ const PianoRolls = () => {
     const playheadRef = useRef(null);
     const rAFRef = useRef(null);
     const [localPlayheadTime, setLocalPlayheadTime] = useState(0);
+    const playbackStartRef = useRef({ systemTime: 0, audioTime: 0 });
+
     // Smooth local playhead driven by Tone when playing
     useEffect(() => {
-        const loop = () => {
-            if (studioIsPlaying) {
+        let rafId = null;
+        const tempoRatio = (studioBpm ?? 120) / 120;
+
+        if (studioIsPlaying) {
+            playbackStartRef.current = {
+                systemTime: Date.now(),
+                audioTime: studioCurrentTime,
+            };
+
+            const loop = () => {
+                const elapsed = (Date.now() - playbackStartRef.current.systemTime) / 1000;
+                let t = playbackStartRef.current.audioTime + elapsed * tempoRatio;
+                // Loop awareness to match Timeline behavior
                 try {
-                    const t = Tone.Transport.seconds;
-                    setLocalPlayheadTime(t);
+                    const loopState = (window.__reduxStore__ && window.__reduxStore__.getState && window.__reduxStore__.getState().loop) || {};
+                    const { isLoopEnabled, loopStart, loopEnd } = loopState;
+                    if (isLoopEnabled && typeof loopStart === 'number' && typeof loopEnd === 'number' && loopEnd > loopStart) {
+                        if (t >= loopEnd) {
+                            playbackStartRef.current = {
+                                systemTime: Date.now(),
+                                audioTime: loopStart,
+                            };
+                            t = loopStart;
+                        }
+                    }
                 } catch {}
-            }
-            rAFRef.current = requestAnimationFrame(loop);
-        };
-        rAFRef.current = requestAnimationFrame(loop);
+                setLocalPlayheadTime(t);
+                rafId = requestAnimationFrame(loop);
+            };
+            rafId = requestAnimationFrame(loop);
+        } else {
+            setLocalPlayheadTime(studioCurrentTime);
+        }
+
         return () => {
-            if (rAFRef.current) cancelAnimationFrame(rAFRef.current);
+            if (rafId) cancelAnimationFrame(rafId);
         };
-    }, [studioIsPlaying]);
-    // When paused, snap local playhead to Redux time
+    }, [studioIsPlaying, studioCurrentTime, studioBpm]);
+
+    // When seeking during playback, re-anchor the local animation baseline
+    useEffect(() => {
+        if (studioIsPlaying) {
+            playbackStartRef.current = {
+                systemTime: Date.now(),
+                audioTime: studioCurrentTime,
+            };
+        }
+    }, [studioCurrentTime, studioIsPlaying]);
+    
+    // When paused, snap local playhead to Redux time (kept for certainty)
     useEffect(() => {
         if (!studioIsPlaying) {
             setLocalPlayheadTime(studioCurrentTime);
@@ -509,9 +547,16 @@ const PianoRolls = () => {
     }, [studioIsPlaying, studioCurrentTime]);
     // Auto-scroll the grid to follow the playhead
     useEffect(() => {
-        if (wrapperRef.current) {
-            const px = localPlayheadTime * timelineWidthPerSecond;
-            wrapperRef.current.scrollLeft = Math.max(0, px - 100);
+        const wrapper = wrapperRef.current;
+        if (!wrapper) return;
+        const px = localPlayheadTime * timelineWidthPerSecond;
+        const viewportLeft = wrapper.scrollLeft;
+        const viewportRight = viewportLeft + wrapper.clientWidth;
+        const edgePadding = 120; // pixels
+        if (px > viewportRight - edgePadding) {
+            wrapper.scrollLeft = Math.max(0, px - wrapper.clientWidth + edgePadding);
+        } else if (px < viewportLeft + edgePadding) {
+            wrapper.scrollLeft = Math.max(0, px - edgePadding);
         }
     }, [localPlayheadTime, timelineWidthPerSecond]);
 
@@ -679,20 +724,9 @@ const PianoRolls = () => {
     // Add visible zoom in/out buttons
     const ZoomControls = () => (
         <div className="absolute top-2 left-2 z-30 flex gap-2">
-            <button
-                className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center cursor-pointer text-xl"
-                onClick={handleZoomOut}
-                aria-label="Zoom Out"
-            >
-                -
-            </button>
-            <button
-                className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center cursor-pointer text-xl"
-                onClick={handleZoomIn}
-                aria-label="Zoom In"
-            >
-                +
-            </button>
+            <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-xs text-white p-6">
+                {Math.round(zoomLevel * 100)}%
+            </div>
         </div>
     );
 
@@ -863,31 +897,39 @@ const PianoRolls = () => {
                         width: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`,
                         height: "100%",
                         position: "relative",
-                        minWidth: "100%"
+                        minWidth: "100%",
+                        transition: "width 0.2s ease-in-out"
                     }}>
                         <svg
-                        className='ms-16'
+                            className='ms-16'
                             ref={timelineHeaderRef}
                             width="100%"
                             height="100%"
-                            style={{ color: "white", width: "100%", marginLeft: '96px' }}
+                            style={{ 
+                                color: "white", 
+                                width: "100%", 
+                                marginLeft: '96px',
+                                transition: "width 0.2s ease-in-out"
+                            }}
                         />
                     </div>
                 </div>
 
                 {/* Purple Playhead - spans full timeline and grid */}
                 <div
-                    ref={playheadRef}  // Add this line
+                    ref={playheadRef}
                     style={{
-                        position: "sticky",
-                        left: `${localPlayheadTime * timelineWidthPerSecond}px`,
-                        top: 0,
+                        position: "absolute",
+                        top: "60px",
+                        left: 0,
                         marginLeft: '96px',
                         height: "100%",
                         width: "2px",
                         background: "#AD00FF",
                         zIndex: 25,
                         pointerEvents: "none",
+                        transform: `translateX(${localPlayheadTime * timelineWidthPerSecond}px)`,
+                        willChange: "transform"
                     }}
                 >
                     {/* Purple triangle at top */}
@@ -895,12 +937,13 @@ const PianoRolls = () => {
                         style={{
                             position: "absolute",
                             top: "0px",
-                            left: "-4px",
-                            width: "0",
-                            height: "0",
-                            borderLeft: "5px solid transparent",
-                            borderRight: "5px solid transparent",
-                            borderTop: "8px solid #AD00FF",
+                            left: "-6px",
+                            width: "16px",
+                            height: "5px",
+                            borderLeft: "0px solid transparent",
+                            borderRight: "0px solid transparent",
+                            borderTop: "15px solid #AD00FF",
+                            borderRadius: "3px",
                         }}
                     />
                 </div>
@@ -945,6 +988,9 @@ const PianoRolls = () => {
                     }}
 
                 >
+                    {/* Transform the playhead for smooth movement without reflow */}
+                    <style>{`.pianoroll-playhead-transform{transform: translateX(${(typeof localPlayheadTime === 'number' ? localPlayheadTime : 0) * timelineWidthPerSecond}px);}`}</style>
+                    <div className="pianoroll-playhead-transform" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 24 }} />
                     {/* White background for all notes */}
                     {notes.length > 0 && (() => {
                         const minStart = Math.min(...notes.map(n => n.start));
@@ -963,14 +1009,15 @@ const PianoRolls = () => {
                                     background: 'rgba(255, 0, 0, 0.1)',
                                     zIndex: 0,
                                     opacity: 1,
-                                    borderRadius: '5px'
+                                    borderRadius: '5px',
+                                    transition: "left 0.2s ease-in-out, width 0.2s ease-in-out" // Smooth transition for zoom
                                 }}
                                 onMouseDown={handleMouseDown}
                                 onMouseUp={handleMouseUp}
                             />
                         );
                     })()}
-                    {console.log('notes',notes)}
+                    {/* {console.log('notes',notes)} */}
                     {notes.map((n, i) => {
                         return (
                             <Rnd
@@ -980,20 +1027,31 @@ const PianoRolls = () => {
                                 bounds="parent"
                                 enableResizing={{ right: true }}
                                 dragAxis="both"
+                                style={{
+                                    transition: "transform 0.2s ease-in-out" // Smooth transition for zoom
+                                }}
                                 onDragStop={(e, d) => {
                                     const snappedY = Math.round(d.y / 30) * 30;
-                                    const noteIndex = Math.round(snappedY / 30);
+                                    const noteIndex = Math.round(d.y / 30);
                                     const newNote = NOTES[noteIndex];
+                                    
+                                    // Use the same time calculation as Timeline.jsx
+                                    const newStartTime = d.x / timelineWidthPerSecond;
                                     updateNote(i, {
-                                        start: d.x / timelineWidthPerSecond,
+                                        start: newStartTime,
                                         note: newNote,
                                     });
                                 }}
                                 onResizeStop={(e, direction, ref, delta, position) => {
                                     const newWidth = parseFloat(ref.style.width);
+                                    
+                                    // Use the same time calculation as Timeline.jsx
+                                    const newDuration = newWidth / timelineWidthPerSecond;
+                                    const newStartTime = position.x / timelineWidthPerSecond;
+                                    
                                     updateNote(i, {
-                                        duration: newWidth / timelineWidthPerSecond,
-                                        start: position.x / timelineWidthPerSecond,
+                                        duration: newDuration,
+                                        start: newStartTime,
                                     });
                                 }}
                             >
@@ -1033,10 +1091,14 @@ const PianoRolls = () => {
                         );
                     })}
 
-                    <svg ref={svgRef} style={{ width: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`, height: "100%" }}>
+                    <svg ref={svgRef} style={{ 
+                        width: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`, 
+                        height: "100%",
+                        transition: "width 0.2s ease-in-out" // Smooth transition for zoom like Timeline.jsx
+                    }}>
                         <g />
                     </svg>
-                    {console.log('consition', pasteMenu && !menuVisible && clipboardNote, pasteMenu, menuVisible, clipboardNote)}
+                    {/* {console.log('consition', pasteMenu && !menuVisible && clipboardNote, pasteMenu, menuVisible, clipboardNote)} */}
                     {(pasteMenu && clipboardNote) ? (
                         <span
                             className='bg-[#1F1F1F] text-white hover:bg-gray-200 hover:text-[#1F1F1F] absolute cursor-pointer text-sm p-1'
