@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
-import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio } from "../Redux/Slice/studio.slice";
+import { addTrack, addAudioClipToTrack,drumRecordedData,  updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio } from "../Redux/Slice/studio.slice";
 import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM, zoomIn, zoomOut, resetZoom } from "../Redux/Slice/grid.slice";
 import { setAudioDuration as setLoopAudioDuration, toggleLoopEnabled, setLoopEnd, setLoopRange, selectIsLoopEnabled } from "../Redux/Slice/loop.slice";
 import { getGridSpacing, getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
@@ -35,6 +35,18 @@ import { toggleEffectsOffcanvas } from "../Redux/Slice/effects.slice";
 import EditTrackNameModal from "./EditTrackNameModal";
 
 const Timeline = () => {
+  // Enhanced effect to ensure timeline updates after recording stops
+
+
+  // Additional effect to preserve drum data visibility
+  // useEffect(() => {
+  //   // Log for debugging - you can remove this later
+  //   if (drumRecordedData.length > 0) {
+  //     console.log('Timeline: Drum recorded data available:', drumRecordedData.length, 'hits');
+  //     console.log('Recording state:', isRecording);
+  //   }
+  // }, [drumRecordedData, isRecording]);
+
   // Define drum machine types for drum recording display
   const drumMachineTypes = [
     {
@@ -42,7 +54,7 @@ const Timeline = () => {
       color: '#7c3aed',
     },
     {
-      name: "Vintage 909", 
+      name: "Vintage 909",
       color: '#dc2626',
     },
     {
@@ -66,7 +78,7 @@ const Timeline = () => {
   const animationFrameId = useRef(null);
   const playbackStartRef = useRef({ systemTime: 0, audioTime: 0 });
   const audioContextRef = useRef(null);
-  
+
   const [players, setPlayers] = useState([]);
   const [waveSurfers, setWaveSurfers] = useState([]);
   const [localCurrentTime, setLocalCurrentTime] = useState(0);
@@ -85,6 +97,9 @@ const Timeline = () => {
   const [resizeModal, setResizeModal] = useState(false);
   const [volumeIndicator, setVolumeIndicator] = useState({ show: false, volume: 0, trackName: '' });
   const [edirNameModel, setEdirNameModel] = useState(false);
+
+  
+    const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
 
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
@@ -107,6 +122,8 @@ const Timeline = () => {
     sectionId: null
   });
 
+
+
   const tracks = useSelector((state) => state.studio?.tracks || []);
   const trackHeight = useSelector((state) => state.studio?.trackHeight || 100);
   const recordedData = useSelector((state) => state.studio?.recordedData || []);
@@ -114,7 +131,7 @@ const Timeline = () => {
 
   const sidebarScrollOffset = useSelector((state) => state.studio?.sidebarScrollOffset || 0);
   const soloTrackId = useSelector((state) => state.studio.soloTrackId);
-  
+
   // Use custom hook for section labels management
   const { sectionLabels, resizeSection } = useSectionLabels();
 
@@ -123,6 +140,22 @@ const Timeline = () => {
   const timelineWidthPerSecond = baseTimelineWidthPerSecond * zoomLevel; // Apply zoom level
 
   // Mute functionality
+
+
+  useEffect(() => {
+    // Force a re-render when recording state changes and we have drum data
+    if (!isRecording && drumRecordedData.length > 0) {
+      // Small delay to ensure all state updates are complete
+      const timeoutId = setTimeout(() => {
+        // Trigger a state update to force timeline re-render
+        setLocalCurrentTime(prev => prev + 0.001); // Minimal change to trigger update
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isRecording, drumRecordedData.length]);
+
+
 
   useEffect(() => {
     players.forEach(playerObj => {
@@ -364,44 +397,44 @@ const Timeline = () => {
 
   const handleReady = useCallback(async (wavesurfer, clip) => {
     if (!clip || !clip.url) return;
-  
+
     try {
       const audioContext = getAudioContext();
-      
+
       // Check if we already have this player
       const existingPlayer = players.find(p => p.trackId === clip.trackId && p.clipId === clip.id);
       if (existingPlayer) {
         return; // Don't create duplicate players
       }
-  
+
       const response = await fetch(clip.url);
       if (!response.ok) {
         throw new Error(`Failed to fetch audio: ${response.statusText}`);
       }
-  
+
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-  
+
       const player = new Player(audioBuffer).toDestination();
 
       // Find the track to get its volume
       const track = tracks.find(t => t.id === clip.trackId);
       const trackVolume = track?.volume || 80;
-      
+
       // Calculate combined volume
       const masterVolumeDb = (masterVolume - 100) * 0.6;
       const trackVolumeDb = (trackVolume - 100) * 0.6;
       const combinedVolumeDb = masterVolumeDb + trackVolumeDb;
-      
+
       player.volume.value = combinedVolumeDb;
 
       // Set playback rate based on tempo
       player.playbackRate = tempoRatio;
-  
+
       const clipDuration = clip.duration || audioBuffer.duration;
       const trimStart = clip.trimStart || 0;
       const trimEnd = clip.trimEnd || clipDuration;
-  
+
       setPlayers((prev) => {
         const filtered = prev.filter(p => !(p.trackId === clip.trackId && p.clipId === clip.id));
         const playerData = {
@@ -417,12 +450,12 @@ const Timeline = () => {
         };
         return [...filtered, playerData];
       });
-  
+
       setWaveSurfers((prev) => {
         if (prev.find(ws => ws === wavesurfer)) return prev;
         return [...prev, wavesurfer];
       });
-  
+
     } catch (error) {
       console.error("Error loading audio:", error);
     }
@@ -492,11 +525,11 @@ const Timeline = () => {
             const remainingTrimmedDuration = (trimEnd - trimStart) - offsetInTrimmedRegion;
 
             if (remainingTrimmedDuration > 0) {
-                              try {
-                  playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
-                } catch (error) {
-                  // Start during seek error can be ignored
-                }
+              try {
+                playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
+              } catch (error) {
+                // Start during seek error can be ignored
+              }
             }
           }
         }
@@ -512,15 +545,15 @@ const Timeline = () => {
   // Fixed animation loop to respect trim boundaries and looping
   useEffect(() => {
     let localAnimationId = null;
-  
+
     if (isPlaying) {
       const updateLoop = () => {
         if (!isPlaying) return;
-  
+
         // Adjust elapsed time based on tempo ratio
         const elapsedTime = (Date.now() - playbackStartRef.current.systemTime) / 1000;
         let newTime = playbackStartRef.current.audioTime + (elapsedTime * tempoRatio);
-  
+
         // Handle looping
         if (isLoopEnabled && newTime >= loopEnd) {
           newTime = loopStart;
@@ -528,7 +561,7 @@ const Timeline = () => {
             systemTime: Date.now(),
             audioTime: loopStart,
           };
-  
+
           // Stop all players and restart them at loop start
           players.forEach((playerObj) => {
             if (playerObj?.player && typeof playerObj.player.stop === 'function') {
@@ -539,28 +572,28 @@ const Timeline = () => {
               }
             }
           });
-  
+
           // Restart clips that should be playing at loop start
           players.forEach((playerObj) => {
             if (playerObj?.player && typeof playerObj.player.start === 'function') {
               const clipStartTime = playerObj.startTime || 0;
               const trimStart = playerObj.trimStart || 0;
               const trimEnd = playerObj.trimEnd || playerObj.duration;
-  
+
               const trimmedClipStart = clipStartTime;
               const trimmedClipEnd = clipStartTime + (trimEnd - trimStart);
-  
+
               if (loopStart >= trimmedClipStart && loopStart < trimmedClipEnd) {
                 const offsetInTrimmedRegion = loopStart - trimmedClipStart;
                 const startOffsetInOriginalAudio = trimStart + offsetInTrimmedRegion;
                 const remainingTrimmedDuration = (trimEnd - trimStart) - offsetInTrimmedRegion;
-  
+
                 if (remainingTrimmedDuration > 0) {
-                                  try {
-                  playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
-                } catch (error) {
-                  // Clip start error during loop can be ignored
-                }
+                  try {
+                    playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
+                  } catch (error) {
+                    // Clip start error during loop can be ignored
+                  }
                 }
               }
             }
@@ -579,17 +612,17 @@ const Timeline = () => {
           });
           return;
         }
-  
+
         // Update local state for smooth animation (this runs every frame)
         setLocalCurrentTime(newTime);
-  
+
         // CRITICAL: Drastically reduce Redux updates to prevent lag
         const reduxUpdateTime = Date.now();
         if (!lastReduxUpdateRef.current || reduxUpdateTime - lastReduxUpdateRef.current > 500) { // Changed from 120ms to 500ms
           dispatch(setCurrentTime(newTime));
           lastReduxUpdateRef.current = reduxUpdateTime;
         }
-  
+
         // CRITICAL: Reduce player state checks to prevent audio stuttering
         const playerUpdateTime = Date.now();
         if (!lastPlayerUpdateRef.current || playerUpdateTime - lastPlayerUpdateRef.current > 300) { // Changed from 100ms to 300ms
@@ -598,10 +631,10 @@ const Timeline = () => {
               const clipStartTime = playerObj.startTime || 0;
               const trimStart = playerObj.trimStart || 0;
               const trimEnd = playerObj.trimEnd || playerObj.duration;
-  
+
               const trimmedClipStart = clipStartTime;
               const trimmedClipEnd = clipStartTime + (trimEnd - trimStart);
-  
+
               // Stop clip if playhead moves beyond the trimmed end
               if (newTime >= trimmedClipEnd && playerObj.player.state === 'started') {
                 try {
@@ -610,7 +643,7 @@ const Timeline = () => {
                   // Silently ignore stop errors
                 }
               }
-  
+
               // Start clip if playhead enters the trimmed region
               const previousTime = playbackStartRef.current.audioTime + ((elapsedTime - 1 / 60) * tempoRatio);
               if (previousTime < trimmedClipStart &&
@@ -621,7 +654,7 @@ const Timeline = () => {
                   const offsetInTrimmedRegion = newTime - trimmedClipStart;
                   const startOffsetInOriginalAudio = trimStart + offsetInTrimmedRegion;
                   const remainingTrimmedDuration = (trimEnd - trimStart) - offsetInTrimmedRegion;
-  
+
                   if (remainingTrimmedDuration > 0) {
                     playerObj.player.start(undefined, startOffsetInOriginalAudio, remainingTrimmedDuration);
                   }
@@ -633,13 +666,13 @@ const Timeline = () => {
           });
           lastPlayerUpdateRef.current = playerUpdateTime;
         }
-  
+
         localAnimationId = requestAnimationFrame(updateLoop);
       };
-  
+
       localAnimationId = requestAnimationFrame(updateLoop);
     }
-  
+
     return () => {
       if (localAnimationId) {
         cancelAnimationFrame(localAnimationId);
@@ -655,7 +688,7 @@ const Timeline = () => {
           const isMuted = soloTrackId
             ? soloTrackId !== track.id
             : track.muted;
-          
+
           if (isMuted) {
             playerObj.player.volume.value = -Infinity;
           } else {
@@ -667,14 +700,14 @@ const Timeline = () => {
         }
       });
     };
-  
+
     let timeoutId;
     return () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(updateVolumes, 16); // ~60fps debounce
     };
   }, [players, tracks, soloTrackId, masterVolume]);
-  
+
   useEffect(() => {
     debouncedVolumeUpdate();
   }, [debouncedVolumeUpdate]);
@@ -936,7 +969,7 @@ const Timeline = () => {
   const handleWheel = useCallback((e) => {
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault(); // Prevent default browser zoom
-      
+
       if (e.deltaY < 0) {
         // Scroll up - zoom in
         dispatch(zoomIn());
@@ -969,7 +1002,7 @@ const Timeline = () => {
 
       if (data) {
         const soundItem = JSON.parse(data);
-        
+
 
         if (!soundItem.soundfile) {
           // console.error('No soundfile found in dropped item');
@@ -1032,7 +1065,7 @@ const Timeline = () => {
             soundData: soundItem
           };
 
-  
+
           dispatch(addAudioClipToTrack({
             trackId: trackId,
             audioClip: newClip
@@ -1062,7 +1095,7 @@ const Timeline = () => {
 
           dispatch(addTrack(newTrack));
         } else {
-  
+
         }
       } else {
 
@@ -1267,7 +1300,7 @@ const Timeline = () => {
         // Implement open in sampler functionality
         break;
       default:
-        // Unknown action
+      // Unknown action
     }
   }, [contextMenu, tracks, clipboard, dispatch, currentTime]);
 
@@ -1364,128 +1397,128 @@ const Timeline = () => {
   }, [selectedTrackId, selectedClipId, handleContextMenuAction, tracks, dispatch]);
 
   const renderGridLines = useMemo(() => {
-  // Early return if required dependencies are not available
-  if (!timelineContainerRef.current || !audioDuration || tracks.length === 0) {
-    return [];
-  }
-
-  const gridLines = [];
-  // Use the actual timeline width that changes with zoom, not the container width
-  const timelineWidth = Math.max(audioDuration, 12) * timelineWidthPerSecond;
-  const duration = audioDuration;
-
-  // Validate dimensions
-  if (timelineWidth <= 0 || duration <= 0) return [];
-
-  // Get grid spacing with proper error handling
-  let gridSpacing;
-  try {
-    gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
-  } catch (error) {
-    console.warn('Invalid grid spacing configuration:', error);
-    gridSpacing = 1; // fallback to 1 second
-  }
-
-  if (gridSpacing <= 0) return [];
-
-  // Use the zoomed timeline width for the scale
-  const xScale = d3.scaleLinear().domain([0, duration]).range([0, timelineWidth]);
-  const totalTracksHeight = trackHeight * tracks.length;
-
-  // Calculate grid parameters with error handling
-  let secondsPerBeat = 0.5;
-  let beats = 4;
-  
-  try {
-    const timeSignature = parseTimeSignature(selectedTime);
-    beats = timeSignature.beats || 4;
-    // You might want to make secondsPerBeat configurable based on tempo
-    // secondsPerBeat = 60 / (tempo || 120); // 120 BPM default
-  } catch (error) {
-    console.warn('Invalid time signature:', error);
-  }
-
-  const secondsPerBar = secondsPerBeat * beats;
-
-  // Optimize grid line calculation
-  const maxGridLines = Math.min(Math.ceil(duration / gridSpacing), 2000);
-  const tolerance = gridSpacing * 0.001; // More precise tolerance
-
-  for (let i = 0; i <= maxGridLines; i++) {
-    const time = i * gridSpacing;
-    if (time > duration) break;
-    
-    const x = Math.round(xScale(time)); // Round to prevent sub-pixel rendering
-
-    // More accurate beat/bar detection
-    const timeInBar = time % secondsPerBar;
-    const timeInBeat = time % secondsPerBeat;
-
-    const isBarStart = timeInBar < tolerance;
-    const isMainBeat = !isBarStart && timeInBeat < tolerance;
-    const isSubdivision = !isBarStart && !isMainBeat;
-
-    // Define grid line styles
-    let lineStyle;
-    if (isBarStart) {
-      lineStyle = {
-        background: "#FFFFFF50",
-        width: 2,
-        opacity: 0.7,
-        zIndex: 3
-      };
-    } else if (isMainBeat) {
-      lineStyle = {
-        background: "#FFFFFF40",
-        width: 1,
-        opacity: 0.5,
-        zIndex: 2
-      };
-    } else if (isSubdivision) {
-      lineStyle = {
-        background: "#FFFFFF25",
-        width: 1,
-        opacity: 0.25,
-        zIndex: 1
-      };
-    } else {
-      continue; // Skip lines that don't match any category
+    // Early return if required dependencies are not available
+    if (!timelineContainerRef.current || !audioDuration || tracks.length === 0) {
+      return [];
     }
 
-    // Only render lines within visible bounds (use timeline width)
-    if (x >= -lineStyle.width && x <= timelineWidth + lineStyle.width) {
-      gridLines.push(
-        <div
-          key={`grid-${time.toFixed(3)}`} // Use time-based key for consistency
-          className="timeline-grid-line" // Add class for easier styling/debugging
-          style={{
-            position: "absolute",
-            left: x,
-            top: 0,
-            width: lineStyle.width,
-            height: totalTracksHeight,
-            background: lineStyle.background,
-            opacity: lineStyle.opacity,
-            zIndex: lineStyle.zIndex,
-            pointerEvents: "none",
-            transform: "translateZ(0)", // Force GPU acceleration
-          }}
-        />
-      );
-    }
-  }
+    const gridLines = [];
+    // Use the actual timeline width that changes with zoom, not the container width
+    const timelineWidth = Math.max(audioDuration, 12) * timelineWidthPerSecond;
+    const duration = audioDuration;
 
-  return gridLines;
-}, [
-  // Include all dependencies to prevent stale closures
-  audioDuration, 
-  selectedGrid, 
-  selectedTime, 
-  tracks.length, 
-  trackHeight,
-  timelineWidthPerSecond, // Add zoom-dependent timeline width
-  zoomLevel // Add zoom level dependency
-]);
+    // Validate dimensions
+    if (timelineWidth <= 0 || duration <= 0) return [];
+
+    // Get grid spacing with proper error handling
+    let gridSpacing;
+    try {
+      gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
+    } catch (error) {
+      console.warn('Invalid grid spacing configuration:', error);
+      gridSpacing = 1; // fallback to 1 second
+    }
+
+    if (gridSpacing <= 0) return [];
+
+    // Use the zoomed timeline width for the scale
+    const xScale = d3.scaleLinear().domain([0, duration]).range([0, timelineWidth]);
+    const totalTracksHeight = trackHeight * tracks.length;
+
+    // Calculate grid parameters with error handling
+    let secondsPerBeat = 0.5;
+    let beats = 4;
+
+    try {
+      const timeSignature = parseTimeSignature(selectedTime);
+      beats = timeSignature.beats || 4;
+      // You might want to make secondsPerBeat configurable based on tempo
+      // secondsPerBeat = 60 / (tempo || 120); // 120 BPM default
+    } catch (error) {
+      console.warn('Invalid time signature:', error);
+    }
+
+    const secondsPerBar = secondsPerBeat * beats;
+
+    // Optimize grid line calculation
+    const maxGridLines = Math.min(Math.ceil(duration / gridSpacing), 2000);
+    const tolerance = gridSpacing * 0.001; // More precise tolerance
+
+    for (let i = 0; i <= maxGridLines; i++) {
+      const time = i * gridSpacing;
+      if (time > duration) break;
+
+      const x = Math.round(xScale(time)); // Round to prevent sub-pixel rendering
+
+      // More accurate beat/bar detection
+      const timeInBar = time % secondsPerBar;
+      const timeInBeat = time % secondsPerBeat;
+
+      const isBarStart = timeInBar < tolerance;
+      const isMainBeat = !isBarStart && timeInBeat < tolerance;
+      const isSubdivision = !isBarStart && !isMainBeat;
+
+      // Define grid line styles
+      let lineStyle;
+      if (isBarStart) {
+        lineStyle = {
+          background: "#FFFFFF50",
+          width: 2,
+          opacity: 0.7,
+          zIndex: 3
+        };
+      } else if (isMainBeat) {
+        lineStyle = {
+          background: "#FFFFFF40",
+          width: 1,
+          opacity: 0.5,
+          zIndex: 2
+        };
+      } else if (isSubdivision) {
+        lineStyle = {
+          background: "#FFFFFF25",
+          width: 1,
+          opacity: 0.25,
+          zIndex: 1
+        };
+      } else {
+        continue; // Skip lines that don't match any category
+      }
+
+      // Only render lines within visible bounds (use timeline width)
+      if (x >= -lineStyle.width && x <= timelineWidth + lineStyle.width) {
+        gridLines.push(
+          <div
+            key={`grid-${time.toFixed(3)}`} // Use time-based key for consistency
+            className="timeline-grid-line" // Add class for easier styling/debugging
+            style={{
+              position: "absolute",
+              left: x,
+              top: 0,
+              width: lineStyle.width,
+              height: totalTracksHeight,
+              background: lineStyle.background,
+              opacity: lineStyle.opacity,
+              zIndex: lineStyle.zIndex,
+              pointerEvents: "none",
+              transform: "translateZ(0)", // Force GPU acceleration
+            }}
+          />
+        );
+      }
+    }
+
+    return gridLines;
+  }, [
+    // Include all dependencies to prevent stale closures
+    audioDuration,
+    selectedGrid,
+    selectedTime,
+    tracks.length,
+    trackHeight,
+    timelineWidthPerSecond, // Add zoom-dependent timeline width
+    zoomLevel // Add zoom level dependency
+  ]);
 
 
 
@@ -1494,7 +1527,7 @@ const Timeline = () => {
   const playheadPosition = useMemo(() => {
     return localCurrentTime * timelineWidthPerSecond;
   }, [localCurrentTime, timelineWidthPerSecond]);
- 
+
 
   // Handler for TimelineActionBoxes
   const handleAction = (action) => {
@@ -1548,39 +1581,54 @@ const Timeline = () => {
     }
   };
 
-  const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
+
 
   // Function to play drum sound (this will be called from drum clips)
-  const playDrumSound = (drumData) => {
-    // This function will be called when timeline plays drum clips
-    // console.log('Timeline playing drum sound:', drumData);
-    // You can add actual sound playback logic here
-  };
+  // Enhanced drum sound playback that works with timeline
+  const playDrumSound = useCallback((drumData) => {
+    // This integrates with your existing Tone.js setup
+    if (drumData && drumData.sound) {
+      // Use your existing drum sound loading logic here
+      console.log('Playing drum sound on timeline:', drumData);
+      // You can trigger actual drum sounds here using your drum component's sound system
+    }
+  }, []);
 
-  // Check for drum clips at current timeline position and play them
+  // Enhanced drum clip checking for timeline playback
   useEffect(() => {
     if (isPlaying && currentTime > 0) {
-      // Check all tracks for drum clips at the current time
+      // Check drum recorded data for playback
+      drumRecordedData.forEach(drumHit => {
+        const hitTime = drumHit.currentTime;
+        const tolerance = 0.05; // 50ms tolerance
+
+        if (Math.abs(currentTime - hitTime) <= tolerance) {
+          playDrumSound(drumHit);
+        }
+      });
+
+      // Also check regular drum tracks
       tracks.forEach(track => {
-        if (track.audioClips) {
+        if (track.type === 'drum' && track.audioClips) {
           track.audioClips.forEach(clip => {
-            if (clip.type === 'drum') {
-              // Check if the current time is within the clip's time range
+            if (clip.type === 'drum' && clip.drumSequence) {
               const clipStart = clip.startTime;
               const clipEnd = clip.startTime + clip.duration;
-              
+
               if (currentTime >= clipStart && currentTime <= clipEnd) {
-                // Play the drum sound
-                if (clip.soundData) {
-                  playDrumSound(clip.soundData);
-                }
+                clip.drumSequence.forEach(drumHit => {
+                  const adjustedHitTime = clipStart + (drumHit.currentTime - clip.startTime);
+                  if (Math.abs(currentTime - adjustedHitTime) <= 0.05) {
+                    playDrumSound(drumHit);
+                  }
+                });
               }
             }
           });
         }
       });
     }
-  }, [isPlaying, currentTime, tracks]);
+  }, [isPlaying, currentTime, tracks, drumRecordedData, playDrumSound]);
 
   const handleSave = (name) => {
     console.log("get name ::: > ", name);
@@ -1703,54 +1751,117 @@ const Timeline = () => {
               </div>
             )}
 
-            {/* Drum Recorded Data Display */}
+            {/* Enhanced Drum Recorded Data Display */}
             {drumRecordedData && drumRecordedData.length > 0 && (
               <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 52 }}>
-                {/* Hit markers */}
-                {drumRecordedData.map((drumRec, idx) => (
-                  <div
-                    key={`drum-recorded-${idx}`}
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: `${(drumRec.currentTime / audioDuration) * 100}%`,
-                      width: "8px",
-                      height: "100%",
-                      opacity: 0.9,
-                      zIndex: 53,
-                      borderRadius: "4px",
-                    }}
-                    title={`Drum: ${drumRec.padId} (${drumRec.sound}) - ${drumRec.drumMachine} - ${drumRec.currentTime.toFixed(2)}s`}
-                  />
-                ))}
+                {/* Individual drum hits with better visualization */}
+                {drumRecordedData.map((drumRec, idx) => {
+                  const drumColor = drumMachineTypes.find(dm => dm.name === drumRec.drumMachine)?.color || '#FF8014';
+                  const intensity = Math.min(1, (drumRec.volume || 50) / 100);
 
-                {/* Background region after recording stops */}
-                {!isRecording && drumRecordedData.length > 1 && (() => {
+                  return (
+                    <React.Fragment key={`drum-recorded-${idx}`}>
+                      {/* Main hit marker */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: `${(drumRec.currentTime / audioDuration) * 100}%`,
+                          width: "4px",
+                          height: "100%",
+                          background: `linear-gradient(180deg, ${drumColor} 0%, ${drumColor}80 50%, transparent 100%)`,
+                          opacity: 0.7 + (intensity * 0.3),
+                          zIndex: 53,
+                          borderRadius: "2px",
+                          boxShadow: `0 0 8px ${drumColor}60`,
+                          transform: `scaleY(${0.8 + intensity * 0.4})`,
+                          transformOrigin: 'bottom'
+                        }}
+                        title={`${drumRec.sound.toUpperCase()} - ${drumRec.drumMachine} - ${drumRec.currentTime.toFixed(2)}s`}
+                      />
+
+                      {/* Sound type indicator */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "10px",
+                          left: `${(drumRec.currentTime / audioDuration) * 100}%`,
+                          transform: "translateX(-50%)",
+                          fontSize: "8px",
+                          color: drumColor,
+                          fontWeight: "bold",
+                          textShadow: `0 0 3px ${drumColor}`,
+                          zIndex: 54,
+                          pointerEvents: 'none',
+                          userSelect: 'none'
+                        }}
+                      >
+                        {drumRec.sound.charAt(0).toUpperCase()}
+                      </div>
+                    </React.Fragment>
+                  );
+                })}
+
+                {/* Enhanced recording region */}
+                {drumRecordedData.length > 0 && (() => {
                   const first = drumRecordedData[0];
                   const last = drumRecordedData[drumRecordedData.length - 1];
-                  const start = Math.max(0, first.currentTime || 0);
-                  const end = Math.max(start, last.currentTime || start);
+                  const start = first.currentTime;
+                  const end = last.currentTime + 0.5; // Add small buffer
                   const leftPct = (start / audioDuration) * 100;
                   const widthPct = ((end - start) / audioDuration) * 100;
                   const drumMachineName = first?.drumMachine;
                   const dmColor = drumMachineTypes.find(dm => dm.name === drumMachineName)?.color || '#FF8014';
+
                   return (
                     <div
                       style={{
                         position: 'absolute',
                         top: 0,
                         left: `${leftPct}%`,
-                        width: `${widthPct}%`,
+                        width: `${Math.max(widthPct, 2)}%`, // Minimum width
                         height: '100%',
-                        background: `${dmColor}22`,
-                        border: `1px solid ${dmColor}55`,
-                        borderRadius: '4px',
-                        boxShadow: `0 0 8px ${dmColor}33`,
-                        pointerEvents: 'none',
+                        background: isRecording
+                          ? `linear-gradient(90deg, transparent, ${dmColor}20, transparent)`
+                          : `linear-gradient(90deg, ${dmColor}10, ${dmColor}20, ${dmColor}10)`,
+                        border: `1px solid ${dmColor}${isRecording ? '60' : '40'}`,
+                        borderRadius: '6px',
+                        boxShadow: isRecording
+                          ? `0 0 20px ${dmColor}40`
+                          : `inset 0 0 10px ${dmColor}20`,
+                        pointerEvents: isRecording ? 'none' : 'auto',
                         zIndex: 52,
+                        cursor: isRecording ? 'default' : 'pointer',
+                        animation: isRecording ? 'drumRecordingPulse 1s ease-in-out infinite' : 'none',
+                        transition: 'all 0.3s ease'
                       }}
-                      title={`Drum recording region (${start.toFixed(2)}s - ${end.toFixed(2)}s)`}
-                    />
+                      onClick={() => {
+                        if (!isRecording) {
+                          // Trigger track creation manually if needed
+                          console.log('Create drum track from recording');
+                        }
+                      }}
+                      title={isRecording
+                        ? `Recording... (${drumRecordedData.length} hits so far)`
+                        : `Drum Recording: ${drumRecordedData.length} hits (${start.toFixed(1)}s - ${end.toFixed(1)}s)`}
+                    >
+                      {!isRecording && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          color: dmColor,
+                          fontSize: '10px',
+                          fontWeight: 'bold',
+                          textShadow: `0 0 4px ${dmColor}`,
+                          whiteSpace: 'nowrap',
+                          opacity: 0.9
+                        }}>
+                          🥁 {drumRecordedData.length} hits
+                        </div>
+                      )}
+                    </div>
                   );
                 })()}
               </div>
@@ -1800,7 +1911,7 @@ const Timeline = () => {
 
               {/* Tracks */}
               {tracks.map((track, index) => {
-        
+
                 return (
                   <div
                     key={track.id}
@@ -1947,7 +2058,7 @@ const Timeline = () => {
             <img src={offce} alt="Off canvas" />
           </div>
           <div className="bg-[#1F1F1F] w-[40px] h-[40px] flex items-center justify-center rounded-full mt-2">
-            <img src={fxIcon} alt="Effects" onClick={() => dispatch(toggleEffectsOffcanvas())}/>
+            <img src={fxIcon} alt="Effects" onClick={() => dispatch(toggleEffectsOffcanvas())} />
           </div>
         </div>
 
@@ -2012,7 +2123,7 @@ const Timeline = () => {
         }}
       />
       <MusicOff showOffcanvas={showOffcanvas} setShowOffcanvas={setShowOffcanvas} />
-      <Effects showOffcanvas={showOffcanvas} setShowOffcanvas={setShowOffcanvas}/>
+      <Effects showOffcanvas={showOffcanvas} setShowOffcanvas={setShowOffcanvas} />
 
       {/* Context Menu */}
       <WaveMenu
@@ -2031,7 +2142,7 @@ const Timeline = () => {
       />
 
       {/* Piano Component */}
-      {showPiano || getTrackType == "Keys" &&  (
+      {showPiano || getTrackType == "Keys" && (
         <Piano onClose={() => setShowPiano(false)} />
       )}
 

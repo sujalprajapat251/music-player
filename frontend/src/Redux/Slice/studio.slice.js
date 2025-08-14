@@ -27,8 +27,9 @@ const initialState = {
   audioDuration: 500,
   masterVolume: 80, // Master volume control
   recordedData: [], // New state for recorded data
-  masterVolume: 80 ,// Master volume control
-  bpm: 120,   
+  masterVolume: 80,// Master volume control
+  bpm: 120,
+  drumDataProcessed: false,
   drumRecordedData: [], // Store drum pad recordings
   isPlayingDrumRecording: false, // Track if playing back drum recording
   drumPlaybackStartTime: null, // Track when drum playback started
@@ -51,9 +52,9 @@ const studioSlice = createSlice({
     },
     addTrack: (state, action) => {
       // Ensure new tracks have frozen property, audioClips array, and a unique color
-      const track = { 
-        ...action.payload, 
-        frozen: false, 
+      const track = {
+        ...action.payload,
+        frozen: false,
         muted: false,
         volume: action.payload.volume || 80, // Set individual track volume (default 80)
         color: action.payload.color || getNextTrackColor(), // Assign unique color
@@ -160,10 +161,10 @@ const studioSlice = createSlice({
           color: getNextTrackColor(), // Assign new unique color
           audioClips: originalTrack.audioClips ? [...originalTrack.audioClips] : [] // Copy audio clips
         };
-        
+
         // Add the duplicated track to the tracks array
         state.tracks.push(duplicatedTrack);
-        
+
         // Copy effects if they exist
         if (state.trackEffects[trackId]) {
           state.trackEffects[duplicatedTrack.id] = { ...state.trackEffects[trackId] };
@@ -178,7 +179,7 @@ const studioSlice = createSlice({
         if (!track.audioClips) {
           track.audioClips = [];
         }
-        
+
         const newClip = {
           id: Date.now() + Math.random(),
           url: audioData.url,
@@ -191,7 +192,7 @@ const studioSlice = createSlice({
           startTime: audioData.startTime || 0,
           frozen: audioData.frozen || false
         };
-        
+
         track.audioClips.push(newClip);
       }
     },
@@ -319,6 +320,9 @@ const studioSlice = createSlice({
     setDrumPlaybackStartTime: (state, action) => {
       state.drumPlaybackStartTime = action.payload;
     },
+    setDrumDataProcessed: (state, action) => {
+      state.drumDataProcessed = action.payload;
+    },
     // TimelineTrack specific actions
     setSelectedClip: (state, action) => {
       state.selectedClipId = action.payload;
@@ -361,20 +365,20 @@ const studioSlice = createSlice({
     setPianoRecordingClip: (state, action) => {
       state.pianoRecordingClip = action.payload; // {start, end, color}
     },
-    
+
     // Key and Scale Selection actions
     setSelectedKey: (state, action) => {
       state.selectedKey = action.payload;
     },
-    
+
     setSelectedScale: (state, action) => {
       state.selectedScale = action.payload;
     },
-    
+
     setHighlightedPianoKeys: (state, action) => {
       state.highlightedPianoKeys = action.payload;
     },
-    
+
     clearKeyScaleSelection: (state) => {
       state.selectedKey = null;
       state.selectedScale = null;
@@ -386,14 +390,14 @@ const studioSlice = createSlice({
   },
 });
 
-export const { 
-  setTracks, 
-  addTrack, 
-  updateTrack, 
+export const {
+  setTracks,
+  addTrack,
+  updateTrack,
   addAudioClipToTrack,
   updateAudioClip,
   removeAudioClip,
-  removeTrack, 
+  removeTrack,
   setTrackHeight,
   updateTimelineSettings,
   updateTrackStartTime,
@@ -424,6 +428,7 @@ export const {
   setMasterVolume,
   setBPM,
   setTrackVolume,
+  drumDataProcessed,
   setDrumRecordedData,
   setDrumPlayback,
   setDrumPlaybackStartTime,
