@@ -230,7 +230,6 @@ const DrumPadMachine = ({ onClose }) => {
   const tracks = useSelector((state) => state.studio?.tracks || []);
   const currentTrackId = useSelector((state) => state.studio?.currentTrackId || null);
 
-
   const currentTypeData = drumMachineTypes[currentType];
   console.log('currentTypeData', currentTypeData);
   // Get the currently selected drum machine
@@ -977,6 +976,7 @@ const DrumPadMachine = ({ onClose }) => {
       const drumData = createDrumData(pad, selectedDrumMachine, currentTime);
 
       const updatedData = [...drumRecordedData, drumData];
+      
       dispatch(setDrumRecordedData(updatedData));
 
       // Only create timeline clip if a track is selected
