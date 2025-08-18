@@ -2,11 +2,12 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
-import { addTrack, addAudioClipToTrack,drumRecordedData,  updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio } from "../Redux/Slice/studio.slice";
+import { addTrack, addAudioClipToTrack,  updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio } from "../Redux/Slice/studio.slice";
 import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM, zoomIn, zoomOut, resetZoom } from "../Redux/Slice/grid.slice";
 import { setAudioDuration as setLoopAudioDuration, toggleLoopEnabled, setLoopEnd, setLoopRange, selectIsLoopEnabled } from "../Redux/Slice/loop.slice";
 import { getGridSpacing, getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
 import { IMAGE_URL } from "../Utils/baseUrl";
+import { getAudioContext as getSharedAudioContext, ensureAudioUnlocked } from "../Utils/audioContext";
 import { getNextTrackColor } from "../Utils/colorUtils";
 import magnetIcon from "../Images/magnet.svg";
 import settingIcon from "../Images/setting.svg";
@@ -103,7 +104,11 @@ const Timeline = () => {
 
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      try {
+        audioContextRef.current = getSharedAudioContext();
+      } catch (e) {
+        audioContextRef.current = null;
+      }
     }
     return audioContextRef.current;
   }, []);
@@ -850,6 +855,7 @@ const Timeline = () => {
   useEffect(() => {
     const handleReduxPlayPause = async () => {
       try {
+        await ensureAudioUnlocked();
         await start();
 
         if (isPlaying) {

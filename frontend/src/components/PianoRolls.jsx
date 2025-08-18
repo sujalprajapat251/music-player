@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import * as Tone from 'tone';
+import Soundfont from 'soundfont-player';
 import { PitchDetector } from 'pitchy';
 import { Rnd } from 'react-rnd';
 import 'react-resizable/css/styles.css';
@@ -8,6 +9,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { selectGridSettings } from '../Redux/Slice/grid.slice';
 import { setPlaying, setCurrentTime as setStudioCurrentTime } from '../Redux/Slice/studio.slice';
 import { getGridDivisions, parseTimeSignature, getGridSpacingWithTimeSignature } from '../Utils/gridUtils';
+import { getAudioContext, ensureAudioUnlocked } from '../Utils/audioContext';
 import { FaPaste, FaRegCopy } from 'react-icons/fa';
 import { MdDelete } from "react-icons/md";
 import { IoCutOutline } from 'react-icons/io5';
@@ -419,9 +421,10 @@ const PianoRolls = () => {
         // Remove restriction: allow adding anywhere
         if (noteIndex >= 0 && noteIndex < NOTES.length) {
             const note = NOTES[noteIndex];
-            // Play the note sound
-            const synth = new Tone.Synth().toDestination();
-            synth.triggerAttackRelease(note, '8n');
+            // Preview using Soundfont-based piano if loaded
+            if (pianoRef.current) {
+                try { pianoRef.current.play(note, undefined, { duration: 0.2 }); } catch {}
+            }
             setNotes(prev => [
                 ...prev,
                 {
@@ -435,13 +438,18 @@ const PianoRolls = () => {
     const handleKeyDown = (note) => {
         if (activeNotes[note]) return;
 
-        const synth = new Tone.Synth().toDestination();
-        const time = Tone.now();
-        synth.triggerAttack(note, time);
+        const ctx = audioContextRef.current || getAudioContext();
+        audioContextRef.current = ctx;
 
+        if (pianoRef.current) {
+            const audioNode = pianoRef.current.play(note);
+            activeAudioNodes.current[note] = audioNode;
+        }
+
+        const time = (typeof Tone.now === 'function') ? Tone.now() : ctx.currentTime;
         setActiveNotes((prev) => ({
             ...prev,
-            [note]: { synth, startTime: time },
+            [note]: { startTime: time },
         }));
     };
 
@@ -449,18 +457,12 @@ const PianoRolls = () => {
         const noteInfo = activeNotes[note];
         if (!noteInfo) return;
 
-        const endTime = Tone.now();
-        const duration = endTime - noteInfo.startTime;
-        noteInfo.synth.triggerRelease(endTime);
+        if (activeAudioNodes.current[note]) {
+            try { activeAudioNodes.current[note].stop(); } catch {}
+            delete activeAudioNodes.current[note];
+        }
 
-        const noteObj = {
-            note,
-            start: noteInfo.startTime - startTime,
-            duration,
-        };
-
-        setNotes((prev) => [...prev, noteObj]);
-
+        // Do not add preview notes to the roll on key release
         setActiveNotes((prev) => {
             const copy = { ...prev };
             delete copy[note];
@@ -482,11 +484,37 @@ const PianoRolls = () => {
 
     // playing time line
     const synthRef = useRef(null);
+    const pianoRef = useRef(null);
+    const audioContextRef = useRef(null);
+    const gainNodeRef = useRef(null);
+    const panNodeRef = useRef(null);
+    const activeAudioNodes = useRef({});
     const notesScheduledRef = useRef(false);
     const playheadRef = useRef(null);
     const rAFRef = useRef(null);
     const [localPlayheadTime, setLocalPlayheadTime] = useState(0);
     const playbackStartRef = useRef({ systemTime: 0, audioTime: 0 });
+
+    // Build simple audio chain and load instrument on mount
+    useEffect(() => {
+        try {
+            const ctx = getAudioContext();
+            audioContextRef.current = ctx;
+
+            const gainNode = ctx.createGain();
+            const panNode = ctx.createStereoPanner();
+
+            gainNode.connect(panNode);
+            panNode.connect(ctx.destination);
+
+            gainNodeRef.current = gainNode;
+            panNodeRef.current = panNode;
+
+            Soundfont.instrument(ctx, 'acoustic_grand_piano', { destination: gainNode })
+                .then((p) => { pianoRef.current = p; })
+                .catch(() => {});
+        } catch {}
+    }, []);
 
     // Smooth local playhead driven by Tone when playing
     useEffect(() => {
@@ -574,19 +602,18 @@ const PianoRolls = () => {
     useEffect(() => {
         (async () => {
             try {
+                await ensureAudioUnlocked();
                 await Tone.start();
                 if (studioIsPlaying) {
-                    if (!notesScheduledRef.current) {
-                        notes.forEach(n => {
-                            Tone.Transport.schedule((time) => {
-                                if (!synthRef.current) {
-                                    synthRef.current = new Tone.PolySynth().toDestination();
-                                }
-                                synthRef.current.triggerAttackRelease(n.note, n.duration, time);
-                            }, n.start);
-                        });
-                        notesScheduledRef.current = true;
-                    }
+                    // Clear previous schedules to avoid duplicates/overlaps
+                    try { Tone.Transport.cancel(0); } catch {}
+                    notes.forEach(n => {
+                        Tone.Transport.schedule(() => {
+                            if (pianoRef.current) {
+                                try { pianoRef.current.play(n.note, undefined, { duration: n.duration }); } catch {}
+                            }
+                        }, n.start);
+                    });
                     try { Tone.Transport.seconds = studioCurrentTime; } catch {}
                     if (Tone.Transport.state !== 'started') {
                         Tone.Transport.start();
@@ -596,7 +623,7 @@ const PianoRolls = () => {
                 }
             } catch {}
         })();
-    }, [studioIsPlaying]);
+    }, [studioIsPlaying, notes, studioCurrentTime]);
 
     // If notes change, allow re-scheduling on next play
     useEffect(() => {
@@ -604,26 +631,26 @@ const PianoRolls = () => {
     }, [notes]);
 
     const handlePlayPause = async () => {
-        if (!synthRef.current) {
-            synthRef.current = new Tone.PolySynth().toDestination();
-        }
-
+        await ensureAudioUnlocked();
         await Tone.start();
 
         if (!studioIsPlaying) {
-            // ⬇️ Only schedule notes if Transport is NOT already running
-            if (Tone.Transport.state !== 'started') {
-                notes.forEach(n => {
-                    Tone.Transport.schedule((time) => {
-                        synthRef.current.triggerAttackRelease(n.note, n.duration, time);
-                    }, n.start);
-                });
-            }
+            // Always clear and reschedule current notes to avoid duplicates
+            try { Tone.Transport.cancel(0); } catch {}
+            notes.forEach(n => {
+                Tone.Transport.schedule(() => {
+                    if (pianoRef.current) {
+                        try { pianoRef.current.play(n.note, undefined, { duration: n.duration }); } catch {}
+                    }
+                }, n.start);
+            });
             try { Tone.Transport.seconds = studioCurrentTime; } catch {}
             Tone.Transport.start();
             dispatch(setPlaying(true));
         } else {
             Tone.Transport.pause();
+            // Optional: clear schedules on pause so next play is clean
+            try { Tone.Transport.cancel(0); } catch {}
             dispatch(setPlaying(false));
         }
     };
@@ -966,7 +993,7 @@ const PianoRolls = () => {
                 {/* Scrollable Piano Roll Grid */}
                 <div
                     ref={wrapperRef}
-                    className={`absolute left-16 top-[80px] right-0 ${selectedNoteIndex || pasteMenu ? 'overflow-hidden' : ' overflow-x-auto overflow-y-auto'}`}
+                    className={`absolute left-24 top-[80px] right-0 ${selectedNoteIndex || pasteMenu ? 'overflow-hidden' : ' overflow-x-auto overflow-y-auto'}`}
                     style={{ background: "#1e1e1e" }}
                     onScroll={handleScroll}
                     onMouseDown={handleMouseDown}
@@ -974,8 +1001,9 @@ const PianoRolls = () => {
                     onContextMenu={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
+                        // if right-clicking on a note box, let that handler manage
+                        if (e.target.closest('.note-box')) return;
                         if (clipboardNote) {
-                            // if (e.target.closest('.note-box')) return;
                             const wrapperRect = wrapperRef.current.getBoundingClientRect();
                             setPasteMenu(true);
                             setSelectedNoteIndex(null);
@@ -1056,11 +1084,18 @@ const PianoRolls = () => {
                                 }}
                             >
                                 <div
-                                    className={`bg-red-500 rounded w-full h-full m-1 relative z-1 ${selectedNoteIndex === i ? 'border-[2px]' : 'border'}`}
+                                    className={`note-box bg-red-500 rounded w-full h-full m-1 relative z-1 ${selectedNoteIndex === i ? 'border-[2px]' : 'border'}`}
                                     onClick={(e) => {
+                                        // Left click: just play the note
                                         e.stopPropagation();
+                                        if (pianoRef.current) {
+                                            try { pianoRef.current.play(n.note, undefined, { duration: Math.max(0.1, n.duration || 0.2) }); } catch {}
+                                        }
+                                    }}
+                                    onContextMenu={(e) => {
+                                        // Right click: open the note context menu
                                         e.preventDefault();
-                                        e.nativeEvent.stopImmediatePropagation(); 
+                                        e.stopPropagation();
                                         const wrapperRect = wrapperRef.current.getBoundingClientRect();
                                         setSelectedNoteIndex(i);
                                         setMenuVisible(true);
