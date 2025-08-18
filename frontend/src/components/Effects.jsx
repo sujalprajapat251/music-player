@@ -199,7 +199,7 @@ const Effects = () => {
                 <div className={`transition-all duration-300 flex ${showEffectsOffcanvas ? 'w-[75%]' : 'w-full'} self-start`}>
                     {showEffectsTwoState ? <Effects2 /> : ""}
                 </div>
-            {showEffectsOffcanvas && (
+                {showEffectsOffcanvas && (
                     <>
                         <div className="absolute top-0 bg-primary-light dark:bg-primary-dark right-0 h-[calc(100vh-82px)] sm:h-[calc(100vh-66px)] md:h-[calc(100vh-96px)]  z-50 shadow-lg transition-transform duration-300 transform translate-x-0 overflow-auto w-[70%] md600:w-[30%]  2xl:w-[25%] 3xl:w-[23%]">
                             <div className=" text-secondary-light dark:text-secondary-dark bg-primary-light dark:bg-primary-dark">
