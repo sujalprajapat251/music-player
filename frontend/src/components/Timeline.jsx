@@ -99,7 +99,7 @@ const Timeline = () => {
   const [edirNameModel, setEdirNameModel] = useState(false);
 
     const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
-    console.log("FFFFFFFFFFFFFFFFFF",drumRecordedData)
+    // console.log("FFFFFFFFFFFFFFFFFF",drumRecordedData)
 
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
