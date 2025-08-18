@@ -71,6 +71,7 @@ const studioSlice = createSlice({
     },
     // New action to add audio clip to existing track
     addAudioClipToTrack: (state, action) => {
+      console.log("-------------------------------audio",action.payload)
       const { trackId, audioClip } = action.payload;
       const trackIndex = state.tracks.findIndex(track => track.id == trackId); // Use == for type coercion
       if (trackIndex !== -1) {
@@ -312,6 +313,7 @@ const studioSlice = createSlice({
       }
     },
     setDrumRecordedData: (state, action) => {
+      console.log("=====================",action.payload)
       state.drumRecordedData = action.payload;
     },
     setDrumPlayback: (state, action) => {

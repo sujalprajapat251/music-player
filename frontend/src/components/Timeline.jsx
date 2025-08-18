@@ -98,8 +98,8 @@ const Timeline = () => {
   const [volumeIndicator, setVolumeIndicator] = useState({ show: false, volume: 0, trackName: '' });
   const [edirNameModel, setEdirNameModel] = useState(false);
 
-  
     const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
+    console.log("FFFFFFFFFFFFFFFFFF",drumRecordedData)
 
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
@@ -107,6 +107,7 @@ const Timeline = () => {
     }
     return audioContextRef.current;
   }, []);
+
   // Context menu state
   const [contextMenu, setContextMenu] = useState({
     isOpen: false,
@@ -121,8 +122,6 @@ const Timeline = () => {
     position: { x: 0, y: 0 },
     sectionId: null
   });
-
-
 
   const tracks = useSelector((state) => state.studio?.tracks || []);
   const trackHeight = useSelector((state) => state.studio?.trackHeight || 100);
@@ -230,7 +229,6 @@ const Timeline = () => {
               frozen: false,
             },
           }));
-
         };
 
         audio.onerror = (err) => {
@@ -300,8 +298,6 @@ const Timeline = () => {
       }
     });
   }, [tracks, players, masterVolume]);
-
-
 
   // Handle clip position changes (drag) with grid snapping
   const handleTrackPositionChange = useCallback((trackId, clipId, newStartTime) => {
@@ -1544,6 +1540,7 @@ const Timeline = () => {
   };
 
   const handleDrumRecordingComplete = async (blob) => {
+    console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",blob)
     const newTrack = {
       id: Date.now().toString(),
       name: `Drum Track ${tracks.length + 1}`,
@@ -1580,8 +1577,6 @@ const Timeline = () => {
       setResizeValue("");
     }
   };
-
-
 
   // Function to play drum sound (this will be called from drum clips)
   // Enhanced drum sound playback that works with timeline

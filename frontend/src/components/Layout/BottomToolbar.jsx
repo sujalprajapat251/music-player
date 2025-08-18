@@ -199,7 +199,7 @@ const BottomToolbar = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside1);
     }, []);
 
-    const handleIncrement = () => {
+    const  handleIncrement = () => {
         setTempo(prev => Math.min(prev + 1, 300));
     };
 
@@ -360,7 +360,7 @@ const BottomToolbar = () => {
         };
         document.addEventListener('mousedown', handleClickOutside2);
         return () => document.removeEventListener('mousedown', handleClickOutside2);
-    }, []);
+    }, []); 
 
     const handleMenuItemSelect = (qualityId, qualityLabel) => {
         dispatch(setMetronomeSound(qualityLabel));
@@ -410,7 +410,9 @@ const BottomToolbar = () => {
 
     // Start recording
     const handleStartRecord = () => {
+        
         if (selectedCountIn === "Off") {
+            console.log("botoooooooooooooooooooooooooooo9")
             dispatch(setRecording(true));
             dispatch(setRecordedData([])); // Clear timeline data
             dispatch(setDrumRecordedData([])); // Clear drum data
@@ -509,7 +511,6 @@ const BottomToolbar = () => {
                 <div className='flex gap-2 sm:gap-3 md:gap-3 lg:gap-5 2xl:gap-7 items-center'>
                     <div className="flex items-center gap-1">
                         <HiOutlineSpeakerWave className={`text-secondary-light dark:text-secondary-dark text-[16px] md:text-[20px] lg:text-[24px] transition-colors ${isVolumeChanging ? 'text-blue-500' : ''}`} />
-
                     </div>
                     <div className=" md:w-32 lg:w-40 2xl:w-48  pb-1 hidden md:block relative">
                         <input
@@ -550,8 +551,7 @@ const BottomToolbar = () => {
                                     {[1, 2, 3, 4].map((dot) => (
                                         <span
                                             key={dot}
-                                            className={`w-3 h-3 rounded-full transform transition-all duration-300 ease-in-out ${dot === countInNumber ? "bg-pink-500 scale-[1.5]" : "bg-pink-900 scale-100"
-                                                }`}
+                                            className={`w-3 h-3 rounded-full transform transition-all duration-300 ease-in-out ${dot === countInNumber ? "bg-pink-500 scale-[1.5]" : "bg-pink-900 scale-100"}`}
                                         ></span>
                                     ))}
                                 </div>
