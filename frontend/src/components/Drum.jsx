@@ -931,7 +931,11 @@ const DrumPadMachine = ({ onClose }) => {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      e.preventDefault();
+      // Do not intercept typing inside inputs/contenteditable elements
+      const target = e.target;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
       const key = e.key.toUpperCase();
       const keyToPadMap = {
         'Q': currentTypeData.pads[0],
@@ -948,12 +952,19 @@ const DrumPadMachine = ({ onClose }) => {
       };
 
       if (keyToPadMap.hasOwnProperty(key) && !pressedKeys.has(key)) {
+        // Prevent default only for handled musical keys
+        e.preventDefault();
         setPressedKeys(prev => new Set([...prev, key]));
         handlePadPress(keyToPadMap[key]); // Call handlePadPress with the corresponding pad
       }
     };
 
     const handleKeyUp = (e) => {
+      // Do not intercept typing inside inputs/contenteditable elements
+      const target = e.target;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
       const key = e.key.toUpperCase();
       setPressedKeys(prev => {
         const newSet = new Set(prev);

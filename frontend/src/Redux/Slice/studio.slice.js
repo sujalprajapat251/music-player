@@ -112,10 +112,15 @@ const studioSlice = createSlice({
     },
     removeTrack: (state, action) => {
       const trackId = action.payload;
-      state.tracks = state.tracks.filter(track => track.id !== trackId);
-      // Clean up related data
-      delete state.trackEffects[trackId];
-      delete state.frozenTrackData[trackId];
+      // Find the track first to ensure it exists
+      const trackIndex = state.tracks.findIndex(track => track.id === trackId);
+      if (trackIndex !== -1) {
+        // Remove the track
+        state.tracks.splice(trackIndex, 1);
+        // Clean up related data
+        delete state.trackEffects[trackId];
+        delete state.frozenTrackData[trackId];
+      }
     },
     setTrackHeight: (state, action) => {
       state.trackHeight = action.payload;
@@ -176,7 +181,7 @@ const studioSlice = createSlice({
       const { trackId, audioData } = action.payload;
       const track = state.tracks.find(track => track.id === trackId);
       if (track) {
-        // Update track with audio data - now adds to audioClips array
+          // Update track with audio data - now adds to audioClips array
         if (!track.audioClips) {
           track.audioClips = [];
         }

@@ -71,7 +71,7 @@ const effects = [
     { id: 18, name: "Tape Wobble", subscription: true, image: TapeWobble1, color: "#409C9F", component: TapeWobble, category: "Modulation" },
 ];
 
-const Effects = () => {
+const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
 
     const dispatch = useDispatch();
 
@@ -196,12 +196,12 @@ const Effects = () => {
                 {/* <div className="flex-1 w-full">
                     <button className='p-2 bg-white text-black' onClick={() => dispatch(toggleEffectsOffcanvas())}>on/off</button>
                 </div> */}
-                <div className={`transition-all duration-300 flex ${showEffectsOffcanvas ? 'w-[75%]' : 'w-full'} self-start`}>
+                <div className={`transition-all duration-300 flex ${showOffcanvas ? 'w-[75%]' : 'w-full'} self-start`}>
                     {showEffectsTwoState ? <Effects2 /> : ""}
-                </div>
-                {showEffectsOffcanvas && (
+                </div>  
+                {showOffcanvas && (
                     <>
-                        <div className="absolute top-0 bg-primary-light dark:bg-primary-dark right-0 h-[calc(100vh-82px)] sm:h-[calc(100vh-66px)] md:h-[calc(100vh-96px)]  z-50 shadow-lg transition-transform duration-300 transform translate-x-0 overflow-auto w-[70%] md600:w-[30%]  2xl:w-[25%] 3xl:w-[23%]">
+                        <div className="absolute top-0 bg-primary-light dark:bg-primary-dark right-0 h-[calc(100vh-82px)] sm:h-[calc(100vh-66px)] md:h-[calc(100vh-96px)] z-50 shadow-lg transition-transform duration-300 ease-in-in transform translate-x-0 overflow-auto w-[70%] md600:w-[30%] 2xl:w-[25%] 3xl:w-[23%]">
                             <div className=" text-secondary-light dark:text-secondary-dark bg-primary-light dark:bg-primary-dark">
                                 <div className=' border-l border-[1px] border-[#1414141A] dark:border-[#FFFFFF1A] bg-transparent'>
                                     <div className='px-[6px] md600:px-[8px] lg:px-[12px] 3xl:px-[16px]'>

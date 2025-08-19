@@ -27,7 +27,16 @@ const TrackMenu = ({ trackId, color, onRename }) => {
   const track = useSelector((state) =>
     state.studio.tracks.find(t => t.id === trackId)
   );
+  
   const isFrozen = track?.frozen || false;
+
+  // Close menu if track is removed while menu is open
+  useEffect(() => {
+    if (!track && open) {
+      setOpen(false);
+      setSubmenu(null);
+    }
+  }, [track, open]);
 
   // Close menu on outside click
   useEffect(() => {
@@ -44,11 +53,19 @@ const TrackMenu = ({ trackId, color, onRename }) => {
   // Keyboard event handling for Shift + Backspace
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Ignore global delete shortcut while typing in inputs
+      const target = e.target;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
       // Check if Shift + Backspace is pressed
       if (e.shiftKey && e.key === 'Backspace') {
         e.preventDefault(); // Prevent default browser behavior
-        dispatch(removeTrack(trackId));
-        setOpen(false);
+        // Ensure track exists before removing
+        if (track) {
+          dispatch(removeTrack(trackId));
+          setOpen(false);
+        }
       }
     };
 
@@ -59,7 +76,12 @@ const TrackMenu = ({ trackId, color, onRename }) => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [dispatch, trackId]);
+  }, [dispatch, trackId, track]);
+
+  // If track doesn't exist, don't render the menu
+  if (!track) {
+    return null;
+  }
 
   const handleMenuClick = (e) => {
     e.stopPropagation(); // Prevent event bubbling
@@ -207,13 +229,16 @@ const TrackMenu = ({ trackId, color, onRename }) => {
             icon={<img src={TrashIcon} alt="Delete track" style={{ width: 16, height: 16, filter: "invert(1)" }} />}
             label="Delete track"
             onClick={() => {
-              if (isShiftPressed) {
-                // If Shift is pressed, delete without confirmation
-                dispatch(removeTrack(trackId));
-                setOpen(false);
-              } else {
-                dispatch(removeTrack(trackId));
-                setOpen(false);
+              // Ensure track exists before removing
+              if (track) {
+                if (isShiftPressed) {
+                  // If Shift is pressed, delete without confirmation
+                  dispatch(removeTrack(trackId));
+                  setOpen(false);
+                } else {
+                  dispatch(removeTrack(trackId));
+                  setOpen(false);
+                }
               }
             }}
             className="py-2 px-3"
