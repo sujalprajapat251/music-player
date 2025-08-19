@@ -306,15 +306,15 @@ const Pattern = () => {
 
   return (
     <>
-      <div className="bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 min-h-screen p-6 text-white">
-        <div className="max-w-7xl mx-auto">
+      <div className="bg-black min-h-screen p-6 text-white">
+        <div className="m-5 mx-auto">
 
           {/* Header Controls */}
           <div className="flex justify-between items-center mb-8">
             <div className="flex items-center gap-4">
               <button
                 onClick={togglePlay}
-                className="bg-purple-600 hover:bg-purple-500 p-3 rounded-lg transition-colors flex items-center gap-2"
+                className="bg-[#1F1F1F] p-3 rounded-lg transition-colors flex items-center gap-2"
               >
                 {isPlaying ? <Pause size={20} /> : <Play size={20} />}
                 {isPlaying ? 'Pause' : 'Play'}
@@ -322,7 +322,7 @@ const Pattern = () => {
 
               <button
                 onClick={stopAndReset}
-                className="bg-purple-600 hover:bg-purple-500 p-3 rounded-lg transition-colors flex items-center gap-2"
+                className="bg-[#1F1F1F] p-3 rounded-lg transition-colors flex items-center gap-2"
               >
                 <RotateCcw size={20} />
                 Stop
@@ -346,7 +346,7 @@ const Pattern = () => {
                 {patternLength > 32 && (
                   <button
                     onClick={resetTo32Beats}
-                    className="bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded text-xs transition-colors"
+                    className="bg-[#1F1F1F] px-2 py-1 rounded text-xs transition-colors"
                   >
                     Reset to 32
                   </button>
@@ -358,7 +358,7 @@ const Pattern = () => {
               {/* Recording Status */}
               {isRecording && (
                 <div className="flex items-center gap-2 bg-red-600 px-3 py-2 rounded-lg">
-                  <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                  <div className="w-2 h-2 bg-[#474747] rounded-full animate-pulse"></div>
                   <span className="text-sm font-medium">Recording...</span>
                 </div>
               )}
@@ -386,7 +386,7 @@ const Pattern = () => {
 
               <button
                 onClick={() => setFollowBeat(!followBeat)}
-                className={`p-2 rounded-lg transition-colors flex items-center gap-2 ${followBeat ? 'bg-purple-600' : 'bg-purple-800'
+                className={`p-2 rounded-lg transition-colors flex items-center gap-2 ${followBeat ? 'bg-[#474747]' : 'bg-[#1F1F1F]'
                   }`}
               >
                 <RotateCcw size={16} />
@@ -395,7 +395,7 @@ const Pattern = () => {
 
               <button
                 onClick={() => setFollowBeat(!followBeat)}
-                className={`p-2 rounded-lg transition-colors flex items-center gap-2 ${followBeat ? 'bg-purple-600' : 'bg-purple-800'
+                className={`p-2 rounded-lg transition-colors flex items-center gap-2 ${followBeat ? 'bg-[#474747]' : 'bg-[#1F1F1F]'
                   }`}
               >
                 <Volume2 size={16} />
@@ -445,7 +445,7 @@ const Pattern = () => {
                     w-2 h-2 rounded-full transition-all duration-150
                     ${currentBeat === beatIndex && isPlaying
                           ? 'bg-yellow-400 ring-2 ring-yellow-300 ring-opacity-50 scale-125'
-                          : 'bg-purple-500'
+                          : 'bg-[#474747]'
                         }
                     ${beatIndex % 4 === 0 ? 'bg-purple-300' : ''}
                     ${beatIndex % 16 === 0 && beatIndex > 0 ? 'ring-1 ring-purple-200' : ''}
@@ -463,7 +463,7 @@ const Pattern = () => {
                 <div className="flex gap-1">
                   {Array.from({ length: Math.ceil(patternLength / 16) }, (_, sectionIndex) => (
                     <div key={sectionIndex} className="flex">
-                      <div className="w-32 text-center text-xs text-purple-300 font-medium">
+                      <div className="w-32 text-center items-center text-xs text-purple-300 font-medium">
                         Section {sectionIndex + 1}
                       </div>
                       {sectionIndex < Math.ceil(patternLength / 16) - 1 && (
@@ -482,10 +482,10 @@ const Pattern = () => {
                   <div key={track.id} className="flex items-center gap-2">
                     {/* Track Label with Dropdown */}
                     <div className="w-32 flex-shrink-0 relative" ref={activeDropdown === track.id ? dropdownRef : null}>
-                      <div className="bg-purple-700 border border-purple-600 rounded p-3 text-center font-medium flex justify-between items-center">
+                      <div className="bg-[#1F1F1F] rounded p-3 text-center font-medium flex justify-between items-center">
                         <button
                           onClick={() => toggleDropdown(track.id)}
-                          className="flex items-center gap-1 hover:text-purple-200 transition-colors flex-1 text-left"
+                          className="flex items-center gap-1 text-white transition-colors flex-1 text-left"
                         >
                           <span className="text-sm">{track.name}</span>
                           <ChevronDown
@@ -495,7 +495,7 @@ const Pattern = () => {
                         </button>
                         <button
                           onClick={() => removeTrack(track.id)}
-                          className="text-xs text-purple-300 hover:text-red-400 ml-2 transition-colors"
+                          className="text-xs text-white hover:text-red-400 ml-2 transition-colors"
                           title="Remove track"
                         >
                           ✕
@@ -530,10 +530,11 @@ const Pattern = () => {
                           key={beatIndex}
                           onClick={() => toggleBeat(track.id, beatIndex)}
                           className={`
-                        w-8 h-8 border border-purple-600 rounded transition-all flex-shrink-0
+                        w-8 h-8 border border-[#949292] rounded transition-all flex-shrink-0
+
                         ${isActive
-                              ? 'bg-purple-400 border-purple-300'
-                              : 'bg-purple-800 hover:bg-purple-700'
+                              ? 'bg-[#474747] border-purple-300'
+                              : 'bg-[#1F1F1F] hover:bg-[#474747]'
                             }
                         ${currentBeat === beatIndex && isPlaying
                               ? 'ring-2 ring-yellow-400 ring-opacity-70'
@@ -554,23 +555,15 @@ const Pattern = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={addTrack}
-                    className="w-32 bg-purple-700 border border-purple-600 border-dashed rounded p-3 text-center text-purple-300 hover:text-white hover:bg-purple-600 transition-colors flex items-center justify-center gap-2 flex-shrink-0"
+                    className="w-32 bg-[#1F1F1F] border-dashed rounded p-3 text-center text-white hover:bg-[#474747] transition-colors flex items-center justify-center gap-2 flex-shrink-0"
                   >
                     <Plus size={16} />
                     Add Track
                   </button>
-                  <div className="w-2 h-2 bg-purple-400 rounded-full ml-2"></div>
+                  <div className="w-2 h-2 bg-[#474747] rounded-full ml-2"></div>
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Pattern Length Indicator */}
-          <div className="mt-6 text-center text-sm text-purple-300">
-            {patternLength} beats • Section {getCurrentSection()} • Beat {getCurrentBeatInSection()}/16
-            <span className="text-orange-300 ml-2">
-              • Click last 16 beats (beats {patternLength - 15}-{patternLength}) to add 16 more beats
-            </span>
           </div>
         </div>
       </div>

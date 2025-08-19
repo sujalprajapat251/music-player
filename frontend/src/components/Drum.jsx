@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setDrumRecordedData, setDrumPlayback, setDrumPlaybackStartTime, addAudioClipToTrack, addTrack } from '../Redux/Slice/studio.slice';
 import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
-import Pattern from './Pattern';
+import Pattern from '../components/Pattern';
 import {
   drumMachineTypes,
   soundDescriptions,
@@ -245,6 +245,17 @@ const DrumPadMachine = ({ onClose }) => {
     setSelectedMenuitems(qualityLabel);
     setIsOpen2(false)
   };
+
+
+  const handlePadPress = (pad, timestamp) => {
+    if (isRecording) {
+      const drumData = createDrumData(pad, selectedDrumMachine, timestamp || currentTime);
+      const updatedData = [...drumRecordedData, drumData];
+      dispatch(setDrumRecordedData(updatedData));
+    }
+    playSound(pad);
+  };
+
 
   // Clear drum recorded data when recording starts
   useEffect(() => {
@@ -880,18 +891,65 @@ const DrumPadMachine = ({ onClose }) => {
   const [pressedKeys, setPressedKeys] = useState(new Set());
 
   // Keyboard handling
+  // useEffect(() => {
+  //   const handleKeyDown = (e) => {
+  //     e.preventDefault();
+  //     const key = e.key.toUpperCase();
+  //     const keyToPadMap = {
+  //       'Q': 'Q', 'W': 'W', 'E': 'E', 'R': 'R',
+  //       'A': 'A', 'S': 'S', 'F': 'F', 'Z': 'Z',
+  //       'X': 'X', 'C': 'C', 'D': 'D'
+  //     };
+
+  //     if (keyToPadMap.hasOwnProperty(key) && !pressedKeys.has(key)) {
+  //       setPressedKeys(prev => new Set([...prev, key]));
+  //       handlePadPress(currentTypeData.pads[keyToPadMap[key]]);
+  //     }
+  //   };
+
+  //   const handleKeyUp = (e) => {
+  //     const key = e.key.toUpperCase();
+  //     setPressedKeys(prev => {
+  //       const newSet = new Set(prev);
+  //       newSet.delete(key);
+  //       return newSet;
+  //     });
+  //   };
+
+  //   window.addEventListener('keydown', handleKeyDown);
+  //   window.addEventListener('keyup', handleKeyUp);
+
+  //   return () => {
+  //     window.removeEventListener('keydown', handleKeyDown);
+  //     window.removeEventListener('keyup', handleKeyUp);
+  //   };
+  // }, [currentTypeData, pressedKeys]);
+
+
+
+  // Replace your existing keyboard handling useEffect with this improved version:
+
   useEffect(() => {
     const handleKeyDown = (e) => {
+      e.preventDefault();
       const key = e.key.toUpperCase();
       const keyToPadMap = {
-        'Q': 'Q', 'W': 'W', 'E': 'E', 'R': 'R',
-        'A': 'A', 'S': 'S', 'F': 'F', 'Z': 'Z',
-        'X': 'X', 'C': 'C', 'D': 'D'
+        'Q': currentTypeData.pads[0],
+        'W': currentTypeData.pads[1],
+        'E': currentTypeData.pads[2],
+        'R': currentTypeData.pads[3],
+        'A': currentTypeData.pads[4],
+        'S': currentTypeData.pads[5],
+        'F': currentTypeData.pads[6],
+        'Z': currentTypeData.pads[7],
+        'X': currentTypeData.pads[8],
+        'C': currentTypeData.pads[9],
+        'D': currentTypeData.pads[10],
       };
 
       if (keyToPadMap.hasOwnProperty(key) && !pressedKeys.has(key)) {
         setPressedKeys(prev => new Set([...prev, key]));
-        handlePadPress(currentTypeData.pads[keyToPadMap[key]]);
+        handlePadPress(keyToPadMap[key]); // Call handlePadPress with the corresponding pad
       }
     };
 
@@ -904,15 +962,15 @@ const DrumPadMachine = ({ onClose }) => {
       });
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+    // Add event listeners to document instead of window for better focus handling
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
     };
-  }, [currentTypeData, pressedKeys]);
-
+  }, [currentTypeData, pressedKeys, handlePadPress]); // Add handlePadPress to dependencies
 
 
 
@@ -972,31 +1030,6 @@ const DrumPadMachine = ({ onClose }) => {
         )}
       </button>
     );
-  };
-
-
-
-  // When a pad is pressed, record it
-  const handlePadPress = (pad) => {
-    if (isRecording) {
-      const drumData = createDrumData(pad, selectedDrumMachine, currentTime);
-
-      const updatedData = [...drumRecordedData, drumData];
-      
-      dispatch(setDrumRecordedData(updatedData));
-
-      // Only create timeline clip if a track is selected
-      if (currentTrackId) {
-        // Store drum data for later processing when recording stops
-        // We'll create the audio blob when recording stops
-        // console.log('Drum data recorded:', drumData);
-      } else {
-        // console.log('No track selected. Drum data recorded but not added to timeline.');
-      }
-    }
-
-    // Your existing pad play logic here
-    playSound(pad);
   };
 
   // Function to create audio blob for drum hit
@@ -1104,64 +1137,6 @@ const DrumPadMachine = ({ onClose }) => {
     return arrayBuffer;
   };
 
-  // return (
-  //   <div className="w-full bg-gray-900 text-white">
-  //     {/* Top Navigation */}
-  //     <div className="flex justify-center items-center py-4 border-b border-gray-700">
-  //       <div className="flex space-x-8">
-  //         <button
-  //           className={`pb-1 transition-colors ${activeView === 'instrument'
-  //             ? 'text-purple-400 border-b-2 border-purple-400'
-  //             : 'text-gray-400 hover:text-white'}`}
-  //           onClick={() => setActiveView('instrument')}
-  //         >
-  //           Instrument
-  //         </button>
-  //         <button
-  //           className={`pb-1 transition-colors ${activeView === 'patterns'
-  //             ? 'text-purple-400 border-b-2 border-purple-400'
-  //             : 'text-gray-400 hover:text-white'}`}
-  //           onClick={() => setActiveView('patterns')}
-  //         >
-  //           Patterns
-  //         </button>
-  //         <button
-  //           className={`pb-1 transition-colors ${activeView === 'piano'
-  //             ? 'text-purple-400 border-b-2 border-purple-400'
-  //             : 'text-gray-400 hover:text-white'}`}
-  //           onClick={() => setActiveView('piano')}
-  //         >
-  //           Piano Roll
-  //         </button>
-  //         <button
-  //           className={`pb-1 transition-colors ${activeView === 'effects'
-  //             ? 'text-purple-400 border-b-2 border-purple-400'
-  //             : 'text-gray-400 hover:text-white'}`}
-  //           onClick={() => setActiveView('effects')}
-  //         >
-  //           Effects
-  //         </button>
-  //       </div>
-  //     </div>
-
-  //     {/* Render different views based on activeView */}
-  //     {/* {activeView === 'patterns' ? (
-  //       <Pattern />
-  //     ) : activeView === 'instrument' ? (
-
-  //     ): activeView === 'piano' ? (
-  //     <div className="flex items-center justify-center h-64">
-  //       <p className="text-gray-400 text-lg">Piano Roll View - Coming Soon</p>
-  //     </div>
-  //     ) : activeView === 'effects' ? (
-  //     <div className="flex items-center justify-center h-64">
-  //       <p className="text-gray-400 text-lg">Effects View - Coming Soon</p>
-  //     </div>
-  //     ) : null} */}
-  //   </div>
-  // );
-
-
   const styles = {
     pressed: {
       transform: 'scale(0.95)',
@@ -1177,7 +1152,6 @@ const DrumPadMachine = ({ onClose }) => {
       transition: 'all 0.1s ease-in-out'
     }
   };
-
 
   const handleAddEffectFromLibrary = (effect) => {
     console.log('handleAddEffectFromLibrary called with:', effect);
@@ -1203,8 +1177,6 @@ const DrumPadMachine = ({ onClose }) => {
   const handlePlusButtonClick = () => {
     dispatch(toggleEffectsOffcanvas());
   };
-
-
 
   return (
     <>
@@ -1247,8 +1219,8 @@ const DrumPadMachine = ({ onClose }) => {
                 </div>
               </div>
               {/* Tabs */}
-              <div className=" bg-[#1F1F1F] flex space-x-2 sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3">
-                {['Instruments', 'patterns', 'Piano Roll', 'Effects'].map((tab) => (
+              <div className=" bg-[#1F1F1F] flex space-x-2 sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3 pb-3">
+                {['Instruments', 'Patterns', 'Piano Roll', 'Effects'].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveView(tab)}
@@ -1361,11 +1333,7 @@ const DrumPadMachine = ({ onClose }) => {
                           </div>
                         </div>
                       </div>
-
                     </div>
-
-
-
 
                     {/* Drum Pad Area */}
                     <div className="flex-1 flex items-center justify-center 3xl:p-4 relative bg-black">
@@ -1451,7 +1419,6 @@ const DrumPadMachine = ({ onClose }) => {
                             </div>
                           </div>
 
-
                           <div
                             className="absolute left-[24%] top-[13%] sm:left-[22%] sm:top-[13%] md600:left-[18%] md600:top-[17%] md:left-[22%] md:top-[30%] lg:left-[9.7%] lg:top-[30%] xl:left-[16.7%] xl:top-[33%] 2xl:left-[15.7%] 2xl:top-[32%] 3xl:left-[24.7%] 3xl:top-[44%] cursor-pointer z-30"
                             style={pressedKeys.has('A') ? styles.pressedButton : {}}
@@ -1497,7 +1464,6 @@ const DrumPadMachine = ({ onClose }) => {
                             </div>
                           </div>
 
-
                           <div
                             className="absolute right-[33%] top-[6%] sm:right-[35%] sm:top-[6%] md600:right-[32%] md600:top-[7%] md:right-[28%] md:top-[12%] lg:right-[45%] lg:top-[12%] xl:right-[47%] xl:top-[14%] 2xl:right-[52%] 2xl:top-[14%] 3xl:right-[47%] 3xl:top-[17%] cursor-pointer z-20"
                             style={pressedKeys.has('Z') ? styles.pressedButton : {}}
@@ -1512,7 +1478,6 @@ const DrumPadMachine = ({ onClose }) => {
                               </div>
                             </div>
                           </div>
-
 
                           <div
                             className="absolute  md600:right-[16%] md600:top-[20%] md:right-[12%] md:top-[20%] lg:right-[12%] lg:top-[20%] xl:right-[20%] xl:top-[22%] 2xl:right-[20%] 2xl:top-[20%] 3xl:right-[25%] 3xl:top-[25%] cursor-pointer z-20 hidden lg:block"
@@ -1565,8 +1530,7 @@ const DrumPadMachine = ({ onClose }) => {
                 )}
 
                 {activeView === 'Patterns' && (
-                  <>dfgfg
-                  </> 
+                  <Pattern />
                 )}
 
                 {activeView === 'Piano Roll' && (
