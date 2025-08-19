@@ -414,7 +414,7 @@ const BottomToolbar = () => {
         if (selectedCountIn === "Off") {
             console.log("botoooooooooooooooooooooooooooo9")
             dispatch(setRecording(true));
-            dispatch(setRecordedData([])); // Clear timeline data
+            dispatch(setRecordedData([])); // Clear timeline 
             dispatch(setDrumRecordedData([])); // Clear drum data
             setRecordingStartTime(Date.now());
             handlePlayPause();
@@ -501,7 +501,7 @@ const BottomToolbar = () => {
 
     useEffect(() => {
         if (!isRecording && recordedData.length > 0) {
-            // console.log("Total recorded data:", recordedData);
+            // console.log("Total recorded data:", recordedData);x
         }
     }, [isRecording, recordedData]);
 
