@@ -91,6 +91,7 @@ const Timeline = () => {
   const [selectedClipId, setSelectedClipId] = useState(null);
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
   const [showPiano, setShowPiano] = useState(false);
+  const [showDrum, setShowDrum] = useState(false);
   const [renameSectionId, setRenameSectionId] = useState(null);
   const [renameValue, setRenameValue] = useState("");
   const [renameModal, setRenameModal] = useState(false);
@@ -2091,7 +2092,7 @@ const Timeline = () => {
 
       </div>
 
-      <Drum onDrumRecordingComplete={handleDrumRecordingComplete} />
+      {/* <Drum onDrumRecordingComplete={handleDrumRecordingComplete} /> */}
 
       {/* Add Track Modal */}
       {showAddTrackModal && (
@@ -2160,6 +2161,10 @@ const Timeline = () => {
       {/* Piano Component */}
       {showPiano || getTrackType == "Keys" && (
         <Piano onClose={() => setShowPiano(false)} />
+      )}
+
+      {showDrum || getTrackType == "Drums & Machines" && (
+        <Drum onClose={() => setShowDrum(false)} />
       )}
 
       {/* Rename Section Modal */}

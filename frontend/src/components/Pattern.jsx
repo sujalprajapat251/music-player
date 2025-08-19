@@ -30,7 +30,7 @@ const Pattern = () => {
   const audioContextRef = useRef(null);
   const dropdownRef = useRef(null);
   const dispatch = useDispatch();
-
+  const selectedTrackId = useSelector((state) => state.studio?.currentTrackId);
   // Available instrument options based on drum machine pads
   const getInstrumentOptions = () => {
     const selectedMachine = drumMachineTypes[currentDrumMachine];
@@ -105,6 +105,85 @@ const Pattern = () => {
       setPatternLength(requiredBeats);
     }
   }, [tracks, bpm, patternLength]);
+
+  // ... existing code ...
+
+  // Add this function after the convertRecordedDataToPattern function
+  const convertTrackDataToPattern = useCallback((selectedTrack) => {
+    if (!selectedTrack?.audioClips) return;
+
+    const allDrumHits = selectedTrack.audioClips.flatMap(clip => {
+      return clip.drumData || [];
+    });
+
+    if (allDrumHits.length === 0) return;
+
+    const sortedHits = allDrumHits.sort((a, b) => a.timestamp - b.timestamp);
+    const firstHit = sortedHits[0];
+    const lastHit = sortedHits[sortedHits.length - 1];
+
+    const beatDurationMs = (60 / bpm) * 1000;
+    const sixteenthNoteMs = beatDurationMs / 4;
+
+    // Calculate total required pattern length first
+    const totalDurationMs = lastHit.timestamp - firstHit.timestamp;
+    const requiredBeats = Math.ceil(totalDurationMs / sixteenthNoteMs);
+
+    // Round up to the nearest multiple of 16 to ensure complete sections
+    const newPatternLength = Math.ceil(requiredBeats / 16) * 16;
+
+    // Update pattern length if needed
+    if (newPatternLength > patternLength) {
+      setPatternLength(newPatternLength);
+    }
+
+    const hitsByPad = {};
+    sortedHits.forEach(hit => {
+      if (!hitsByPad[hit.padId]) {
+        hitsByPad[hit.padId] = [];
+      }
+      hitsByPad[hit.padId].push(hit);
+    });
+
+    // Create new tracks based on unique pad IDs
+    const newTracks = Object.entries(hitsByPad).map(([padId, hits]) => {
+      // Initialize pattern with the new length
+      const pattern = new Array(newPatternLength).fill(false);
+
+      hits.forEach(hit => {
+        const timeOffsetMs = hit.timestamp - firstHit.timestamp;
+        const beatPosition = Math.round(timeOffsetMs / sixteenthNoteMs);
+
+        // Ensure we're within the pattern length
+        if (beatPosition >= 0 && beatPosition < newPatternLength) {
+          pattern[beatPosition] = true;
+        }
+      });
+
+      const firstHitOfType = hits[0];
+      return {
+        id: padId,
+        name: firstHitOfType.sound.charAt(0).toUpperCase() + firstHitOfType.sound.slice(1),
+        pattern,
+        padId,
+        drumType: firstHitOfType.type,
+        freq: firstHitOfType.freq,
+        decay: firstHitOfType.decay
+      };
+    });
+
+    // Force a re-render by creating a new array
+    setTracks([...newTracks]);
+  }, [bpm, patternLength]);
+
+  useEffect(() => {
+    const selectedTrack = tracks.find(track => track.id === selectedTrackId);
+    if (selectedTrack?.audioClips) {
+      convertTrackDataToPattern(selectedTrack);
+    }
+  }, [selectedTrackId, convertTrackDataToPattern]);
+
+  // ... rest of your existing code ...
 
   // Effect to automatically apply recorded data when recording stops
   useEffect(() => {
@@ -222,20 +301,20 @@ const Pattern = () => {
     setCurrentBeat(0);
   };
 
-  const toggleBeat = (trackId, beatIndex) => {
+  const toggleBeat = useCallback((trackId, beatIndex) => {
     expandPatternIfNeeded(beatIndex);
 
-    setTracks(prev => prev.map(track =>
-      track.id === trackId
-        ? {
-          ...track,
-          pattern: track.pattern.map((beat, index) =>
-            index === beatIndex ? !beat : beat
-          )
+    setTracks(prevTracks => {
+      return prevTracks.map(track => {
+        if (track.id === trackId) {
+          const newPattern = [...track.pattern];
+          newPattern[beatIndex] = !newPattern[beatIndex];
+          return { ...track, pattern: newPattern };
         }
-        : track
-    ));
-  };
+        return track;
+      });
+    });
+  }, []);
 
   const removeTrack = (trackId) => {
     setTracks(prev => prev.filter(track => track.id !== trackId));
@@ -303,6 +382,12 @@ const Pattern = () => {
       pattern: new Array(patternLength).fill(false)
     })));
   };
+
+
+
+
+
+
 
   return (
     <>
