@@ -7,7 +7,7 @@ import 'react-resizable/css/styles.css';
 import * as d3 from 'd3';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectGridSettings } from '../Redux/Slice/grid.slice';
-import { setPlaying, setCurrentTime as setStudioCurrentTime, setPianoNotes } from '../Redux/Slice/studio.slice';
+import { setPlaying, setCurrentTime as setStudioCurrentTime } from '../Redux/Slice/studio.slice';
 import { getGridDivisions, parseTimeSignature, getGridSpacingWithTimeSignature } from '../Utils/gridUtils';
 import { getAudioContext, ensureAudioUnlocked } from '../Utils/audioContext';
 import { FaPaste, FaRegCopy } from 'react-icons/fa';
@@ -66,7 +66,6 @@ const PianoRolls = () => {
 
     // get data from redux
     const track = useSelector((state)=>state.studio.tracks)
-    const pianoNotesFromRedux = useSelector((state)=>state.studio?.pianoNotes || [])
     // console.log('track',audio);
     // Get grid settings from Redux
     const { selectedGrid, selectedTime, selectedRuler } = useSelector(selectGridSettings);
@@ -477,8 +476,6 @@ const PianoRolls = () => {
         setNotes(prev => {
             const updated = [...prev];
             updated[index] = { ...updated[index], ...updates };
-            // keep Redux in sync so timeline and other views reflect edits
-            try { dispatch(setPianoNotes(updated)); } catch {}
             return updated;
         });
     };
@@ -788,12 +785,6 @@ const PianoRolls = () => {
     // };
     
     useEffect(() => {
-        // Prefer explicitly recorded piano notes from Redux (keyboard U/I/O/P etc.)
-        if (pianoNotesFromRedux && pianoNotesFromRedux.length > 0) {
-            setNotes(pianoNotesFromRedux);
-            return;
-        }
-        // Fallback: detect from first audio clip if available
         if (track[0]?.audioClips[0]?.url) {
             (async () => {
                 const audioBuffer = await decodeAudio(track[0].audioClips[0].url);
@@ -802,7 +793,7 @@ const PianoRolls = () => {
                 }
             })();
         }
-    }, [track, pianoNotesFromRedux]);
+    }, [track]);
     const decodeAudio = async (fileOrUrl) => {
         let arrayBuffer;
     
@@ -826,145 +817,70 @@ const PianoRolls = () => {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         return await audioCtx.decodeAudioData(arrayBuffer);
     };
-    const detectNotes = (audioBuffer) => {
-        // Helpers
-        const computeRMS = (arr) => {
-            let sumSquares = 0;
-            for (let i = 0; i < arr.length; i++) sumSquares += arr[i] * arr[i];
-            return Math.sqrt(sumSquares / arr.length);
-        };
-        const hzToMidi = (hz) => Math.round(69 + 12 * Math.log2(hz / 440));
-        const midiToNote = (midi) => {
-            const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-            const name = noteNames[(midi % 12 + 12) % 12];
-            const octave = Math.floor(midi / 12) - 1;
-            return `${name}${octave}`;
-        };
-        const median = (arr) => {
-            if (arr.length === 0) return null;
-            const sorted = [...arr].sort((a, b) => a - b);
-            const mid = Math.floor(sorted.length / 2);
-            return sorted.length % 2 ? sorted[mid] : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
-        };
-        const quantizeToGrid = (t, step) => {
-            if (!step || step <= 0) return t;
-            return Math.max(0, Math.round(t / step) * step);
-        };
-        const mergeAdjacent = (items, maxGap) => {
-            if (!items.length) return items;
-            const merged = [];
-            let current = { ...items[0] };
-            for (let i = 1; i < items.length; i++) {
-                const nxt = items[i];
-                const currentEnd = current.start + current.duration;
-                const gap = nxt.start - currentEnd;
-                if (nxt.note === current.note && gap >= 0 && gap <= maxGap) {
-                    // extend current
-                    current.duration = (nxt.start + nxt.duration) - current.start;
-                } else {
-                    merged.push(current);
-                    current = { ...nxt };
-                }
-            }
-            merged.push(current);
-            return merged;
-        };
-
+    const detectNotes = (audioBuffer) => {        
         const audioData = audioBuffer.getChannelData(0); // mono
         const sampleRate = audioBuffer.sampleRate;
         const frameSize = 2048;
         const hopSize = 512;
+    
         const detector = PitchDetector.forFloat32Array(frameSize);
-
-        // Dynamic thresholds
-        const clarityThreshold = 0.9;
-        const rmsThreshold = 0.02; // ignore very low energy frames
-        const smoothingWindow = 5; // frames for pitch median smoothing
-
-        const rawSegments = [];
-        let currentMidi = null;
+    
+        const results = [];
+        let currentNote = null;
         let noteStart = null;
-        const midiWindow = [];
-
+    
         for (let i = 0; i + frameSize < audioData.length; i += hopSize) {
             const frame = audioData.slice(i, i + frameSize);
-            const rms = computeRMS(frame);
             const [pitch, clarity] = detector.findPitch(frame, sampleRate);
             const time = i / sampleRate;
 
-            // Determine candidate midi
-            let candidateMidi = null;
-            if (rms > rmsThreshold && clarity >= clarityThreshold && pitch > 50 && pitch < 2000) {
-                candidateMidi = hzToMidi(pitch);
-            }
+            if (clarity > 0.95 && pitch > 50 && pitch < 2000) {
+                const note = pitchToNote(pitch);
 
-            // Smoothing using median of last few midis (excluding null)
-            if (candidateMidi !== null) midiWindow.push(candidateMidi);
-            if (midiWindow.length > smoothingWindow) midiWindow.shift();
-            const smoothedMidi = median(midiWindow.filter(m => m !== null));
-
-            if (smoothedMidi !== null) {
-                // If continuing same note
-                if (currentMidi === smoothedMidi) {
-                    // keep extending
+                if (currentNote === note) {
+                    continue;
                 } else {
-                    // close previous
-                    if (currentMidi !== null && noteStart !== null) {
+                    // finish previous note if exists
+                    if (currentNote && noteStart !== null) {
                         const duration = time - noteStart;
-                        rawSegments.push({
-                            note: midiToNote(currentMidi),
-                            start: noteStart,
-                            duration: duration
+                        results.push({
+                            note: currentNote,
+                            start: parseFloat(noteStart.toFixed(2)),
+                            duration: parseFloat(duration.toFixed(2)),
                         });
                     }
-                    // start new
-                    currentMidi = smoothedMidi;
+
+                    // start new note
+                    currentNote = note;
                     noteStart = time;
                 }
             } else {
-                // silence - close if open
-                if (currentMidi !== null && noteStart !== null) {
+                if (currentNote && noteStart !== null) {
                     const duration = time - noteStart;
-                    rawSegments.push({
-                        note: midiToNote(currentMidi),
-                        start: noteStart,
-                        duration: duration
+                    results.push({
+                        note: currentNote,
+                        start: parseFloat(noteStart.toFixed(2)),
+                        duration: parseFloat(duration.toFixed(2)),
                     });
-                    currentMidi = null;
+                    currentNote = null;
                     noteStart = null;
                 }
             }
         }
 
-        // Close tail
-        if (currentMidi !== null && noteStart !== null) {
+        // console.log('results',results);
+        if (currentNote && noteStart !== null) {
             const endTime = audioData.length / sampleRate;
             const duration = endTime - noteStart;
-            rawSegments.push({
-                note: midiToNote(currentMidi),
-                start: noteStart,
-                duration: duration
+            results.push({
+                note: currentNote,
+                start: parseFloat(noteStart.toFixed(2)),
+                duration: parseFloat(duration.toFixed(2)),
             });
         }
 
-        // Quantize and clean up
-        const gridStep = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
-        const minDur = Math.max(0.05, gridStep / 4);
-        const processed = rawSegments
-            .map(seg => {
-                const qStart = quantizeToGrid(seg.start, gridStep);
-                const qEnd = quantizeToGrid(seg.start + seg.duration, gridStep);
-                const qDur = Math.max(minDur, qEnd - qStart);
-                return { note: seg.note, start: qStart, duration: qDur };
-            })
-            .filter(seg => seg.duration >= minDur)
-            .sort((a, b) => a.start - b.start);
-
-        // Merge adjacent same-note segments separated by tiny gaps
-        const merged = mergeAdjacent(processed, gridStep / 3);
-
-        setNotes(merged);
-        return merged;
+        setNotes(results);
+        return results;
     };
 
     const pitchToNote = (freq) => {
@@ -1028,8 +944,8 @@ const PianoRolls = () => {
                 <div
                     ref={playheadRef}
                     style={{
-                        position: "absolute",
-                        top: "60px",
+                        position: "fixed",
+                        top: "110px",
                         left: 0,
                         marginLeft: '96px',
                         height: "100%",
@@ -1132,7 +1048,7 @@ const PianoRolls = () => {
                         return (
                             <Rnd
                                 key={i}
-                                size={{ width: n.duration * timelineWidthPerSecond, height: 24 }}
+                                size={{ width: n.duration * timelineWidthPerSecond > 15 ? n.duration * timelineWidthPerSecond : 15, height: 24 }}
                                 position={{ x: n.start * timelineWidthPerSecond, y: getYFromNote(n.note) }}
                                 bounds="parent"
                                 enableResizing={{ right: true }}
