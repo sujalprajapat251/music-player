@@ -13,12 +13,12 @@ const Pattern = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBeat, setCurrentBeat] = useState(0);
   const [bpm, setBpm] = useState(120);
-  const [patternLength, setPatternLength] = useState(32);
+  const [patternLength, setPatternLength] = useState(48);
   const [currentDrumMachine, setCurrentDrumMachine] = useState(0); // Track current drum machine
   const [tracks, setTracks] = useState([
-    { id: 'kick', name: 'Kick', pattern: new Array(32).fill(false), padId: 'Q' },
-    { id: 'snare', name: 'Snare', pattern: new Array(32).fill(false), padId: 'W' },
-    { id: 'hihat', name: 'Hihat (Closed)', pattern: new Array(32).fill(false), padId: 'E' }
+    { id: 'kick', name: 'Kick', pattern: new Array(48).fill(false), padId: 'Q' },
+    { id: 'snare', name: 'Snare', pattern: new Array(48).fill(false), padId: 'W' },
+    { id: 'hihat', name: 'Hihat', pattern: new Array(48).fill(false), padId: 'E' }
   ]);
   const [followBeat, setFollowBeat] = useState(true);
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -81,7 +81,7 @@ const Pattern = () => {
         const timeOffsetMs = hit.timestamp - firstHit.timestamp;
 
         // Convert to beat position (assuming 16th note grid)
-        const beatPosition = Math.round(timeOffsetMs / sixteenthNoteMs);  
+        const beatPosition = Math.round(timeOffsetMs / sixteenthNoteMs);
 
         // Ensure we don't exceed pattern length
         if (beatPosition >= 0 && beatPosition < targetPatternLength) {
@@ -95,7 +95,7 @@ const Pattern = () => {
       };
     });
 
-    console.log("newTracks",newTracks)
+    console.log("newTracks", newTracks)
 
     setTracks(newTracks);
 
@@ -116,7 +116,7 @@ const Pattern = () => {
 
   // Play drum sound using the same logic as Drum.jsx
   const playDrumSound = useCallback((pad) => {
-    try { 
+    try {
       const audioContext = getAudioContext(audioContextRef);
 
       if (audioContext.state === 'suspended') {
@@ -266,10 +266,10 @@ const Pattern = () => {
   const resetTo32Beats = () => {
     setIsPlaying(false);
     setCurrentBeat(0);
-    setPatternLength(32);
+    setPatternLength(48);
     setTracks(prev => prev.map(track => ({
       ...track,
-      pattern: new Array(32).fill(false)
+      pattern: new Array(48).fill(false)
     })));
   };
 
@@ -343,12 +343,12 @@ const Pattern = () => {
 
               <div className="flex items-center gap-2">
                 <span className="text-sm">Length: {patternLength}</span>
-                {patternLength > 32 && (
+                {patternLength > 48 && (
                   <button
                     onClick={resetTo32Beats}
                     className="bg-[#1F1F1F] px-2 py-1 rounded text-xs transition-colors"
                   >
-                    Reset to 32
+                    Reset to 48
                   </button>
                 )}
               </div>
@@ -430,59 +430,21 @@ const Pattern = () => {
           )}
 
           {/* Beat Indicator Dots */}
-          <div className='overflow-x-auto'>
-            <div className="mt-6">
-              <div className="flex items-center gap-2 min-w-max">
-                <div className="w-32 flex-shrink-0"></div>
+          <div className="mt-6 max-h-[300px] overflow-auto">
+            <div className="flex">
+              {/* Fixed Labels Column */}
+              <div className="w-32 flex-shrink-0 z-10 bg-black">
+                {/* Empty spacer for beat dots alignment */}
+                <div className="h-3 mb-2"></div>
 
-                <div className="flex gap-1">
-                  {Array.from({ length: patternLength }, (_, beatIndex) => (
-                    <div
-                      key={beatIndex}
-                      className={`w-8 h-3 flex items-center justify-center flex-shrink-0`}
-                    >
-                      <div className={`
-                    w-2 h-2 rounded-full transition-all duration-150
-                    ${currentBeat === beatIndex && isPlaying
-                          ? 'bg-yellow-400 ring-2 ring-yellow-300 ring-opacity-50 scale-125'
-                          : 'bg-[#474747]'
-                        }
-                    ${beatIndex % 4 === 0 ? 'bg-purple-300' : ''}
-                    ${beatIndex % 16 === 0 && beatIndex > 0 ? 'ring-1 ring-purple-200' : ''}
-                  `}></div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+                {/* Empty spacer for section numbers alignment */}
+                <div className="h-6 mb-4"></div>
 
-            {/* Section Numbers */}
-            <div className="mt-2 mb-4">
-              <div className="flex items-center gap-2 min-w-max">
-                <div className="w-32 flex-shrink-0"></div>
-                <div className="flex gap-1">
-                  {Array.from({ length: Math.ceil(patternLength / 16) }, (_, sectionIndex) => (
-                    <div key={sectionIndex} className="flex">
-                      <div className="w-32 text-center items-center text-xs text-purple-300 font-medium">
-                        Section {sectionIndex + 1}
-                      </div>
-                      {sectionIndex < Math.ceil(patternLength / 16) - 1 && (
-                        <div className="w-96"></div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Drum Grid */}
-            <div className="space-y-2">
-              <div className="flex flex-col gap-2 min-w-max">
-                {tracks.map((track) => (
-                  <div key={track.id} className="flex items-center gap-2">
-                    {/* Track Label with Dropdown */}
-                    <div className="w-32 flex-shrink-0 relative" ref={activeDropdown === track.id ? dropdownRef : null}>
-                      <div className="bg-[#1F1F1F] rounded p-3 text-center font-medium flex justify-between items-center">
+                {/* Fixed Track Labels */}
+                <div className="space-y-5">
+                  {tracks.map((track) => (
+                    <div key={track.id} className="relative" ref={activeDropdown === track.id ? dropdownRef : null}>
+                      <div className="bg-[#1F1F1F] rounded p-3 text-center font-medium flex justify-between items-center h-10">
                         <button
                           onClick={() => toggleDropdown(track.id)}
                           className="flex items-center gap-1 text-white transition-colors flex-1 text-left"
@@ -504,12 +466,12 @@ const Pattern = () => {
 
                       {/* Dropdown Menu */}
                       {activeDropdown === track.id && (
-                        <div className="absolute top-full left-0 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+                        <div className="absolute top-full left-0 w-full mt-1 dark:bg-primary-dark border border-gray-600 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
                           {getAvailableInstruments(track.id).map((option) => (
                             <button
                               key={option.padId}
                               onClick={() => handleInstrumentNameChange(track.id, option.name, option.padId)}
-                              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-700 transition-colors border-b border-gray-700 last:border-b-0 text-gray-300"
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-[#303030] transition-colors border-b border-gray-700 last:border-b-0 text-white"
                             >
                               {option.name}
                             </button>
@@ -522,45 +484,103 @@ const Pattern = () => {
                         </div>
                       )}
                     </div>
+                  ))}
 
-                    {/* Beat Grid */}
-                    <div className="flex gap-1">
-                      {track.pattern.slice(0, patternLength).map((isActive, beatIndex) => (
-                        <button
-                          key={beatIndex}
-                          onClick={() => toggleBeat(track.id, beatIndex)}
-                          className={`
-                        w-8 h-8 border border-[#949292] rounded transition-all flex-shrink-0
-
-                        ${isActive
-                              ? 'bg-[#474747] border-purple-300'
-                              : 'bg-[#1F1F1F] hover:bg-[#474747]'
-                            }
-                        ${currentBeat === beatIndex && isPlaying
-                              ? 'ring-2 ring-yellow-400 ring-opacity-70'
-                              : ''
-                            }
-                        ${beatIndex % 4 === 0 ? 'border-l-2 border-l-purple-400' : ''}
-                        ${beatIndex % 16 === 15 ? 'border-r-2 border-r-purple-400' : ''}
-                        ${beatIndex >= (patternLength - 16) ? 'ring-1 ring-orange-400 ring-opacity-50' : ''}
-                      `}
-                          title={beatIndex >= (patternLength - 16) ? `Click to expand to ${patternLength + 16} beats` : ''}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-
-                {/* Add Track Button */}
-                <div className="flex items-center gap-2">
+                  {/* Add Track Button */}
                   <button
                     onClick={addTrack}
-                    className="w-32 bg-[#1F1F1F] border-dashed rounded p-3 text-center text-white hover:bg-[#474747] transition-colors flex items-center justify-center gap-2 flex-shrink-0"
+                    className="w-full bg-[#1F1F1F] border-dashed rounded p-3 text-center text-white hover:bg-[#474747] transition-colors flex items-center justify-center gap-2"
                   >
                     <Plus size={16} />
                     Add Track
                   </button>
-                  <div className="w-2 h-2 bg-[#474747] rounded-full ml-2"></div>
+                </div>
+              </div>
+
+              {/* Scrollable Content */}
+              <div className="overflow-x-auto flex-1">
+                <div className="min-w-max">
+                  {/* Beat Indicator Dots */}
+                  <div className="flex items-center gap-2 h-3 mb-2">
+                    <div className="flex gap-1">
+                      {Array.from({ length: Math.ceil(patternLength / 16) }, (_, sectionIndex) => (
+                        <div key={sectionIndex} className="flex gap-1 mx-2">
+                          {Array.from({ length: 16 }, (_, beatIndexInSection) => {
+                            const beatIndex = sectionIndex * 16 + beatIndexInSection;
+                            if (beatIndex >= patternLength) return null;
+
+                            return (
+                              <div
+                                key={beatIndex}
+                                className={`w-8 h-3 flex items-center justify-center flex-shrink-0`}
+                              >
+                                <div className={`
+                w-2 h-2 rounded-full transition-all duration-150
+                ${currentBeat === beatIndex && isPlaying
+                                    ? 'bg-yellow-400 ring-2 ring-yellow-300 ring-opacity-50 scale-125'
+                                    : 'bg-[#474747]'
+                                  }
+                ${beatIndex % 4 === 0 ? 'bg-white' : ''}
+                ${beatIndex % 16 === 0 && beatIndex > 0 ? 'ring-1 ring-purple-200' : ''}
+              `}></div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Section Numbers */}
+                  <div className="flex items-center gap-2 h-6 mb-4">
+                    <div className="flex gap-1">
+                      {Array.from({ length: Math.ceil(patternLength / 16) }, (_, sectionIndex) => (
+                        <div key={sectionIndex} className="flex justify-center items-center mx-2" style={{ width: `${16 * 36}px` }}>
+                          <div className="text-center text-xs text-white font-medium">
+                            Section {sectionIndex + 1}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Beat Grids */}
+                  <div className="space-y-5">
+                    {tracks.map((track) => (
+                      <div key={track.id} className="flex items-center gap-2 h-10">
+                        <div className="flex gap-1">
+                          {Array.from({ length: Math.ceil(patternLength / 16) }, (_, sectionIndex) => (
+                            <div key={sectionIndex} className="flex gap-1 mx-2">
+                              {track.pattern.slice(sectionIndex * 16, (sectionIndex + 1) * 16).map((isActive, beatIndexInSection) => {
+                                const beatIndex = sectionIndex * 16 + beatIndexInSection;
+                                return (
+                                  <button
+                                    key={beatIndex}
+                                    onClick={() => toggleBeat(track.id, beatIndex)}
+                                    className={`
+                    w-8 h-8 border border-[#949292] rounded transition-all flex-shrink-0
+                    ${isActive
+                                        ? 'bg-[#ffffff] border-purple-300'
+                                        : 'bg-[#1F1F1F] hover:bg-[#474747]'
+                                      }
+                    ${currentBeat === beatIndex && isPlaying
+                                        ? 'ring-2 ring-yellow-400 ring-opacity-70'
+                                        : ''
+                                      }
+                    ${beatIndex % 4 === 0 ? 'border-l-2 border-l-purple-400' : ''}
+                    ${beatIndex % 16 === 15 ? 'border-r-2 border-r-purple-400' : ''}
+                    ${beatIndex >= (patternLength - 16) ? 'ring-1 ring-orange-400 ring-opacity-50' : ''}
+                  `}
+                                    title={beatIndex >= (patternLength - 16) ? `Click to expand to ${patternLength + 16} beats` : ''}
+                                  />
+                                );
+                              })}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

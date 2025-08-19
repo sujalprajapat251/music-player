@@ -1219,7 +1219,7 @@ const DrumPadMachine = ({ onClose }) => {
                 </div>
               </div>
               {/* Tabs */}
-              <div className=" bg-[#1F1F1F] flex space-x-2 sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3 pb-3">
+              <div className=" bg-[#1F1F1F] flex space-x-2 sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3 pb-4">
                 {['Instruments', 'Patterns', 'Piano Roll', 'Effects'].map((tab) => (
                   <button
                     key={tab}
@@ -1565,7 +1565,7 @@ const DrumPadMachine = ({ onClose }) => {
                       }
                     }}
                   >
-                    <div className="flex items-center justify-center p-2 sm:p-4 min-w-max bg-black">
+                    <div className="flex items-center justify-center p-16 sm:p-11 md600:p-14 md:p-3 lg:p-10 3xl:p-16 min-w-max bg-black">
                       <div className="flex gap-2 sm:gap-4 min-w-max">
                         {activeEffects.map((effect) => (
                           <div key={effect.instanceId} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-white flex flex-col shrink-0">
