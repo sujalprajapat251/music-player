@@ -234,10 +234,10 @@ const DrumPadMachine = ({ onClose }) => {
   const tracks = useSelector((state) => state.studio?.tracks || []);
   const currentTrackId = useSelector((state) => state.studio?.currentTrackId || null);
   const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas } = useSelector((state) => state.effects);
-  console.log("activeEffects", activeEffects, "showEffectsLibrary", showEffectsLibrary,);
+  // console.log("activeEffects", activeEffects, "showEffectsLibrary", showEffectsLibrary,);
 
   const currentTypeData = drumMachineTypes[currentType];
-  console.log('currentTypeData', currentTypeData);
+  // console.log('currentTypeData', currentTypeData);
   // Get the currently selected drum machine
   const selectedDrumMachine = drumMachineTypes[currentType];
 
