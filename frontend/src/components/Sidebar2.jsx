@@ -85,7 +85,7 @@ const Sidebar2 = () => {
               }
             `}</style>
             {(tracks || []).map((track, idx) => {
-              const isMuted = soloTrackId ? soloTrackId !== track.id : track.muted;
+              const isMuted = soloTrackId ? soloTrackId !== track.id : (track?.muted || false);
 
               return (
                 <div
@@ -124,14 +124,14 @@ const Sidebar2 = () => {
                           onChange={e => setEditingName(e.target.value)}
                           onBlur={() => {
                             if (editingName.trim() && editingName !== track.name) {
-                              dispatch(renameTrack({ id: track.id, newName: editingName.trim() }));
+                              dispatch(renameTrack({ trackId: track.id, newName: editingName.trim() }));
                             }
                             setEditingTrackId(null);
                           }}
                           onKeyDown={e => {
                             if (e.key === "Enter") {
                               if (editingName.trim() && editingName !== track.name) {
-                                dispatch(renameTrack({ id: track.id, newName: editingName.trim() }));
+                                dispatch(renameTrack({ trackId: track.id, newName: editingName.trim() }));
                               }
                               setEditingTrackId(null);
                             }

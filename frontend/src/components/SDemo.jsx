@@ -853,6 +853,11 @@ const SDemo = () => {
   // === KEYBOARD EVENT HANDLERS ===
   useEffect(() => {
     const handleKeyDown = (event) => {
+      // Don't steal keys from focused inputs while user is typing
+      const target = event.target;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
       const currentKeyboardMap = getCurrentKeyboardMap();
       
       if (currentKeyboardMap[event.key]) {
@@ -881,6 +886,10 @@ const SDemo = () => {
     };
 
     const handleKeyUp = (event) => {
+      const target = event.target;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
       setPressedKeys(prev => {
         const newSet = new Set(prev);
         newSet.delete(event.key);

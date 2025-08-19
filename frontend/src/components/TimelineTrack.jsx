@@ -151,6 +151,7 @@ const AudioClip = ({
   timelineWidthPerSecond = 100,
   frozen = false,
   gridSpacing = 0.25,
+  color,  
 }) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
@@ -307,7 +308,7 @@ const AudioClip = ({
       }}
       onContextMenu={(e) => onContextMenu && onContextMenu(e, trackId, clip.id)}
       style={{
-        background: clip.color || "transparent",
+        background:  color || "transparent",
         borderRadius: '8px',
         border: isSelected
           ? "2px solid #AD00FF"
@@ -418,6 +419,7 @@ const TimelineTrack = ({
   timelineWidthPerSecond = 100,
   frozen = false,
   gridSpacing = 0.25,
+  color 
 }) => {
   // Get piano notes from Redux
   const pianoNotes = useSelector((state) => state.studio.pianoNotes);
@@ -497,6 +499,7 @@ const TimelineTrack = ({
             onContextMenu={onContextMenu}
             onSelect={onSelect}
             isSelected={selectedClipId === clip.id}
+            color={color}
           />
         );
       })}

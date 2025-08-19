@@ -38,12 +38,15 @@ import { useTheme } from '../../Utils/ThemeContext';
 import { ReactComponent as Close } from '../../Images/closeicon.svg';
 import midi from '../../Images/midi.svg';
 import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { setIsSongSection } from '../../Redux/Slice/ui.slice';
 
 const TopHeader = () => {
+    const dispatch = useDispatch();
+    const isSongSection = useSelector((state) => state.ui.isSongSection);
 
     const [isActiveMenu, setIsActiveMenu] = useState("");
     const [isLowLatency, setIsLowLatency] = useState(false);
-    const [isLowLatency1, setIsLowLatency1] = useState(false);
     const [isLowLatency2, setIsLowLatency2] = useState(false);
     const [lowlatencyomodal, setLowLatencyModel] = useState(false);
     const [midikeyboardmodal, setMidiKeyboardModel] = useState(false);
@@ -226,7 +229,7 @@ const TopHeader = () => {
                         </div>
 
                         <Menu.Items
-                            className="absolute left-[-20px] sm:left-0 z-10 mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60   origin-top-right bg-primary-light dark:bg-primary-dark shadow-lg outline-none"
+                            className="absolute left-[-20px] sm:left-0 z-[99] mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60   origin-top-right bg-primary-light dark:bg-primary-dark shadow-lg outline-none"
                         >
                             <div className="">
                                 {/* First item: Print */}
@@ -341,7 +344,7 @@ const TopHeader = () => {
                         </div>
 
                         <Menu.Items
-                            className="absolute left-0 z-10 mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60   origin-top-right bg-primary-light dark:bg-primary-dark shadow-lg outline-none"
+                            className="absolute left-0 z-[99] mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60   origin-top-right bg-primary-light dark:bg-primary-dark shadow-lg outline-none"
                         >
                             <div className="">
                                 {/* First item: Print */}
@@ -441,7 +444,7 @@ const TopHeader = () => {
                         </div>
 
                         <Menu.Items
-                            className="absolute left-[-60px] sm:left-0 z-10 mt-2 lg:mt-3 w-40 sm:w-44 md600:w-48 lg:w-60   origin-top-right bg-primary-light dark:bg-primary-dark shadow-lg outline-none"
+                            className="absolute left-[-60px] sm:left-0 z-[99] mt-2 lg:mt-3 w-40 sm:w-44 md600:w-48 lg:w-60   origin-top-right bg-primary-light dark:bg-primary-dark shadow-lg outline-none"
                         >
                             <div className="">
                                 <Menu.Item>
@@ -570,8 +573,8 @@ const TopHeader = () => {
                                                     <input
                                                         type="checkbox"
                                                         className="sr-only peer"
-                                                        checked={isLowLatency1}
-                                                        onChange={() => setIsLowLatency1(prev => !prev)}
+                                                        checked={isSongSection}
+                                                        onChange={() => dispatch(setIsSongSection(!isSongSection))}
                                                     />
                                                     <div className="relative w-9 h-4 bg-gray-400 peer-focus:outline-none rounded-full peer dark:bg-[#353535] peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-[#357935] peer-checked:bg-[#357935] dark:peer-checked:bg-[#357935]"></div>
                                                 </label>

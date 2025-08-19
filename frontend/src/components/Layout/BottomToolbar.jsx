@@ -150,7 +150,8 @@ const BottomToolbar = () => {
     useEffect(() => {
         const handleKeyDown = (event) => {
             // Only handle shortcuts when not typing in input fields
-            if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+            const target = event.target;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
                 return;
             }
 

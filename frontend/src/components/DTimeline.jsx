@@ -997,10 +997,11 @@ const DTimeline = () => {
   useEffect(() => {
     players.forEach(playerObj => {
       const track = tracks.find(t => t.id === playerObj.trackId);
+      if (!track) return; // Skip if track doesn't exist
       const isMuted = soloTrackId
         ? soloTrackId !== track.id
         : track.muted;
-      if (playerObj.player && track) {
+      if (playerObj.player) {
         playerObj.player.volume.value = isMuted ? -Infinity : 0;
       }
     });
@@ -1226,7 +1227,7 @@ const DTimeline = () => {
                     width: "100%",
                     height: `${trackHeight}px`,
                     zIndex: 0,
-                    opacity: (soloTrackId ? soloTrackId !== track.id : track.muted) ? 0.5 : 1,
+                    opacity: (soloTrackId ? soloTrackId !== track.id : (track?.muted || false)) ? 0.5 : 1,
                     pointerEvents: "auto",
                   }}
                 >

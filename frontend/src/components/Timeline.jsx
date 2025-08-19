@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
-import { addTrack, addAudioClipToTrack,  updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio } from "../Redux/Slice/studio.slice";
+import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio } from "../Redux/Slice/studio.slice";
 import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM, zoomIn, zoomOut, resetZoom } from "../Redux/Slice/grid.slice";
 import { setAudioDuration as setLoopAudioDuration, toggleLoopEnabled, setLoopEnd, setLoopRange, selectIsLoopEnabled } from "../Redux/Slice/loop.slice";
 import { getGridSpacing, getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
@@ -85,6 +85,7 @@ const Timeline = () => {
   const [localCurrentTime, setLocalCurrentTime] = useState(0);
   const [showGridSetting, setShowGridSetting] = useState(false);
   const [showOffcanvas, setShowOffcanvas] = useState(false);
+  const [showOffcanvasEffects, setShowOffcanvasEffects] = useState(false);
   const [clipboard, setClipboard] = useState(null);
   const [selectedTrackId, setSelectedTrackId] = useState(null);
   const [selectedClipId, setSelectedClipId] = useState(null);
@@ -99,8 +100,8 @@ const Timeline = () => {
   const [volumeIndicator, setVolumeIndicator] = useState({ show: false, volume: 0, trackName: '' });
   const [edirNameModel, setEdirNameModel] = useState(false);
 
-    const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
-    // console.log("FFFFFFFFFFFFFFFFFF",drumRecordedData)
+  const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
+  // console.log("FFFFFFFFFFFFFFFFFF",drumRecordedData)
 
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
@@ -164,10 +165,11 @@ const Timeline = () => {
   useEffect(() => {
     players.forEach(playerObj => {
       const track = tracks.find(t => t.id === playerObj.trackId);
+      if (!track) return; // Skip if track doesn't exist
       const isMuted = soloTrackId
         ? soloTrackId !== track.id
         : track.muted;
-      if (playerObj.player && track) {
+      if (playerObj.player) {
         playerObj.player.volume.value = isMuted ? -Infinity : 0;
       }
     });
@@ -189,6 +191,9 @@ const Timeline = () => {
   const masterVolume = useSelector((state) => state.studio?.masterVolume ?? 80);
 
   const bpm = useSelector((state) => state.studio?.bpm ?? 120);
+
+  // UI state selector for MySection visibility
+  const isSongSection = useSelector((state) => state.ui?.isSongSection ?? false);
 
   const ORIGINAL_BPM = 120;
 
@@ -260,10 +265,11 @@ const Timeline = () => {
   useEffect(() => {
     players.forEach(playerObj => {
       const track = tracks.find(t => t.id === playerObj.trackId);
+      if (!track) return; // Skip if track doesn't exist
       const isMuted = soloTrackId
         ? soloTrackId !== track.id
         : track.muted;
-      if (playerObj.player && track) {
+      if (playerObj.player) {
         if (isMuted) {
           playerObj.player.volume.value = -Infinity;
         } else {
@@ -685,7 +691,8 @@ const Timeline = () => {
     const updateVolumes = () => {
       players.forEach(playerObj => {
         const track = tracks.find(t => t.id === playerObj.trackId);
-        if (playerObj.player && track && typeof playerObj.player.volume === 'object') {
+        if (!track) return; // Skip if track doesn't exist
+        if (playerObj.player && typeof playerObj.player.volume === 'object') {
           const isMuted = soloTrackId
             ? soloTrackId !== track.id
             : track.muted;
@@ -1352,6 +1359,11 @@ const Timeline = () => {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Ignore shortcuts while typing into inputs/textareas/contenteditable
+      const target = e.target;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return;
+      }
       if (!selectedTrackId) return;
 
       if (e.ctrlKey && e.key === 'x') {
@@ -1546,7 +1558,7 @@ const Timeline = () => {
   };
 
   const handleDrumRecordingComplete = async (blob) => {
-    console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",blob)
+    console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", blob)
     const newTrack = {
       id: Date.now().toString(),
       name: `Drum Track ${tracks.length + 1}`,
@@ -1648,7 +1660,7 @@ const Timeline = () => {
           color: "white",
           background: "transparent",
           height: "100%",
-          marginRight: showOffcanvas ? "23vw" : 0,
+          marginRight: showOffcanvas || showOffcanvasEffects ? "23vw" : 0,
         }}
         className="relative overflow-hidden"
       >
@@ -1690,14 +1702,16 @@ const Timeline = () => {
             <LoopBar />
 
             {/* My Section - positioned below loop bar */}
-            <MySection
-              timelineContainerRef={timelineContainerRef}
-              audioDuration={audioDuration}
-              selectedGrid={selectedGrid}
-            />
+            {isSongSection && (
+              <MySection
+                timelineContainerRef={timelineContainerRef}
+                audioDuration={audioDuration}
+                selectedGrid={selectedGrid}
+              />
+            )}
 
             {/* Section Labels - display all saved section labels */}
-            {sectionLabels.map((section) => (
+            {isSongSection && sectionLabels.map((section) => (
               <ResizableSectionLabel
                 key={section.id}
                 section={section}
@@ -1924,8 +1938,8 @@ const Timeline = () => {
                       width: "100%",
                       height: `${trackHeight}px`,
                       zIndex: 0,
-                      opacity: (soloTrackId ? soloTrackId !== track.id : track.muted) ? 0.5 : 1,
-                      pointerEvents: "auto",
+                      opacity: (soloTrackId ? soloTrackId !== track.id : (track?.muted || false)) ? 0.5 : 1,
+                      pointerEvents: "auto",  
                     }}
                     onClick={(e) => {
                       // Only clear clip selection if clicking on the track background, not on a clip
@@ -1956,6 +1970,7 @@ const Timeline = () => {
                       onContextMenu={handleContextMenu}
                       onSelect={(clip) => setSelectedClipId(clip.id)}
                       selectedClipId={selectedClipId}
+                      color={track.color}
                     />
                   </div>
                 );
@@ -2054,12 +2069,12 @@ const Timeline = () => {
         <div className="absolute top-[60px] right-[0] -translate-x-1/2 z-30">
           <div
             className="bg-[#FFFFFF] w-[40px] h-[40px] flex items-center justify-center rounded-full cursor-pointer"
-            onClick={() => setShowOffcanvas((prev) => !prev)}
+            onClick={() => { setShowOffcanvas((prev) => !prev); setShowOffcanvasEffects(false); }}
           >
             <img src={offce} alt="Off canvas" />
           </div>
-          <div className="bg-[#1F1F1F] w-[40px] h-[40px] flex items-center justify-center rounded-full mt-2">
-            <img src={fxIcon} alt="Effects" onClick={() => dispatch(toggleEffectsOffcanvas())} />
+          <div className="bg-[#1F1F1F] w-[40px] h-[40px] flex items-center justify-center rounded-full mt-2 cursor-pointer">
+            <img src={fxIcon} alt="Effects" onClick={() => { setShowOffcanvasEffects((prev) => !prev); setShowOffcanvas(false); }} />
           </div>
         </div>
 
@@ -2124,7 +2139,7 @@ const Timeline = () => {
         }}
       />
       <MusicOff showOffcanvas={showOffcanvas} setShowOffcanvas={setShowOffcanvas} />
-      <Effects showOffcanvas={showOffcanvas} setShowOffcanvas={setShowOffcanvas} />
+      <Effects showOffcanvas={showOffcanvasEffects} setShowOffcanvas={setShowOffcanvasEffects} />
 
       {/* Context Menu */}
       <WaveMenu
