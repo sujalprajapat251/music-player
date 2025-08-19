@@ -259,8 +259,8 @@ const TrackMenu = ({ trackId, color, onRename }) => {
             label={`${isFrozen ? 'Unfreeze' : 'Freeze'} track (Free up CPU)`}
             onClick={handleFreezeTrack}
             style={{
-              color: isFrozen ? "#4CAF50" : "#fff",
-              fontWeight: isFrozen ? "bold" : "normal"
+              color: "#fff",
+              fontWeight:"normal"
             }}
             className="py-2 px-3"
           />

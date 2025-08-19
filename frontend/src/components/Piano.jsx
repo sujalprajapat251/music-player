@@ -797,7 +797,7 @@ const Pianodemo = ({ onClose }) => {
             </button> */}
             {showOffcanvas1 === true && (
                 <>
-                    <div className="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px]  lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[516px]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
+                    <div className="fixed z-0 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px]  lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[516px]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
                         {/* Static Navbar with Tabs */}
                         <div className="  border-b border-[#FFFFFF1A] h-full">
                             <div className=" bg-[#1F1F1F] flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
