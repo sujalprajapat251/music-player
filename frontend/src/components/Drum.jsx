@@ -246,6 +246,21 @@ const DrumPadMachine = ({ onClose }) => {
     setIsOpen2(false)
   };
 
+  const selectedTrackId = useSelector((state) => state.studio?.currentTrackId);
+  // const tracks = useSelector((state) => state.studio?.tracks);
+  // const activeView = useSelector((state) => state.studio?.activeView);
+
+  // Add useEffect to handle track data display and logging
+  useEffect(() => {
+    if (activeView === 'Patterns' && selectedTrackId && tracks) {
+      const selectedTrack = tracks.find(track => track.id === selectedTrackId);
+      if (selectedTrack) {
+        console.log('Selected Track Data:', selectedTrack);
+        // You can add additional logic here to display the track data in the UI
+      }
+    }
+  }, [activeView, selectedTrackId, tracks]);
+
 
   const handlePadPress = (pad, timestamp) => {
     if (isRecording) {

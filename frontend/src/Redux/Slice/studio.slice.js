@@ -49,6 +49,7 @@ const studioSlice = createSlice({
   reducers: {
     setTracks: (state, action) => {
       state.tracks = action.payload;
+      console.log('all trackid', action.payload);
     },
     addTrack: (state, action) => {
       // Ensure new tracks have frozen property, audioClips array, and a unique color
@@ -216,6 +217,7 @@ const studioSlice = createSlice({
     },
     setCurrentTrackId: (state, action) => {
       state.currentTrackId = action.payload;
+      console.log('jsdbfjkasdjfjsdfjasdfkadfbhjksjhkshkfkj', action.payload);
     },
     toggleMuteTrack: (state, action) => {
       const trackId = action.payload;

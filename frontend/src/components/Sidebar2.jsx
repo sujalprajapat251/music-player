@@ -85,6 +85,7 @@ const Sidebar2 = () => {
               }
             `}</style>
             {(tracks || []).map((track, idx) => {
+              console.log('tracks', tracks);
               const isMuted = soloTrackId ? soloTrackId !== track.id : (track?.muted || false);
               const borderColor = track.id === currentTrackId ? track.color : '';
               console.log("borderColor", borderColor)
