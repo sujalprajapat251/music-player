@@ -86,21 +86,22 @@ const Sidebar2 = () => {
             `}</style>
             {(tracks || []).map((track, idx) => {
               const isMuted = soloTrackId ? soloTrackId !== track.id : (track?.muted || false);
+              const borderColor = track.id === currentTrackId ? track.color : '';
+              console.log("borderColor", borderColor)
 
               return (
                 <div
                   key={track.id}
-                  className={`flex items-center justify-between px-3 border-l-4 border-b border-b-[#1414141A] dark:border-b-[#FFFFFF1A] bg-[#232323] cursor-pointer ${track.id === currentTrackId ? ' border-l-[#fff]' : 'border-l-[#232323] '
-                    }`}
+                  className={`flex items-center justify-between px-3 border-l-4 border-b border-b-[#1414141A] dark:border-b-[#FFFFFF1A] bg-[#232323] cursor-pointer`}
                   style={{
-                    height: `${trackHeight + 1}px`, // 8px for padding
+                    height: `${trackHeight + 1}px`, 
                     minHeight: `${trackHeight + 1}px`,
+                    borderLeftColor: track.id === currentTrackId && borderColor ? borderColor : '#232323',
                   }}
                   onClick={() => handleChangeTrack(track.id)}
                 >
                   <div className="flex items-center w-16 justify-center">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${track.frozen ? 'bg-[#2a2a2a]' : 'bg-black'
-                      }`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${track.frozen ? 'bg-[#7F7B87]' : 'bg-black'}`}>
                       {track.name === 'Voice & Mic' && <Track1 className="w-6 h-6" />}
                       {track.name === 'Keys' && <Track2 className="w-6 h-6" />}
                       {track.name === 'Bass & 808' && <Track3 className="w-6 h-6" />}
