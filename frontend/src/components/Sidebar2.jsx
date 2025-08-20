@@ -66,7 +66,7 @@ const Sidebar2 = () => {
     <>
       <TopHeader />
       <div className="flex h-[calc(100vh-82px)] sm:h-[calc(100vh-66px)] md:h-[calc(100vh-96px)] relative">
-        <div className="border-r border-[#1414141A] dark:border-[#FFFFFF1A] w-[20%] sm:w-[23%] md:w-[22%] lg:w-[20%] xl:w-[17%] 2xl:w-[15%] bg-primary-light dark:bg-primary-dark">
+        <div className="border-r border-[#1414141A] dark:border-[#b463631a] w-[20%] sm:w-[23%] md:w-[22%] lg:w-[20%] xl:w-[17%] 2xl:w-[15%] bg-primary-light dark:bg-primary-dark">
           {/* Timeline ruler space - matches the ruler height in Timeline component */}
           <div className="h-[100px] border-b border-[#1414141A] dark:border-[#FFFFFF1A] flex items-end pb-2"></div>
 
@@ -85,10 +85,8 @@ const Sidebar2 = () => {
               }
             `}</style>
             {(tracks || []).map((track, idx) => {
-              console.log('tracks', tracks);
               const isMuted = soloTrackId ? soloTrackId !== track.id : (track?.muted || false);
               const borderColor = track.id === currentTrackId ? track.color : '';
-              console.log("borderColor", borderColor)
 
               return (
                 <div

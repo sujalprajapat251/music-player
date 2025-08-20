@@ -170,6 +170,7 @@ const TimelineTrack = ({
   gridSpacing = 0.25,
   isPattern,
   pattern,
+  
 }) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);

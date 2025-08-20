@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
-import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio } from "../Redux/Slice/studio.slice";
+import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio, setCurrentTrackId, setTrackType } from "../Redux/Slice/studio.slice";
 import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM, zoomIn, zoomOut, resetZoom } from "../Redux/Slice/grid.slice";
 import { setAudioDuration as setLoopAudioDuration, toggleLoopEnabled, setLoopEnd, setLoopRange, selectIsLoopEnabled } from "../Redux/Slice/loop.slice";
 import { getGridSpacing, getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
@@ -1553,7 +1553,29 @@ const Timeline = () => {
     } else if (action === "Import file") {
       fileInputRef.current && fileInputRef.current.click();
     } else if (action === "Play the synth") {
-      setShowPiano(true);
+      const newTrackId = Date.now() + Math.random();
+      const newTrack = {
+        id: newTrackId,
+        name: 'Synth',
+        type: 'keys',
+        volume: 80,
+        audioClips: []
+      };
+      dispatch(addTrack(newTrack));
+      dispatch(setCurrentTrackId(newTrackId));
+      dispatch(setTrackType('Keys'));
+    } else if (action === "Patterns Beatmaker") {
+      const newTrackId = Date.now() + Math.random();
+      const newTrack = {
+        id: newTrackId,
+        name: 'Drums & Machines',
+        type: 'drum',
+        volume: 80,
+        audioClips: []
+      };
+      dispatch(addTrack(newTrack));
+      dispatch(setCurrentTrackId(newTrackId));
+      dispatch(setTrackType('Drums & Machines'));
     }
     // Add more actions as needed
   };

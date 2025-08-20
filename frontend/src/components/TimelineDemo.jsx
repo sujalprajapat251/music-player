@@ -168,7 +168,8 @@ const TimelineTrack = ({
   onPositionChange,
   timelineWidthPerSecond = 100,
   frozen = false,
-  gridSpacing = 0.25
+  gridSpacing = 0.25,
+  TimelineTrack 
 }) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);

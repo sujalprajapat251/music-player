@@ -14,7 +14,7 @@ const Pattern = () => {
   const [currentBeat, setCurrentBeat] = useState(0);
   const [bpm, setBpm] = useState(120);
   const [patternLength, setPatternLength] = useState(48);
-  const [currentDrumMachine, setCurrentDrumMachine] = useState(0); // Track current drum machine
+  const [currentDrumMachine, setCurrentDrumMachine] = useState(0);
   const [tracks, setTracks] = useState([
     { id: 'kick', name: 'Kick', pattern: new Array(48).fill(false), padId: 'Q' },
     { id: 'snare', name: 'Snare', pattern: new Array(48).fill(false), padId: 'W' },
@@ -31,6 +31,10 @@ const Pattern = () => {
   const dropdownRef = useRef(null);
   const dispatch = useDispatch();
   const selectedTrackId = useSelector((state) => state.studio?.currentTrackId);
+
+  // Get all tracks from Redux store
+  const allTracks = useSelector((state) => state.studio?.tracks || []);
+
   // Available instrument options based on drum machine pads
   const getInstrumentOptions = () => {
     const selectedMachine = drumMachineTypes[currentDrumMachine];
@@ -51,8 +55,8 @@ const Pattern = () => {
     if (!recordedData || recordedData.length === 0) return;
 
     // Calculate beat duration in milliseconds
-    const beatDurationMs = (60 / targetBpm) * 1000; // Duration of one beat in ms
-    const sixteenthNoteMs = beatDurationMs / 4; // Duration of a 16th note in ms
+    const beatDurationMs = (60 / targetBpm) * 1000;
+    const sixteenthNoteMs = beatDurationMs / 4;
 
     // Find the first and last recorded hit to determine the time range
     const firstHit = recordedData[0];
@@ -95,8 +99,6 @@ const Pattern = () => {
       };
     });
 
-    console.log("newTracks", newTracks)
-
     setTracks(newTracks);
 
     // Update pattern length if needed
@@ -106,18 +108,20 @@ const Pattern = () => {
     }
   }, [tracks, bpm, patternLength]);
 
-  // ... existing code ...
-
-  // Add this function after the convertRecordedDataToPattern function
+  // NEW FUNCTION: Convert track data to pattern
   const convertTrackDataToPattern = useCallback((selectedTrack) => {
     if (!selectedTrack?.audioClips) return;
 
+    // Get all drum data from all audio clips in the track
     const allDrumHits = selectedTrack.audioClips.flatMap(clip => {
       return clip.drumData || [];
     });
 
     if (allDrumHits.length === 0) return;
 
+    console.log("Processing drum hits from track:", allDrumHits);
+
+    // Sort hits by timestamp
     const sortedHits = allDrumHits.sort((a, b) => a.timestamp - b.timestamp);
     const firstHit = sortedHits[0];
     const lastHit = sortedHits[sortedHits.length - 1];
@@ -125,18 +129,19 @@ const Pattern = () => {
     const beatDurationMs = (60 / bpm) * 1000;
     const sixteenthNoteMs = beatDurationMs / 4;
 
-    // Calculate total required pattern length first
+    // Calculate total required pattern length
     const totalDurationMs = lastHit.timestamp - firstHit.timestamp;
     const requiredBeats = Math.ceil(totalDurationMs / sixteenthNoteMs);
 
     // Round up to the nearest multiple of 16 to ensure complete sections
-    const newPatternLength = Math.ceil(requiredBeats / 16) * 16;
+    const newPatternLength = Math.max(48, Math.ceil(requiredBeats / 16) * 16);
 
     // Update pattern length if needed
     if (newPatternLength > patternLength) {
       setPatternLength(newPatternLength);
     }
 
+    // Group hits by pad ID
     const hitsByPad = {};
     sortedHits.forEach(hit => {
       if (!hitsByPad[hit.padId]) {
@@ -145,7 +150,7 @@ const Pattern = () => {
       hitsByPad[hit.padId].push(hit);
     });
 
-    // Create new tracks based on unique pad IDs
+    // Create new tracks based on unique pad IDs from the recorded data
     const newTracks = Object.entries(hitsByPad).map(([padId, hits]) => {
       // Initialize pattern with the new length
       const pattern = new Array(newPatternLength).fill(false);
@@ -172,18 +177,20 @@ const Pattern = () => {
       };
     });
 
-    // Force a re-render by creating a new array
-    setTracks([...newTracks]);
+    console.log("Generated pattern tracks:", newTracks);
+    setTracks(newTracks);
   }, [bpm, patternLength]);
 
+  // Effect to watch for selected track changes and auto-convert
   useEffect(() => {
-    const selectedTrack = tracks.find(track => track.id === selectedTrackId);
-    if (selectedTrack?.audioClips) {
-      convertTrackDataToPattern(selectedTrack);
+    if (selectedTrackId) {
+      const selectedTrack = allTracks.find(track => track.id === selectedTrackId);
+      if (selectedTrack?.audioClips && selectedTrack.audioClips.length > 0) {
+        console.log("Selected track has audio clips, converting to pattern:", selectedTrack);
+        convertTrackDataToPattern(selectedTrack);
+      }
     }
-  }, [selectedTrackId, convertTrackDataToPattern]);
-
-  // ... rest of your existing code ...
+  }, [selectedTrackId, allTracks, convertTrackDataToPattern]);
 
   // Effect to automatically apply recorded data when recording stops
   useEffect(() => {
@@ -191,10 +198,10 @@ const Pattern = () => {
       // Auto-apply recorded data to pattern
       convertRecordedDataToPattern(drumRecordedData);
     }
-  }, [isRecording, drumRecordedData]);
+  }, [isRecording, drumRecordedData, convertRecordedDataToPattern]);
 
   // Play drum sound using the same logic as Drum.jsx
-  const playDrumSound = useCallback((pad) => {
+  const playDrumSound = useCallback((trackData) => {
     try {
       const audioContext = getAudioContext(audioContextRef);
 
@@ -203,17 +210,47 @@ const Pattern = () => {
       }
 
       const selectedMachine = drumMachineTypes[currentDrumMachine];
-      const currentTypeEffects = selectedMachine.effects;
+      let padData;
+
+      // Handle different input types
+      if (typeof trackData === 'string') {
+        // If it's a string (padId), find the pad in current drum machine
+        padData = selectedMachine.pads.find(p => p.id === trackData);
+      } else if (trackData && trackData.padId) {
+        // If it's a track object with stored pad data, use that data or find from machine
+        if (trackData.freq && trackData.decay && trackData.drumType) {
+          // Use stored drum data from the track
+          padData = {
+            id: trackData.padId,
+            sound: trackData.name.toLowerCase(),
+            freq: trackData.freq,
+            decay: trackData.decay,
+            type: trackData.drumType
+          };
+        } else {
+          // Fallback to drum machine pad
+          padData = selectedMachine.pads.find(p => p.id === trackData.padId);
+        }
+      } else {
+        // Direct pad object
+        padData = trackData;
+      }
+
+      // Fallback if no pad found
+      if (!padData) {
+        console.warn('No pad data found, using default kick');
+        padData = selectedMachine.pads.find(p => p.type === 'kick') || selectedMachine.pads[0];
+      }
 
       // Create synthetic sound
-      const synthSource = createSynthSound(pad, audioContext);
+      const synthSource = createSynthSound(padData, audioContext);
 
       // Connect to destination
       synthSource.connect(audioContext.destination);
 
       // Record pattern data if recording
       if (isRecordingPattern) {
-        const drumData = createDrumData(pad, selectedMachine, currentTime);
+        const drumData = createDrumData(padData, selectedMachine, currentTime);
         setPatternRecordedData(prev => [...prev, drumData]);
       }
     } catch (error) {
@@ -269,7 +306,8 @@ const Pattern = () => {
 
           tracks.forEach(track => {
             if (track.pattern[nextBeat]) {
-              playDrumSound(track.padId);
+              // Pass the entire track object to playDrumSound
+              playDrumSound(track);
             }
           });
 
@@ -314,7 +352,7 @@ const Pattern = () => {
         return track;
       });
     });
-  }, []);
+  }, [patternLength]);
 
   const removeTrack = (trackId) => {
     setTracks(prev => prev.filter(track => track.id !== trackId));
@@ -375,6 +413,16 @@ const Pattern = () => {
     }
   };
 
+  // NEW FUNCTION: Apply selected track data to pattern
+  const applySelectedTrackData = () => {
+    if (selectedTrackId) {
+      const selectedTrack = allTracks.find(track => track.id === selectedTrackId);
+      if (selectedTrack) {
+        convertTrackDataToPattern(selectedTrack);
+      }
+    }
+  };
+
   // Function to clear pattern
   const clearPattern = () => {
     setTracks(prev => prev.map(track => ({
@@ -383,11 +431,17 @@ const Pattern = () => {
     })));
   };
 
+  const hasAvailableInstruments = () => {
+    const usedNames = tracks.map(track => track.name);
+    return getInstrumentOptions().some(option => !usedNames.includes(option.name));
+  };
 
-
-
-
-
+  // Check if selected track has drum data
+  const selectedTrackHasDrumData = () => {
+    if (!selectedTrackId) return false;
+    const selectedTrack = allTracks.find(track => track.id === selectedTrackId);
+    return selectedTrack?.audioClips?.some(clip => clip.drumData && clip.drumData.length > 0) || false;
+  };
 
   return (
     <>
@@ -448,6 +502,18 @@ const Pattern = () => {
                 </div>
               )}
 
+              {/* Apply Selected Track Data Button */}
+              {selectedTrackHasDrumData() && (
+                <button
+                  onClick={applySelectedTrackData}
+                  className="bg-blue-600 hover:bg-blue-500 p-3 rounded-lg transition-colors flex items-center gap-2"
+                  title="Apply selected track's drum data to pattern"
+                >
+                  <Mic size={16} />
+                  Apply Track Data
+                </button>
+              )}
+
               {/* Apply Recorded Data Button */}
               {drumRecordedData.length > 0 && !isRecording && (
                 <button
@@ -488,6 +554,34 @@ const Pattern = () => {
               </button>
             </div>
           </div>
+
+          {/* Selected Track Info */}
+          {selectedTrackHasDrumData() && (
+            <div className="mb-4 p-3 bg-blue-800/50 rounded-lg border border-blue-600/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  {(() => {
+                    const selectedTrack = allTracks.find(track => track.id === selectedTrackId);
+                    const totalHits = selectedTrack?.audioClips?.reduce((total, clip) =>
+                      total + (clip.drumData?.length || 0), 0) || 0;
+                    return (
+                      <>
+                        <span className="text-sm text-blue-200">
+                          🎵 Selected Track: "{selectedTrack?.name}" - {totalHits} drum hits
+                        </span>
+                        <span className="text-sm text-blue-300">
+                          BPM: {bpm}
+                        </span>
+                      </>
+                    );
+                  })()}
+                </div>
+                <div className="text-xs text-blue-400">
+                  Click "Apply Track Data" to convert to beat pattern
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Recording Info */}
           {drumRecordedData.length > 0 && (
@@ -572,13 +666,15 @@ const Pattern = () => {
                   ))}
 
                   {/* Add Track Button */}
-                  <button
-                    onClick={addTrack}
-                    className="w-full bg-[#1F1F1F] border-dashed rounded p-3 text-center text-white hover:bg-[#474747] transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Plus size={16} />
-                    Add Track
-                  </button>
+                  {hasAvailableInstruments() && (
+                    <button
+                      onClick={addTrack}
+                      className="w-full bg-[#1F1F1F] border-dashed rounded p-3 text-center text-white hover:bg-[#474747] transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Plus size={16} />
+                      Add Track
+                    </button>
+                  )}
                 </div>
               </div>
 
