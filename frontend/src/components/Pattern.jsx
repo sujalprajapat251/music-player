@@ -8,6 +8,7 @@ import {
   createDrumData,
   getAudioContext
 } from '../Utils/drumMachineUtils';
+import { handleBeatToggleSync } from '../Utils/patternTimelineBridge';
 
 const Pattern = () => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -301,6 +302,22 @@ const Pattern = () => {
     setCurrentBeat(0);
   };
 
+  // const toggleBeat = useCallback((trackId, beatIndex) => {
+  //   expandPatternIfNeeded(beatIndex);
+
+  //   setTracks(prevTracks => {
+  //     return prevTracks.map(track => {
+  //       if (track.id === trackId) {
+  //         const newPattern = [...track.pattern];
+  //         newPattern[beatIndex] = !newPattern[beatIndex];
+  //         return { ...track, pattern: newPattern };
+  //       }
+  //       return track;
+  //     });
+  //   });
+  // }, []);
+
+
   const toggleBeat = useCallback((trackId, beatIndex) => {
     expandPatternIfNeeded(beatIndex);
 
@@ -308,13 +325,25 @@ const Pattern = () => {
       return prevTracks.map(track => {
         if (track.id === trackId) {
           const newPattern = [...track.pattern];
-          newPattern[beatIndex] = !newPattern[beatIndex];
+          const nextIsOn = !newPattern[beatIndex];
+          newPattern[beatIndex] = nextIsOn;
+
+          // NEW: push to timeline in real-time
+          handleBeatToggleSync({
+            dispatch,
+            trackId: (selectedTrackId || currentTrackId), // whichever you already use
+            padId: track.padId,
+            beatIndex,
+            bpm,
+            isOn: nextIsOn,
+          });
+
           return { ...track, pattern: newPattern };
         }
         return track;
       });
     });
-  }, []);
+  }, [expandPatternIfNeeded, dispatch, bpm, selectedTrackId, currentTrackId]);
 
   const removeTrack = (trackId) => {
     setTracks(prev => prev.filter(track => track.id !== trackId));

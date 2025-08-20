@@ -1772,7 +1772,7 @@ const Timeline = () => {
               <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 52 }}>
                 {/* Individual drum hits with better visualization */}
                 {drumRecordedData.map((drumRec, idx) => {
-                  const drumColor = drumMachineTypes.find(dm => dm.name === drumRec.drumMachine)?.color || '#FF8014';
+                  // const drumColor = drumMachineTypes.find(dm => dm.name === drumRec.drumMachine)?.color || '#FF8014';
                   const intensity = Math.min(1, (drumRec.volume || 50) / 100);
 
                   return (
@@ -1785,11 +1785,11 @@ const Timeline = () => {
                           left: `${(drumRec.currentTime / audioDuration) * 100}%`,
                           width: "4px",
                           height: "100%",
-                          background: `linear-gradient(180deg, ${drumColor} 0%, ${drumColor}80 50%, transparent 100%)`,
+                          // background: `linear-gradient(180deg, ${drumColor} 0%, ${drumColor}80 50%, transparent 100%)`,
                           opacity: 0.7 + (intensity * 0.3),
                           zIndex: 53,
                           borderRadius: "2px",
-                          boxShadow: `0 0 8px ${drumColor}60`,
+                          // boxShadow: `0 0 8px ${drumColor}60`,
                           transform: `scaleY(${0.8 + intensity * 0.4})`,
                           transformOrigin: 'bottom'
                         }}
@@ -1804,9 +1804,9 @@ const Timeline = () => {
                           left: `${(drumRec.currentTime / audioDuration) * 100}%`,
                           transform: "translateX(-50%)",
                           fontSize: "8px",
-                          color: drumColor,
+                          // color: drumColor,
                           fontWeight: "bold",
-                          textShadow: `0 0 3px ${drumColor}`,
+                          // textShadow: `0 0 3px ${drumColor}`,
                           zIndex: 54,
                           pointerEvents: 'none',
                           userSelect: 'none'
