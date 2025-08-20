@@ -424,8 +424,9 @@ const TimelineTrack = ({
   // Get piano notes from Redux
   const pianoNotes = useSelector((state) => state.studio.pianoNotes);
   const pianoRecordingClip = useSelector((state) => state.studio.pianoRecordingClip);
-  // Only show piano roll for 'Keys' tracks or if track.name === 'Keys'
-  const isPianoTrack = track.type === 'Keys' || track.name === 'Keys';
+  const currentTrackId = useSelector((state) => state.studio.currentTrackId);
+  // Show overlay on the actively selected track (so PianoRolls -> Timeline always matches)
+  const isPianoTrack = (track && track.id === currentTrackId) || track.type === 'Keys' || track.name === 'Keys';
 
   return (
     <div
@@ -445,8 +446,8 @@ const TimelineTrack = ({
             top: 0,
             width: Math.max(0, (pianoRecordingClip.end - pianoRecordingClip.start)) * timelineWidthPerSecond,
             height: height,
-            background:'red', // translucent
-            border: `1px solid ${(pianoRecordingClip.color || '#AD00FF')}55`,
+            background: `${(pianoRecordingClip.color || '#E44F65')}1A`,
+            border: `1px solid ${(pianoRecordingClip.color || '#E44F65')}55`,
             borderRadius: 6,
             zIndex: 4,
             pointerEvents: 'none'
