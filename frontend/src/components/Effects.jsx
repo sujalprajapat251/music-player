@@ -212,26 +212,14 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
                                             <div className="relative mb-1 md600:mb-2 lg:mb-3 3xl:mb-4">
                                                 <div className="relative flex items-center">
                                                     <IoSearch className="absolute left-2 lg:left-3 w-3 h-3 md600:w-4 md600:h-4 lg:h-5 lg:w-5 text-[#888888] dark:text-[#FFFFFF99]" />
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Search effects..."
-                                                        className="w-full bg-primary-light dark:bg-primary-dark border-[1px] border-[#000] dark:border-[#fff] text-[10px] md600:text-[12px] lg:text-[14px] font-[ text-secondary-light dark:text-secondary-dark placeholder-gray-400 rounded-[4px] pl-6 pr-3  md600:pl-8 md600:pr-3 py-1 lg:pl-10 lg:pr-4 lg:py-2 outline- focus:outline-none transition-all duration-200"
-                                                        value={searchTerm}
-                                                        onChange={handleSearchChange}
-                                                    />
+                                                    <input type="text" placeholder="Search effects..." className="w-full bg-primary-light dark:bg-primary-dark border-[1px] border-[#000] dark:border-[#fff] text-[10px] md600:text-[12px] lg:text-[14px] font-[ text-secondary-light dark:text-secondary-dark placeholder-gray-400 rounded-[4px] pl-6 pr-3  md600:pl-8 md600:pr-3 py-1 lg:pl-10 lg:pr-4 lg:py-2 outline- focus:outline-none transition-all duration-200" value={searchTerm} onChange={handleSearchChange}/>
                                                 </div>
                                             </div>
                                             <div className='flex flex-wrap gap-1 md600:gap-2 3xl:gap-3'>
                                                 {category.map((categoryItem, index) => {
                                                     const isSelected = selectedCategory === categoryItem.name;
                                                     return (
-                                                        <div
-                                                            key={index}
-                                                            className={`bg-[#E5E5E5] dark:bg-[#262529] w-[67px] md600:w-[64px] md:w-[65px] lg:w-[64px] xl:w-[83px] 2xl:w-[77px] 3xl:w-[70px] rounded-[2px] text-secondary-light dark:text-secondary-dark text-[10px] lg:text-[12px] lg:py-[4px] xl:py-[5px] text-center cursor-pointer hover:bg-[#b8b8b8] dark:hover:bg-gray-600 transition-colors duration-200 ${isSelected ? 'border-2 border-blue-500 bg-blue-100 dark:bg-blue-900' : ''}`}
-                                                            onClick={() => handleCategoryClick(categoryItem.name)}
-                                                        >
-                                                            {categoryItem?.name}
-                                                        </div>
+                                                        <div key={index} className={`bg-[#E5E5E5] dark:bg-[#262529] w-[67px] md600:w-[64px] md:w-[65px] lg:w-[64px] xl:w-[83px] 2xl:w-[77px] 3xl:w-[70px] rounded-[2px] text-secondary-light dark:text-secondary-dark text-[10px] lg:text-[12px] lg:py-[4px] xl:py-[5px] text-center cursor-pointer hover:bg-[#b8b8b8] dark:hover:bg-gray-600 transition-colors duration-200 ${isSelected ? 'border-2 border-blue-500 bg-blue-100 dark:bg-blue-900' : ''}`} onClick={() => handleCategoryClick(categoryItem.name)}>{categoryItem?.name}</div>
                                                     )
                                                 })}
                                             </div>
@@ -243,12 +231,7 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
                                                         {searchTerm && `Search: "${searchTerm}"`}
                                                         {` (${filteredEffects.length} effects)`}
                                                     </p>
-                                                    <button
-                                                        onClick={clearFilters}
-                                                        className="text-[10px] md600:text-[12px] text-blue-500 hover:text-blue-700 underline"
-                                                    >
-                                                        Clear
-                                                    </button>
+                                                    <button onClick={clearFilters} className="text-[10px] md600:text-[12px] text-blue-500 hover:text-blue-700 underline">Clear</button>
                                                 </div>
                                             )}
                                         </div>
@@ -282,13 +265,7 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
                                             ) : (
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 md600:grid-cols-1 md600:gap-3 md:grid-cols-2 md:gap-2 lg:grid-cols-3 lg:gap-2">
                                                     {filteredEffects.map((effect) => (
-                                                        <div
-                                                            key={effect.id}
-                                                            className='cursor-pointer active:cursor-grabbing transition-all duration-200'
-                                                            draggable
-                                                            onDragStart={(e) => handleDragStart(e, effect)}
-                                                            onDragEnd={handleDragEnd}
-                                                        >
+                                                        <div key={effect.id} className='cursor-pointer active:cursor-grabbing transition-all duration-200' draggable onDragStart={(e) => handleDragStart(e, effect)} onDragEnd={handleDragEnd}>
                                                             {effect?.subscription === true ?
                                                                 <div className="flex py-1 gap-1 md600:gap-2  md:gap-3 lg:gap-2 justify-center md600:py-2 items-center text-white" style={{ backgroundColor: effect?.color || '#8F7CFD' }}>
                                                                     <img src={subscription} alt="" className='w-5 h-5 sm:w-3 sm:h-3 md600:w-4 md600:h-4 md:w-4 md:h-4 3xl:w-5 3xl:h-5' />

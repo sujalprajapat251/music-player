@@ -1,6 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-// Import effect components
 import Fuzz from "../../components/Fuzz";
 import Clipper from '../../components/Clipper';
 import ClassicDist from '../../components/ClassicDist';
@@ -16,7 +15,6 @@ import Rotary from '../../components/Rotary';
 import StereoChorus from '../../components/StereoChorus';
 import TapeWobble from '../../components/TapeWobble';
 
-// Effect configuration with parameters
 const EFFECT_CONFIGS = {
     "Classic Dist": {
         parameters: [
@@ -146,7 +144,6 @@ const EFFECT_CONFIGS = {
     }
 };
 
-// Component mapping for effects
 const EFFECT_COMPONENTS = {
     "Fuzz": Fuzz,
     "Clipper" : Clipper,
@@ -168,7 +165,7 @@ const EFFECT_COMPONENTS = {
 };
 
 const initialState = {
-    activeEffects: [], // Array of active effects with their parameters
+    activeEffects: [],
     effectsLibrary: [
         { id: 1, name: "Bitcrushar", subscription: true, color: "#8F7CFD", category: "Distortion" },
         { id: 2, name: "Classic Dist", subscription: false, color: "#8F7CFD", category: "Distortion" },
@@ -189,9 +186,9 @@ const initialState = {
         { id: 17, name: "Stereo Chorus", subscription: false, color: "#409C9F", category: "Modulation" },
         { id: 18, name: "Tape Wobble", subscription: true, color: "#409C9F", category: "Modulation" },
     ],
-    selectedEffect: null, // Currently selected effect for detailed view
-    showEffectsLibrary: false, // Controls the effects library modal
-    showEffectsOffcanvas: false, // Controls the Effects.jsx component visibility
+    selectedEffect: null,
+    showEffectsLibrary: false, 
+    showEffectsOffcanvas: false,
 };
 
 const effectsSlice = createSlice({
@@ -201,7 +198,6 @@ const effectsSlice = createSlice({
         addEffect: (state, action) => {
             const effect = action.payload;
             
-            // Map effect names to component keys
             const componentMapping = {
                 "Classic Dist": "ClassicDist",
                 "Juicy Distrotion": "JuicyDistrotion", 
@@ -217,7 +213,7 @@ const effectsSlice = createSlice({
             const newEffect = {
                 ...effect,
                 instanceId: Date.now(),
-                component: component, // Add the component to the effect
+                component: component,
                 parameters: EFFECT_CONFIGS[effect.name]?.parameters || [
                     { name: "Parameter 1", min: -135, max: 135, defaultAngle: 0 },
                     { name: "Parameter 2", min: -135, max: 135, defaultAngle: 45 },

@@ -35,19 +35,19 @@ import { showEffectsTwo } from '../Redux/Slice/effects.slice';
 // import RotaryPro from "../Images/Rotary Pro.svg";
 // import StereoChorus from "../Images/Stereo Chorus.svg";
 // import TapeWobble from "../Images/Tape Wobble.svg";
-import Fuzz from "./Fuzz";
-import Clipper from './Clipper';
-import Chorus from './Chorus';
-import Crusher from "./Crusher";
-import JuicyDistrotion from './JuicyDistrotion';
-import Overdrive from './Overdrive';
-import AutoPan from './AutoPan';
-import AutoWah from './AutoWah';
-import Flanger from './Flanger';
-import Phaser from './Phaser';
-import Rotary from './Rotary';
-import StereoChorus from './StereoChorus';
-import TapeWobble from './TapeWobble';
+// import Fuzz from "./Fuzz";
+// import Clipper from './Clipper';
+// import Chorus from './Chorus';
+// import Crusher from "./Crusher";
+// import JuicyDistrotion from './JuicyDistrotion';
+// import Overdrive from './Overdrive';
+// import AutoPan from './AutoPan';
+// import AutoWah from './AutoWah';
+// import Flanger from './Flanger';
+// import Phaser from './Phaser';
+// import Rotary from './Rotary';
+// import StereoChorus from './StereoChorus';
+// import TapeWobble from './TapeWobble';
 
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
@@ -57,7 +57,6 @@ function polarToCartesian(cx, cy, r, angle) {
     };
 }
 
-// Helper to describe arc path
 function describeArc(cx, cy, r, startAngle, endAngle) {
     const start = polarToCartesian(cx, cy, r, endAngle);
     const end = polarToCartesian(cx, cy, r, startAngle);
@@ -75,16 +74,15 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const lastY = useRef(0);
 
 
-    // Tailwind-consistent responsive sizes
     const getResponsiveSize = () => {
         if (typeof window !== 'undefined') {
-            if (window.innerWidth >= 1440) return 56; // 2xl
-            if (window.innerWidth >= 1280) return 52; // xl  
-            if (window.innerWidth >= 1024) return 48; // lg
-            if (window.innerWidth >= 768) return 44;  // md
-            if (window.innerWidth >= 640) return 40;  // sm
-            if (window.innerWidth >= 425) return 36;  // sm
-            return 26; // xs (mobile)
+            if (window.innerWidth >= 1440) return 56;
+            if (window.innerWidth >= 1280) return 52;
+            if (window.innerWidth >= 1024) return 48;
+            if (window.innerWidth >= 768) return 44;
+            if (window.innerWidth >= 640) return 40;
+            if (window.innerWidth >= 425) return 36;
+            return 26;
         }
         return 56;
     };
@@ -98,12 +96,11 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     }, []);
 
 
-    // Tailwind-consistent responsive sizes
     const getResponsiveStroke = () => {
         if (typeof window !== 'undefined') {
-            if (window.innerWidth >= 768) return 3;  // md
-            // if (window.innerWidth >= 640) return 40;  // sm
-            return 2; // xs (mobile)
+            if (window.innerWidth >= 768) return 3;
+            // if (window.innerWidth >= 640) return 40;
+            return 2;
         }
         return 56;
     };
@@ -128,10 +125,10 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
 
     const onMouseMove = (e) => {
         if (!dragging.current) return;
-        const deltaY = lastY.current - e.clientY; // up is negative, down is positive
+        const deltaY = lastY.current - e.clientY; 
         lastY.current = e.clientY;
         setAngle((prev) => {
-            let next = prev + deltaY * 1.5; // adjust sensitivity as needed
+            let next = prev + deltaY * 1.5;
             next = Math.max(min, Math.min(max, next));
             return next;
         });
@@ -143,61 +140,20 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         document.removeEventListener("mouseup", onMouseUp);
     };
 
-    const arcStart = min; // -135
-    const valueAngle = angle; // current angle
+    const arcStart = min;
+    const valueAngle = angle; 
     const fgArc = describeArc(center, center, radius, arcStart, valueAngle);
 
     return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                // marginTop: 40,
-            }}
-        >
-            <div
-                ref={knobRef}
-                style={{
-                    width: size,
-                    height: size,
-                    position: "relative",
-                    cursor: "pointer",
-                }}
-                onMouseDown={onMouseDown}
-            >
+        <div style={{display: "flex",flexDirection: "column",alignItems: "center"}}>
+            <div ref={knobRef} style={{ width: size, height: size, position: "relative", cursor: "pointer",}} onMouseDown={onMouseDown}>
                 <svg width={size} height={size}>
-                    {/* Full background circle */}
-                    <circle
-                        cx={center}
-                        cy={center}
-                        r={radius}
-                        stroke="#444"
-                        strokeWidth={stroke}
-                        fill="#1F1F1F"
-                    />
-                    {/* Colored arc (top half, up to value) */}
-                    <path
-                        d={fgArc}
-                        stroke="#bbb"
-                        strokeWidth={stroke}
-                        fill="#1F1F1F"
-                        strokeLinecap="round"
-                    />
+                    <circle cx={center} cy={center} r={radius} stroke="#444" strokeWidth={stroke} fill="#1F1F1F"/>
+                    <path d={fgArc} stroke="#bbb" strokeWidth={stroke} fill="#1F1F1F" strokeLinecap="round"/>
                 </svg>
-                {/* Indicator line */}
-                <div
-                    className={`absolute top-1.5 left-1/2 w-0.5 h-2 md600:h-3 lg:h-4 bg-gray-400 rounded-sm -translate-x-1/2 origin-bottom`}
-                    style={{
-                        transform: `translateX(-50%) rotate(${angle}deg)`,
-                    }}
-                />
+                <div className={`absolute top-1.5 left-1/2 w-0.5 h-2 md600:h-3 lg:h-4 bg-gray-400 rounded-sm -translate-x-1/2 origin-bottom`} style={{ transform: `translateX(-50%) rotate(${angle}deg)`,}}/>
             </div>
-            <div className='text-[8px] md600:text-[10px] md:text-[12px] 2xl:text-[14px] mt-1 items-center text-[#aaa]'
-                style={{
-                    fontFamily: "sans-serif"
-                }}
-            >
+            <div className='text-[8px] md600:text-[10px] md:text-[12px] 2xl:text-[14px] mt-1 items-center text-[#aaa]' style={{ fontFamily: "sans-serif"}}>
                 {label}
             </div>
         </div>
@@ -205,7 +161,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
 }
 
 
-// Range Slider Component
 const RangeSlider = ({
     min = 0,
     max = 100,
@@ -228,15 +183,12 @@ const RangeSlider = ({
 
     return (
         <div className={`w-full ${className}`}>
-            {/* Label and Value Display */}
             <div className="flex justify-between items-center">
                 <label className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] text-[#FFFFFF]">{label}</label>
                 <span className="text-[10px] md600:text-[12px] md:text-[14px] text-[#FFFFFF99] outline-none focus:outline-none">{value}{unit}</span>
             </div>
 
-            {/* Slider Container */}
             <div className="relative">
-                {/* Custom styled range input */}
                 <input type="range" min={min} max={max} step={step} value={value} onChange={handleChange} className="w-full h-1 bg-[#444] rounded-lg appearance-none cursor-pointer slider"
                     style={{ background: `linear-gradient(to right, #bbb 0%, #bbb ${percentage}%, #444 ${percentage}%, #444 100%)` }} />
             </div>
@@ -372,18 +324,15 @@ const Effects2 = () => {
     const [activeTab, setActiveTab] = useState('Instruments');
     const [playingEffectId, setPlayingEffectId] = useState(null);
 
-    // Get effects state from Redux
     const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas } = useSelector((state) => state.effects);
     console.log("activeEffects", activeEffects, "showEffectsLibrary", showEffectsLibrary,);
 
 
-    // Local state for effects library
     const [effectsSearchTerm, setEffectsSearchTerm] = useState('');
     const [selectedEffectCategory, setSelectedEffectCategory] = useState(null);
     const [isDragOver, setIsDragOver] = useState(false);
     const [isProcessingDrop, setIsProcessingDrop] = useState(false);
 
-    // Separate state for each instrument type
     const [kickIndex, setKickIndex] = useState(0);
     const [snareIndex, setSnareIndex] = useState(0);
     const [hihatIndex, setHihatIndex] = useState(0);
@@ -400,7 +349,6 @@ const Effects2 = () => {
         setHumanizeToggle(prev => !prev);
     };
 
-    // Separate navigation functions for each instrument
     const nextKick = () => {
         setKickIndex((prev) => prev === kick.length - 1 ? 0 : prev + 1);
     };
@@ -453,7 +401,6 @@ const Effects2 = () => {
         }
     };
 
-    // New functions for effects management
     const handleRemoveEffect = (instanceId) => {
         dispatch(removeEffect(instanceId));
     };
@@ -478,7 +425,6 @@ const Effects2 = () => {
     const handleAddEffectFromLibrary = (effect) => {
         console.log('handleAddEffectFromLibrary called with:', effect);
 
-        // Prevent duplicate additions during drag operations
         if (isProcessingDrop) {
             console.log('Already processing a drop, skipping duplicate');
             return;
@@ -490,23 +436,19 @@ const Effects2 = () => {
         setEffectsSearchTerm('');
         setSelectedEffectCategory(null);
 
-        // Reset the flag after a short delay
         setTimeout(() => {
             setIsProcessingDrop(false);
         }, 100);
     };
 
-    // Filter effects based on search and category
     const filteredEffects = effectsLibrary.filter(effect => {
         const matchesSearch = effect.name.toLowerCase().includes(effectsSearchTerm.toLowerCase());
         const matchesCategory = !selectedEffectCategory || effect.category === selectedEffectCategory;
         return matchesSearch && matchesCategory;
     });
 
-    // Get unique categories
     const categories = [...new Set(effectsLibrary.map(effect => effect.category))];
 
-    // Instrument configuration for dynamic rendering
     const instrumentConfigs = [
         {
             id: 'kick',
@@ -546,7 +488,6 @@ const Effects2 = () => {
         }
     ];
 
-    // Add function to handle plus button click
     const handlePlusButtonClick = () => {
         dispatch(toggleEffectsOffcanvas());
     };
@@ -656,28 +597,19 @@ const Effects2 = () => {
                                                 </div>
                                             </div>
 
-                                            <button
-                                                onClick={nextInstrument}
-                                                className="text-gray-400 hover:text-white transition-colors p-1 lg:p-2"
-                                            >
+                                            <button onClick={nextInstrument} className="text-gray-400 hover:text-white transition-colors p-1 lg:p-2">
                                                 <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] text-[#FFFFFF99]' />
                                             </button>
                                         </div>
                                     </div>
 
-                                    {/* Audio Effect Knobs */}
                                     <div className="flex space-x-1 md600:space-x-2 lg:space-x-4 2xl:space-x-6">
-                                        {/* Reverb Knob */}
                                         <div className="flex flex-col items-center">
                                             <Knob label="Reverb" min={-135} max={135} defaultAngle={-90} />
                                         </div>
-
-                                        {/* Pan Knob */}
                                         <div className="flex flex-col items-center">
                                             <Knob label="Pan" min={-135} max={135} defaultAngle={0} />
                                         </div>
-
-                                        {/* Volume Knob */}
                                         <div className="flex flex-col items-center">
                                             <Knob label="Volume" min={-135} max={135} defaultAngle={90} />
                                         </div>
@@ -693,10 +625,7 @@ const Effects2 = () => {
                                         <div className="pe-2 sm:pe-3 md:pe-4 lg:pe-5 border-r border-[#FFFFFF99] max-h-[130px] sm:max-h-[180px] md:max-h-[247px] lg:max-h-[245px] xl:max-h-[252px] overflow-y-auto w-full">
                                             {effects?.map((effect) => (
                                                 <div key={effect?.id} className="flex gap-1 sm:gap-3 md:gap-4 lg:gap-5 mb-1 md:mb-2 ps-2 sm:ps-3 md:ps-4 lg:ps-5 py-1 md:py-2 rounded-md w-[105px] sm:w-[138px] md600:w-[138px] md:w-[176px] lg:w-[230px] bg-[#FFFFFF1A] hover:bg-[#FFFFFF4D]">
-                                                    <button
-                                                        onClick={() => handleEffectPlayPause1(effect?.id)}
-                                                        className='flex justify-center p-1 md:p-2 bg-[#FFFFFF1A] rounded-full items-center'
-                                                    >
+                                                    <button onClick={() => handleEffectPlayPause1(effect?.id)} className='flex justify-center p-1 md:p-2 bg-[#FFFFFF1A] rounded-full items-center'>
                                                         {playingEffectId === effect?.id ?
                                                             <MdOutlinePause className='text-black text-[8px] sm:text-[10px] md:text-[12px] lg:text-[10px] xl:text-[12px]' /> :
                                                             <FaPlay className='text-black text-[8px] sm:text-[10px] md:text-[12px] lg:text-[10px] xl:text-[12px]' />
@@ -715,10 +644,7 @@ const Effects2 = () => {
                                                             <img src={instrument?.image} alt="" className="w-3 h-3 lg:w-4 lg:h-4 content-center self-center" />
                                                         </div>
                                                         <div className="flex items-center w-[136px] md:w-[155px] lg:w-[230px] justify-between bg-[#353535] p-1 sm:p-2 lg:p-2 rounded-lg md:my-1">
-                                                            <button
-                                                                onClick={instrument.prevFunction}
-                                                                className="text-gray-400 hover:text-white transition-colors p-1"
-                                                            >
+                                                            <button onClick={instrument.prevFunction} className="text-gray-400 hover:text-white transition-colors p-1">
                                                                 <FaChevronLeft className='text-[8px] sm:text-[10px] md:text-[12px] lg:text-[14px] text-[#FFFFFF99]' />
                                                             </button>
                                                             <div className="">
@@ -736,18 +662,8 @@ const Effects2 = () => {
                                                         <div >
                                                             <div className="flex  items-center justify-center gap-2 sm:gap-4 md:gap-6 lg:gap-8">
                                                                 <div className="flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-4">
-
-                                                                    {/* Toggle Switch */}
-                                                                    <div
-                                                                        onClick={() => handleToggle(index)}
-                                                                        className={`relative w-6 h-3 sm:w-8 sm:h-4 rounded-full cursor-pointer transition-colors duration-300 ${toggles[index] ? 'bg-white' : 'bg-[#FFFFFF1A]'
-                                                                            }`}
-                                                                    >
-                                                                        {/* Toggle Circle */}
-                                                                        <div
-                                                                            className={`absolute top-0.5 w-2 h-2 sm:w-3 sm:h-3  rounded-full transition-transform duration-300 ${toggles[index] ? ' translate-x-4 bg-black' : 'translate-x-1 bg-white'
-                                                                                }`}
-                                                                        />
+                                                                    <div onClick={() => handleToggle(index)} className={`relative w-6 h-3 sm:w-8 sm:h-4 rounded-full cursor-pointer transition-colors duration-300 ${toggles[index] ? 'bg-white' : 'bg-[#FFFFFF1A]'}`}>
+                                                                        <div className={`absolute top-0.5 w-2 h-2 sm:w-3 sm:h-3  rounded-full transition-transform duration-300 ${toggles[index] ? ' translate-x-4 bg-black' : 'translate-x-1 bg-white'}`}/>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -761,54 +677,22 @@ const Effects2 = () => {
                                             <div className="flex gap-3 mt-1 sm:gap-2 sm:mt-4 md:gap-4 md:mt-6 lg:gap-5 lg:mt-7 items-center">
                                                 <p className="text-white text-[8px] sm:text-[10px] md:text-[12px] lg:text-[14px]">Complexity</p>
                                                 <div className=" w-28  md:w-32 lg:w-40 2xl:w-48  pb-1 ">
-                                                    <input
-                                                        type="range"
-                                                        min="0"
-                                                        max="100"
-                                                        value={volume}
-                                                        onChange={(e) => setVolume(e.target.value)}
-                                                        className="w-full h-1 lg:h-2 bg-[#2B2B2B]  rounded-lg appearance-none cursor-pointer slider outline-none focus:outline-none"
-                                                        style={{
-                                                            background: isDark
-                                                                ? `linear-gradient(to right, #ffffff 0%, #ffffff ${volume}%, #2B2B2B ${volume}%, #2B2B2B 100%)`
-                                                                : `linear-gradient(to right, #141414 0%, #141414 ${volume}%, #1414141A ${volume}%, #1414141A 100%)`
-                                                        }}
-                                                    />
+                                                    <input type="range" min="0" max="100" value={volume} onChange={(e) => setVolume(e.target.value)} className="w-full h-1 lg:h-2 bg-[#2B2B2B]  rounded-lg appearance-none cursor-pointer slider outline-none focus:outline-none"
+                                                        style={{ background: isDark ? `linear-gradient(to right, #ffffff 0%, #ffffff ${volume}%, #2B2B2B ${volume}%, #2B2B2B 100%)` : `linear-gradient(to right, #141414 0%, #141414 ${volume}%, #1414141A ${volume}%, #1414141A 100%)`}}/>
                                                 </div>
                                             </div>
                                             <div className="flex gap-4 sm:gap-3 mt-1 sm:mt-4 md:gap-6 md:mt-6 lg:gap-7  lg:mt-7 items-center">
                                                 <p className="text-white text-[8px] sm:text-[10px] md:text-[12px] lg:text-[14px]">Loudness</p>
                                                 <div className="sm:w-28 md:w-32 lg:w-40 2xl:w-48  pb-1 ">
-                                                    <input
-                                                        type="range"
-                                                        min="0"
-                                                        max="100"
-                                                        value={volume1}
-                                                        onChange={(e) => setVolume1(e.target.value)}
-                                                        className="w-full h-1 lg:h-2 bg-[#2B2B2B]  rounded-lg appearance-none cursor-pointer slider outline-none focus:outline-none"
-                                                        style={{
-                                                            background: isDark
-                                                                ? `linear-gradient(to right, #ffffff 0%, #ffffff ${volume1}%, #2B2B2B ${volume1}%, #2B2B2B 100%)`
-                                                                : `linear-gradient(to right, #141414 0%, #141414 ${volume1}%, #1414141A ${volume1}%, #1414141A 100%)`
-                                                        }}
-                                                    />
+                                                    <input type="range" min="0" max="100" value={volume1} onChange={(e) => setVolume1(e.target.value)} className="w-full h-1 lg:h-2 bg-[#2B2B2B]  rounded-lg appearance-none cursor-pointer slider outline-none focus:outline-none"
+                                                        style={{ background: isDark ? `linear-gradient(to right, #ffffff 0%, #ffffff ${volume1}%, #2B2B2B ${volume1}%, #2B2B2B 100%)` : `linear-gradient(to right, #141414 0%, #141414 ${volume1}%, #1414141A ${volume1}%, #1414141A 100%)`}}/>
                                                 </div>
                                             </div>
                                             <div className="flex gap-9 md:gap-14 mt-1 md:mt-6 lg:gap-16 sm:mt-4 lg:mt-7 items-center">
                                                 <p className="text-white text-[8px] sm:text-[12px] md:text-[12px] lg:text-[14px]">Fills</p>
                                                 <div className="sm:w-28 md:w-32 lg:w-40 2xl:w-48  pb-1 ">
-                                                    <input
-                                                        type="range"
-                                                        min="0"
-                                                        max="100"
-                                                        value={volume2}
-                                                        onChange={(e) => setVolume2(e.target.value)}
-                                                        className="w-full h-1 lg:h-2 bg-[#2B2B2B]  rounded-lg appearance-none cursor-pointer slider outline-none focus:outline-none"
-                                                        style={{
-                                                            background: isDark
-                                                                ? `linear-gradient(to right, #ffffff 0%, #ffffff ${volume2}%, #2B2B2B ${volume2}%, #2B2B2B 100%)`
-                                                                : `linear-gradient(to right, #141414 0%, #141414 ${volume2}%, #1414141A ${volume2}%, #1414141A 100%)`
-                                                        }}
+                                                    <input type="range" min="0" max="100" value={volume2} onChange={(e) => setVolume2(e.target.value)} className="w-full h-1 lg:h-2 bg-[#2B2B2B]  rounded-lg appearance-none cursor-pointer slider outline-none focus:outline-none"
+                                                        style={{ background: isDark ? `linear-gradient(to right, #ffffff 0%, #ffffff ${volume2}%, #2B2B2B ${volume2}%, #2B2B2B 100%)` : `linear-gradient(to right, #141414 0%, #141414 ${volume2}%, #1414141A ${volume2}%, #1414141A 100%)`}}
                                                     />
                                                 </div>
                                             </div>
@@ -816,18 +700,8 @@ const Effects2 = () => {
                                                 <p className="text-white text-[8px] sm:text-[10px] md:text-[12px] lg:text-[14px]">Humanize</p>
                                                 <div className="flex  items-center justify-center md:gap-6 lg:gap-8">
                                                     <div className="flex items-center gap-4">
-
-                                                        {/* Toggle Switch */}
-                                                        <div
-                                                            onClick={handleHumanizeToggle}
-                                                            className={`relative w-6 h-3 sm:w-8 sm:h-4 rounded-full cursor-pointer transition-colors duration-300 ${humanizeToggle ? 'bg-white' : 'bg-[#FFFFFF1A]'
-                                                                }`}
-                                                        >
-                                                            {/* Toggle Circle */}
-                                                            <div
-                                                                className={`absolute top-0.5 w-2 h-2 sm:w-3 sm:h-3  rounded-full transition-transform duration-300 ${humanizeToggle ? ' translate-x-4 bg-black' : 'translate-x-1 bg-white'
-                                                                    }`}
-                                                            />
+                                                        <div onClick={handleHumanizeToggle} className={`relative w-6 h-3 sm:w-8 sm:h-4 rounded-full cursor-pointer transition-colors duration-300 ${humanizeToggle ? 'bg-white' : 'bg-[#FFFFFF1A]'}`}>
+                                                            <div className={`absolute top-0.5 w-2 h-2 sm:w-3 sm:h-3  rounded-full transition-transform duration-300 ${humanizeToggle ? ' translate-x-4 bg-black' : 'translate-x-1 bg-white'}`}/>
                                                         </div>
                                                     </div>
                                                 </div>
