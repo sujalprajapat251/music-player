@@ -50,7 +50,6 @@ const Sidebar2 = () => {
     
     // Find the clicked track
     const clickedTrack = tracks.find(track => track.id === trackId);
-    console.log("clickedTrack", clickedTrack)
     
     // If it's a "Drums & Machines" track, open the Drum component
     if (clickedTrack && (clickedTrack.name === 'Drums & Machines' || clickedTrack.type === 'drum')) {

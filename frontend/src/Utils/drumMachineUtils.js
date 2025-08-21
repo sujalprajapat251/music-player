@@ -428,7 +428,7 @@ export const createDrumData = (pad, drumMachine, currentTime = 0) => {
     decay: pad.decay,
     type: pad.type,
     drumMachine: drumMachine.name,
-    effects: drumMachine.effects
+    effects: drumMachine.effects,
   };
 };
 

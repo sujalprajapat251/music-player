@@ -41,8 +41,6 @@ import Rotary from "./components/Rotary";
 import StereoChorus from "./components/StereoChorus";
 import Clipper from "./components/Clipper";
 import Crusher from "./components/Crusher";
-import DTimeline from './components/DTimeline';
-import TimelineDemo from './components/TimelineDemo';
 import SDemo from './components/SDemo';
 import JuicyDistrotion from './components/JuicyDistrotion';
 import TapeWobble from './components/TapeWobble';
@@ -123,30 +121,23 @@ function App() {
 
 
           <Route path='/login' element={<Login />} />
-          <Route path='/drum' element={<Drum />} />
-          <Route path='/pianox' element={<Pianodemo />} />
-          <Route path='/pattern' element={<Pattern />} />
 
           <Route path="/" element={<Layout />} >
             <Route path='project' element={<Home2 />} />
-            <Route path='profile' element={<Profile />} />
             <Route path='demo-project' element={<Demoproject />} />
+            <Route path='profile' element={<Profile />} />
           </Route>
 
           <Route path='/sidebar' element={<ThemeProvider><Sidebar2 /></ThemeProvider>} >
             <Route path='timeline' element={<Timeline />} />
-            <Route path='dtimeline' element={<DTimeline />} />
-            <Route path='timelinedemo' element={<TimelineDemo />} />
             <Route path='knob' element={<Knob />} />
             <Route path='loop' element={<Loops />} />
             <Route path="effects" element={<Effects />} />
             <Route path="savani" element={<SDemo />} />
             <Route path="piano" element={<Piano />} />
             <Route path="voice" element={<VoiceTransformer />} />
-
-           
-
           </Route>
+          
         </Routes>
       </SnackbarProvider>
     </Provider>

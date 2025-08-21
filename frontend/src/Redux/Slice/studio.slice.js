@@ -366,6 +366,7 @@ const studioSlice = createSlice({
       }
     },
     addPianoNote: (state, action) => {
+      console.log("action.payload :: > ", action.payload)
       state.pianoNotes.push(action.payload);
     },
     setPianoNotes: (state, action) => {
