@@ -12,7 +12,7 @@ import headphone from "../Images/headphone.svg";
 import mute from "../Images/mute.svg";
 import more from "../Images/more.svg";
 import TrackMenu from "./TrackMenu";
-import { renameTrack, setCurrentTrackId, setSidebarScrollOffset, toggleMuteTrack, setSoloTrackId, setTrackVolume } from "../Redux/Slice/studio.slice";
+import { renameTrack, setCurrentTrackId, setSidebarScrollOffset, toggleMuteTrack, setSoloTrackId, setTrackVolume, setTrackType } from "../Redux/Slice/studio.slice";
 import FreezeIcon from "../Images/freeze.svg";
 import { ReactComponent as Track1 } from '../Images/track1.svg'
 import { ReactComponent as Track2 } from '../Images/track2.svg'
@@ -23,11 +23,14 @@ import { ReactComponent as Track6 } from '../Images/track6.svg'
 import { ReactComponent as Track7 } from '../Images/track7.svg'
 import { ReactComponent as Track8 } from '../Images/track8.svg'
 import { ReactComponent as Wav } from '../Images/wav.svg'
+import Drum from "./Drum";
 
 const Sidebar2 = () => {
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
   const [editingTrackId, setEditingTrackId] = useState(null);
   const [editingName, setEditingName] = useState("");
+  const [showDrum, setShowDrum] = useState(false);
+  const [showPiano, setShowPiano] = useState(false);
   const tracks = useSelector((state) => state.studio.tracks);
   const trackHeight = useSelector((state) => state.studio.trackHeight);
   const dispatch = useDispatch();
@@ -40,10 +43,26 @@ const Sidebar2 = () => {
     const scrollTop = e.target.scrollTop;
     dispatch(setSidebarScrollOffset(scrollTop));
   }
-
+  
 
   const handleChangeTrack = (trackId) => {
     dispatch(setCurrentTrackId(trackId));
+    
+    // Find the clicked track
+    const clickedTrack = tracks.find(track => track.id === trackId);
+    console.log("clickedTrack", clickedTrack)
+    
+    // If it's a "Drums & Machines" track, open the Drum component
+    if (clickedTrack && (clickedTrack.name === 'Drums & Machines' || clickedTrack.type === 'drum')) {
+      dispatch(setTrackType('Drums & Machines'));
+      setShowPiano(false);
+      setShowDrum(true);
+    }
+    if (clickedTrack && (clickedTrack.name === 'Keys' || clickedTrack.type === 'piano')) {
+      dispatch(setTrackType('Keys'));
+      setShowDrum(false);
+      setShowPiano(true);
+    }
   }
 
   const handleMuteTrack = (trackId) => {
@@ -224,6 +243,9 @@ const Sidebar2 = () => {
       <BottomToolbar />
       {showAddTrackModal && (
         <AddNewTrackModel onClose={() => setShowAddTrackModal(false)} />
+      )}
+      {showDrum && (
+        <Drum onClose={() => setShowDrum(false)} />
       )}
     </>
   );

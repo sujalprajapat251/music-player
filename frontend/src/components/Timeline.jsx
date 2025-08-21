@@ -1962,7 +1962,7 @@ const Timeline = () => {
                       height: `${trackHeight}px`,
                       zIndex: 0,
                       opacity: (soloTrackId ? soloTrackId !== track.id : (track?.muted || false)) ? 0.5 : 1,
-                      pointerEvents: "auto",  
+                      pointerEvents: "auto",
                     }}
                     onClick={(e) => {
                       // Only clear clip selection if clicking on the track background, not on a clip
@@ -1994,6 +1994,9 @@ const Timeline = () => {
                       onSelect={(clip) => setSelectedClipId(clip.id)}
                       selectedClipId={selectedClipId}
                       color={track.color}
+                      bpm={120}              // Set your track's BPM
+                      beatsPerBar={4}        // Time signature (4/4, 3/4, etc.)
+                      showBeatRectangles={true} // Toggle beat visualization
                     />
                   </div>
                 );

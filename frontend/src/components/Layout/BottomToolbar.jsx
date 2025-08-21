@@ -47,7 +47,7 @@ const BottomToolbar = () => {
     const [tempo, setTempo] = useState(120);
     const [appliedTempo, setAppliedTempo] = useState(120);
     const [selectedMenuitems, setSelectedMenuitems] = useState('Click');
-    const [selectedCountIn, setSelectedCountIn] = useState('2 bars');
+    const [selectedCountIn, setSelectedCountIn] = useState('Off');
     const [isVolumeChanging, setIsVolumeChanging] = useState(false);
     const [isCounting, setIsCounting] = useState(false);
     const [countInNumber, setCountInNumber] = useState(null);
