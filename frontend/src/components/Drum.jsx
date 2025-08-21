@@ -455,58 +455,6 @@ const DrumPadMachine = ({ onClose }) => {
   // Define different drum machine types with synthetic sound parameters
 
 
-  // const soundDescriptions = {
-  //   kick: 'Kick Drum',
-  //   snare: 'Snare Drum', 
-  //   hihat: 'Hi-Hat Closed',
-  //   openhat: 'Hi-Hat Open',
-  //   clap: 'Hand Clap',
-  //   perc1: 'Percussion',
-  //   bass: 'Bass Drum',
-  //   tom: 'Tom Drum',
-  //   crash: 'Crash Cymbal',
-  //   ride: 'Ride Cymbal',
-  //   cowbell: 'Cowbell',
-  //   shaker: 'Shaker',
-  //   woodblock: 'Wood Block',
-  //   vocal: 'Vocal Sample',
-  //   fx1: 'Sound FX 1',
-  //   fx2: 'Sound FX 2'
-  // };
-
-  // Initialize Web Audio API
-
-
-  // const soundDescriptions = {
-  //   kick: "Kick Drum (Low-end punch)",
-  //   snare: "Snare Drum (Sharp attack)",
-  //   hihat: "Closed Hi-Hat (Short & tight)",
-  //   openhat: "Open Hi-Hat (Sizzly)",
-  //   clap: "Clap (Snappy)",
-  //   rimshot: "Rimshot (Sharp side-stick)",
-  //   perc1: "Percussion Hit (General)",
-  //   perc2: "Metallic Perc (Ping)",
-  //   bass: "808 Bass (Low rumble)",
-  //   tom: "Tom Drum (Mid-punch)",
-  //   crash: "Crash Cymbal (Washy)",
-  //   ride: "Ride Cymbal (Sustained)",
-  //   cowbell: "Cowbell (Metal click)",
-  //   shaker: "Shaker (Rhythmic noise)",
-  //   woodblock: "Wood Block (Thock)",
-  //   conga: "Conga (Hand drum)",
-  //   bongo: "Bongo (High-pitched hand drum)",
-  //   vocal: "Vocal FX (Chops or shout)",
-  //   fx1: "Effect Hit (Sweep / Boom)",
-  //   fx2: "Reverse FX (Whoosh / Delay tail)",
-  //   snap: "Finger Snap",
-  //   laser: "Laser Shot FX",
-  //   glitch: "Glitch FX",
-  //   vinyl: "Vinyl Scratch",
-  //   rise: "Riser FX",
-  //   drop: "Drop Impact"
-  // };
-
-
 
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
@@ -904,42 +852,6 @@ const DrumPadMachine = ({ onClose }) => {
   }, [volume, pan, reverb, soundDescriptions, drumMachineTypes, currentType, isRecording, padEffects, createReverbBuffer, applyTypeEffects]);
 
   const [pressedKeys, setPressedKeys] = useState(new Set());
-
-  // Keyboard handling
-  // useEffect(() => {
-  //   const handleKeyDown = (e) => {
-  //     e.preventDefault();
-  //     const key = e.key.toUpperCase();
-  //     const keyToPadMap = {
-  //       'Q': 'Q', 'W': 'W', 'E': 'E', 'R': 'R',
-  //       'A': 'A', 'S': 'S', 'F': 'F', 'Z': 'Z',
-  //       'X': 'X', 'C': 'C', 'D': 'D'
-  //     };
-
-  //     if (keyToPadMap.hasOwnProperty(key) && !pressedKeys.has(key)) {
-  //       setPressedKeys(prev => new Set([...prev, key]));
-  //       handlePadPress(currentTypeData.pads[keyToPadMap[key]]);
-  //     }
-  //   };
-
-  //   const handleKeyUp = (e) => {
-  //     const key = e.key.toUpperCase();
-  //     setPressedKeys(prev => {
-  //       const newSet = new Set(prev);
-  //       newSet.delete(key);
-  //       return newSet;
-  //     });
-  //   };
-
-  //   window.addEventListener('keydown', handleKeyDown);
-  //   window.addEventListener('keyup', handleKeyUp);
-
-  //   return () => {
-  //     window.removeEventListener('keydown', handleKeyDown);
-  //     window.removeEventListener('keyup', handleKeyUp);
-  //   };
-  // }, [currentTypeData, pressedKeys]);
-
 
 
   // Replace your existing keyboard handling useEffect with this improved version:

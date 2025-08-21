@@ -486,9 +486,6 @@ export const {
 
 export default studioSlice.reducer;
 
-// === Pattern → Timeline sync via Redux thunks (centralized in Redux) ===
-// These thunks enable real-time placement/removal of tiny clips on the selected
-// track when a 16th-note beat is toggled in the Pattern grid, without touching Timeline.
 
 const PATTERN_SAMPLE_MAP = {
   Q: '/Audio/kick_1.mp3',
@@ -522,12 +519,12 @@ export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColo
   if (trackId === undefined || trackId === null) return;
 
   const eps = 1e-6;
-  const cellDuration = 60 / bpm / 4; // one 16th-note
+  // Lock pattern timing to seconds: 16 steps = 1 second regardless of BPM or zoom
   const sectionIndex = Math.floor(beatIndex / 16);
   const slotIndex = beatIndex % 16;
-  const blockStart = sectionIndex * 16 * cellDuration;
-  const blockDuration = 16 * cellDuration;
-  const slotStart = blockStart + slotIndex * cellDuration;
+  const blockStart = sectionIndex * 1; // section N starts at N seconds
+  const blockDuration = 1; // each section spans exactly 1 second
+  const slotStart = blockStart + (slotIndex / 16); // each step is 1/16 second
 
   // Resolve pad meta (for playback)
   const resolvePadMeta = (id) => {

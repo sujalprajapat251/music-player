@@ -41,7 +41,7 @@ import Rotary from "./components/Rotary";
 import StereoChorus from "./components/StereoChorus";
 import Clipper from "./components/Clipper";
 import Crusher from "./components/Crusher";
-import DTimeline from './components/DTimeline';
+// import DTimeline from './components/DTimeline';
 import TimelineDemo from './components/TimelineDemo';
 import SDemo from './components/SDemo';
 import JuicyDistrotion from './components/JuicyDistrotion';
@@ -135,7 +135,7 @@ function App() {
 
           <Route path='/sidebar' element={<ThemeProvider><Sidebar2 /></ThemeProvider>} >
             <Route path='timeline' element={<Timeline />} />
-            <Route path='dtimeline' element={<DTimeline />} />
+            {/* <Route path='dtimeline' element={<DTimeline />} /> */}
             <Route path='timelinedemo' element={<TimelineDemo />} />
             <Route path='knob' element={<Knob />} />
             <Route path='loop' element={<Loops />} />
