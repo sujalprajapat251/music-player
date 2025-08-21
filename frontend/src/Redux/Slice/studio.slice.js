@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { getNextTrackColor, resetColorIndex } from '../../Utils/colorUtils';
-
+import { drumMachineTypes } from '../../Utils/drumMachineUtils';
+import WavEncoder from 'wav-encoder';
 const initialState = {
   tracks: [],
   trackHeight: 70, // Standard height for each track
@@ -457,3 +458,272 @@ export const {
 } = studioSlice.actions;
 
 export default studioSlice.reducer;
+
+// === Pattern → Timeline sync via Redux thunks (centralized in Redux) ===
+// These thunks enable real-time placement/removal of tiny clips on the selected
+// track when a 16th-note beat is toggled in the Pattern grid, without touching Timeline.
+
+const PATTERN_SAMPLE_MAP = {
+  Q: '/Audio/kick_1.mp3',
+  W: '/Audio/snare.mp3',
+  E: '/Audio/hat_closed.mp3',
+};
+
+const SOUND_SAMPLE_MAP = {
+  Q: '/Audio/kick_1.mp3',
+  W: '/Audio/snare.mp3',
+  E: '/Audio/hat_closed.mp3',
+};
+
+const getSampleUrlForPadFromRedux = (padId) => {
+  if (PATTERN_SAMPLE_MAP[padId]) return PATTERN_SAMPLE_MAP[padId];
+  // Try to resolve by sound name using shared drum machine definitions
+  try {
+    for (const kit of drumMachineTypes || []) {
+      const pad = kit?.pads?.find(p => p.id === padId);
+      if (pad) {
+        const url = SOUND_SAMPLE_MAP[pad.sound];
+        return url || '/Audio/perc.mp3';
+      }
+    }
+  } catch (_) {}
+  return '/Audio/perc.mp3';
+};
+const beatIndexToSecondsFromRedux = (beatIndex, bpm) => beatIndex * (60 / bpm / 4);
+
+export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColor = '#FFB6C1' }) => async (dispatch, getState) => {
+  if (trackId === undefined || trackId === null) return;
+
+  const eps = 1e-6;
+  const cellDuration = 60 / bpm / 4; // one 16th-note
+  const sectionIndex = Math.floor(beatIndex / 16);
+  const slotIndex = beatIndex % 16;
+  const blockStart = sectionIndex * 16 * cellDuration;
+  const blockDuration = 16 * cellDuration;
+  const slotStart = blockStart + slotIndex * cellDuration;
+
+  // Resolve pad meta (for playback)
+  const resolvePadMeta = (id) => {
+    try {
+      for (const kit of drumMachineTypes || []) {
+        const pad = kit?.pads?.find(p => p.id === id);
+        if (pad) {
+          const { sound, type, freq, decay } = pad;
+          return { sound, type, freq, decay, drumMachine: kit.name };
+        }
+      }
+    } catch (_) {}
+    return { sound: 'perc', type: 'perc', freq: 1000, decay: 0.2 };
+  };
+
+  const state = getState();
+  const track = state.studio?.tracks?.find(t => t.id == trackId);
+  const clips = (track?.audioClips || []).filter(c => c?.fromPattern === true);
+
+  // Find the single container for this 16-beat section
+  const isContainer = (c) =>
+    c?.blockIndex === sectionIndex &&
+    Math.abs((c?.startTime ?? -1) - blockStart) < eps &&
+    Math.abs((c?.duration ?? 0) - blockDuration) < eps;
+
+  const container = clips.find(isContainer);
+
+  if (isOn) {
+    if (container) {
+      const byPad = { ...(container.onBeatsByPad || {}) };
+      const seq = Array.isArray(container.drumSequence) ? [...container.drumSequence] : [];
+
+      // migrate legacy onBeats if present
+      if (Array.isArray(container.onBeats)) {
+        const legacyPad = container.padId || 'LEGACY';
+        const migrated = new Set([...(byPad[legacyPad] || []), ...container.onBeats]);
+        byPad[legacyPad] = Array.from(migrated);
+      }
+
+      // upsert event at this slot
+      const meta = resolvePadMeta(padId);
+      const idx = seq.findIndex(ev => Math.abs((ev?.currentTime ?? -1) - slotStart) < eps);
+      const event = { currentTime: slotStart, padId, ...meta };
+      if (idx >= 0) {
+        seq[idx] = event; // overwrite slot
+      } else {
+        seq.push(event);
+      }
+
+      const set = new Set(byPad[padId] || []);
+      set.add(beatIndex);
+      byPad[padId] = Array.from(set);
+
+      dispatch(updateAudioClip({
+        trackId,
+        clipId: container.id,
+        updates: {
+          drumSequence: seq,
+          onBeatsByPad: byPad,
+          blockIndex: sectionIndex,
+          blockSize: 16
+        }
+      }));
+
+      // Regenerate waveform for this section
+      await regenWaveForSection(dispatch, getState, { trackId, sectionIndex, blockStart, blockDuration });
+      return;
+    }
+
+    // Create the single section container (no waveform yet)
+    const meta = resolvePadMeta(padId);
+    const audioClip = {
+      name: `Section ${sectionIndex + 1}`,
+      color: clipColor,
+      startTime: blockStart,
+      duration: blockDuration,
+      trimStart: 0,
+      trimEnd: blockDuration,
+      type: 'drum',
+      fromPattern: true,
+      blockIndex: sectionIndex,
+      blockSize: 16,
+      onBeatsByPad: { [padId]: [beatIndex] },
+      drumSequence: [
+        { currentTime: slotStart, padId, ...meta }
+      ],
+    };
+    dispatch(addAudioClipToTrack({ trackId, audioClip }));
+
+    // Regenerate waveform for this section (find container by section fields)
+    await regenWaveForSection(dispatch, getState, { trackId, sectionIndex, blockStart, blockDuration });
+    return;
+  }
+
+  // Turning OFF: remove only this slot; drop container if empty
+  if (!container) return;
+
+  const byPad = { ...(container.onBeatsByPad || {}) };
+  const seq = Array.isArray(container.drumSequence) ? [...container.drumSequence] : [];
+  const newSeq = seq.filter(ev => !(Math.abs((ev?.currentTime ?? -1) - slotStart) < eps && (ev?.padId ?? padId) === padId));
+
+  if (byPad[padId]) {
+    const set = new Set(byPad[padId]);
+    set.delete(beatIndex);
+    if (set.size === 0) delete byPad[padId];
+    else byPad[padId] = Array.from(set);
+  } else if (Array.isArray(container.onBeats)) {
+    // Legacy cleanup
+    const nextLegacy = container.onBeats.filter(b => b !== beatIndex);
+    if (nextLegacy.length === 0 && Object.keys(byPad).length === 0 && newSeq.length === 0) {
+      dispatch(removeAudioClip({ trackId, clipId: container.id }));
+      return;
+    }
+    dispatch(updateAudioClip({ trackId, clipId: container.id, updates: { onBeats: nextLegacy, drumSequence: newSeq } }));
+    await regenWaveForSection(dispatch, getState, { trackId, sectionIndex, blockStart, blockDuration });
+    return;
+  }
+
+  if (Object.keys(byPad).length === 0 && newSeq.length === 0) {
+    dispatch(removeAudioClip({ trackId, clipId: container.id }));
+  } else {
+    dispatch(updateAudioClip({ trackId, clipId: container.id, updates: { onBeatsByPad: byPad, drumSequence: newSeq } }));
+    await regenWaveForSection(dispatch, getState, { trackId, sectionIndex, blockStart, blockDuration });
+  }
+};
+
+export const clearPatternClips = (trackId) => (dispatch, getState) => {
+  const state = getState();
+  const track = state.studio?.tracks?.find(t => t.id == trackId);
+  if (!track?.audioClips) return;
+  track.audioClips
+    .filter(c => c?.fromPattern === true)
+    .forEach(c => dispatch(removeAudioClip({ trackId, clipId: c.id })));
+};
+
+export const syncWholePatternToTimeline = ({ trackId, patternRows, bpm }) => (dispatch) => {
+  if (!trackId || !Array.isArray(patternRows)) return;
+  dispatch(clearPatternClips(trackId));
+  patternRows.forEach(row => {
+    const { padId, pattern } = row || {};
+    if (!padId || !Array.isArray(pattern)) return;
+    pattern.forEach((isOn, beatIndex) => {
+      if (!isOn) return;
+      dispatch(syncPatternBeat({ trackId, padId, beatIndex, bpm, isOn: true }));
+    });
+  });
+};
+
+// Build a mono waveform for a 16-slot section using the clip's drumSequence
+async function buildPatternWav({ drumSequence = [], blockStart = 0, blockDuration = 1 }) {
+  try {
+    const sampleRate = 44100;
+    const length = Math.max(1, Math.floor(blockDuration * sampleRate));
+    const ch = new Float32Array(length);
+    // Add short decaying bursts for each event
+    for (const ev of drumSequence) {
+      const tRel = Math.max(0, (ev.currentTime - blockStart));
+      const idx = Math.floor(tRel * sampleRate);
+      const freq = Math.max(40, Math.min(4000, ev.freq || 1000));
+      const decaySec = Math.max(0.01, Math.min(0.25, ev.decay || 0.08));
+      const burstLen = Math.min(length - idx - 1, Math.floor(decaySec * sampleRate));
+      for (let n = 0; n < burstLen; n++) {
+        const env = Math.exp(-n / (decaySec * sampleRate));
+        const sample = Math.sin(2 * Math.PI * freq * (n / sampleRate)) * env * 0.8;
+        const j = idx + n;
+        if (j >= 0 && j < length) {
+          ch[j] += sample;
+        }
+      }
+    }
+    // Soft limit to avoid clipping
+    for (let i = 0; i < length; i++) {
+      ch[i] = Math.max(-1, Math.min(1, Math.tanh(ch[i])));
+    }
+
+    const wavBuffer = await WavEncoder.encode({
+      sampleRate,
+      channelData: [ch]
+    });
+    const blob = new Blob([wavBuffer], { type: 'audio/wav' });
+    const url = URL.createObjectURL(blob);
+    return { url };
+  } catch (e) {
+    console.warn('Pattern WAV build failed:', e);
+    return { url: null };
+  }
+}
+
+// Ensure the pattern container clip (single section) has an up-to-date waveform URL
+async function regenWaveForSection(dispatch, getState, { trackId, sectionIndex, blockStart, blockDuration }) {
+  const state = getState();
+  const track = state.studio?.tracks?.find(t => t.id == trackId);
+  if (!track?.audioClips) return;
+
+  const eps = 1e-6;
+  const container = track.audioClips.find(c =>
+    c?.fromPattern === true &&
+    c?.blockIndex === sectionIndex &&
+    Math.abs((c?.startTime ?? -1) - blockStart) < eps &&
+    Math.abs((c?.duration ?? 0) - blockDuration) < eps
+  );
+  if (!container) return;
+  const drumSequence = Array.isArray(container.drumSequence) ? container.drumSequence : [];
+  if (drumSequence.length === 0) {
+    // If empty, remove url to avoid drawing waveform
+    dispatch(updateAudioClip({
+      trackId,
+      clipId: container.id,
+      updates: { url: null }
+    }));
+    return;
+  }
+  const { url } = await buildPatternWav({ drumSequence, blockStart, blockDuration });
+  if (url) {
+    dispatch(updateAudioClip({
+      trackId,
+      clipId: container.id,
+      updates: {
+        url,
+        duration: blockDuration,
+        trimStart: 0,
+        trimEnd: blockDuration
+      }
+    }));
+  }
+}
