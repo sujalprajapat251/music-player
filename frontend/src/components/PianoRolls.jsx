@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import * as Tone from 'tone';
 import Soundfont from 'soundfont-player';
 import { PitchDetector } from 'pitchy';
@@ -7,9 +7,10 @@ import 'react-resizable/css/styles.css';
 import * as d3 from 'd3';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectGridSettings } from '../Redux/Slice/grid.slice';
-import { setPlaying, setCurrentTime as setStudioCurrentTime } from '../Redux/Slice/studio.slice';
+import { setPlaying, setCurrentTime as setStudioCurrentTime, setPianoNotes, setPianoRecordingClip, setRecordingAudio } from '../Redux/Slice/studio.slice';
 import { getGridDivisions, parseTimeSignature, getGridSpacingWithTimeSignature } from '../Utils/gridUtils';
 import { getAudioContext, ensureAudioUnlocked } from '../Utils/audioContext';
+import { drumMachineTypes, createSynthSound } from '../Utils/drumMachineUtils';
 import { FaPaste, FaRegCopy } from 'react-icons/fa';
 import { MdDelete } from "react-icons/md";
 import { IoCutOutline } from 'react-icons/io5';
@@ -66,6 +67,9 @@ const PianoRolls = () => {
 
     // get data from redux
     const track = useSelector((state)=>state.studio.tracks)
+    const tracks = useSelector((state)=>state.studio.tracks || [])
+    const currentTrackId = useSelector((state)=>state.studio.currentTrackId)
+    const selectedTrack = useMemo(()=>tracks.find(t=>t.id===currentTrackId),[tracks,currentTrackId])
     // console.log('track',audio);
     // Get grid settings from Redux
     const { selectedGrid, selectedTime, selectedRuler } = useSelector(selectGridSettings);
@@ -341,6 +345,7 @@ const PianoRolls = () => {
     const isScrubbingRef = useRef(false);
     const wasPlayingRef = useRef(false);
     const lastScrubDispatchRef = useRef(0);
+
     const updateScrub = (e, force = false) => {
         const snappedTime = computeSnappedTimeFromEvent(e);
         if (snappedTime === undefined) return;
@@ -352,6 +357,7 @@ const PianoRolls = () => {
         try { Tone.Transport.seconds = snappedTime; } catch {}
         setLocalPlayheadTime(snappedTime);
     };
+
     const onHeaderMouseDown = (e) => {
         if (!timelineHeaderRef.current) return;
         isScrubbingRef.current = true;
@@ -365,10 +371,12 @@ const PianoRolls = () => {
         window.addEventListener('mouseup', onHeaderMouseUp);
         e.preventDefault();
     };
+
     const onHeaderMouseMove = (e) => {
         if (!isScrubbingRef.current) return;
         updateScrub(e);
     };
+
     const onHeaderMouseUp = (e) => {
         if (!isScrubbingRef.current) return;
         updateScrub(e, true);
@@ -421,18 +429,20 @@ const PianoRolls = () => {
         // Remove restriction: allow adding anywhere
         if (noteIndex >= 0 && noteIndex < NOTES.length) {
             const note = NOTES[noteIndex];
-            // Preview using Soundfont-based piano if loaded
-            if (pianoRef.current) {
-                try { pianoRef.current.play(note, undefined, { duration: 0.2 }); } catch {}
-            }
-            setNotes(prev => [
-                ...prev,
-                {
-                    note,
-                    start,
+            // Preview using selected instrument
+            playNoteForTrack(note, 0.2);
+            setNotes(prev => {
+                const updated = [
+                    ...prev,
+                    {
+                        note,
+                        start,
                     duration: 0.1, // default duration
-                },
-            ]);
+                    },
+                ];
+                syncNotesToRedux(updated);
+                return updated;
+            });
         }
     };
     const handleKeyDown = (note) => {
@@ -441,10 +451,15 @@ const PianoRolls = () => {
         const ctx = audioContextRef.current || getAudioContext();
         audioContextRef.current = ctx;
 
-        if (pianoRef.current) {
-            const audioNode = pianoRef.current.play(note);
-            activeAudioNodes.current[note] = audioNode;
+        // For drum tracks or when melodic instrument not loaded, just trigger once
+        if (isDrumTrack || !pianoRef.current) {
+            playNoteForTrack(note, 0.2);
+            return;
         }
+
+        // Melodic instrument: start and keep a reference for key up
+        const audioNode = pianoRef.current.play(note);
+        activeAudioNodes.current[note] = audioNode;
 
         const time = (typeof Tone.now === 'function') ? Tone.now() : ctx.currentTime;
         setActiveNotes((prev) => ({
@@ -479,6 +494,40 @@ const PianoRolls = () => {
             return updated;
         });
     };
+    
+    // Note helpers (must be defined before any hook that uses them)
+    const noteNames = useMemo(() => ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'], []);
+    const noteNameToMidi = useCallback((note) => {
+        if (!note || typeof note !== 'string') return 60;
+        const match = note.match(/^([A-G])(#?)(-?\d+)$/i);
+        if (!match) return 60;
+        const [, letter, sharp, octaveStr] = match;
+        const letterUp = letter.toUpperCase();
+        const idxBase = noteNames.indexOf(letterUp + (sharp ? '#' : ''));
+        const octave = parseInt(octaveStr, 10);
+        if (idxBase < 0 || isNaN(octave)) return 60;
+        return (octave + 1) * 12 + idxBase;
+    }, [noteNames]);
+    
+    // Sync notes to Redux so Timeline shows red region + white mini boxes
+    const syncNotesToRedux = useCallback((list) => {
+        try {
+            const mapped = list.map(n => ({
+                note: n.note,
+                startTime: n.start,
+                duration: n.duration,
+                midiNumber: noteNameToMidi(n.note)
+            }));
+            dispatch(setPianoNotes(mapped));
+        } catch {}
+        if (Array.isArray(list) && list.length > 0) {
+            const minStart = Math.min(...list.map(n => n.start));
+            const maxEnd = Math.max(...list.map(n => n.start + n.duration));
+            try { dispatch(setPianoRecordingClip({ start: minStart, end: maxEnd, color: '#E44F65' })); } catch {}
+        } else {
+            try { dispatch(setPianoRecordingClip(null)); } catch {}
+        }
+    }, [dispatch, noteNameToMidi]);
     // piano key handling over
 
 
@@ -495,7 +544,28 @@ const PianoRolls = () => {
     const [localPlayheadTime, setLocalPlayheadTime] = useState(0);
     const playbackStartRef = useRef({ systemTime: 0, audioTime: 0 });
 
-    // Build simple audio chain and load instrument on mount
+    // Determine instrument by selected track
+    const isDrumTrack = useMemo(() => {
+        if (!selectedTrack) return false;
+        const name = (selectedTrack.name || '').toLowerCase();
+        return selectedTrack.type === 'drum' || name.includes('drum');
+    }, [selectedTrack]);
+
+    const targetInstrumentId = useMemo(() => {
+        if (!selectedTrack) return 'acoustic_grand_piano';
+        const name = (selectedTrack.name || '').toLowerCase();
+        if (selectedTrack.type === 'drum' || name.includes('drum')) return null; // handled via drum synth
+        if (name.includes('key')) return 'acoustic_grand_piano';
+        if (name.includes('bass')) return 'synth_bass_1';
+        if (name.includes('guitar/bass amp')) return 'overdriven_guitar';
+        if (name.includes('guitar')) return 'electric_guitar_jazz';
+        if (name.includes('synth')) return 'lead_1_square';
+        if (name.includes('orchestral')) return 'string_ensemble_1';
+        if (name.includes('voice') || name.includes('mic')) return 'voice_oohs';
+        return 'acoustic_grand_piano';
+    }, [selectedTrack]);
+
+    // Build simple audio chain and load base context
     useEffect(() => {
         try {
             const ctx = getAudioContext();
@@ -509,12 +579,41 @@ const PianoRolls = () => {
 
             gainNodeRef.current = gainNode;
             panNodeRef.current = panNode;
-
-            Soundfont.instrument(ctx, 'acoustic_grand_piano', { destination: gainNode })
-                .then((p) => { pianoRef.current = p; })
-                .catch(() => {});
         } catch {}
     }, []);
+
+    // Load or switch melodic instrument when not a drum track
+    useEffect(() => {
+        if (!audioContextRef.current) return;
+        if (isDrumTrack) {
+            pianoRef.current = null; // ensure we don't accidentally use melodic instrument
+            return;
+        }
+        if (!targetInstrumentId) return;
+        Soundfont.instrument(audioContextRef.current, targetInstrumentId, { destination: gainNodeRef.current })
+            .then((p) => { pianoRef.current = p; })
+            .catch(() => { pianoRef.current = null; });
+    }, [isDrumTrack, targetInstrumentId]);
+
+    // Drum instrument selection (default kit)
+    const selectedDrumMachine = useMemo(() => drumMachineTypes[0], []);
+
+    // Unified play helper
+    const playNoteForTrack = useCallback((note, duration = 0.2) => {
+        try {
+            const ctx = audioContextRef.current || getAudioContext();
+            audioContextRef.current = ctx;
+            if (isDrumTrack) {
+                const midi = noteNameToMidi(note);
+                const pads = selectedDrumMachine.pads;
+                const pad = pads[midi % pads.length];
+                const src = createSynthSound(pad, ctx);
+                if (gainNodeRef.current) src.connect(gainNodeRef.current); else src.connect(ctx.destination);
+            } else if (pianoRef.current) {
+                try { pianoRef.current.play(note, undefined, { duration: Math.max(0.1, duration) }); } catch {}
+            }
+        } catch {}
+    }, [isDrumTrack, noteNameToMidi, selectedDrumMachine]);
 
     // Smooth local playhead driven by Tone when playing
     useEffect(() => {
@@ -609,9 +708,7 @@ const PianoRolls = () => {
                     try { Tone.Transport.cancel(0); } catch {}
                     notes.forEach(n => {
                         Tone.Transport.schedule(() => {
-                            if (pianoRef.current) {
-                                try { pianoRef.current.play(n.note, undefined, { duration: n.duration }); } catch {}
-                            }
+                            playNoteForTrack(n.note, n.duration);
                         }, n.start);
                     });
                     try { Tone.Transport.seconds = studioCurrentTime; } catch {}
@@ -629,33 +726,6 @@ const PianoRolls = () => {
     useEffect(() => {
         notesScheduledRef.current = false;
     }, [notes]);
-
-    const handlePlayPause = async () => {
-        await ensureAudioUnlocked();
-        await Tone.start();
-
-        if (!studioIsPlaying) {
-            // Always clear and reschedule current notes to avoid duplicates
-            try { Tone.Transport.cancel(0); } catch {}
-            notes.forEach(n => {
-                Tone.Transport.schedule(() => {
-                    if (pianoRef.current) {
-                        try { pianoRef.current.play(n.note, undefined, { duration: n.duration }); } catch {}
-                    }
-                }, n.start);
-            });
-            try { Tone.Transport.seconds = studioCurrentTime; } catch {}
-            Tone.Transport.start();
-            dispatch(setPlaying(true));
-        } else {
-            Tone.Transport.pause();
-            // Optional: clear schedules on pause so next play is clean
-            try { Tone.Transport.cancel(0); } catch {}
-            dispatch(setPlaying(false));
-        }
-    };
-
-
 
     // right click menu handler 
     const menuRef = useRef(null);
@@ -686,6 +756,7 @@ const PianoRolls = () => {
         if (selectedNoteIndex !== null) {
             const updatedNotes = notes.filter((_, idx) => idx !== selectedNoteIndex);
             setNotes(updatedNotes);
+            syncNotesToRedux(updatedNotes);
             setTimeout(() => {
                 setMenuVisible(false);
                 setSelectedNoteIndex(null);
@@ -728,7 +799,11 @@ const PianoRolls = () => {
                 note,
             };
 
-            setNotes((prev) => [...prev, pastedNote]);
+            setNotes((prev) => {
+                const updated = [...prev, pastedNote];
+                syncNotesToRedux(updated);
+                return updated;
+            });
 
             // Reset state
             setPasteMenu(false);
@@ -744,31 +819,6 @@ const PianoRolls = () => {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
-
-
-
-    // --- ZOOM CONTROLS ---
-    // Add visible zoom in/out buttons
-    const ZoomControls = () => (
-        <div className="absolute top-2 left-2 z-30 flex gap-2">
-            <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-xs text-white p-6">
-                {Math.round(zoomLevel * 100)}%
-            </div>
-        </div>
-    );
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     // audio detection code 
@@ -789,11 +839,15 @@ const PianoRolls = () => {
             (async () => {
                 const audioBuffer = await decodeAudio(track[0].audioClips[0].url);
                 if (audioBuffer) {
-                    detectNotes(audioBuffer);
+                    const detected = detectNotes(audioBuffer);
+                    if (detected && Array.isArray(detected)) {
+                        syncNotesToRedux(detected);
+                    }
                 }
             })();
         }
-    }, [track]);
+    }, [track, syncNotesToRedux]);
+
     const decodeAudio = async (fileOrUrl) => {
         let arrayBuffer;
     
@@ -817,6 +871,7 @@ const PianoRolls = () => {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         return await audioCtx.decodeAudioData(arrayBuffer);
     };
+
     const detectNotes = (audioBuffer) => {        
         const audioData = audioBuffer.getChannelData(0); // mono
         const sampleRate = audioBuffer.sampleRate;
@@ -895,13 +950,6 @@ const PianoRolls = () => {
     return (
         <>
             {/* Zoom Controls */}
-            <ZoomControls />
-            <button
-                className="absolute right-4 top-2 z-50 bg-green-500 text-white px-4 py-2 rounded"
-                onClick={handlePlayPause}
-            >
-                {studioIsPlaying ? "Pause" : "Play"}
-            </button>
             <div
                 className={`relative w-full h-[450px] bg-[#1e1e1e] text-white ${selectedNoteIndex || pasteMenu ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'}  `}
                 onWheel={handleWheel}
@@ -1009,7 +1057,7 @@ const PianoRolls = () => {
                                 x: e.clientX - wrapperRect.left,
                                 y: e.clientY - wrapperRect.top,
                             });
-                            console.log('iscalled')
+                            // console.log('iscalled')
                         }
                     }}
 
@@ -1063,9 +1111,12 @@ const PianoRolls = () => {
                                     
                                     // Use the same time calculation as Timeline.jsx
                                     const newStartTime = d.x / timelineWidthPerSecond;
-                                    updateNote(i, {
-                                        start: newStartTime,
-                                        note: newNote,
+                                    const updates = { start: newStartTime, note: newNote };
+                                    setNotes(prev => {
+                                        const updated = [...prev];
+                                        updated[i] = { ...updated[i], ...updates };
+                                        syncNotesToRedux(updated);
+                                        return updated;
                                     });
                                 }}
                                 onResizeStop={(e, direction, ref, delta, position) => {
@@ -1074,10 +1125,11 @@ const PianoRolls = () => {
                                     // Use the same time calculation as Timeline.jsx
                                     const newDuration = newWidth / timelineWidthPerSecond;
                                     const newStartTime = position.x / timelineWidthPerSecond;
-                                    
-                                    updateNote(i, {
-                                        duration: newDuration,
-                                        start: newStartTime,
+                                    setNotes(prev => {
+                                        const updated = [...prev];
+                                        updated[i] = { ...updated[i], duration: newDuration, start: newStartTime };
+                                        syncNotesToRedux(updated);
+                                        return updated;
                                     });
                                 }}
                             >
@@ -1086,9 +1138,7 @@ const PianoRolls = () => {
                                     onClick={(e) => {
                                         // Left click: just play the note
                                         e.stopPropagation();
-                                        if (pianoRef.current) {
-                                            try { pianoRef.current.play(n.note, undefined, { duration: Math.max(0.1, n.duration || 0.2) }); } catch {}
-                                        }
+                                        playNoteForTrack(n.note, Math.max(0.1, n.duration || 0.2));
                                     }}
                                     onContextMenu={(e) => {
                                         // Right click: open the note context menu

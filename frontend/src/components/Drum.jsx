@@ -1208,7 +1208,7 @@ const DrumPadMachine = ({ onClose }) => {
     <>
       {showOffcanvas3 === true && (
         <>
-          <div className="fixed z-0 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[390px] sm:bottom-[390px] md600:bottom-[450px]  lg:bottom-[530px] xl:bottom-[545px] 2xl:bottom-[563px] 3xl:bottom-[610px]"
+          <div className="fixed z-[26] w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[390px] sm:bottom-[390px] md600:bottom-[450px]  lg:bottom-[530px] xl:bottom-[545px] 2xl:bottom-[563px] 3xl:bottom-[610px]"
             tabIndex="-1"
             aria-labelledby="drawer-swipe-label"
             onDragOver={(e) => {
