@@ -1672,40 +1672,18 @@ const Timeline = () => {
 
   return (
     <>
-      <EditTrackNameModal
-        isOpen={edirNameModel}
-        onClose={() => setEdirNameModel(false)}
-        onSave={handleSave}
-      />
-      <div
-        style={{
-          padding: "0",
-          color: "white",
-          background: "transparent",
-          height: "100%",
-          marginRight: showOffcanvas || showOffcanvasEffects ? "23vw" : 0,
-        }}
-        className="relative overflow-hidden"
-      >
-        <div
-          style={{ width: "100%", overflowX: "auto" }}
-          className="hide-scrollbar"
-        >
+      <EditTrackNameModal isOpen={edirNameModel} onClose={() => setEdirNameModel(false)} onSave={handleSave}/>
+      <div style={{ padding: "0", color: "white", background: "transparent", height: "100%", marginRight: showOffcanvas || showOffcanvasEffects ? "23vw" : 0,}} className="relative overflow-hidden">
+        <div style={{ width: "100%", overflowX: "auto" }} className="hide-scrollbar">
           <div
             ref={timelineContainerRef}
             className="timeline-container"
-            style={{
-              minWidth: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`,
-              position: "relative",
-              height: "100vh",
-              transition: "min-width 0.2s ease-in-out", // Smooth transition for zoom
-            }}
+            style={{ minWidth: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`, position: "relative", height: "100vh", transition: "min-width 0.2s ease-in-out",}}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onWheel={handleWheel}
           >
-            {/* Timeline Header */}
             <div
               style={{ height: "100px", borderBottom: "1px solid #1414141A", position: "relative", top: 0, zIndex: 20, background: "#141414" }}
               onMouseDown={handleMouseDown}
@@ -1713,27 +1691,15 @@ const Timeline = () => {
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
             >
-              <svg
-                ref={svgRef}
-                width={`${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`}
-                height="100%"
-                style={{ color: "white", background: "#141414" }}
-              />
+              <svg ref={svgRef} width={`${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`} height="100%" style={{ color: "white", background: "#141414" }}/>
             </div>
 
-            {/* Loop Bar - positioned right below timeline header */}
             <LoopBar />
 
-            {/* My Section - positioned below loop bar */}
             {isSongSection && (
-              <MySection
-                timelineContainerRef={timelineContainerRef}
-                audioDuration={audioDuration}
-                selectedGrid={selectedGrid}
-              />
+              <MySection timelineContainerRef={timelineContainerRef} audioDuration={audioDuration} selectedGrid={selectedGrid}/>
             )}
 
-            {/* Section Labels - display all saved section labels */}
             {isSongSection && sectionLabels.map((section) => (
               <ResizableSectionLabel
                 key={section.id}
@@ -1746,30 +1712,15 @@ const Timeline = () => {
               />
             ))}
 
-            {/* Recorded Data Display */}
             {recordedData && recordedData.length > 0 && (
               <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 50 }}>
-                {/* Recorded Data Markers */}
                 {recordedData.map((rec, idx) => (
-                  <div
-                    key={`recorded-${idx}`}
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: `${(rec.currentTime / audioDuration) * 100}%`,
-                      width: "6px",
-                      height: "100%",
-                      background: "#FF6767",
-                      opacity: 0.8,
-                      zIndex: 51,
-                      borderRadius: "2px",
-                      boxShadow: "0 0 4px rgba(255, 103, 103, 0.6)"
-                    }}
+                  <div key={`recorded-${idx}`}
+                    style={{ position: "absolute", top: 0, left: `${(rec.currentTime / audioDuration) * 100}%`, width: "6px", height: "100%", background: "#FF6767", opacity: 0.8, zIndex: 51, borderRadius: "2px", boxShadow: "0 0 4px rgba(255, 103, 103, 0.6)"}}
                     title={`Recorded at ${rec.currentTime.toFixed(2)}s - Volume: ${rec.volume} - Playing: ${rec.isPlaying ? 'Yes' : 'No'}`}
                   />
                 ))}
 
-                {/* Recorded Data Region (if multiple data points) */}
                 {recordedData.length > 1 && (
                   <div
                     style={{
@@ -1789,17 +1740,14 @@ const Timeline = () => {
               </div>
             )}
 
-            {/* Enhanced Drum Recorded Data Display */}
             {drumRecordedData && drumRecordedData.length > 0 && (
               <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 52 }}>
-                {/* Individual drum hits with better visualization */}
                 {drumRecordedData.map((drumRec, idx) => {
                   // const drumColor = drumMachineTypes.find(dm => dm.name === drumRec.drumMachine)?.color || '#FF8014';
                   const intensity = Math.min(1, (drumRec.volume || 50) / 100);
 
                   return (
                     <React.Fragment key={`drum-recorded-${idx}`}>
-                      {/* Main hit marker */}
                       <div
                         style={{
                           position: "absolute",
@@ -1818,34 +1766,20 @@ const Timeline = () => {
                         title={`${drumRec.sound.toUpperCase()} - ${drumRec.drumMachine} - ${drumRec.currentTime.toFixed(2)}s`}
                       />
 
-                      {/* Sound type indicator */}
                       <div
-                        style={{
-                          position: "absolute",
-                          top: "10px",
-                          left: `${(drumRec.currentTime / audioDuration) * 100}%`,
-                          transform: "translateX(-50%)",
-                          fontSize: "8px",
-                          // color: drumColor,
-                          fontWeight: "bold",
-                          // textShadow: `0 0 3px ${drumColor}`,
-                          zIndex: 54,
-                          pointerEvents: 'none',
-                          userSelect: 'none'
-                        }}
-                      >
+                        style={{ position: "absolute", top: "10px", left: `${(drumRec.currentTime / audioDuration) * 100}%`, transform: "translateX(-50%)", fontSize: "8px", // color: drumColor, fontWeight: "bold", // textShadow: `0 0 3px ${drumColor}`, zIndex: 54, pointerEvents: 'none', userSelect: 'none'
+                        }}>
                         {drumRec.sound.charAt(0).toUpperCase()}
                       </div>
                     </React.Fragment>
                   );
                 })}
 
-                {/* Enhanced recording region */}
                 {drumRecordedData.length > 0 && (() => {
                   const first = drumRecordedData[0];
                   const last = drumRecordedData[drumRecordedData.length - 1];
                   const start = first.currentTime;
-                  const end = last.currentTime + 0.5; // Add small buffer
+                  const end = last.currentTime + 0.5;
                   const leftPct = (start / audioDuration) * 100;
                   const widthPct = ((end - start) / audioDuration) * 100;
                   const drumMachineName = first?.drumMachine;
@@ -1853,12 +1787,7 @@ const Timeline = () => {
 
                   return (
                     <div
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: `${leftPct}%`,
-                        width: `${Math.max(widthPct, 2)}%`, // Minimum width
-                        height: '100%',
+                      style={{ position: 'absolute', top: 0, left: `${leftPct}%`, width: `${Math.max(widthPct, 2)}%`, height: '100%',
                         background: isRecording
                           ? `linear-gradient(90deg, transparent, ${dmColor}20, transparent)`
                           : `linear-gradient(90deg, ${dmColor}10, ${dmColor}20, ${dmColor}10)`,
@@ -1875,7 +1804,6 @@ const Timeline = () => {
                       }}
                       onClick={() => {
                         if (!isRecording) {
-                          // Trigger track creation manually if needed
                           console.log('Create drum track from recording');
                         }
                       }}
@@ -1884,18 +1812,7 @@ const Timeline = () => {
                         : `Drum Recording: ${drumRecordedData.length} hits (${start.toFixed(1)}s - ${end.toFixed(1)}s)`}
                     >
                       {!isRecording && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '50%',
-                          left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                          color: dmColor,
-                          fontSize: '10px',
-                          fontWeight: 'bold',
-                          textShadow: `0 0 4px ${dmColor}`,
-                          whiteSpace: 'nowrap',
-                          opacity: 0.9
-                        }}>
+                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: dmColor, fontSize: '10px', fontWeight: 'bold', textShadow: `0 0 4px ${dmColor}`, whiteSpace: 'nowrap', opacity: 0.9}}>
                           🥁 {drumRecordedData.length} hits
                         </div>
                       )}
@@ -1920,34 +1837,11 @@ const Timeline = () => {
               `}
             </style>
 
-            {/* Tracks Container - adjusted top margin to account for loop bar and my section */}
-            <div
-              style={{
-                overflow: "visible",
-                position: "relative",
-                minHeight: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px",
-                height: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px",
-                marginTop: "40px",
-              }}
-            >
-              {/* Track lanes with separators - only show when there are tracks */}
+            <div style={{ overflow: "visible", position: "relative", minHeight: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px", height: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px", marginTop: "40px",}}>
               {tracks.length > 0 && Array.from({ length: tracks.length }).map((_, index) => (
-                <div
-                  key={`lane-${index}`}
-                  style={{
-                    position: "absolute",
-                    top: `${(index * trackHeight) - sidebarScrollOffset}px`,
-                    left: 0,
-                    width: "100%",
-                    height: `${trackHeight}px`,
-                    borderTop: "1px solid #FFFFFF1A",
-                    borderBottom: "1px solid #FFFFFF1A",
-                    zIndex: 0,
-                  }}
-                />
+                <div key={`lane-${index}`} style={{ position: "absolute", top: `${(index * trackHeight) - sidebarScrollOffset}px`, left: 0, width: "100%", height: `${trackHeight}px`, borderTop: "1px solid #FFFFFF1A", borderBottom: "1px solid #FFFFFF1A", zIndex: 0,}}/>
               ))}
 
-              {/* Tracks */}
               {tracks.map((track, index) => {
 
                 return (
@@ -1965,7 +1859,6 @@ const Timeline = () => {
                       pointerEvents: "auto",  
                     }}
                     onClick={(e) => {
-                      // Only clear clip selection if clicking on the track background, not on a clip
                       if (e.target === e.currentTarget) {
                         setSelectedClipId(null);
                         setSelectedTrackId(track.id);
@@ -2005,57 +1898,14 @@ const Timeline = () => {
             )}
 
             {/* Playhead - adjusted to account for loop bar */}
-            <div
-              style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                height: "100%",
-                width: "2px",
-                pointerEvents: "none",
-                zIndex: 26,
-                transform: `translateX(${playheadPosition}px)`,
-                willChange: "transform",
-              }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  top: "60px",
-                  left: "-8px",
-                  width: "18px",
-                  height: "18px",
-                  background: "#AD00FF",
-                  borderRadius: "3px",
-                  border: "1px solid #fff",
-                }}
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  top: "78px",
-                  left: 0,
-                  bottom: 0,
-                  width: "2px",
-                  background: "#AD00FF",
-                }}
-              />
+            <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: "2px", pointerEvents: "none", zIndex: 26, transform: `translateX(${playheadPosition}px)`, willChange: "transform",}}>
+              <div style={{ position: "absolute", top: "60px", left: "-8px", width: "18px", height: "18px", background: "#AD00FF", borderRadius: "3px", border: "1px solid #fff",}}/>
+              <div style={{ position: "absolute", top: "78px", left: 0, bottom: 0, width: "2px", background: "#AD00FF",}}/>
             </div>
 
             {/* Grid lines - only show when there are tracks */}
             {tracks.length > 0 && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: `${140 - sidebarScrollOffset}px`, // Adjusted for loop bar and scroll offset
-                  left: 0,
-                  width: "100%",
-                  height: `${trackHeight * tracks.length}px`,
-                  pointerEvents: "none",
-                }}
-              >
-                {renderGridLines}
-              </div>
+              <div style={{ position: "absolute", top: `${140 - sidebarScrollOffset}px`, left: 0, width: "100%", height: `${trackHeight * tracks.length}px`, pointerEvents: "none",}}>{renderGridLines}</div>
             )}
           </div>
         </div>
@@ -2065,10 +1915,7 @@ const Timeline = () => {
           <div className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full">
             <img src={magnetIcon} alt="Magnet" />
           </div>
-          <div
-            className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full relative"
-            onClick={() => setShowGridSetting((prev) => !prev)}
-          >
+          <div className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full relative" onClick={() => setShowGridSetting((prev) => !prev)}>
             <img src={settingIcon} alt="Settings" />
             {showGridSetting && (
               <div className="absolute top-full right-0 z-[50]">
@@ -2121,10 +1968,7 @@ const Timeline = () => {
         <AddNewTrackModel onClose={() => setShowAddTrackModal(false)} />
       )}
       {/* Hidden file input for import */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        style={{ display: "none" }}
+      <input type="file" ref={fileInputRef} style={{ display: "none" }}
         onChange={async (e) => {
           const file = e.target.files[0];
           if (!file) return;
@@ -2205,13 +2049,8 @@ const Timeline = () => {
                 <div className="md:pt-[20px] md:pb-[30px] py-[20px] md:w-[400px] m-auto">
                   <div className=''>
                     <div className='text-sm text-[#FFFFFF] font-[400] mb-[10px]'>Name</div>
-                    <input
-                      type="text"
-                      value={renameValue}
-                      onChange={e => setRenameValue(e.target.value)}
-                      onKeyPress={e => { if (e.key === 'Enter') handleRenameSubmit(); }}
-                      className='text-[#FFFFFF99] rounded-[4px] w-full md:p-[11px] p-[8px] bg-[#FFFFFF0F] border-[0.5px] border-[#14141499]'
-                    />
+                    <input type="text" value={renameValue} onChange={e => setRenameValue(e.target.value)} onKeyPress={e => { if (e.key === 'Enter') handleRenameSubmit(); }}
+                      className='text-[#FFFFFF99] rounded-[4px] w-full md:p-[11px] p-[8px] bg-[#FFFFFF0F] border-[0.5px] border-[#14141499]'/>
                   </div>
                   <div className="text-center md:pt-[40px] pt-[20px]">
                     <button className="d_btn d_cancelbtn sm:me-7 me-5" onClick={() => setRenameModal(false)}>Cancel</button>
@@ -2240,14 +2079,8 @@ const Timeline = () => {
                 <div className="md:pt-[20px] md:pb-[30px] py-[20px] md:w-[400px] m-auto">
                   <div className=''>
                     <div className='text-sm text-[#FFFFFF] font-[400] mb-[10px]'>Width (px)</div>
-                    <input
-                      type="number"
-                      min={10}
-                      value={resizeValue}
-                      onChange={e => setResizeValue(e.target.value)}
-                      onKeyPress={e => { if (e.key === 'Enter') handleResizeSubmit(); }}
-                      className='text-[#FFFFFF99] rounded-[4px] w-full md:p-[11px] p-[8px] bg-[#FFFFFF0F] border-[0.5px] border-[#14141499]'
-                    />
+                    <input type="number" min={10} value={resizeValue} onChange={e => setResizeValue(e.target.value)} onKeyPress={e => { if (e.key === 'Enter') handleResizeSubmit(); }}
+                      className='text-[#FFFFFF99] rounded-[4px] w-full md:p-[11px] p-[8px] bg-[#FFFFFF0F] border-[0.5px] border-[#14141499]'/>
                   </div>
                   <div className="text-center md:pt-[40px] pt-[20px]">
                     <button className="d_btn d_cancelbtn sm:me-7 me-5" onClick={() => setResizeModal(false)}>Cancel</button>
