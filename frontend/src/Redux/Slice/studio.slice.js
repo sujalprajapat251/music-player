@@ -9,6 +9,8 @@ const initialState = {
     pixelsPerSecond: 50,
     maxDuration: 10,
   },
+  patternDrumPlayback: {}, // Track which pattern drum clips are playing
+  patternDrumEvents: {},
   // Track effects and plugins state
   trackEffects: {}, // Store effects for each track
   frozenTrackData: {}, // Store processed audio data for frozen tracks
@@ -73,7 +75,7 @@ const studioSlice = createSlice({
     },
     // New action to add audio clip to existing track
     addAudioClipToTrack: (state, action) => {
-      console.log("-------------------------------audio",action.payload)
+      console.log("-------------------------------audio", action.payload)
       const { trackId, audioClip } = action.payload;
       const trackIndex = state.tracks.findIndex(track => track.id == trackId); // Use == for type coercion
       if (trackIndex !== -1) {
@@ -183,7 +185,7 @@ const studioSlice = createSlice({
       const { trackId, audioData } = action.payload;
       const track = state.tracks.find(track => track.id === trackId);
       if (track) {
-          // Update track with audio data - now adds to audioClips array
+        // Update track with audio data - now adds to audioClips array
         if (!track.audioClips) {
           track.audioClips = [];
         }
@@ -321,7 +323,7 @@ const studioSlice = createSlice({
       }
     },
     setDrumRecordedData: (state, action) => {
-      console.log("=====================",action.payload)
+      console.log("=====================", action.payload)
       state.drumRecordedData = action.payload;
     },
     setDrumPlayback: (state, action) => {
@@ -397,6 +399,29 @@ const studioSlice = createSlice({
     setMetronomeSound(state, action) {
       state.selectedSound = action.payload;
     },
+    // Add these new actions after your existing actions
+    setPatternDrumPlayback: (state, action) => {
+      const { trackId, clipId, isPlaying: isDrumPlaying } = action.payload;
+      if (!state.patternDrumPlayback) {
+        state.patternDrumPlayback = {};
+      }
+      if (!state.patternDrumPlayback[trackId]) {
+        state.patternDrumPlayback[trackId] = {};
+      }
+      state.patternDrumPlayback[trackId][clipId] = isDrumPlaying;
+    },
+
+    setPatternDrumEvents: (state, action) => {
+      const { trackId, clipId, drumEvents } = action.payload;
+      if (!state.patternDrumEvents) {
+        state.patternDrumEvents = {};
+      }
+      if (!state.patternDrumEvents[trackId]) {
+        state.patternDrumEvents[trackId] = {};
+      }
+      state.patternDrumEvents[trackId][clipId] = drumEvents;
+    },
+
   },
 });
 
@@ -454,7 +479,9 @@ export const {
   setSelectedScale,
   setHighlightedPianoKeys,
   clearKeyScaleSelection,
-  setMetronomeSound
+  setMetronomeSound,
+  setPatternDrumPlayback,
+  setPatternDrumEvents,
 } = studioSlice.actions;
 
 export default studioSlice.reducer;
@@ -486,7 +513,7 @@ const getSampleUrlForPadFromRedux = (padId) => {
         return url || '/Audio/perc.mp3';
       }
     }
-  } catch (_) {}
+  } catch (_) { }
   return '/Audio/perc.mp3';
 };
 const beatIndexToSecondsFromRedux = (beatIndex, bpm) => beatIndex * (60 / bpm / 4);
@@ -512,7 +539,7 @@ export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColo
           return { sound, type, freq, decay, drumMachine: kit.name };
         }
       }
-    } catch (_) {}
+    } catch (_) { }
     return { sound: 'perc', type: 'perc', freq: 1000, decay: 0.2 };
   };
 
@@ -649,28 +676,28 @@ export const syncWholePatternToTimeline = ({ trackId, patternRows, bpm }) => (di
   });
 };
 
-// Build a mono waveform for a 16-slot section using the clip's drumSequence
 async function buildPatternWav({ drumSequence = [], blockStart = 0, blockDuration = 1 }) {
   try {
     const sampleRate = 44100;
     const length = Math.max(1, Math.floor(blockDuration * sampleRate));
     const ch = new Float32Array(length);
-    // Add short decaying bursts for each event
+
+    // Process each drum hit with actual drum sounds from drumMachineUtils
     for (const ev of drumSequence) {
       const tRel = Math.max(0, (ev.currentTime - blockStart));
       const idx = Math.floor(tRel * sampleRate);
-      const freq = Math.max(40, Math.min(4000, ev.freq || 1000));
-      const decaySec = Math.max(0.01, Math.min(0.25, ev.decay || 0.08));
-      const burstLen = Math.min(length - idx - 1, Math.floor(decaySec * sampleRate));
-      for (let n = 0; n < burstLen; n++) {
-        const env = Math.exp(-n / (decaySec * sampleRate));
-        const sample = Math.sin(2 * Math.PI * freq * (n / sampleRate)) * env * 0.8;
-        const j = idx + n;
-        if (j >= 0 && j < length) {
-          ch[j] += sample;
+
+      if (idx >= 0 && idx < length) {
+        // Create drum sound using the drum machine utilities
+        const drumSound = await createDrumSoundFromPattern(ev, sampleRate, length - idx);
+
+        // Mix the drum sound into the output buffer
+        for (let n = 0; n < drumSound.length && (idx + n) < length; n++) {
+          ch[idx + n] += drumSound[n] * 0.8; // Prevent clipping
         }
       }
     }
+
     // Soft limit to avoid clipping
     for (let i = 0; i < length; i++) {
       ch[i] = Math.max(-1, Math.min(1, Math.tanh(ch[i])));
@@ -688,6 +715,223 @@ async function buildPatternWav({ drumSequence = [], blockStart = 0, blockDuratio
     return { url: null };
   }
 }
+
+
+
+async function createDrumSoundFromPattern(drumEvent, sampleRate, maxLength) {
+  const { padId, type, freq, decay } = drumEvent;
+
+  // Find the drum machine pad data from drumMachineUtils
+  let padData = null;
+  for (const kit of drumMachineTypes) {
+    const pad = kit.pads.find(p => p.id === padId);
+    if (pad) {
+      padData = pad;
+      break;
+    }
+  }
+
+  if (!padData) {
+    // Fallback to synthetic sound
+    return createSyntheticDrumSound(type, freq, decay, sampleRate, maxLength);
+  }
+
+  // Try to load actual drum sample first
+  try {
+    const sampleUrl = await getDrumSampleUrl(padData);
+    if (sampleUrl) {
+      return await loadAndProcessDrumSample(sampleUrl, sampleRate, maxLength, decay);
+    }
+  } catch (e) {
+    console.warn('Failed to load drum sample, falling back to synthetic:', e);
+  }
+
+  // Fallback to enhanced synthetic sound using drumMachineUtils parameters
+  return createEnhancedSyntheticDrumSound(padData, sampleRate, maxLength);
+}
+
+
+
+// Function to get drum sample URL based on pad data from drumMachineUtils
+async function getDrumSampleUrl(padData) {
+  // Map drum types to sample files in your public/Audio folder
+  const sampleMap = {
+    'kick': '/Audio/kick_1.mp3',
+    'snare': '/Audio/snare.mp3',
+    'hihat': '/Audio/hat_closed.mp3',
+    'openhat': '/Audio/hat_open.mp3',
+    'clap': '/Audio/clap.mp3',
+    'crash': '/Audio/crash.mp3',
+    'ride': '/Audio/ride.mp3',
+    'tom': '/Audio/tom.mp3',
+    'cowbell': '/Audio/cowbell.mp3',
+    'perc': '/Audio/perc.mp3',
+    'perc1': '/Audio/perc.mp3',
+    'bass': '/Audio/kick_1.mp3' // Use kick for bass
+  };
+
+  return sampleMap[padData.type] || sampleMap[padData.sound] || null;
+}
+
+
+// Function to load and process drum samples
+async function loadAndProcessDrumSample(sampleUrl, sampleRate, maxLength, decay) {
+  try {
+    const response = await fetch(sampleUrl);
+    const arrayBuffer = await response.arrayBuffer();
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+    // Get the first channel data
+    const originalData = audioBuffer.getChannelData(0);
+    const originalLength = originalData.length;
+
+    // Calculate target length based on decay from drumMachineUtils
+    const targetLength = Math.min(maxLength, Math.floor(decay * sampleRate));
+
+    // Create output buffer
+    const output = new Float32Array(targetLength);
+
+    // Copy and apply decay envelope
+    for (let i = 0; i < targetLength; i++) {
+      if (i < originalLength) {
+        const decayEnvelope = Math.exp(-i / (decay * sampleRate));
+        output[i] = originalData[i] * decayEnvelope;
+      } else {
+        output[i] = 0;
+      }
+    }
+
+    return output;
+  } catch (e) {
+    console.warn('Failed to load drum sample:', e);
+    return new Float32Array(maxLength).fill(0);
+  }
+}
+
+
+// Enhanced synthetic drum sound generation using drumMachineUtils parameters
+function createEnhancedSyntheticDrumSound(padData, sampleRate, maxLength) {
+  const { type, freq, decay } = padData;
+  const output = new Float32Array(maxLength);
+  const decaySamples = Math.floor(decay * sampleRate);
+
+  switch (type) {
+    case 'kick': {
+      for (let i = 0; i < decaySamples && i < maxLength; i++) {
+        const t = i / sampleRate;
+        const envelope = Math.exp(-t / decay);
+        const freqSweep = freq * Math.exp(-t * 2);
+        output[i] = Math.sin(2 * Math.PI * freqSweep * t) * envelope * 0.8;
+      }
+      break;
+    }
+
+    case 'snare': {
+      for (let i = 0; i < decaySamples && i < maxLength; i++) {
+        const t = i / sampleRate;
+        const envelope = Math.exp(-t / decay);
+        const noise = (Math.random() * 2 - 1) * 0.5;
+        const tone = Math.sin(2 * Math.PI * freq * t) * 0.3;
+        output[i] = (noise + tone) * envelope * 0.6;
+      }
+      break;
+    }
+
+    case 'hihat': {
+      for (let i = 0; i < decaySamples && i < maxLength; i++) {
+        const t = i / sampleRate;
+        const envelope = Math.exp(-t / decay);
+        const noise = (Math.random() * 2 - 1) * 0.4;
+        output[i] = noise * envelope * 0.5;
+      }
+      break;
+    }
+
+    case 'openhat': {
+      for (let i = 0; i < decaySamples && i < maxLength; i++) {
+        const t = i / sampleRate;
+        const envelope = Math.exp(-t / decay);
+        const noise = (Math.random() * 2 - 1) * 0.3;
+        const ring = Math.sin(2 * Math.PI * freq * t) * 0.2;
+        output[i] = (noise + ring) * envelope * 0.4;
+      }
+      break;
+    }
+
+    case 'clap': {
+      for (let i = 0; i < decaySamples && i < maxLength; i++) {
+        const t = i / sampleRate;
+        const envelope = Math.exp(-t / decay);
+        const noise = (Math.random() * 2 - 1) * 0.4;
+        output[i] = noise * envelope * 0.5;
+      }
+      break;
+    }
+
+    case 'cowbell': {
+      for (let i = 0; i < decaySamples && i < maxLength; i++) {
+        const t = i / sampleRate;
+        const envelope = Math.exp(-t / decay);
+        const fundamental = Math.sin(2 * Math.PI * freq * t);
+        const harmonic = Math.sin(2 * Math.PI * freq * 1.5 * t);
+        output[i] = (fundamental + harmonic * 0.5) * envelope * 0.4;
+      }
+      break;
+    }
+
+    case 'tom': {
+      for (let i = 0; i < decaySamples && i < maxLength; i++) {
+        const t = i / sampleRate;
+        const envelope = Math.exp(-t / decay);
+        const freqSweep = freq * Math.exp(-t * 1.5);
+        output[i] = Math.sin(2 * Math.PI * freqSweep * t) * envelope * 0.6;
+      }
+      break;
+    }
+
+    case 'crash':
+    case 'ride': {
+      for (let i = 0; i < decaySamples && i < maxLength; i++) {
+        const t = i / sampleRate;
+        const envelope = Math.exp(-t / decay);
+        const noise = (Math.random() * 2 - 1) * 0.3;
+        const ring1 = Math.sin(2 * Math.PI * freq * t);
+        const ring2 = Math.sin(2 * Math.PI * freq * 1.5 * t);
+        output[i] = (noise + ring1 * 0.4 + ring2 * 0.2) * envelope * 0.4;
+      }
+      break;
+    }
+
+    default: {
+      for (let i = 0; i < decaySamples && i < maxLength; i++) {
+        const t = i / sampleRate;
+        const envelope = Math.exp(-t / decay);
+        output[i] = Math.sin(2 * Math.PI * freq * t) * envelope * 0.4;
+      }
+    }
+  }
+
+  return output;
+}
+
+
+// Keep the original synthetic function as fallback
+function createSyntheticDrumSound(type, freq, decay, sampleRate, maxLength) {
+  const output = new Float32Array(maxLength);
+  const decaySamples = Math.floor(decay * sampleRate);
+
+  for (let i = 0; i < decaySamples && i < maxLength; i++) {
+    const t = i / sampleRate;
+    const envelope = Math.exp(-t / decay);
+    const sample = Math.sin(2 * Math.PI * freq * t) * envelope * 0.8;
+    output[i] = sample;
+  }
+
+  return output;
+}
+
+
 
 // Ensure the pattern container clip (single section) has an up-to-date waveform URL
 async function regenWaveForSection(dispatch, getState, { trackId, sectionIndex, blockStart, blockDuration }) {
@@ -727,3 +971,44 @@ async function regenWaveForSection(dispatch, getState, { trackId, sectionIndex, 
     }));
   }
 }
+
+
+// ... existing code ...
+
+// Add this new thunk after your existing thunks
+export const triggerPatternDrumPlayback = ({ trackId, clipId, currentTime }) => async (dispatch, getState) => {
+  const state = getState();
+  const track = state.studio?.tracks?.find(t => t.id === trackId);
+  if (!track?.audioClips) return;
+
+  const clip = track.audioClips.find(c => c.id === clipId);
+  if (!clip || !clip.fromPattern || !clip.drumSequence) return;
+
+  // Check if this clip should be playing at current time
+  const clipStart = clip.startTime || 0;
+  const clipEnd = clipStart + (clip.duration || 0);
+
+  if (currentTime >= clipStart && currentTime <= clipEnd) {
+    // Find drum events that should trigger at this time
+    const drumEvents = clip.drumSequence.filter(event => {
+      const eventTime = clipStart + (event.currentTime - (clip.startTime || 0));
+      const tolerance = 0.05; // 50ms tolerance
+      return Math.abs(currentTime - eventTime) <= tolerance;
+    });
+
+    if (drumEvents.length > 0) {
+      // Mark this clip as playing drums
+      dispatch(setPatternDrumPlayback({ trackId, clipId, isPlaying: true }));
+
+      // Store the drum events for this time
+      dispatch(setPatternDrumEvents({ trackId, clipId, drumEvents }));
+
+      // Schedule to stop playing after a short delay
+      setTimeout(() => {
+        dispatch(setPatternDrumPlayback({ trackId, clipId, isPlaying: false }));
+      }, 100);
+    }
+  }
+};
+
+// ... existing code ...
