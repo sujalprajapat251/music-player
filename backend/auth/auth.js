@@ -132,6 +132,21 @@ exports.googleLogin = async (req, res) => {
   }
 };
 
+exports.facebookLogin = async (req, res) => {
+  try {
+    const { uid, firstName, lastName, email, photo } = req.body;
+    let checkUser = await user.findOne({ email });
+    if (!checkUser) {
+      checkUser = await user.create({ uid, firstName, lastName, email, photo });
+    }
+    const plain = checkUser.toObject();
+    const token = await jwt.sign({ _id: plain._id }, process.env.SECRET_KEY, { expiresIn: "1D" });
+    return res.status(200).json({ message: 'login successful', success: true, user: plain, token });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 exports.forgotPassword = async (req, res) => {
   try {
     let { email } = req.body;

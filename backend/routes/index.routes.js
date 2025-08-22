@@ -2,7 +2,7 @@ const express = require('express');
 const indexRoutes = express.Router()
 const upload = require("../helper/uplodes");
 const { removeUser, updateUser, getUserById, getAllUsers, createNewUser, resetPassword, addToWishlist, getUserWishlist, removeFromWishlist } = require('../controller/user.controller');
-const { userLogin, googleLogin, forgotPassword, verifyOtp, changePassword, userLogout, refreshAccessToken } = require('../auth/auth');
+const { userLogin, googleLogin, forgotPassword, verifyOtp, changePassword, userLogout, refreshAccessToken, facebookLogin } = require('../auth/auth');
 const { auth } = require('../middleware/auth');
 const { createSound, getAllSounds, getSoundById, updateSound, deleteSound } = require('../controller/soundController');
 const { createNewFolder, getFolderByUserId, updateFolderName, deleteFolderById } = require('../controller/folderController');
@@ -21,6 +21,7 @@ indexRoutes.post('/forgotPassword', forgotPassword)
 indexRoutes.post('/verifyOtp', verifyOtp)
 indexRoutes.post('/changePassword', changePassword)
 indexRoutes.get('/refresh-token', refreshAccessToken);
+indexRoutes.post('/facebook-login', facebookLogin);
 
 // user Routes 
 

@@ -131,6 +131,21 @@ export const logoutUser = createAsyncThunk(
 );
 
 
+export const facebookLogin = createAsyncThunk(
+    'auth/facebook-login',
+    async ({ uid, firstName, lastName, email, photo }, { dispatch, rejectWithValue }) => {
+        try {
+            const response = await axios.post(`${BASE_URL}/facebook-login`, { uid, firstName, lastName, email, photo });
+            sessionStorage.setItem('token', response.data.token);
+            sessionStorage.setItem('userId', response.data.user._id);
+            dispatch(setAlert({ text: response.data.message, color: 'success' }));
+            return response.data;
+        } catch (error) {
+            return handleErrors(error, dispatch, rejectWithValue);
+        }
+    }
+);
+
 const authSlice = createSlice({
     name: 'auth',
     initialState,
@@ -235,6 +250,18 @@ const authSlice = createSlice({
                 state.error = action.payload.message;
                 state.message = action.payload?.message || "Google Login Failed";
                 // enqueueSnackbar(state.message, { variant: 'error' });
+            })
+            .addCase(facebookLogin.fulfilled, (state, action) => {
+                state.user = action.payload.user;
+                state.isAuthenticated = true;
+                state.loading = false;
+                state.error = null;
+                state.message = action.payload?.message || "Facebook Login successful";
+            })
+            .addCase(facebookLogin.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload.message;
+                state.message = action.payload?.message || "Facebook Login Failed";
             })
             .addCase(logoutUser.fulfilled, (state, action) => {
                 state.user = null;

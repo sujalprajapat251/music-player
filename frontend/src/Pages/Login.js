@@ -2,14 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Saturn3DGalaxy from "./Saturn3DGalaxy";
 import { LuEye, LuEyeClosed } from "react-icons/lu";
 import { useDispatch } from "react-redux";
-import {
-  forgotPassword,
-  googleLogin,
-  login,
-  register,
-  resetPassword,
-  verifyOtp,
-} from "../Redux/Slice/auth.slice";
+import { forgotPassword, googleLogin, login, register, resetPassword, verifyOtp, facebookLogin } from "../Redux/Slice/auth.slice";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
@@ -18,6 +11,7 @@ import { jwtDecode } from "jwt-decode";
 import Animation from "../components/Animation";
 import axios from "axios";
 import FacebookLogin from "react-facebook-login";
+import { BASE_URL } from "../Utils/baseUrl";
 const OTPInput = ({ length = 4, onComplete, handleVerifyOTP, email }) => {
   const [otp, setOtp] = useState(new Array(length).fill(""));
   const [error, setError] = useState("");
@@ -102,30 +96,14 @@ const OTPInput = ({ length = 4, onComplete, handleVerifyOTP, email }) => {
   return (
     <div className="bg-gray-950 bg-opacity-90 rounded-[4px] shadow-lg m-4 md:m-0 p-4 md:p-8 w-full max-w-md">
       <div className="text-center mb-8">
-        <h1 className="text-xl sm:text-3xl font-bold text-white mb-4">
-          Verify OTP
+        <h1 className="text-xl sm:text-3xl font-bold text-white mb-4">Verify OTP
         </h1>
-        <p className="text-white/60 text-sm leading-relaxed">
-          We’ve sent a code to{" "}
-          <span className="text-white">example123@gmail.com</span>
-          <br />
-          Please enter it to verify your Email.
-        </p>
+        <p className="text-white/60 text-sm leading-relaxed">We’ve sent a code to{" "}<span className="text-white">example123@gmail.com</span><br />Please enter it to verify your Email.</p>
       </div>
       <form onSubmit={handleSubmit}>
         <div className="flex justify-center space-x-2 sm:space-x-4 mb-10">
           {otp.map((digit, index) => (
-            <input
-              key={index}
-              ref={(ref) => (inputRefs.current[index] = ref)}
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              value={digit}
-              onChange={(e) => handleChange(e, index)}
-              onKeyDown={(e) => handleKeyDown(e, index)}
-              onPaste={handlePaste}
-              maxLength={1}
+            <input key={index} ref={(ref) => (inputRefs.current[index] = ref)} type="text" inputMode="numeric" autoComplete="one-time-code" value={digit} onChange={(e) => handleChange(e, index)} onKeyDown={(e) => handleKeyDown(e, index)} onPaste={handlePaste} maxLength={1}
               className="w-12 h-12 bg-white/10 border border-white/20 rounded text-white text-center text-xl font-semibold focus:outline-none focus:ring-2 focus:ring-white focus:border-transparent transition-all duration-200"
             />
           ))}
@@ -135,23 +113,11 @@ const OTPInput = ({ length = 4, onComplete, handleVerifyOTP, email }) => {
         )}
 
         {/* Verify OTP button */}
-        <button
-          // onClick={handleSendOTP}
-          type="submit"
-          className="w-full mb-5 bg-white text-gray-900 py-3 px-4 rounded-[4px] font-semibold hover:bg-gray-100 transition-all duration-200 transform"
-        >
-          Verify OTP
-        </button>
+        <button type="submit" className="w-full mb-5 bg-white text-gray-900 py-3 px-4 rounded-[4px] font-semibold hover:bg-gray-100 transition-all duration-200 transform">Verify OTP</button>
 
         <div className="text-center">
-          <p className="text-white/60 text-xs sm:text-sm">
-            Didn't received code?{" "}
-            <button
-              // onClick={handleResend}
-              className="text-white underline transition-colors"
-            >
-              Resend
-            </button>
+          <p className="text-white/60 text-xs sm:text-sm">Didn't received code?{" "}
+            <button className="text-white underline transition-colors">Resend</button>
           </p>
         </div>
       </form>
@@ -187,7 +153,7 @@ const Login = () => {
   };
 
   const handleChangePassword = (values) => {
-    const { newPassword } = values; // Extract newPassword from values
+    const { newPassword } = values;
     dispatch(resetPassword({ newPassword, email })).then((response) => {
       console.log(response);
       if (response.payload.success) {
@@ -196,48 +162,34 @@ const Login = () => {
     });
   };
   const handleResponse = async (response) => {
-    // console.log("Facebook Login Response:", response);
-    if (response.email) {
-        // console.log("Access Token:", response.email);
-        // var data = await axios.post(`${Api}/social-api`, {
-        //     name: response.name,
-        //     email: response.email,
-        // },
-        // )
-        // console.log('faceboookkkkk done', data.data.result);
-        // localStorage.setItem("Login", JSON.stringify(data.data.result));
-        // userHandling(data.data.result);
-        // onClose();
+    const { name, email, id, picture } = response || {};
+    if (email && id && name) {
+      const [firstName, ...rest] = name.split(" ");
+      const lastName = rest.join(" ");
+      const photo = picture?.data?.url;
+  
+      dispatch(
+        facebookLogin({ uid: id, firstName, lastName, email, photo })
+      ).then((res) => {
+        if (res.payload?.success) navigate("/");
+      });
     } else {
-        // console.error("Facebook login failed", response);
+      console.error("Facebook login failed", response);
     }
-};
+  };
+  
 
   return (
     <div className="relative w-full h-screen">
-      <div className="absolute inset-0 z-0">
-        <Animation />
-      </div>
-      {/* Overlay Sign Up Form */}
+      <div className="absolute inset-0 z-0"><Animation /></div>
       <div className="absolute inset-0 flex items-center justify-center w-full md:w-[800px] mx-auto">
         {forgotPasswordStep === 0 && (
           <div className="bg-gray-950 bg-opacity-90 rounded-[4px] shadow-lg m-4 md:m-0 p-4 md:p-8 w-full max-w-md min-h-[600px]">
             {isSignIn ? (
               <div>
-                <h2 className="text-2xl font-bold text-white mb-2 text-center">
-                  Sign in
-                </h2>
-                <p className="text-gray-400 mb-6 text-center">
-                  Welcome back! Please sign in.
-                </p>
-                <Formik
-                  initialValues={{
-                    email: "",
-                    password: "",
-                    showPassword: false,
-                    rememberMe: false,
-                  }}
-                  validationSchema={signInSchema}
+                <h2 className="text-2xl font-bold text-white mb-2 text-center">Sign in</h2>
+                <p className="text-gray-400 mb-6 text-center">Welcome back! Please sign in.</p>
+                <Formik initialValues={{ email: "", password: "", showPassword: false, rememberMe: false,}} validationSchema={signInSchema}
                   onSubmit={(values) => {
                     dispatch(login(values)).then((response) => {
                       if (response.payload.success) navigate("/");
@@ -254,38 +206,17 @@ const Login = () => {
                   }) => (
                     <form onSubmit={handleSubmit}>
                       <div className="mb-4">
-                        <label className="text-gray-300 mb-2 text-sm">
-                          Email
-                        </label>
-                        <input
-                          type="email"
-                          className="w-full px-3 py-2 rounded bg-white/5 text-white focus:outline-none"
-                          placeholder="Email"
-                          name="email"
-                          value={values.email}
-                          onChange={handleChange}
-                        />
+                        <label className="text-gray-300 mb-2 text-sm">Email</label>
+                        <input type="email" className="w-full px-3 py-2 rounded bg-white/5 text-white focus:outline-none" placeholder="Email" name="email" value={values.email} onChange={handleChange}/>
                         {errors.email && touched.email && (
-                          <div className="text-red-500 text-sm mt-1">
-                            {errors.email}
-                          </div>
+                          <div className="text-red-500 text-sm mt-1">{errors.email}</div>
                         )}
                       </div>
                       <div className="mb-4">
-                        <label className="text-gray-300 mb-2 text-sm">
-                          Password
-                        </label>
+                        <label className="text-gray-300 mb-2 text-sm">Password</label>
                         <div className="relative">
-                          <input
-                            type={values.showPassword ? "text" : "password"}
-                            className="w-full px-3 py-2 rounded bg-white/5 text-white focus:outline-none"
-                            name="password"
-                            placeholder="Password"
-                            value={values.password}
-                            onChange={handleChange}
-                          />
-                          <div
-                            className="absolute right-3 top-3 cursor-pointer select-none text-white"
+                          <input type={values.showPassword ? "text" : "password"} className="w-full px-3 py-2 rounded bg-white/5 text-white focus:outline-none" name="password" placeholder="Password" value={values.password} onChange={handleChange}/>
+                          <div className="absolute right-3 top-3 cursor-pointer select-none text-white"
                             onMouseDown={(e) => {
                               e.preventDefault();
                               setFieldValue(
@@ -297,41 +228,18 @@ const Login = () => {
                             {values.showPassword ? <LuEye /> : <LuEyeClosed />}
                           </div>
                           {errors.password && touched.password && (
-                            <div className="text-red-500 text-sm mt-1">
-                              {errors.password}
-                            </div>
+                            <div className="text-red-500 text-sm mt-1">{errors.password}</div>
                           )}
                         </div>
                       </div>
                       <div className="flex items-center justify-between mb-4">
                         <label className="flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            name="rememberMe"
-                            checked={values.rememberMe}
-                            onChange={handleChange}
-                            className="w-4 h-4 text-red-500 bg-transparent border-white/20 rounded-[2px] j_checkBox"
-                          />
-                          <span className="ml-2 text-xs md:text-sm text-gray-300">
-                            Remember Me
-                          </span>
+                          <input type="checkbox" name="rememberMe" checked={values.rememberMe} onChange={handleChange} className="w-4 h-4 text-red-500 bg-transparent border-white/20 rounded-[2px] j_checkBox"/>
+                          <span className="ml-2 text-xs md:text-sm text-gray-300">Remember Me</span>
                         </label>
-                        <button
-                          onClick={() => {
-                            setForgotPasswordStep(1);
-                          }}
-                          type="button"
-                          className="text-xs md:text-sm text-red-500 font-medium hover:text-red-600 transition-colors"
-                        >
-                          Forgot Password?
-                        </button>
+                        <button onClick={() => { setForgotPasswordStep(1); }} type="button" className="text-xs md:text-sm text-red-500 font-medium hover:text-red-600 transition-colors">Forgot Password?</button>
                       </div>
-                      <button
-                        type="submit"
-                        className="w-full bg-white hover:bg-white text-black font-semibold py-2 rounded transition"
-                      >
-                        Sign In
-                      </button>
+                      <button type="submit" className="w-full bg-white hover:bg-white text-black font-semibold py-2 rounded transition">Sign In</button>
                     </form>
                   )}
                 </Formik>
@@ -342,16 +250,6 @@ const Login = () => {
                   <span className="text-white">OR</span>
                   <div className="flex-1 h-px m-0-10 bg-gradient-to-r from-black to-white/50"></div>
                 </div>
-                {/* <div className="my-6">
-                        <div className="relative">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-white/20"></div>
-                            </div>
-                            <div className="relative flex justify-center text-sm">
-                                <span className="px-2 bg-black/40 text-gray-300">OR</span>
-                            </div>
-                        </div>
-                    </div> */}
 
                 <div className="mt-6 flex justify-between items-center">
                   <GoogleLogin
@@ -372,31 +270,29 @@ const Login = () => {
                     }}
                     onFailure={console.error}
                     render={(renderProps) => (
-                      <button
-                        onClick={renderProps.onClick}
-                        disabled={renderProps.disabled}
-                        className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-lg p-2.5 hover:bg-gray-50 transition-colors"
-                      >
-                        <img
-                          src={require("../Images/google-logo.png")}
-                          alt="Google"
-                          className="w-5 h-5"
-                        />
+                      <button onClick={renderProps.onClick} disabled={renderProps.disabled} className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-lg p-2.5 hover:bg-gray-50 transition-colors">
+                        <img src={require("../Images/google-logo.png")} alt="Google" className="w-5 h-5"/>
                         <span className="text-right flex-grow-0">Google</span>
                       </button>
                     )}
                   />
-                  <button className="w-44 flex items-center justify-center px-4 py-2 border border-white/20 rounded-[4px] text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200">
-                    <svg
-                      className="w-5 h-5 mr-3"
-                      fill="#1877F2"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                    </svg>
-                    Facebook
-                  </button>
+                  <div className="w-44">
+                    <FacebookLogin
+                      appId="2295150360940038"
+                      autoLoad={false}
+                      fields="name, email, picture"
+                      callback={handleResponse}
+                      cssClass="w-full flex items-center justify-center px-4 py-2 border border-white/20 rounded-[4px] text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                      textButton="Facebook"
+                      icon={
+                        <svg className="w-5 h-5 mr-3" fill="#1877F2" viewBox="0 0 24 24">
+                          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                        </svg>
+                      }
+                    />
+                  </div>
                 </div>
+
                 {/* Social login buttons */}
 
                 {/* <div className="flex justify-between">
@@ -426,25 +322,15 @@ const Login = () => {
                         </div> */}
                 {/* Sign up link */}
                 <div className="mt-6 text-center">
-                  <p className="text-white/60 text-sm md:text-base">
-                    Didn't have any account?{" "}
-                    <button
-                      className="text-white underline transition-colors"
-                      onClick={() => setIsSignIn(false)}
-                    >
-                      Create Account
-                    </button>
+                  <p className="text-white/60 text-sm md:text-base">Didn't have any account?{" "}
+                    <button className="text-white underline transition-colors" onClick={() => setIsSignIn(false)}>Create Account</button>
                   </p>
                 </div>
               </div>
             ) : (
               <div>
-                <h2 className="text-2xl font-bold text-white mb-2 text-center">
-                  Create Account
-                </h2>
-                <p className="text-gray-400 mb-6 text-center">
-                  Register your account easily enter your email below.
-                </p>
+                <h2 className="text-2xl font-bold text-white mb-2 text-center">Create Account</h2>
+                <p className="text-gray-400 mb-6 text-center">Register your account easily enter your email below.</p>
                 <Formik
                   initialValues={{
                     firstName: "",
@@ -472,77 +358,34 @@ const Login = () => {
                       <div className="grid grid-cols-2 gap-4 mb-4">
                         {/* First Name field */}
                         <div>
-                          <label className="text-sm text-gray-300 mb-2">
-                            First Name
-                          </label>
-                          <input
-                            type="text"
-                            name="firstName"
-                            className="w-full px-3 py-2 text-sm rounded bg-white/5 text-white focus:outline-none"
-                            placeholder="First name"
-                            onChange={handleChange}
-                            value={values.firstName}
-                          />
+                          <label className="text-sm text-gray-300 mb-2">First Name</label>
+                          <input type="text" name="firstName" className="w-full px-3 py-2 text-sm rounded bg-white/5 text-white focus:outline-none" placeholder="First name" onChange={handleChange} value={values.firstName}/>
                           {errors.firstName && touched.firstName && (
-                            <div className="text-red-500 text-sm mt-1">
-                              {errors.firstName}
-                            </div>
+                            <div className="text-red-500 text-sm mt-1">{errors.firstName}</div>
                           )}
                         </div>
 
                         {/* Last Name field */}
                         <div>
-                          <label className="text-sm text-gray-300 mb-2">
-                            Last Name
-                          </label>
-                          <input
-                            type="text"
-                            name="lastName"
-                            className="w-full px-3 py-2 text-sm rounded bg-white/5 text-white focus:outline-none"
-                            placeholder="Last name"
-                            onChange={handleChange}
-                            value={values.lastName}
-                          />
+                          <label className="text-sm text-gray-300 mb-2">Last Name</label>
+                          <input type="text" name="lastName" className="w-full px-3 py-2 text-sm rounded bg-white/5 text-white focus:outline-none" placeholder="Last name" onChange={handleChange} value={values.lastName}/>
                           {errors.lastName && touched.lastName && (
-                            <div className="text-red-500 text-sm mt-1">
-                              {errors.lastName}
-                            </div>
+                            <div className="text-red-500 text-sm mt-1">{errors.lastName}</div>
                           )}
                         </div>
                       </div>
                       <div className="mb-4">
-                        <label className="text-gray-300 mb-2 text-sm">
-                          Email
-                        </label>
-                        <input
-                          type="email"
-                          name="email"
-                          className="w-full px-3 py-2 rounded text-sm bg-white/5 text-white focus:outline-none"
-                          placeholder="Email"
-                          onChange={handleChange}
-                          value={values.email}
-                        />
+                        <label className="text-gray-300 mb-2 text-sm">Email</label>
+                        <input type="email" name="email" className="w-full px-3 py-2 rounded text-sm bg-white/5 text-white focus:outline-none" placeholder="Email" onChange={handleChange} value={values.email}/>
                         {errors.email && touched.email && (
-                          <div className="text-red-500 text-sm mt-1">
-                            {errors.email}
-                          </div>
+                          <div className="text-red-500 text-sm mt-1">{errors.email}</div>
                         )}
                       </div>
                       <div className="mb-4">
-                        <label className="text-gray-300 mb-2 text-sm">
-                          Password
-                        </label>
+                        <label className="text-gray-300 mb-2 text-sm">Password</label>
                         <div className="relative">
-                          <input
-                            name="password"
-                            type={values.showPassword ? "text" : "password"}
-                            className="w-full px-3 py-2 rounded text-sm bg-white/5 text-white focus:outline-none"
-                            placeholder="Password"
-                            onChange={handleChange}
-                            value={values.password}
-                          />
-                          <div
-                            className="absolute top-3 right-3 cursor-pointer select-none text-white/60"
+                          <input name="password" type={values.showPassword ? "text" : "password"} className="w-full px-3 py-2 rounded text-sm bg-white/5 text-white focus:outline-none" placeholder="Password" onChange={handleChange} value={values.password}/>
+                          <div className="absolute top-3 right-3 cursor-pointer select-none text-white/60"
                             onMouseDown={(e) => {
                               e.preventDefault();
                               setFieldValue(
@@ -555,29 +398,19 @@ const Login = () => {
                           </div>
                         </div>
                         {errors.password && touched.password && (
-                          <div className="text-red-500 text-sm mt-1">
-                            {errors.password}
-                          </div>
+                          <div className="text-red-500 text-sm mt-1">{errors.password}</div>
                         )}
                       </div>
-                      <button
-                        type="submit"
-                        className="w-full bg-white hover:bg-white text-black font-semibold py-2 rounded transition"
-                      >
-                        Create Account
-                      </button>
+                      <button type="submit" className="w-full bg-white hover:bg-white text-black font-semibold py-2 rounded transition">Create Account</button>
                     </form>
                   )}
                 </Formik>
 
-                {/* Divider */}
                 <div className="flex items-center my-5">
                   <div className="flex-1 h-px m-0-10 bg-gradient-to-r from-white/50 to-black"></div>
                   <span className="text-white">OR</span>
                   <div className="flex-1 h-px m-0-10 bg-gradient-to-r from-black to-white/50"></div>
                 </div>
-
-                {/* Social login buttons */}
                 
                 <div className="flex justify-between">
                 <GoogleLogin
@@ -598,49 +431,23 @@ const Login = () => {
                   }}
                   onFailure={console.error}
                   render={(renderProps) => (
-                    <button
-                      onClick={renderProps.onClick}
-                      disabled={renderProps.disabled}
-                      className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-lg p-2.5 hover:bg-gray-50 transition-colors"
-                    >
-                      <img
-                        src={require("../Images/google-logo.png")}
-                        alt="Google"
-                        className="w-5 h-5"
-                      />
-                      <span className="text-right flex-grow-0">
-                        Continue with Google
-                      </span>
+                    <button onClick={renderProps.onClick} disabled={renderProps.disabled} className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-lg p-2.5 hover:bg-gray-50 transition-colors">
+                      <img src={require("../Images/google-logo.png")} alt="Google" className="w-5 h-5"/>
+                      <span className="text-right flex-grow-0">Continue with Google</span>
                     </button>
                   )}
                 />
 
-<div className='s_modal_btn2' >
-                        <FacebookLogin
-                            appId="3443333199307811" // Replace with your Facebook App ID
-                            autoLoad={false}
-                            fields="name,email,picture"
-                            scope="" // Use the 'email' scope only
-                            callback={handleResponse}
-                            text='signin_with'
-                            icon='fa-facebook'
-                            cssClass='s_facebook_btn'
-                            textButton='Sign in with Facebook'
-                        >
-                            <p className='mb-0'>Sign in with Facebook</p></FacebookLogin>
-                    </div>
+                <div className='s_modal_btn2' >
+                  <FacebookLogin appId="2295150360940038" autoLoad={false} fields="name, email, picture" scope="" callback={handleResponse} text='signin_with' icon='fa-facebook' cssClass='s_facebook_btn' textButton='Sign in with Facebook'>
+                  <p className='mb-0'>Sign in with Facebook</p></FacebookLogin>
+                </div>
  
                 </div>
                 {/* Sign up link */}
                 <div className="mt-6 text-center">
-                  <p className="text-white/60 text-sm md:text-base">
-                    Already have any account?{" "}
-                    <button
-                      className="text-white underline transition-colors"
-                      onClick={() => setIsSignIn(true)}
-                    >
-                      Sign in
-                    </button>
+                  <p className="text-white/60 text-sm md:text-base">Already have any account?{" "}
+                    <button className="text-white underline transition-colors" onClick={() => setIsSignIn(true)}>Sign in</button>
                   </p>
                 </div>
               </div>
@@ -650,13 +457,8 @@ const Login = () => {
         {forgotPasswordStep === 1 && (
           <div className="bg-gray-950 bg-opacity-90 rounded-[4px] shadow-lg m-4 md:m-0 p-4 md:p-8 w-full max-w-md">
             <div className="text-center mb-8">
-              <h1 className="text-xl sm:text-3xl font-bold text-white mb-4">
-                Forgot Password
-              </h1>
-              <p className="text-white/60 text-sm leading-relaxed">
-                We will send you an email with instructions on how to reset your
-                password.
-              </p>
+              <h1 className="text-xl sm:text-3xl font-bold text-white mb-4">Forgot Password</h1>
+              <p className="text-white/60 text-sm leading-relaxed">We will send you an email with instructions on how to reset yourpassword.</p>
             </div>
             <Formik
               initialValues={{ email: "" }}
@@ -680,83 +482,29 @@ const Login = () => {
               {({ handleChange, handleSubmit, errors, touched }) => (
                 <form onSubmit={handleSubmit}>
                   <div className="mb-10">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Email
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Email
                     </label>
-                    <input
-                      type="email"
-                      className="w-full px-3 py-2 rounded bg-white/5 text-white focus:outline-none"
-                      placeholder="Email"
-                      name="email"
-                      ref={(input) => input && input.focus()}
-                      onChange={handleChange}
-                    />
+                    <input type="email" className="w-full px-3 py-2 rounded bg-white/5 text-white focus:outline-none" placeholder="Email" name="email" ref={(input) => input && input.focus()} onChange={handleChange}/>
                     {errors.email && touched.email && (
-                      <div className="text-red-500 text-sm mt-1">
-                        {errors.email}
-                      </div>
+                      <div className="text-red-500 text-sm mt-1">{errors.email}</div>
                     )}
                   </div>
 
                   {/* Send OTP button */}
-                  <button
-                    type="submit"
-                    className="w-full bg-white text-gray-900 py-3 px-4 rounded-[4px] font-semibold hover:bg-gray-100 transition-all duration-200 transform"
-                  >
-                    Send OTP
-                  </button>
+                  <button type="submit" className="w-full bg-white text-gray-900 py-3 px-4 rounded-[4px] font-semibold hover:bg-gray-100 transition-all duration-200 transform">Send OTP</button>
                 </form>
               )}
             </Formik>
           </div>
         )}
         {forgotPasswordStep === 2 && (
-          // <div className="bg-gray-950 bg-opacity-90 rounded-[4px] shadow-lg p-8 w-full max-w-md">
-          //     <div className="text-center mb-8">
-          //         <h1 className="text-xl sm:text-3xl font-bold text-white mb-4">Verify OTP</h1>
-          //         <p className="text-white/60 text-sm leading-relaxed">
-          //             We’ve sent a code to <span className='text-white'>example123@gmail.com</span><br />
-          //             Please enter it to verify your Email.
-          //         </p>
-          //     </div>
-          //     <form>
-          //         <div className='mb-10'>
-          //             <label className="block text-sm font-medium text-gray-300 mb-2">
-          //                 Email
-          //             </label>
-          //             <input
-          //                 type="email"
-          //                 className="w-full px-3 py-2 rounded bg-white/5 text-white focus:outline-none"
-          //                 placeholder="Email"
-          //             />
-          //         </div>
-
-          //         {/* Send OTP button */}
-          //         <button
-          //             // onClick={handleSendOTP}
-          //             className="w-full bg-white text-gray-900 py-3 px-4 rounded-[4px] font-semibold hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 transform"
-          //         >
-          //             Send OTP
-          //         </button>
-          //     </form>
-          // </div>
-          <OTPInput
-            length={4}
-            onComplete={(otpValue) => {}}
-            handleVerifyOTP={handleVerifyOTP}
-            email={email}
-          />
+          <OTPInput length={4} onComplete={(otpValue) => {}} handleVerifyOTP={handleVerifyOTP} email={email}/>
         )}
         {forgotPasswordStep === 3 && (
           <div className="bg-gray-950 bg-opacity-90 rounded-[4px] shadow-lg m-4 md:m-0 p-4 md:p-8 w-full max-w-md">
             <div className="text-center mb-8">
-              <h1 className="text-xl sm:text-3xl font-bold text-white mb-4">
-                Change password
-              </h1>
-              <p className="text-white/60 text-sm leading-relaxed">
-                Protect your account with a unique password at least 6
-                characters long.
-              </p>
+              <h1 className="text-xl sm:text-3xl font-bold text-white mb-4">Change password</h1>
+              <p className="text-white/60 text-sm leading-relaxed">Protect your account with a unique password at least 6characters long.</p>
             </div>
             <Formik
               initialValues={{
@@ -788,20 +536,10 @@ const Login = () => {
               }) => (
                 <form onSubmit={handleSubmit}>
                   <div className="mb-4">
-                    <label className="text-gray-300 mb-2 text-sm">
-                      New Password
-                    </label>
+                    <label className="text-gray-300 mb-2 text-sm">New Password</label>
                     <div className="relative">
-                      <input
-                        type={values.showNewPassword ? "text" : "password"}
-                        name="newPassword"
-                        placeholder="New Password"
-                        value={values.newPassword}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 rounded bg-white/5 text-white focus:outline-none text-sm"
-                      />
-                      <div
-                        className="absolute right-3 top-3 cursor-pointer select-none text-white"
+                      <input type={values.showNewPassword ? "text" : "password"} name="newPassword" placeholder="New Password" value={values.newPassword} onChange={handleChange} className="w-full px-3 py-2 rounded bg-white/5 text-white focus:outline-none text-sm"/>
+                      <div className="absolute right-3 top-3 cursor-pointer select-none text-white"
                         onMouseDown={(e) => {
                           e.preventDefault();
                           setFieldValue(
@@ -814,27 +552,15 @@ const Login = () => {
                       </div>
                     </div>
                     {errors.newPassword && touched.newPassword && (
-                      <div className="text-red-500 text-sm mt-1">
-                        {errors.newPassword}
-                      </div>
+                      <div className="text-red-500 text-sm mt-1">{errors.newPassword}</div>
                     )}
                   </div>
 
                   <div className="mb-10">
-                    <label className="text-gray-300 mb-2 text-sm">
-                      Confirm Password
-                    </label>
+                    <label className="text-gray-300 mb-2 text-sm">Confirm Password</label>
                     <div className="relative">
-                      <input
-                        type={values.showConfirmPassword ? "text" : "password"}
-                        name="confirmPassword"
-                        placeholder="Confirm Password"
-                        value={values.confirmPassword}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 rounded bg-white/5 text-white focus:outline-none text-sm"
-                      />
-                      <div
-                        className="absolute right-3 top-3 cursor-pointer select-none text-white"
+                      <input type={values.showConfirmPassword ? "text" : "password"} name="confirmPassword" placeholder="Confirm Password" value={values.confirmPassword} onChange={handleChange} className="w-full px-3 py-2 rounded bg-white/5 text-white focus:outline-none text-sm"/>
+                      <div className="absolute right-3 top-3 cursor-pointer select-none text-white"
                         onMouseDown={(e) => {
                           e.preventDefault();
                           setFieldValue(
@@ -851,19 +577,12 @@ const Login = () => {
                       </div>
                     </div>
                     {errors.confirmPassword && touched.confirmPassword && (
-                      <div className="text-red-500 text-sm mt-1">
-                        {errors.confirmPassword}
-                      </div>
+                      <div className="text-red-500 text-sm mt-1">{errors.confirmPassword}</div>
                     )}
                   </div>
 
                   {/* Send OTP button */}
-                  <button
-                    type="submit"
-                    className="w-full bg-white text-gray-900 py-3 px-4 rounded-[4px] font-semibold hover:bg-gray-100 transition-all duration-200 transform"
-                  >
-                    Reset Password
-                  </button>
+                  <button type="submit" className="w-full bg-white text-gray-900 py-3 px-4 rounded-[4px] font-semibold hover:bg-gray-100 transition-all duration-200 transform">Reset Password</button>
                 </form>
               )}
             </Formik>
