@@ -568,7 +568,7 @@ const BottomToolbar = () => {
                         ) : (
                             <button onClick={() => {
                                 if (!tracks || tracks.length === 0) {
-                                    alert("Please Add New Track !");
+                                    alert("Please Add New Track !"); // You can place an alert here
                                 } else {
                                     handleStartRecord();
                                 }

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
+import Soundfont from 'soundfont-player';
 import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio, setCurrentTrackId, setTrackType } from "../Redux/Slice/studio.slice";
 import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM, zoomIn, zoomOut, resetZoom } from "../Redux/Slice/grid.slice";
 import { setAudioDuration as setLoopAudioDuration, toggleLoopEnabled, setLoopEnd, setLoopRange, selectIsLoopEnabled } from "../Redux/Slice/loop.slice";
@@ -91,7 +92,13 @@ const Timeline = () => {
   const [volumeIndicator, setVolumeIndicator] = useState({ show: false, volume: 0, trackName: '' });
   const [edirNameModel, setEdirNameModel] = useState(false);
 
+  // Piano playback functionality
+  const pianoRef = useRef(null);
+  const pianoAudioContextRef = useRef(null);
+  const activePianoNotesRef = useRef(new Set());
+
   const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
+  const pianoNotes = useSelector((state) => state.studio.pianoNotes || []);
   // console.log("FFFFFFFFFFFFFFFFFF",drumRecordedData)
 
   const getAudioContext = useCallback(() => {
@@ -103,6 +110,54 @@ const Timeline = () => {
       }
     }
     return audioContextRef.current;
+  }, []);
+
+  // Initialize piano for playback
+  const initializePiano = useCallback(async () => {
+    if (!pianoAudioContextRef.current) {
+      pianoAudioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    if (!pianoRef.current) {
+      try {
+        pianoRef.current = await Soundfont.instrument(pianoAudioContextRef.current, 'acoustic_grand_piano');
+        console.log("Piano instrument loaded for playback");
+      } catch (error) {
+        console.error("Error loading piano instrument for playback:", error);
+      }
+    }
+  }, []);
+
+  // Play piano note
+  const playPianoNote = useCallback((midiNumber, duration = 0.5) => {
+    if (pianoRef.current && pianoAudioContextRef.current) {
+      try {
+        if (pianoAudioContextRef.current.state === 'suspended') {
+          pianoAudioContextRef.current.resume();
+        }
+        const audioNode = pianoRef.current.play(midiNumber, undefined, { duration });
+        activePianoNotesRef.current.add(audioNode);
+        
+        // Clean up after note duration
+        setTimeout(() => {
+          activePianoNotesRef.current.delete(audioNode);
+        }, duration * 1000);
+      } catch (error) {
+        console.error("Error playing piano note:", error);
+      }
+    }
+  }, []);
+
+  // Stop all piano notes
+  const stopAllPianoNotes = useCallback(() => {
+    activePianoNotesRef.current.forEach(audioNode => {
+      try {
+        audioNode.stop();
+      } catch (error) {
+        console.error("Error stopping piano note:", error);
+      }
+    });
+    activePianoNotesRef.current.clear();
   }, []);
 
   // Context menu state
@@ -614,6 +669,29 @@ const Timeline = () => {
         // Update local state for smooth animation (this runs every frame)
         setLocalCurrentTime(newTime);
 
+        // Piano playback logic
+        if (pianoNotes.length > 0) {
+          pianoNotes.forEach(note => {
+            const noteStartTime = note.startTime || 0;
+            const noteEndTime = noteStartTime + (note.duration || 0.5);
+            
+            // Check if the current time is within the note's time range
+            if (newTime >= noteStartTime && newTime <= noteEndTime) {
+              // Check if we haven't already played this note in this time range
+              const noteKey = `${note.id}-${Math.floor(noteStartTime * 10)}`;
+              if (!activePianoNotesRef.current.has(noteKey)) {
+                playPianoNote(note.midiNumber, note.duration || 0.5);
+                activePianoNotesRef.current.add(noteKey);
+                
+                // Remove the note key after the note duration
+                setTimeout(() => {
+                  activePianoNotesRef.current.delete(noteKey);
+                }, (note.duration || 0.5) * 1000);
+              }
+            }
+          });
+        }
+
         // CRITICAL: Drastically reduce Redux updates to prevent lag
         const reduxUpdateTime = Date.now();
         if (!lastReduxUpdateRef.current || reduxUpdateTime - lastReduxUpdateRef.current > 500) { // Changed from 120ms to 500ms
@@ -676,7 +754,7 @@ const Timeline = () => {
         cancelAnimationFrame(localAnimationId);
       }
     };
-  }, [isPlaying, audioDuration, players, isLoopEnabled, loopStart, loopEnd, tempoRatio]);
+  }, [isPlaying, audioDuration, players, isLoopEnabled, loopStart, loopEnd, tempoRatio, pianoNotes, playPianoNote]);
 
   const debouncedVolumeUpdate = useMemo(() => {
     const updateVolumes = () => {
@@ -1655,6 +1733,28 @@ const Timeline = () => {
       });
     }
   }, [isPlaying, currentTime, tracks, drumRecordedData, playDrumSound]);
+
+  // Initialize piano for playback when component mounts
+  useEffect(() => {
+    initializePiano();
+  }, [initializePiano]);
+
+  // Cleanup piano notes when playback stops
+  useEffect(() => {
+    if (!isPlaying) {
+      stopAllPianoNotes();
+    }
+  }, [isPlaying, stopAllPianoNotes]);
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      stopAllPianoNotes();
+      if (pianoAudioContextRef.current) {
+        pianoAudioContextRef.current.close();
+      }
+    };
+  }, [stopAllPianoNotes]);
 
   const handleSave = (name) => {
     console.log("get name ::: > ", name);

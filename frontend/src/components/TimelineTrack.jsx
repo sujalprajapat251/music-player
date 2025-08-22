@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import WaveSurfer from "wavesurfer.js";
 import { Rnd } from "react-rnd";
 import reverceIcon from "../Images/reverce.svg";
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { setPianoNotes, setPianoRecordingClip } from '../Redux/Slice/studio.slice';
 
 // Custom Resizable Trim Handle Component
 const ResizableTrimHandle = ({
@@ -421,11 +422,33 @@ const TimelineTrack = ({
   gridSpacing = 0.25,
   color 
 }) => {
+  const dispatch = useDispatch();
   // Get piano notes from Redux
   const pianoNotes = useSelector((state) => state.studio.pianoNotes);
   const pianoRecordingClip = useSelector((state) => state.studio.pianoRecordingClip);
-  // Only show piano roll for 'Keys' tracks or if track.name === 'Keys'
-  const isPianoTrack = track.type === 'Keys' || track.name === 'Keys';
+
+  const currentTrackId = useSelector((state) => state.studio.currentTrackId);
+  // Consider multiple naming variations to detect the piano track
+  const typeName = (track?.type || '').toString().toLowerCase();
+  const displayName = (track?.name || '').toString().toLowerCase();
+  const isPianoTrack = typeName === 'keys' || displayName === 'keys' || displayName.includes('piano') || displayName.includes('key');
+
+  // Derive per-track piano data
+  const trackPianoNotes = Array.isArray(pianoNotes) ? pianoNotes.filter(n => (n?.trackId ?? null) === trackId) : [];
+  const trackPianoClip = (pianoRecordingClip && (pianoRecordingClip.trackId ?? null) === trackId) ? pianoRecordingClip : null;
+
+  // Derive a passive clip from this track's notes if there is no active clip
+  const passiveClip = (!trackPianoClip && trackPianoNotes.length > 0)
+    ? (() => {
+        const start = Math.min(...trackPianoNotes.map(n => n.startTime || 0));
+        const end = Math.max(...trackPianoNotes.map(n => (n.startTime || 0) + (n.duration || 0.05)));
+        if (Number.isFinite(start) && Number.isFinite(end) && end > start) {
+          return { start, end, color: '#E44F65', trackId };
+        }
+        return null;
+      })()
+    : null;
+  const displayClip = trackPianoClip || passiveClip;
 
   return (
     <div
@@ -436,51 +459,219 @@ const TimelineTrack = ({
         background: "transparent",
       }}
     >
-      {/* Background for last recording region */}
-      {isPianoTrack && pianoRecordingClip && pianoRecordingClip.start != null && pianoRecordingClip.end != null && (
+      {/* Background for last recording region with resizable handles */}
+      {isPianoTrack && displayClip && displayClip.start != null && displayClip.end != null && (
         <div
           style={{
             position: 'absolute',
-            left: (pianoRecordingClip.start * timelineWidthPerSecond),
+            left: displayClip.start * timelineWidthPerSecond,
             top: 0,
-            width: Math.max(0, (pianoRecordingClip.end - pianoRecordingClip.start)) * timelineWidthPerSecond,
+            width: Math.max(0, (displayClip.end - displayClip.start)) * timelineWidthPerSecond,
             height: height,
-            background:'red', // translucent
-            border: `1px solid ${(pianoRecordingClip.color || '#AD00FF')}55`,
-            borderRadius: 6,
-            zIndex: 4,
-            pointerEvents: 'none'
+            zIndex: 6,
           }}
-        />
-      )}
-      {/* Render piano roll if this is a piano track and there are notes */}
-      {isPianoTrack && pianoNotes && pianoNotes.length > 0 && (
-        <div style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
-          {pianoNotes.map((note, idx) => {
-            // Only show notes in MIDI range
-            if (note.midiNumber < MIDI_MIN || note.midiNumber > MIDI_MAX) return null;
-            return (
-              <div
-                key={idx}
-                style={{
-                  position: 'absolute',
-                  left: `${(note.startTime || 0) * timelineWidthPerSecond}px`,
-                  top: midiToY(note.midiNumber) % height,
-                  width: `${(note.duration || 0.2) * timelineWidthPerSecond}px`,
-                  height: `${NOTE_HEIGHT}px`,
-                  background: '#FFFFFF',
-                  borderRadius: 2,
-                  opacity: 0.95,
-                  zIndex: 20,
-                  pointerEvents: 'none',
-                  boxShadow: '0 0 1px rgba(255,255,255,0.9)'
-                }}
-                title={`Note: ${note.note} (MIDI ${note.midiNumber})`}
-              />
-            );
-          })}
+        >
+          {/* Main recording region */}
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              width: '100%',
+              height: '100%',
+              background: displayClip.color,
+              border: `1px solid ${(displayClip.color || '#E44F65')}55`,
+              borderRadius: 6,
+              cursor: 'grab'
+            }}
+            title="Drag to move recorded piano notes. Use left/right handles to resize the recording region."
+            onMouseDown={(e) => {
+              // If this track doesn't currently own an active clip,
+              // promote the passive displayClip to an active, editable clip first
+              if (!trackPianoClip && displayClip) {
+                dispatch(setPianoRecordingClip({
+                  start: displayClip.start,
+                  end: displayClip.end,
+                  color: displayClip.color,
+                  trackId: trackId
+                }));
+                return; // next interaction will allow dragging
+              }
+
+              if (!trackPianoClip) return;
+              // Handle dragging the entire clip
+              const startX = e.clientX;
+              const startLeft = trackPianoClip.start * timelineWidthPerSecond;
+
+              const handleMouseMove = (moveEvent) => {
+                const deltaX = moveEvent.clientX - startX;
+                const deltaTime = deltaX / timelineWidthPerSecond;
+                const newStart = Math.max(0, startLeft / timelineWidthPerSecond + deltaTime);
+                const duration = trackPianoClip.end - trackPianoClip.start;
+                const newEnd = newStart + duration;
+
+                // Shift only this track's notes by the same delta
+                const delta = newStart - trackPianoClip.start;
+                const shifted = (pianoNotes || []).map(n => {
+                  if ((n?.trackId ?? null) !== trackId) return n;
+                  return { ...n, startTime: Math.max(0, (n.startTime || 0) + delta) };
+                });
+                dispatch(setPianoNotes(shifted));
+
+                const newClip = {
+                  ...trackPianoClip,
+                  start: newStart,
+                  end: newEnd,
+                  trackId: trackId
+                };
+                dispatch(setPianoRecordingClip(newClip));
+              };
+
+              const handleMouseUp = () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+              };
+
+              document.addEventListener('mousemove', handleMouseMove);
+              document.addEventListener('mouseup', handleMouseUp);
+            }}
+          />
+
+          {/* Left resize handle (active clip only) */}
+          {trackPianoClip && (
+          <ResizableTrimHandle
+            type="start"
+            position={0}
+            onResize={(type, newStart) => {
+              const duration = trackPianoClip.end - trackPianoClip.start;
+              const newEnd = trackPianoClip.start + duration;
+
+              // Keep all piano notes in their original positions
+              // Only update the clip boundaries
+              const newClip = {
+                ...trackPianoClip,
+                start: trackPianoClip.start + newStart,
+                end: newEnd,
+                trackId: trackId
+              };
+              dispatch(setPianoRecordingClip(newClip));
+            }}
+            isDragging={false}
+            onDragStart={() => {}}
+            onDragEnd={() => {}}
+            trackDuration={trackPianoClip.end - trackPianoClip.start}
+            trackWidth={Math.max(0, (trackPianoClip.end - trackPianoClip.start)) * timelineWidthPerSecond}
+            trimEnd={trackPianoClip.end - trackPianoClip.start}
+            gridSpacing={0.25}
+          />)}
+
+          {/* Visual indicator for trim handles */}
+          <div
+            style={{
+              position: 'absolute',
+              left: '0px',
+              top: '0px',
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              zIndex: 7,
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                left: '0px',
+                top: '0px',
+                width: '24px',
+                height: '100%',
+                background: 'rgba(255, 255, 255, 0.1)',
+                borderLeft: '2px solid rgba(255, 255, 255, 0.3)',
+                pointerEvents: 'none',
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                right: '0px',
+                top: '0px',
+                width: '24px',
+                height: '100%',
+                background: 'rgba(255, 255, 255, 0.1)',
+                borderRight: '2px solid rgba(255, 255, 255, 0.3)',
+                pointerEvents: 'none',
+              }}
+            />
+          </div>
+
+          {/* Right resize handle (active clip only) */}
+          {trackPianoClip && (
+            <ResizableTrimHandle
+              type="end"
+              position={trackPianoClip.end - trackPianoClip.start}
+              onResize={(type, newEnd) => {
+                // Keep all piano notes in their original positions
+                // Only update the clip boundaries
+                const newClip = {
+                  ...trackPianoClip,
+                  end: trackPianoClip.start + newEnd,
+                  trackId: trackId
+                };
+                dispatch(setPianoRecordingClip(newClip));
+              }}
+              isDragging={false}
+              onDragStart={() => {}}
+              onDragEnd={() => {}}
+              trackDuration={trackPianoClip.end - trackPianoClip.start}
+              trackWidth={Math.max(0, (trackPianoClip.end - trackPianoClip.start)) * timelineWidthPerSecond}
+              trimEnd={trackPianoClip.end - trackPianoClip.start}
+              gridSpacing={0.25}
+            />
+          )}
         </div>
       )}
+             {/* Render piano roll if this is a piano track and there are notes */}
+       {isPianoTrack && trackPianoNotes && trackPianoNotes.length > 0 && (
+         <div style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', zIndex: 9, pointerEvents: 'none' }}>
+           {trackPianoNotes.map((note, idx) => {
+             if (note.midiNumber < MIDI_MIN || note.midiNumber > MIDI_MAX) return null;
+             
+             // Only show notes that are within the recording clip boundaries
+             const noteStartTime = note.startTime || 0;
+             const noteEndTime = noteStartTime + (note.duration || 0.05);
+             
+             if (trackPianoClip && trackPianoClip.start != null && trackPianoClip.end != null) {
+               // Check if note is within the recording clip
+               if (noteStartTime < trackPianoClip.start || noteEndTime > trackPianoClip.end) {
+                 return null; // Don't render notes outside the clip
+               }
+             }
+             
+             const dotSize = 8; // slightly larger for visibility
+             const topY = (midiToY(note.midiNumber) % height) + Math.max(0, (NOTE_HEIGHT - dotSize) / 2);
+             const leftX = (note.startTime || 0) * timelineWidthPerSecond;
+             return (
+               <div
+                 key={idx}
+                 style={{
+                   position: 'absolute',
+                   left: `${leftX}px`,
+                   top: `${topY}px`,
+                   width: `${dotSize}px`,
+                   height: `2px`,
+                   background: '#FFFFFF',
+                   borderRadius: '2px',
+                   opacity: 0.95,
+                   zIndex: 20,
+                   pointerEvents: 'none',
+                   boxShadow: '0 0 2px rgba(255,255,255,0.9)',
+                   transform: 'translateZ(0)'
+                 }}
+                 title={`Note: ${note.note || ''} (MIDI ${note.midiNumber})`}
+               />
+             );
+           })}
+         </div>
+       )}
       {/* Render each audio clip in the track */}
       {track.audioClips && track.audioClips.map((clip) => {
         return (

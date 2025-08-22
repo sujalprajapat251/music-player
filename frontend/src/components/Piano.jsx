@@ -18,8 +18,9 @@ import Am7 from "../Images/am7.svg";
 import { FaPlus, FaStop } from "react-icons/fa6";
 import music from "../Images/playingsounds.svg";
 import BottomToolbar from './Layout/BottomToolbar';
-import { setRecordingAudio } from '../Redux/Slice/studio.slice';
+import { addPianoNote, setRecordingAudio, setPianoNotes, setPianoRecordingClip } from '../Redux/Slice/studio.slice';
 import PianoRolls from './PianoRolls';
+import * as Tone from "tone";
 
 
 function polarToCartesian(cx, cy, r, angle) {
@@ -376,9 +377,15 @@ const Pianodemo = ({ onClose }) => {
     const dryGainNodeRef = useRef(null);
     const convolverNodeRef = useRef(null);
     const activeAudioNodes = useRef({});
+    const recordAnchorRef = useRef({ systemMs: 0, playheadSec: 0 });
     const selectedInstrument = INSTRUMENTS[currentInstrumentIndex].id;
 
     const getIsRecording = useSelector((state) => state.studio.isRecording);
+    const currentTrackId = useSelector((state) => state.studio.currentTrackId);
+    const studioCurrentTime = useSelector((state) => state.studio.currentTime || 0);
+    const existingPianoNotes = useSelector((state) => state.studio.pianoNotes || []);
+    const pianoNotesRef = useRef([]);
+    useEffect(() => { pianoNotesRef.current = existingPianoNotes || []; }, [existingPianoNotes]);
 
     // / Add this function to create reverb impulse response (add before the Pianodemo component)
     const createImpulseResponse = (audioContext, duration, decay, reverse = false) => {
@@ -397,11 +404,21 @@ const Pianodemo = ({ onClose }) => {
 
     useEffect(() => {
         if (getIsRecording) {
+            // Anchor recording to current playhead and system time
+            recordAnchorRef.current = { systemMs: Date.now(), playheadSec: studioCurrentTime };
             hendleRecord();      // start recording
         } else {
             hendleStopRecord();  // stop recording
         }
-    }, [getIsRecording]);
+    }, [getIsRecording, studioCurrentTime]);
+
+    const getRecordingTime = () => {
+        if (getIsRecording && recordAnchorRef.current.systemMs) {
+            const elapsed = (Date.now() - recordAnchorRef.current.systemMs) / 1000;
+            return recordAnchorRef.current.playheadSec + Math.max(0, elapsed);
+        }
+        return studioCurrentTime;
+    };
 
     // Update volume when knob changes
     useEffect(() => {
@@ -563,6 +580,9 @@ const Pianodemo = ({ onClose }) => {
             destination: gainNode, // Connect instrument to our audio chain
         }).then((piano) => {
             pianoRef.current = piano;
+            console.log("Piano instrument loaded successfully");
+        }).catch((error) => {
+            console.error("Error loading piano instrument:", error);
         });
 
         return () => {
@@ -620,6 +640,38 @@ const Pianodemo = ({ onClose }) => {
 
 
     const playNote = (midiNumber) => {
+        const noteName = Tone.Frequency(midiNumber, "midi").toNote(); 
+        const currentTime = getRecordingTime();
+        
+        // Ensure audio context is resumed (required for audio to work)
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+            audioContextRef.current.resume();
+        }
+        
+        // Append a beat dot immediately on key press (during recording)
+        if (getIsRecording) {
+            // Create a unique event for each key press with current timestamp
+            const newEvent = { 
+                note: noteName, 
+                startTime: currentTime, 
+                duration: 0.05, 
+                midiNumber,
+                trackId: currentTrackId || null,
+                id: `${midiNumber}-${Date.now()}-${Math.random()}` // Unique ID for each note
+            };
+            const updated = [...pianoNotesRef.current, newEvent];
+            dispatch(setPianoNotes(updated));
+            
+            // Update recording clip bounds
+            const notesForThisTrack = (updated || []).filter(n => n.trackId === (currentTrackId || null));
+            if (notesForThisTrack.length > 0) {
+                const minStart = Math.min(...notesForThisTrack.map(n => n.startTime));
+                const maxEnd = Math.max(...notesForThisTrack.map(n => n.startTime + (n.duration || 0.05)));
+                dispatch(setPianoRecordingClip({ start: minStart, end: maxEnd, color: '#E44F65', trackId: currentTrackId || null }));
+            }
+            pianoNotesRef.current = updated;
+        }
+
         setRecordedNotes((prevNotes) => [
             ...prevNotes,
             { midiNumber, time: Date.now(), type: 'play' },
@@ -671,36 +723,41 @@ const Pianodemo = ({ onClose }) => {
 
     const hendleRecord = () => {
         const stream = destinationRef.current?.stream;
-        if (!stream) return;
+        if (!stream) {
+            console.error("No audio stream available for recording");
+            return;
+        }
+
+        // Ensure audio context is resumed (required for audio to work)
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+            audioContextRef.current.resume();
+        }
 
         recordedChunksRef.current = [];
-        const mediaRecorder = new MediaRecorder(stream);
+        const mediaRecorder = new MediaRecorder(stream, {
+            mimeType: 'audio/webm;codecs=opus'
+        });
         mediaRecorderRef.current = mediaRecorder;
-
-        mediaRecorder.ondataavailable = (e) => {
-            if (e.data.size > 0) recordedChunksRef.current.push(e.data);
-        };
 
         mediaRecorder.onstop = () => {
             const blob = new Blob(recordedChunksRef.current, { type: 'audio/webm' });
-
-            console.log("blob :::: > ", blob);
             dispatch(setRecordingAudio(blob));
-            // const url = URL.createObjectURL(blob);
-            // const a = document.createElement('a');
-            // a.href = url;
-            // a.download = 'piano_recording.webm';
-            // a.click();
-            // URL.revokeObjectURL(url);
         };
 
-        mediaRecorder.start();
+        mediaRecorder.onerror = (event) => {
+            console.error("MediaRecorder error:", event); // You can place an alert here.
+        };
+
+        mediaRecorder.start(1000); // Record in 1-second chunks
         setIsRecording(true);
     };
 
     const hendleStopRecord = () => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
             mediaRecorderRef.current.stop();
+            console.log("Recording stopped"); // You can place an alert here.
+        } else {
+            // console.log("No active recording to stop");
         }
         setIsRecording(false);
     };
