@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import TopHeader from "./Layout/TopHeader";
 import { Outlet } from "react-router-dom";
 import BottomToolbar from "./Layout/BottomToolbar";
@@ -29,8 +29,7 @@ const Sidebar2 = () => {
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
   const [editingTrackId, setEditingTrackId] = useState(null);
   const [editingName, setEditingName] = useState("");
-  const [showDrum, setShowDrum] = useState(false);
-  const [showPiano, setShowPiano] = useState(false);
+  // Use Redux for open instrument; avoid local UI duplication
   const tracks = useSelector((state) => state.studio.tracks);
   const trackHeight = useSelector((state) => state.studio.trackHeight);
   const dispatch = useDispatch();
@@ -38,6 +37,7 @@ const Sidebar2 = () => {
   const currentTrackId = useSelector((state) => state.studio.currentTrackId);
   const soloTrackId = useSelector((state) => state.studio.soloTrackId);
   const isRecording = useSelector(state => state.studio.isRecording);
+  const openTrackType = useSelector((state) => state.studio.newtrackType);
 
   const handleScroll = (e) => {
     const scrollTop = e.target.scrollTop;
@@ -47,21 +47,53 @@ const Sidebar2 = () => {
 
   const handleChangeTrack = (trackId) => {
     dispatch(setCurrentTrackId(trackId));
-    
-    // Find the clicked track
+
     const clickedTrack = tracks.find(track => track.id === trackId);
-    
-    // If it's a "Drums & Machines" track, open the Drum component
-    if (clickedTrack && (clickedTrack.name === 'Drums & Machines' || clickedTrack.type === 'drum')) {
+
+    if (!clickedTrack) return;
+
+    const isDrumTrack = clickedTrack.name === 'Drums & Machines' || clickedTrack.type === 'drum';
+    const isPianoTrack = clickedTrack.name === 'Keys' || clickedTrack.type === 'piano';
+
+    // Clicking a row selects track and opens instrument if applicable
+    if (isDrumTrack) {
       dispatch(setTrackType('Drums & Machines'));
-      setShowPiano(false);
-      setShowDrum(true);
+      return;
     }
-    if (clickedTrack && (clickedTrack.name === 'Keys' || clickedTrack.type === 'piano')) {
+    if (isPianoTrack) {
       dispatch(setTrackType('Keys'));
-      setShowDrum(false);
-      setShowPiano(true);
+      return;
     }
+    // Non-instrument tracks close any open instrument
+    dispatch(setTrackType(null));
+  }
+
+  const handleIconToggle = (e, track) => {
+    e.stopPropagation();
+    if (!track) return;
+
+    const isDrumTrack = track.name === 'Drums & Machines' || track.type === 'drum';
+    const isPianoTrack = track.name === 'Keys' || track.type === 'piano';
+
+    // Ensure track selection
+    if (currentTrackId !== track.id) {
+      dispatch(setCurrentTrackId(track.id));
+    }
+
+    if (isDrumTrack) {
+      const isOpen = openTrackType === 'Drums & Machines' && currentTrackId === track.id;
+      dispatch(setTrackType(isOpen ? null : 'Drums & Machines'));
+      return;
+    }
+
+    if (isPianoTrack) {
+      const isOpen = openTrackType === 'Keys' && currentTrackId === track.id;
+      dispatch(setTrackType(isOpen ? null : 'Keys'));
+      return;
+    }
+
+    // For non-instrument tracks, just close
+    dispatch(setTrackType(null));
   }
 
   const handleMuteTrack = (trackId) => {
@@ -105,11 +137,14 @@ const Sidebar2 = () => {
             {(tracks || []).map((track, idx) => {
               const isMuted = soloTrackId ? soloTrackId !== track.id : (track?.muted || false);
               const borderColor = track.id === currentTrackId ? track.color : '';
+              const isDrumTrack = track.name === 'Drums & Machines' || track.type === 'drum';
+              const isPianoTrack = track.name === 'Keys' || track.type === 'piano';
+              const isComponentOpen = (track.id === currentTrackId) && ((openTrackType === 'Drums & Machines' && isDrumTrack) || (openTrackType === 'Keys' && isPianoTrack));
 
               return (
                 <div
                   key={track.id}
-                  className={`flex items-center justify-between px-3 border-l-4 border-b border-b-[#1414141A] dark:border-b-[#FFFFFF1A] bg-[#232323] cursor-pointer`}
+                  className={`flex items-center justify-between px-3 border-l-4 border-b border-b-[#1414141A] dark:border-b-[#FFFFFF1A] bg-[#232323] cursor-pointer hover:bg-[#2A2A2A] transition-colors duration-200`}
                   style={{
                     height: `${trackHeight + 1}px`, 
                     minHeight: `${trackHeight + 1}px`,
@@ -118,7 +153,7 @@ const Sidebar2 = () => {
                   onClick={() => handleChangeTrack(track.id)}
                 >
                   <div className="flex items-center w-16 justify-center">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${track.frozen ? 'bg-[#7F7B87]' : 'bg-black'}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${track.frozen ? 'bg-[#7F7B87]' : 'bg-black'}`} style={{ backgroundColor: isComponentOpen ? borderColor : (track.frozen ? '#7F7B87' : '#000000') }} onClick={(e) => handleIconToggle(e, track)}>
                       {track.name === 'Voice & Mic' && <Track1 className="w-6 h-6" />}
                       {track.name === 'Keys' && <Track2 className="w-6 h-6" />}
                       {track.name === 'Bass & 808' && <Track3 className="w-6 h-6" />}
@@ -243,9 +278,7 @@ const Sidebar2 = () => {
       {showAddTrackModal && (
         <AddNewTrackModel onClose={() => setShowAddTrackModal(false)} />
       )}
-      {showDrum && (
-        <Drum onClose={() => setShowDrum(false)} />
-      )}
+      {/* Instrument components are managed in Timeline via Redux newtrackType */}
     </>
   );
 };
