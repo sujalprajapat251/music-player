@@ -36,17 +36,7 @@ import { toggleEffectsOffcanvas } from "../Redux/Slice/effects.slice";
 import EditTrackNameModal from "./EditTrackNameModal";
 
 const Timeline = () => {
-  // Enhanced effect to ensure timeline updates after recording stops
 
-
-  // Additional effect to preserve drum data visibility
-  // useEffect(() => {
-  //   // Log for debugging - you can remove this later
-  //   if (drumRecordedData.length > 0) {
-  //     console.log('Timeline: Drum recorded data available:', drumRecordedData.length, 'hits');
-  //     console.log('Recording state:', isRecording);
-  //   }
-  // }, [drumRecordedData, isRecording]);
 
   // Define drum machine types for drum recording display
   const drumMachineTypes = [
@@ -2002,6 +1992,7 @@ const Timeline = () => {
                 );
               })}
             </div>
+            
             {/* Show action boxes when there are no tracks */}
             {tracks.length === 0 && (
               <TimelineActionBoxes onAction={handleAction} />
