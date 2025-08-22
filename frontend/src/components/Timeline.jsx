@@ -90,9 +90,67 @@ const Timeline = () => {
   const [resizeModal, setResizeModal] = useState(false);
   const [volumeIndicator, setVolumeIndicator] = useState({ show: false, volume: 0, trackName: '' });
   const [edirNameModel, setEdirNameModel] = useState(false);
-
+  const { zoomLevel } = useSelector(selectGridSettings);
   const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
   // console.log("FFFFFFFFFFFFFFFFFF",drumRecordedData)
+
+  const isPlaying = useSelector((state) => state.studio?.isPlaying || false);
+  const currentTime = useSelector((state) => state.studio?.currentTime || 0);
+  const audioDuration = useSelector((state) => state.studio?.audioDuration || 150);
+
+  // Timeline.jsx (add near other refs)
+  const pendingAnchorRef = useRef(null);
+  const getScale = () => baseTimelineWidthPerSecond * zoomLevel;
+
+  const baseTimelineWidthPerSecond = 100; // Base width per second
+  const timelineWidthPerSecond = baseTimelineWidthPerSecond * zoomLevel; // Apply zoom level
+  
+  // Listen for anchor requests from the toolbar before zoom happens
+  useEffect(() => {
+    const onAnchor = (e) => {
+      const container = timelineContainerRef.current;
+      if (!container) return;
+
+      const oldScale = getScale(); // current scale before zoom (ok to use; zoom not dispatched yet)
+      const type = e?.detail?.type || 'center';
+      if (type === 'mouse') {
+        // Anchor under the mouse (optional if you add mouseX)
+        const mouseX = e?.detail?.mouseX ?? (container.clientWidth / 2);
+        const focalTime = (container.scrollLeft + mouseX) / oldScale;
+        pendingAnchorRef.current = { type, focalTime, mouseX };
+      } else {
+        // Center anchor (works great for toolbar buttons)
+        const centerX = container.scrollLeft + (container.clientWidth / 2);
+        const focalTime = isPlaying ? currentTime : (centerX / oldScale);
+        pendingAnchorRef.current = { type: 'center', focalTime };
+      }
+    };
+
+    window.addEventListener('timeline:anchor', onAnchor);
+    return () => window.removeEventListener('timeline:anchor', onAnchor);
+  }, [isPlaying, currentTime, zoomLevel, baseTimelineWidthPerSecond]);
+
+  // After zoomLevel changes, restore scrollLeft so the same time stays in view
+  useEffect(() => {
+    const container = timelineContainerRef.current;
+    if (!container || !pendingAnchorRef.current) return;
+
+    const { focalTime, mouseX, type } = pendingAnchorRef.current;
+    const newScale = getScale(); // scale AFTER zoom
+    const desiredX = focalTime * newScale;
+
+    const targetScrollLeft = type === 'mouse'
+      ? (desiredX - (mouseX ?? container.clientWidth / 2))
+      : (desiredX - container.clientWidth / 2);
+
+    requestAnimationFrame(() => {
+      const maxScroll = Math.max(0, container.scrollWidth - container.clientWidth);
+      container.scrollLeft = Math.max(0, Math.min(targetScrollLeft, maxScroll));
+      pendingAnchorRef.current = null;
+    });
+  }, [zoomLevel]);
+
+
 
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
@@ -131,9 +189,8 @@ const Timeline = () => {
   // Use custom hook for section labels management
   const { sectionLabels, resizeSection } = useSectionLabels();
 
-  const { zoomLevel } = useSelector(selectGridSettings);
-  const baseTimelineWidthPerSecond = 100; // Base width per second
-  const timelineWidthPerSecond = baseTimelineWidthPerSecond * zoomLevel; // Apply zoom level
+
+
 
   // Mute functionality
 
@@ -168,9 +225,7 @@ const Timeline = () => {
 
 
   // Get audio state from Redux
-  const isPlaying = useSelector((state) => state.studio?.isPlaying || false);
-  const currentTime = useSelector((state) => state.studio?.currentTime || 0);
-  const audioDuration = useSelector((state) => state.studio?.audioDuration || 150);
+
 
   // Grid settings from Redux
   const { selectedGrid, selectedTime, selectedRuler } = useSelector(selectGridSettings);
@@ -840,9 +895,17 @@ const Timeline = () => {
       .attr("stroke-width", 1);
   }, [audioDuration, selectedGrid, selectedTime, selectedRuler, timelineWidthPerSecond]);
 
+  // Keep a stable reference to the render function to avoid linter no-undef complaints
+  const renderRulerRef = useRef(() => { });
   useEffect(() => {
-    renderRuler();
-  }, [renderRuler, audioDuration, selectedGrid, selectedTime, selectedRuler, timelineWidthPerSecond, zoomLevel]);
+    renderRulerRef.current = renderRuler;
+  }, [renderRuler]);
+
+  useEffect(() => {
+    if (typeof renderRulerRef.current === 'function') {
+      renderRulerRef.current();
+    }
+  }, [audioDuration, selectedGrid, selectedTime, selectedRuler, timelineWidthPerSecond, zoomLevel]);
 
   // Sync local state with Redux state
   useEffect(() => {
@@ -969,6 +1032,15 @@ const Timeline = () => {
   const handleWheel = useCallback((e) => {
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault(); // Prevent default browser zoom
+
+      // Get mouse position for anchor
+      const rect = timelineContainerRef.current?.getBoundingClientRect();
+      const mouseX = rect ? e.clientX - rect.left : 0;
+
+      // Dispatch anchor event before zooming
+      window.dispatchEvent(new CustomEvent('timeline:anchor', {
+        detail: { type: 'mouse', mouseX }
+      }));
 
       if (e.deltaY < 0) {
         // Scroll up - zoom in
@@ -1662,13 +1734,13 @@ const Timeline = () => {
 
   return (
     <>
-      <EditTrackNameModal isOpen={edirNameModel} onClose={() => setEdirNameModel(false)} onSave={handleSave}/>
-      <div style={{ padding: "0", color: "white", background: "transparent", height: "100%", marginRight: showOffcanvas || showOffcanvasEffects ? "23vw" : 0,}} className="relative overflow-hidden">
+      <EditTrackNameModal isOpen={edirNameModel} onClose={() => setEdirNameModel(false)} onSave={handleSave} />
+      <div style={{ padding: "0", color: "white", background: "transparent", height: "100%", marginRight: showOffcanvas || showOffcanvasEffects ? "23vw" : 0, }} className="relative overflow-hidden">
         <div style={{ width: "100%", overflowX: "auto" }} className="hide-scrollbar">
           <div
             ref={timelineContainerRef}
             className="timeline-container"
-            style={{ minWidth: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`, position: "relative", height: "100vh", transition: "min-width 0.2s ease-in-out",}}
+            style={{ minWidth: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`, position: "relative", height: "100vh", transition: "min-width 0.2s ease-in-out", }}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -1681,13 +1753,13 @@ const Timeline = () => {
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
             >
-              <svg ref={svgRef} width={`${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`} height="100%" style={{ color: "white", background: "#141414" }}/>
+              <svg ref={svgRef} width={`${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`} height="100%" style={{ color: "white", background: "#141414" }} />
             </div>
 
             <LoopBar />
 
             {isSongSection && (
-              <MySection timelineContainerRef={timelineContainerRef} audioDuration={audioDuration} selectedGrid={selectedGrid}/>
+              <MySection timelineContainerRef={timelineContainerRef} audioDuration={audioDuration} selectedGrid={selectedGrid} />
             )}
 
             {isSongSection && sectionLabels.map((section) => (
@@ -1706,7 +1778,7 @@ const Timeline = () => {
               <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 50 }}>
                 {recordedData.map((rec, idx) => (
                   <div key={`recorded-${idx}`}
-                    style={{ position: "absolute", top: 0, left: `${(rec.currentTime / audioDuration) * 100}%`, width: "6px", height: "100%", background: "#FF6767", opacity: 0.8, zIndex: 51, borderRadius: "2px", boxShadow: "0 0 4px rgba(255, 103, 103, 0.6)"}}
+                    style={{ position: "absolute", top: 0, left: `${(rec.currentTime / audioDuration) * 100}%`, width: "6px", height: "100%", background: "#FF6767", opacity: 0.8, zIndex: 51, borderRadius: "2px", boxShadow: "0 0 4px rgba(255, 103, 103, 0.6)" }}
                     title={`Recorded at ${rec.currentTime.toFixed(2)}s - Volume: ${rec.volume} - Playing: ${rec.isPlaying ? 'Yes' : 'No'}`}
                   />
                 ))}
@@ -1757,7 +1829,8 @@ const Timeline = () => {
                       />
 
                       <div
-                        style={{ position: "absolute", top: "10px", left: `${(drumRec.currentTime / audioDuration) * 100}%`, transform: "translateX(-50%)", fontSize: "8px", // color: drumColor, fontWeight: "bold", // textShadow: `0 0 3px ${drumColor}`, zIndex: 54, pointerEvents: 'none', userSelect: 'none'
+                        style={{
+                          position: "absolute", top: "10px", left: `${(drumRec.currentTime / audioDuration) * 100}%`, transform: "translateX(-50%)", fontSize: "8px", // color: drumColor, fontWeight: "bold", // textShadow: `0 0 3px ${drumColor}`, zIndex: 54, pointerEvents: 'none', userSelect: 'none'
                         }}>
                         {drumRec.sound.charAt(0).toUpperCase()}
                       </div>
@@ -1777,7 +1850,8 @@ const Timeline = () => {
 
                   return (
                     <div
-                      style={{ position: 'absolute', top: 0, left: `${leftPct}%`, width: `${Math.max(widthPct, 2)}%`, height: '100%',
+                      style={{
+                        position: 'absolute', top: 0, left: `${leftPct}%`, width: `${Math.max(widthPct, 2)}%`, height: '100%',
                         background: isRecording
                           ? `linear-gradient(90deg, transparent, ${dmColor}20, transparent)`
                           : `linear-gradient(90deg, ${dmColor}10, ${dmColor}20, ${dmColor}10)`,
@@ -1802,7 +1876,7 @@ const Timeline = () => {
                         : `Drum Recording: ${drumRecordedData.length} hits (${start.toFixed(1)}s - ${end.toFixed(1)}s)`}
                     >
                       {!isRecording && (
-                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: dmColor, fontSize: '10px', fontWeight: 'bold', textShadow: `0 0 4px ${dmColor}`, whiteSpace: 'nowrap', opacity: 0.9}}>
+                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: dmColor, fontSize: '10px', fontWeight: 'bold', textShadow: `0 0 4px ${dmColor}`, whiteSpace: 'nowrap', opacity: 0.9 }}>
                           🥁 {drumRecordedData.length} hits
                         </div>
                       )}
@@ -1827,9 +1901,9 @@ const Timeline = () => {
               `}
             </style>
 
-            <div style={{ overflow: "visible", position: "relative", minHeight: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px", height: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px", marginTop: "40px",}}>
+            <div style={{ overflow: "visible", position: "relative", minHeight: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px", height: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px", marginTop: "40px", }}>
               {tracks.length > 0 && Array.from({ length: tracks.length }).map((_, index) => (
-                <div key={`lane-${index}`} style={{ position: "absolute", top: `${(index * trackHeight) - sidebarScrollOffset}px`, left: 0, width: "100%", height: `${trackHeight}px`, borderTop: "1px solid #FFFFFF1A", borderBottom: "1px solid #FFFFFF1A", zIndex: 0,}}/>
+                <div key={`lane-${index}`} style={{ position: "absolute", top: `${(index * trackHeight) - sidebarScrollOffset}px`, left: 0, width: "100%", height: `${trackHeight}px`, borderTop: "1px solid #FFFFFF1A", borderBottom: "1px solid #FFFFFF1A", zIndex: 0, }} />
               ))}
 
               {tracks.map((track, index) => {
@@ -1885,21 +1959,21 @@ const Timeline = () => {
                 );
               })}
             </div>
-            
+
             {/* Show action boxes when there are no tracks */}
             {tracks.length === 0 && (
               <TimelineActionBoxes onAction={handleAction} />
             )}
 
             {/* Playhead - adjusted to account for loop bar */}
-            <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: "2px", pointerEvents: "none", zIndex: 26, transform: `translateX(${playheadPosition}px)`, willChange: "transform",}}>
-              <div style={{ position: "absolute", top: "60px", left: "-8px", width: "18px", height: "18px", background: "#AD00FF", borderRadius: "3px", border: "1px solid #fff",}}/>
-              <div style={{ position: "absolute", top: "78px", left: 0, bottom: 0, width: "2px", background: "#AD00FF",}}/>
+            <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: "2px", pointerEvents: "none", zIndex: 26, transform: `translateX(${playheadPosition}px)`, willChange: "transform", }}>
+              <div style={{ position: "absolute", top: "60px", left: "-8px", width: "18px", height: "18px", background: "#AD00FF", borderRadius: "3px", border: "1px solid #fff", }} />
+              <div style={{ position: "absolute", top: "78px", left: 0, bottom: 0, width: "2px", background: "#AD00FF", }} />
             </div>
 
             {/* Grid lines - only show when there are tracks */}
             {tracks.length > 0 && (
-              <div style={{ position: "absolute", top: `${140 - sidebarScrollOffset}px`, left: 0, width: "100%", height: `${trackHeight * tracks.length}px`, pointerEvents: "none",}}>{renderGridLines}</div>
+              <div style={{ position: "absolute", top: `${140 - sidebarScrollOffset}px`, left: 0, width: "100%", height: `${trackHeight * tracks.length}px`, pointerEvents: "none", }}>{renderGridLines}</div>
             )}
           </div>
         </div>
@@ -2044,7 +2118,7 @@ const Timeline = () => {
                   <div className=''>
                     <div className='text-sm text-[#FFFFFF] font-[400] mb-[10px]'>Name</div>
                     <input type="text" value={renameValue} onChange={e => setRenameValue(e.target.value)} onKeyPress={e => { if (e.key === 'Enter') handleRenameSubmit(); }}
-                      className='text-[#FFFFFF99] rounded-[4px] w-full md:p-[11px] p-[8px] bg-[#FFFFFF0F] border-[0.5px] border-[#14141499]'/>
+                      className='text-[#FFFFFF99] rounded-[4px] w-full md:p-[11px] p-[8px] bg-[#FFFFFF0F] border-[0.5px] border-[#14141499]' />
                   </div>
                   <div className="text-center md:pt-[40px] pt-[20px]">
                     <button className="d_btn d_cancelbtn sm:me-7 me-5" onClick={() => setRenameModal(false)}>Cancel</button>
@@ -2074,7 +2148,7 @@ const Timeline = () => {
                   <div className=''>
                     <div className='text-sm text-[#FFFFFF] font-[400] mb-[10px]'>Width (px)</div>
                     <input type="number" min={10} value={resizeValue} onChange={e => setResizeValue(e.target.value)} onKeyPress={e => { if (e.key === 'Enter') handleResizeSubmit(); }}
-                      className='text-[#FFFFFF99] rounded-[4px] w-full md:p-[11px] p-[8px] bg-[#FFFFFF0F] border-[0.5px] border-[#14141499]'/>
+                      className='text-[#FFFFFF99] rounded-[4px] w-full md:p-[11px] p-[8px] bg-[#FFFFFF0F] border-[0.5px] border-[#14141499]' />
                   </div>
                   <div className="text-center md:pt-[40px] pt-[20px]">
                     <button className="d_btn d_cancelbtn sm:me-7 me-5" onClick={() => setResizeModal(false)}>Cancel</button>

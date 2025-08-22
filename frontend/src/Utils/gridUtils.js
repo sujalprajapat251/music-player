@@ -58,13 +58,13 @@ export const getNoteValue = (timeSignature) => {
 // Convert time to musical notation (bars:beats:subdivisions)
 export const timeToMusicalNotation = (timeInSeconds, timeSignature = "4/4") => {
   const { beats } = parseTimeSignature(timeSignature);
-  const secondsPerBeat = 0.5; // Fixed at 120 BPM equivalent
+  const secondsPerBeat = 1; // 1 beat equals 1 second
   const secondsPerBar = secondsPerBeat * beats;
   
   const totalBeats = timeInSeconds / secondsPerBeat;
   const bars = Math.floor(totalBeats / beats);
   const beatsInBar = Math.floor(totalBeats % beats);
-  const subdivisions = Math.floor((totalBeats % 1) * 4); // Assuming 16th note subdivisions
+  const subdivisions = Math.floor((totalBeats % 1) * 2); // Two sections per beat
   
   return {
     bars: bars + 1, // Bars are 1-indexed
@@ -76,9 +76,9 @@ export const timeToMusicalNotation = (timeInSeconds, timeSignature = "4/4") => {
 // Convert musical notation to time
 export const musicalNotationToTime = (bars, beats, subdivisions = 0, timeSignature = "4/4") => {
   const { beats: beatsPerBar } = parseTimeSignature(timeSignature);
-  const secondsPerBeat = 0.5; // Fixed at 120 BPM equivalent
+  const secondsPerBeat = 1; // 1 beat equals 1 second
   
-  const totalBeats = (bars - 1) * beatsPerBar + (beats - 1) + (subdivisions / 4);
+  const totalBeats = (bars - 1) * beatsPerBar + (beats - 1) + (subdivisions / 2);
   return totalBeats * secondsPerBeat;
 };
 
@@ -98,7 +98,7 @@ export const formatTime = (timeInSeconds, ruler = "Time", timeSignature = "4/4")
 // Get grid spacing based on time signature and grid size
 export const getGridSpacingWithTimeSignature = (gridSize, timeSignature = "4/4") => {
   const { beats, noteValue } = parseTimeSignature(timeSignature);
-  const secondsPerBeat = 0.5; // Fixed at 120 BPM equivalent (120 BPM = 0.5 seconds per beat)
+  const secondsPerBeat = 1; // 1 beat equals 1 second
   
   // Get the grid divisions for the selected grid size
   const divisions = getGridDivisions(gridSize);

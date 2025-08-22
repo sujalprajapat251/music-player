@@ -732,7 +732,7 @@ const Pattern = () => {
                       {Array.from({ length: Math.ceil(patternLength / 16) }, (_, sectionIndex) => (
                         <div key={sectionIndex} className="flex justify-center items-center mx-2" style={{ width: `${16 * 36}px` }}>
                           <div className="text-center text-xs text-white font-medium">
-                            Section {sectionIndex + 1}
+                            Section {sectionIndex}
                           </div>
                         </div>
                       ))}

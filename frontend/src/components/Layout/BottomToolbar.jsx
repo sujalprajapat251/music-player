@@ -73,25 +73,35 @@ const BottomToolbar = () => {
     const reduxSelectedScale = useSelector((state) => state.studio?.selectedScale || null);
 
     const { selectedGrid, zoomLevel } = useSelector(selectGridSettings);
+    // BottomToolbar.jsx – add this small helper near your handlers
+    const requestCenterAnchor = () => {
+        window.dispatchEvent(new CustomEvent('timeline:anchor', { detail: { type: 'center' } }));
+    };
 
-    // Handle zoom in with visual feedback
+    // Then update your existing zoom handlers:
     const handleZoomIn = () => {
-        setIsZooming(true);
+        // Dispatch anchor event before zooming
+        window.dispatchEvent(new CustomEvent('timeline:anchor', {
+            detail: { type: 'center' }
+        }));
         dispatch(zoomIn());
-        setTimeout(() => {
-            setIsZooming(false);
-        }, 300);
     };
 
-    // Handle zoom out with visual feedback
     const handleZoomOut = () => {
-        setIsZooming(true);
+        // Dispatch anchor event before zooming
+        window.dispatchEvent(new CustomEvent('timeline:anchor', {
+            detail: { type: 'center' }
+        }));
         dispatch(zoomOut());
-        setTimeout(() => {
-            setIsZooming(false);
-        }, 300);
     };
 
+    const handleResetZoom = () => {
+        // Dispatch anchor event before zooming
+        window.dispatchEvent(new CustomEvent('timeline:anchor', {
+            detail: { type: 'center' }
+        }));
+        dispatch(resetZoom());
+    };
 
 
     // Sync local state with Redux state
@@ -200,7 +210,7 @@ const BottomToolbar = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside1);
     }, []);
 
-    const  handleIncrement = () => {
+    const handleIncrement = () => {
         setTempo(prev => Math.min(prev + 1, 300));
     };
 
@@ -361,7 +371,7 @@ const BottomToolbar = () => {
         };
         document.addEventListener('mousedown', handleClickOutside2);
         return () => document.removeEventListener('mousedown', handleClickOutside2);
-    }, []); 
+    }, []);
 
     const handleMenuItemSelect = (qualityId, qualityLabel) => {
         dispatch(setMetronomeSound(qualityLabel));
@@ -411,7 +421,7 @@ const BottomToolbar = () => {
 
     // Start recording
     const handleStartRecord = () => {
-        
+
         if (selectedCountIn === "Off") {
             console.log("botoooooooooooooooooooooooooooo9")
             dispatch(setRecording(true));
@@ -476,29 +486,7 @@ const BottomToolbar = () => {
         }
     };
 
-    // // Collect data while recording
-    // useEffect(() => {
-    //     let interval;
-    //     if (isRecording && recordingStartTime) {
-    //         interval = setInterval(() => {
-    //             const currentData = {
-    //                 timestamp: Date.now() - recordingStartTime,
-    //                 currentTime: currentTime,
-    //                 volume: masterVolume,
-    //                 isPlaying: isPlaying
-    //             };
-
-    //             // Update recorded data in Redux
-    //             const updatedData = [...(Array.isArray(recordedData) ? recordedData : []), currentData];
-    //             dispatch(setRecordedData(updatedData));
-    //         }, 1000); // Collect data every 1 second
-    //     }
-    //     return () => {
-    //         if (interval) {
-    //             clearInterval(interval);
-    //         }
-    //     };
-    // }, [isRecording, recordingStartTime, currentTime, masterVolume, isPlaying, recordedData, dispatch]);
+    
 
     useEffect(() => {
         if (!isRecording && recordedData.length > 0) {

@@ -514,19 +514,28 @@ const getSampleUrlForPadFromRedux = (padId) => {
   } catch (_) { }
   return '/Audio/perc.mp3';
 };
-const beatIndexToSecondsFromRedux = (beatIndex, bpm) => beatIndex * (60 / bpm / 4);
 
-export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColor = '#FFB6C1' }) => async (dispatch, getState) => {
+
+export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColor = '#FFB6C1', selectedRuler, sectionStartTime, sectionEndTime }) => async (dispatch, getState) => {
   if (trackId === undefined || trackId === null) return;
 
-  const eps = 1e-6;
-  // Lock pattern timing to seconds: 16 steps = 1 second regardless of BPM or zoom
+  // Calculate section and position
   const sectionIndex = Math.floor(beatIndex / 16);
-  const slotIndex = beatIndex % 16;
-  const blockStart = sectionIndex * 1; // section N starts at N seconds
-  const blockDuration = 1; // each section spans exactly 1 second
-  const slotStart = blockStart + (slotIndex / 16); // each step is 1/16 second
+  const beatInSection = beatIndex % 16;
 
+  // let blockStart, blockDuration, slotStart;
+
+
+  let blockStart, blockDuration, slotStart;
+  if (selectedRuler === "Time") {
+    blockStart = sectionIndex * 1.0;
+    blockDuration = 1.0;
+    slotStart = blockStart + (beatInSection / 16) * 1.0;
+  } else {
+    blockStart = sectionIndex * 1.0;
+    blockDuration = 1.0;
+    slotStart = blockStart + (beatInSection / 16) * 1.0;
+  }
   // Resolve pad meta (for playback)
   const resolvePadMeta = (id) => {
     try {
@@ -545,39 +554,53 @@ export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColo
   const track = state.studio?.tracks?.find(t => t.id == trackId);
   const clips = (track?.audioClips || []).filter(c => c?.fromPattern === true);
 
-  // Find the single container for this 16-beat section
-  const isContainer = (c) =>
+  // Find existing container for this section
+  const container = clips.find(c =>
+    c?.fromPattern === true &&
     c?.blockIndex === sectionIndex &&
-    Math.abs((c?.startTime ?? -1) - blockStart) < eps &&
-    Math.abs((c?.duration ?? 0) - blockDuration) < eps;
-
-  const container = clips.find(isContainer);
+    Math.abs(c?.startTime - blockStart) < 0.001
+  );
 
   if (isOn) {
     if (container) {
-      const byPad = { ...(container.onBeatsByPad || {}) };
+      // Update existing container
+      // const byPad = { ...(container.onBeatsByPad || {}) };
       const seq = Array.isArray(container.drumSequence) ? [...container.drumSequence] : [];
 
-      // migrate legacy onBeats if present
-      if (Array.isArray(container.onBeats)) {
-        const legacyPad = container.padId || 'LEGACY';
-        const migrated = new Set([...(byPad[legacyPad] || []), ...container.onBeats]);
-        byPad[legacyPad] = Array.from(migrated);
-      }
-
-      // upsert event at this slot
+      // Add or update this beat
       const meta = resolvePadMeta(padId);
-      const idx = seq.findIndex(ev => Math.abs((ev?.currentTime ?? -1) - slotStart) < eps);
-      const event = { currentTime: slotStart, padId, ...meta };
-      if (idx >= 0) {
-        seq[idx] = event; // overwrite slot
+      const event = {
+        currentTime: slotStart,
+        padId,
+        ...meta,
+        beatIndex: beatIndex,
+        beatInSection: beatInSection
+      };
+
+      // Remove existing event at this beat position
+      const existingIndex = seq.findIndex(ev =>
+        Math.abs(ev.currentTime - slotStart) < 0.001
+      );
+
+      if (existingIndex >= 0) {
+        seq[existingIndex] = event;
       } else {
         seq.push(event);
       }
 
-      const set = new Set(byPad[padId] || []);
-      set.add(beatIndex);
-      byPad[padId] = Array.from(set);
+      // Update beat tracking
+      // Deep-clone nested arrays to avoid mutating frozen state
+      const src = container.onBeatsByPad || {};
+      const byPad = Object.keys(src).reduce((acc, key) => {
+        acc[key] = Array.isArray(src[key]) ? [...src[key]] : [];
+        return acc;
+      }, {});
+
+      // Immutable add
+      const existing = byPad[padId] || [];
+      if (!existing.includes(beatIndex)) {
+        byPad[padId] = [...existing, beatIndex];
+      }
 
       dispatch(updateAudioClip({
         trackId,
@@ -585,72 +608,113 @@ export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColo
         updates: {
           drumSequence: seq,
           onBeatsByPad: byPad,
-          blockIndex: sectionIndex,
-          blockSize: 16
+          startTime: blockStart,
+          duration: blockDuration,
+          trimStart: 0,
+          trimEnd: blockDuration,
+          ruler: selectedRuler,
+          bpm: bpm,
+          musicalBeat: selectedRuler === "Beats" ? (sectionIndex % 4) + 1 : null // Track which musical beat this represents
         }
       }));
 
-      // Regenerate waveform for this section
-      await regenWaveForSection(dispatch, getState, { trackId, sectionIndex, blockStart, blockDuration });
-      return;
+      // Regenerate waveform
+      await regenWaveForSection(dispatch, getState, {
+        trackId,
+        sectionIndex,
+        blockStart,
+        blockDuration
+      });
+    } else {
+      // Create new container for this section
+      const meta = resolvePadMeta(padId);
+      const audioClip = {
+        name: selectedRuler === "Beats" ? `Beat ${(sectionIndex % 4) + 1}` : `Pattern Section ${sectionIndex + 1}`,
+        color: clipColor,
+        startTime: blockStart,
+        duration: blockDuration,
+        trimStart: 0,
+        trimEnd: blockDuration,
+        type: 'drum',
+        fromPattern: true,
+        blockIndex: sectionIndex,
+        blockSize: 16,
+        onBeatsByPad: { [padId]: [beatIndex] },
+        ruler: selectedRuler,
+        bpm: bpm,
+        musicalBeat: selectedRuler === "Beats" ? (sectionIndex % 4) + 1 : null,
+        drumSequence: [{
+          currentTime: slotStart,
+          padId,
+          ...meta,
+          beatIndex: beatIndex,
+          beatInSection: beatInSection
+        }],
+      };
+
+      dispatch(addAudioClipToTrack({ trackId, audioClip }));
+
+      // Regenerate waveform
+      await regenWaveForSection(dispatch, getState, {
+        trackId,
+        sectionIndex,
+        blockStart,
+        blockDuration
+      });
     }
-
-    // Create the single section container (no waveform yet)
-    const meta = resolvePadMeta(padId);
-    const audioClip = {
-      name: `Section ${sectionIndex + 1}`,
-      color: clipColor,
-      startTime: blockStart,
-      duration: blockDuration,
-      trimStart: 0,
-      trimEnd: blockDuration,
-      type: 'drum',
-      fromPattern: true,
-      blockIndex: sectionIndex,
-      blockSize: 16,
-      onBeatsByPad: { [padId]: [beatIndex] },
-      drumSequence: [
-        { currentTime: slotStart, padId, ...meta }
-      ],
-    };
-    dispatch(addAudioClipToTrack({ trackId, audioClip }));
-
-    // Regenerate waveform for this section (find container by section fields)
-    await regenWaveForSection(dispatch, getState, { trackId, sectionIndex, blockStart, blockDuration });
-    return;
-  }
-
-  // Turning OFF: remove only this slot; drop container if empty
-  if (!container) return;
-
-  const byPad = { ...(container.onBeatsByPad || {}) };
-  const seq = Array.isArray(container.drumSequence) ? [...container.drumSequence] : [];
-  const newSeq = seq.filter(ev => !(Math.abs((ev?.currentTime ?? -1) - slotStart) < eps && (ev?.padId ?? padId) === padId));
-
-  if (byPad[padId]) {
-    const set = new Set(byPad[padId]);
-    set.delete(beatIndex);
-    if (set.size === 0) delete byPad[padId];
-    else byPad[padId] = Array.from(set);
-  } else if (Array.isArray(container.onBeats)) {
-    // Legacy cleanup
-    const nextLegacy = container.onBeats.filter(b => b !== beatIndex);
-    if (nextLegacy.length === 0 && Object.keys(byPad).length === 0 && newSeq.length === 0) {
-      dispatch(removeAudioClip({ trackId, clipId: container.id }));
-      return;
-    }
-    dispatch(updateAudioClip({ trackId, clipId: container.id, updates: { onBeats: nextLegacy, drumSequence: newSeq } }));
-    await regenWaveForSection(dispatch, getState, { trackId, sectionIndex, blockStart, blockDuration });
-    return;
-  }
-
-  if (Object.keys(byPad).length === 0 && newSeq.length === 0) {
-    dispatch(removeAudioClip({ trackId, clipId: container.id }));
   } else {
-    dispatch(updateAudioClip({ trackId, clipId: container.id, updates: { onBeatsByPad: byPad, drumSequence: newSeq } }));
-    await regenWaveForSection(dispatch, getState, { trackId, sectionIndex, blockStart, blockDuration });
+    // Turning OFF: remove this beat
+    if (!container) return;
+
+    // const byPad = { ...(container.onBeatsByPad || {}) };
+    const seq = Array.isArray(container.drumSequence) ? [...container.drumSequence] : [];
+
+    // Remove this beat
+    const newSeq = seq.filter(ev =>
+      !(Math.abs(ev.currentTime - slotStart) < 0.001 && ev.padId === padId)
+    );    
+
+
+    const src = container.onBeatsByPad || {};
+    const byPad = Object.keys(src).reduce((acc, key) => {
+      acc[key] = Array.isArray(src[key]) ? [...src[key]] : [];
+      return acc;
+    }, {});
+
+    // Immutable remove
+    if (byPad[padId]) {
+      const next = byPad[padId].filter(b => b !== beatIndex);
+      if (next.length === 0) delete byPad[padId];
+      else byPad[padId] = next;
+    }
+
+
+
+    if (Object.keys(byPad).length === 0 && newSeq.length === 0) {
+      // Remove empty container
+      dispatch(removeAudioClip({ trackId, clipId: container.id }));
+    } else {
+      // Update container
+      dispatch(updateAudioClip({
+        trackId,
+        clipId: container.id,
+        updates: {
+          drumSequence: newSeq,
+          onBeatsByPad: byPad
+        }
+      }));
+
+      // Regenerate waveform
+      await regenWaveForSection(dispatch, getState, {
+        trackId,
+        sectionIndex,
+        blockStart,
+        blockDuration
+      });
+    }
   }
 };
+
 
 export const clearPatternClips = (trackId) => (dispatch, getState) => {
   const state = getState();
@@ -661,19 +725,52 @@ export const clearPatternClips = (trackId) => (dispatch, getState) => {
     .forEach(c => dispatch(removeAudioClip({ trackId, clipId: c.id })));
 };
 
-export const syncWholePatternToTimeline = ({ trackId, patternRows, bpm }) => (dispatch) => {
+
+export const syncWholePatternToTimeline = ({ trackId, patternRows, bpm }) => (dispatch, getState) => {
   if (!trackId || !Array.isArray(patternRows)) return;
+
+  // Get the current ruler setting
+  const state = getState();
+  const selectedRuler = state.grid?.selectedRuler || "Time";
+
+  // Clear existing pattern clips
   dispatch(clearPatternClips(trackId));
+
+  // Process each pattern row
   patternRows.forEach(row => {
     const { padId, pattern } = row || {};
     if (!padId || !Array.isArray(pattern)) return;
+
     pattern.forEach((isOn, beatIndex) => {
       if (!isOn) return;
-      dispatch(syncPatternBeat({ trackId, padId, beatIndex, bpm, isOn: true }));
+
+      // Calculate timing based on ruler
+      const sectionIndex = Math.floor(beatIndex / 16);
+
+      let sectionStartTime, sectionEndTime;
+      if (selectedRuler === "Time") {
+        sectionStartTime = sectionIndex * 1.0;
+        sectionEndTime = (sectionIndex + 1) * 1.0;
+      } else {
+        sectionStartTime = sectionIndex * 1.0;
+        sectionEndTime = (sectionIndex + 1) * 1.0;
+      }
+
+      dispatch(syncPatternBeat({
+        trackId,
+        padId,
+        beatIndex,
+        bpm,
+        isOn: true,
+        selectedRuler,
+        sectionStartTime,
+        sectionEndTime
+      }));
     });
   });
 };
 
+// ... existing code ...
 async function buildPatternWav({ drumSequence = [], blockStart = 0, blockDuration = 1 }) {
   try {
     const sampleRate = 44100;
@@ -971,8 +1068,6 @@ async function regenWaveForSection(dispatch, getState, { trackId, sectionIndex, 
 }
 
 
-// ... existing code ...
-
 // Add this new thunk after your existing thunks
 export const triggerPatternDrumPlayback = ({ trackId, clipId, currentTime }) => async (dispatch, getState) => {
   const state = getState();
@@ -1008,5 +1103,3 @@ export const triggerPatternDrumPlayback = ({ trackId, clipId, currentTime }) => 
     }
   }
 };
-
-// ... existing code ...
