@@ -152,22 +152,45 @@ const AudioClip = ({
   timelineWidthPerSecond = 100,
   frozen = false,
   gridSpacing = 0.25,
-  color,  
+  color,
 }) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
   const isInitialized = useRef(false);
   const [isDraggingTrim, setIsDraggingTrim] = useState(null);
 
+  // Convert time to pixels using the current scale
+  const toPx = (seconds, scale) => Math.round(seconds * scale * 100) / 100;
+
+  // Calculate clip dimensions based on current scale
+  const clipDuration = clip.duration || 1;
+  const trimStart = clip.trimStart || 0;
+  const trimEnd = clip.trimEnd || clipDuration;
+  const startTime = clip.startTime || 0;
+
+  // Calculate positions and widths using absolute pixel values
+  const fullWidth = toPx(clipDuration, timelineWidthPerSecond);
+  const visibleWidth = toPx(Math.max(0, trimEnd - trimStart), timelineWidthPerSecond);
+  const rndX = toPx(startTime, timelineWidthPerSecond);
+  const trimOffsetX = toPx(trimStart, timelineWidthPerSecond);
+
   useEffect(() => {
     if (!waveformRef.current || !clip.url || isInitialized.current) return;
 
     let isMounted = true;
+    let readyHandler = null;
+    let errorHandler = null;
 
     const initWaveSurfer = async () => {
       try {
         if (wavesurfer.current) {
-          wavesurfer.current.destroy();
+          try {
+            wavesurfer.current.destroy();
+          } catch (e) {
+            if (!(e && e.name === 'AbortError')) {
+              console.warn('WaveSurfer destroy failed:', e);
+            }
+          }
           wavesurfer.current = null;
         }
 
@@ -180,28 +203,40 @@ const AudioClip = ({
           height: height - 8,
           barWidth: 2,
           responsive: true,
-          minPxPerSec: 50,
+          minPxPerSec: timelineWidthPerSecond, // Use current scale
           normalize: true,
         });
 
         if (!isMounted) return;
 
-        const readyHandler = () => {
+        readyHandler = () => {
           if (isMounted && onReady && wavesurfer.current) {
             onReady(wavesurfer.current, { ...clip, trackId });
           }
         };
 
-        const errorHandler = (error) => {
+        errorHandler = (error) => {
           if (isMounted) {
             console.error("WaveSurfer error:", error);
           }
         };
 
-        wavesurfer.current.on("ready", readyHandler);
-        wavesurfer.current.on("error", errorHandler);
+        // Bind listeners
+        if (wavesurfer.current && typeof wavesurfer.current.on === 'function') {
+          wavesurfer.current.on("ready", readyHandler);
+          wavesurfer.current.on("error", errorHandler);
+        }
 
-        wavesurfer.current.load(clip.url);
+        // Load audio with guard; ignore abort errors if unmounted mid-load
+        try {
+          if (isMounted && wavesurfer.current) {
+            wavesurfer.current.load(clip.url);
+          }
+        } catch (e) {
+          if (!(e && (e.name === 'AbortError' || String(e).includes('aborted')))) {
+            console.warn('WaveSurfer load failed:', e);
+          }
+        }
         isInitialized.current = true;
 
       } catch (error) {
@@ -216,6 +251,18 @@ const AudioClip = ({
     return () => {
       isMounted = false;
       isInitialized.current = false;
+      
+      // Clean up listeners first
+      if (wavesurfer.current) {
+        try {
+          if (readyHandler) wavesurfer.current.un('ready', readyHandler);
+          if (errorHandler) wavesurfer.current.un('error', errorHandler);
+        } catch (e) {
+          // Ignore unsubscription errors
+        }
+      }
+      
+      // Then destroy
       if (wavesurfer.current) {
         try {
           wavesurfer.current.destroy();
@@ -225,7 +272,27 @@ const AudioClip = ({
         wavesurfer.current = null;
       }
     };
-  }, [clip.id, frozen, clip.url]);
+  }, [clip.id, frozen, clip.url, timelineWidthPerSecond]);
+
+  // Keep WaveSurfer zoom in sync with timeline scale
+  useEffect(() => {
+    if (wavesurfer.current) {
+      const pxPerSec = Math.max(1, timelineWidthPerSecond);
+      try {
+        if (wavesurfer.current.params) {
+          wavesurfer.current.params.minPxPerSec = pxPerSec;
+        }
+        if (typeof wavesurfer.current.zoom === 'function') {
+          wavesurfer.current.zoom(pxPerSec);
+        }
+        if (typeof wavesurfer.current.drawBuffer === 'function') {
+          wavesurfer.current.drawBuffer();
+        }
+      } catch (e) {
+        // Ignore zoom errors
+      }
+    }
+  }, [timelineWidthPerSecond]);
 
   const handleTrimResize = useCallback((type, newPosition) => {
     if (frozen) return;
@@ -284,13 +351,9 @@ const AudioClip = ({
     }
   }, [clip.id, onPositionChange, timelineWidthPerSecond, gridSpacing]);
 
-  const width = (clip.duration || 1) * timelineWidthPerSecond;
-  const actualTrimEnd = clip.trimEnd || clip.duration;
-  const visibleWidth = ((actualTrimEnd - (clip.trimStart || 0)) / clip.duration) * width;
-  const rndX = (clip.startTime || 0) * timelineWidthPerSecond;
-
   return (
     <Rnd
+      key={`${clip.id}-${timelineWidthPerSecond}`} // Force re-render on zoom
       size={{
         width: visibleWidth,
         height: height
@@ -309,7 +372,7 @@ const AudioClip = ({
       }}
       onContextMenu={(e) => onContextMenu && onContextMenu(e, trackId, clip.id)}
       style={{
-        background:  color || "transparent",
+        background: color || "transparent",
         borderRadius: '8px',
         border: isSelected
           ? "2px solid #AD00FF"
@@ -323,6 +386,7 @@ const AudioClip = ({
         overflow: "hidden",
         zIndex: 10,
         position: "relative",
+        boxSizing: 'border-box', // Ensure borders don't affect size
       }}
     >
       {/* Waveform with clip-path to show only trimmed portion */}
@@ -334,13 +398,13 @@ const AudioClip = ({
             <div
               ref={waveformRef}
               style={{
-                width: `${width}px`,
+                width: `${fullWidth}px`,
                 height: "100%",
                 position: "absolute",
                 top: 0,
-                left: `-${((clip.trimStart || 0) / clip.duration) * width}px`,
+                left: `-${trimOffsetX}px`,
                 zIndex: 1,
-                clipPath: `inset(0 ${(1 - (actualTrimEnd / clip.duration)) * 100}% 0 ${((clip.trimStart || 0) / clip.duration) * 100}%)`,
+                clipPath: `inset(0 ${(1 - (trimEnd / clipDuration)) * 100}% 0 ${(trimStart / clipDuration) * 100}%)`,
               }}
             />
 
@@ -353,23 +417,23 @@ const AudioClip = ({
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
               trackDuration={clip.duration}
-              trackWidth={width}
+              trackWidth={fullWidth}
               trimStart={clip.trimStart || 0}
-              trimEnd={actualTrimEnd}
+              trimEnd={trimEnd}
               gridSpacing={gridSpacing}
             />
 
             <ResizableTrimHandle
               type="end"
-              position={actualTrimEnd}
+              position={trimEnd}
               onResize={handleTrimResize}
               isDragging={isDraggingTrim === 'end'}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
               trackDuration={clip.duration}
-              trackWidth={width}
+              trackWidth={fullWidth}
               trimStart={clip.trimStart || 0}
-              trimEnd={actualTrimEnd}
+              trimEnd={trimEnd}
               gridSpacing={gridSpacing}
             />
 
@@ -420,7 +484,7 @@ const TimelineTrack = ({
   timelineWidthPerSecond = 100,
   frozen = false,
   gridSpacing = 0.25,
-  color 
+  color
 }) => {
   const dispatch = useDispatch();
   // Get piano notes from Redux
@@ -469,6 +533,10 @@ const TimelineTrack = ({
             width: Math.max(0, (displayClip.end - displayClip.start)) * timelineWidthPerSecond,
             height: height,
             zIndex: 6,
+            background: 'red', // translucent
+            border: `1px solid ${(pianoRecordingClip.color || '#AD00FF')}55`,
+            borderRadius: 6,
+            pointerEvents: 'none'
           }}
         >
           {/* Main recording region */}
