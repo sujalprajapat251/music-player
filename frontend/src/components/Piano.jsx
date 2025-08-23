@@ -667,7 +667,20 @@ const Pianodemo = ({ onClose }) => {
             if (notesForThisTrack.length > 0) {
                 const minStart = Math.min(...notesForThisTrack.map(n => n.startTime));
                 const maxEnd = Math.max(...notesForThisTrack.map(n => n.startTime + (n.duration || 0.05)));
-                dispatch(setPianoRecordingClip({ start: minStart, end: maxEnd, color: '#E44F65', trackId: currentTrackId || null }));
+                dispatch(setPianoRecordingClip({ 
+                    start: minStart, 
+                    end: maxEnd, 
+                    color: '#E44F65', 
+                    trackId: currentTrackId || null,
+                    type: 'piano',
+                    name: `Piano Recording (${notesForThisTrack.length} notes)`,
+                    duration: maxEnd - minStart,
+                    startTime: minStart,
+                    trimStart: 0,
+                    trimEnd: maxEnd - minStart,
+                    id: `piano_recording_${Date.now()}`,
+                    pianoData: notesForThisTrack
+                }));
             }
             pianoNotesRef.current = updated;
         }

@@ -514,6 +514,95 @@ const TimelineTrack = ({
     : null;
   const displayClip = trackPianoClip || passiveClip;
 
+  // Add state for dragging trim handles
+  const [isDraggingTrim, setIsDraggingTrim] = useState(null);
+
+  // Implement handleTrimResize for piano recording clip
+  const handlePianoTrimResize = useCallback((type, newPosition) => {
+    if (frozen) return;
+    if (!trackPianoClip) return;
+
+    const currentStart = trackPianoClip.start;
+    const currentEnd = trackPianoClip.end;
+    const duration = currentEnd - currentStart;
+
+    const snapToGrid = (time) => {
+      if (!gridSpacing || gridSpacing <= 0) return time;
+      const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+      return Math.max(0, gridPosition);
+    };
+
+    if (type === 'start') {
+      // newPosition is relative to the clip, convert to absolute time
+      const absoluteNewStart = currentStart + newPosition;
+      const snappedPosition = snapToGrid(absoluteNewStart);
+      const newStart = Math.max(0, Math.min(snappedPosition, currentEnd - gridSpacing));
+      
+      // Update the piano recording clip
+      const newClip = {
+        ...trackPianoClip,
+        start: newStart,
+        end: currentEnd,
+        trackId: trackId
+      };
+      dispatch(setPianoRecordingClip(newClip));
+
+      // Optionally filter out notes that are now outside the clip boundaries
+      const filteredNotes = (pianoNotes || []).map(note => {
+        if ((note?.trackId ?? null) !== trackId) return note;
+        const noteStartTime = note.startTime || 0;
+        const noteEndTime = noteStartTime + (note.duration || 0.05);
+        
+        // Keep notes that are still within bounds, or adjust their timing
+        if (noteStartTime < newStart) {
+          // Note starts before new clip start - could trim or remove
+          return note; // Keep as is for now
+        }
+        return note;
+      });
+      dispatch(setPianoNotes(filteredNotes));
+
+    } else if (type === 'end') {
+      // newPosition is relative to the clip, convert to absolute time
+      const absoluteNewEnd = currentStart + newPosition;
+      const snappedPosition = snapToGrid(absoluteNewEnd);
+      const newEnd = Math.max(currentStart + gridSpacing, snappedPosition);
+      
+      // Update the piano recording clip
+      const newClip = {
+        ...trackPianoClip,
+        start: currentStart,
+        end: newEnd,
+        trackId: trackId
+      };
+      dispatch(setPianoRecordingClip(newClip));
+
+      // Optionally filter out notes that are now outside the clip boundaries
+      const filteredNotes = (pianoNotes || []).map(note => {
+        if ((note?.trackId ?? null) !== trackId) return note;
+        const noteStartTime = note.startTime || 0;
+        const noteEndTime = noteStartTime + (note.duration || 0.05);
+        
+        // Keep notes that are still within bounds
+        if (noteEndTime > newEnd) {
+          // Note extends past new clip end - could trim or remove
+          return note; // Keep as is for now
+        }
+        return note;
+      });
+      dispatch(setPianoNotes(filteredNotes));
+    }
+  }, [trackPianoClip, pianoNotes, dispatch, trackId, gridSpacing, frozen]);
+
+  const handlePianoDragStart = useCallback((type) => {
+    if (frozen) return;
+    setIsDraggingTrim(type);
+  }, [frozen]);
+
+  const handlePianoDragEnd = useCallback(() => {
+    setIsDraggingTrim(null);
+  }, []);
+
   return (
     <div
       style={{
@@ -550,7 +639,8 @@ const TimelineTrack = ({
               background: displayClip.color,
               border: `1px solid ${(displayClip.color || '#E44F65')}55`,
               borderRadius: 6,
-              cursor: 'grab'
+              cursor: 'grab',
+              pointerEvents: 'auto'
             }}
             title="Drag to move recorded piano notes. Use left/right handles to resize the recording region."
             onMouseDown={(e) => {
@@ -567,14 +657,18 @@ const TimelineTrack = ({
               }
 
               if (!trackPianoClip) return;
+              
+              e.preventDefault();
+              e.stopPropagation();
+              
               // Handle dragging the entire clip
               const startX = e.clientX;
-              const startLeft = trackPianoClip.start * timelineWidthPerSecond;
+              const initialStart = trackPianoClip.start;
 
               const handleMouseMove = (moveEvent) => {
                 const deltaX = moveEvent.clientX - startX;
                 const deltaTime = deltaX / timelineWidthPerSecond;
-                const newStart = Math.max(0, startLeft / timelineWidthPerSecond + deltaTime);
+                const newStart = Math.max(0, initialStart + deltaTime);
                 const duration = trackPianoClip.end - trackPianoClip.start;
                 const newEnd = newStart + duration;
 
@@ -607,31 +701,80 @@ const TimelineTrack = ({
 
           {/* Left resize handle (active clip only) */}
           {trackPianoClip && (
-          <ResizableTrimHandle
-            type="start"
-            position={0}
-            onResize={(type, newStart) => {
-              const duration = trackPianoClip.end - trackPianoClip.start;
-              const newEnd = trackPianoClip.start + duration;
+            <div
+              style={{
+                position: "absolute",
+                left: "12px",
+                top: "19px",
+                width: "24px",
+                height: "100%",
+                cursor: "ew-resize",
+                zIndex: 15,
+                transform: "translateX(-12px)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                pointerEvents: 'auto'
+              }}
+              onMouseDown={(e) => {
+                if (frozen) return;
+                
+                e.preventDefault();
+                e.stopPropagation();
+                
+                setIsDraggingTrim('start');
+                
+                const startX = e.clientX;
+                const initialStart = trackPianoClip.start;
+                const clipEnd = trackPianoClip.end;
 
-              // Keep all piano notes in their original positions
-              // Only update the clip boundaries
-              const newClip = {
-                ...trackPianoClip,
-                start: trackPianoClip.start + newStart,
-                end: newEnd,
-                trackId: trackId
-              };
-              dispatch(setPianoRecordingClip(newClip));
-            }}
-            isDragging={false}
-            onDragStart={() => {}}
-            onDragEnd={() => {}}
-            trackDuration={trackPianoClip.end - trackPianoClip.start}
-            trackWidth={Math.max(0, (trackPianoClip.end - trackPianoClip.start)) * timelineWidthPerSecond}
-            trimEnd={trackPianoClip.end - trackPianoClip.start}
-            gridSpacing={0.25}
-          />)}
+                const handleMouseMove = (moveEvent) => {
+                  const deltaX = moveEvent.clientX - startX;
+                  const deltaTime = deltaX / timelineWidthPerSecond;
+                  let newStart = initialStart + deltaTime;
+                  
+                  // Snap to grid
+                  if (gridSpacing && gridSpacing > 0) {
+                    newStart = Math.round(newStart / gridSpacing) * gridSpacing;
+                  }
+                  
+                  // Ensure start doesn't go past end
+                  newStart = Math.max(0, Math.min(newStart, clipEnd - (gridSpacing || 0.25)));
+
+                  const newClip = {
+                    ...trackPianoClip,
+                    start: newStart,
+                    end: clipEnd,
+                    trackId: trackId
+                  };
+                  dispatch(setPianoRecordingClip(newClip));
+                };
+
+                const handleMouseUp = () => {
+                  setIsDraggingTrim(null);
+                  document.removeEventListener('mousemove', handleMouseMove);
+                  document.removeEventListener('mouseup', handleMouseUp);
+                };
+
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#FFFFFF",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  fontFamily: "monospace",
+                }}
+              >
+                [&gt;
+              </div>
+            </div>
+          )}
 
           {/* Visual indicator for trim handles */}
           <div
@@ -673,27 +816,79 @@ const TimelineTrack = ({
 
           {/* Right resize handle (active clip only) */}
           {trackPianoClip && (
-            <ResizableTrimHandle
-              type="end"
-              position={trackPianoClip.end - trackPianoClip.start}
-              onResize={(type, newEnd) => {
-                // Keep all piano notes in their original positions
-                // Only update the clip boundaries
-                const newClip = {
-                  ...trackPianoClip,
-                  end: trackPianoClip.start + newEnd,
-                  trackId: trackId
-                };
-                dispatch(setPianoRecordingClip(newClip));
+            <div
+              style={{
+                position: "absolute",
+                right: "12px",
+                top: '19px',
+                width: "24px",
+                height: "100%",
+                cursor: "ew-resize",
+                zIndex: 15,
+                transform: "translateX(12px)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                pointerEvents: 'auto'
               }}
-              isDragging={false}
-              onDragStart={() => {}}
-              onDragEnd={() => {}}
-              trackDuration={trackPianoClip.end - trackPianoClip.start}
-              trackWidth={Math.max(0, (trackPianoClip.end - trackPianoClip.start)) * timelineWidthPerSecond}
-              trimEnd={trackPianoClip.end - trackPianoClip.start}
-              gridSpacing={0.25}
-            />
+              onMouseDown={(e) => {
+                if (frozen) return;
+                
+                e.preventDefault();
+                e.stopPropagation();
+                
+                setIsDraggingTrim('end');
+                
+                const startX = e.clientX;
+                const clipStart = trackPianoClip.start;
+                const initialEnd = trackPianoClip.end;
+
+                const handleMouseMove = (moveEvent) => {
+                  const deltaX = moveEvent.clientX - startX;
+                  const deltaTime = deltaX / timelineWidthPerSecond;
+                  let newEnd = initialEnd + deltaTime;
+                  
+                  // Snap to grid
+                  if (gridSpacing && gridSpacing > 0) {
+                    newEnd = Math.round(newEnd / gridSpacing) * gridSpacing;
+                  }
+                  
+                  // Ensure end doesn't go before start
+                  newEnd = Math.max(clipStart + (gridSpacing || 0.25), newEnd);
+
+                  const newClip = {
+                    ...trackPianoClip,
+                    start: clipStart,
+                    end: newEnd,
+                    trackId: trackId
+                  };
+                  dispatch(setPianoRecordingClip(newClip));
+                };
+
+                const handleMouseUp = () => {
+                  setIsDraggingTrim(null);
+                  document.removeEventListener('mousemove', handleMouseMove);
+                  document.removeEventListener('mouseup', handleMouseUp);
+                };
+
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#FFFFFF",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  fontFamily: "monospace",
+                }}
+              >
+                &lt;]
+              </div>
+            </div>
           )}
         </div>
       )}
