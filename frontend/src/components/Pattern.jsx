@@ -19,7 +19,7 @@ const Pattern = () => {
   const [tracks, setTracks] = useState([
     { id: 'kick', name: 'Kick', pattern: new Array(48).fill(false), padId: 'Q' },
     { id: 'snare', name: 'Snare', pattern: new Array(48).fill(false), padId: 'W' },
-    { id: 'hihat', name: 'Hihat', pattern: new Array(48).fill(false), padId: 'E' }
+    { id: 'hihat', name: 'Hihat', pattern: new Array(48).fill(false), padId: 'E' },
   ]);
   const [followBeat, setFollowBeat] = useState(true);
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -339,7 +339,6 @@ const Pattern = () => {
     setIsPlaying(false);
     setCurrentBeat(0);
   };
-
 
   const toggleBeat = useCallback((trackId, beatIndex) => {
     expandPatternIfNeeded(beatIndex);

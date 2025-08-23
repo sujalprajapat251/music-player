@@ -37,8 +37,6 @@ const OffcanvasSidebar = ({ isOpen, onClose, activeItem, setActiveItem }) => {
             <div className={`fixed top-0 left-0 h-full w-[230px] bg-[#141414] border-r border-[#FFFFFF1A] z-50 transform transition-transform duration-300 md:hidden ${isOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}>
 
-
-
                 {/* Three Dots Menu */}
                 <div className="flex justify-between bg-[#FFFFFF1A] py-2 px-4">
                     <div className="flex">

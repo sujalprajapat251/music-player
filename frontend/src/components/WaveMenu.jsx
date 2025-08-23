@@ -365,7 +365,6 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
               >
                 Alien
               </div>
-
             </div>
           )}
         </div>

@@ -7,8 +7,7 @@ import {
   drumMachineTypes,
   soundDescriptions,
   createSynthSound,
-  createDrumData,
-  getAudioContext
+  createDrumData
 } from '../Utils/drumMachineUtils';
 import { IoClose } from 'react-icons/io5';
 import PianoRolls from './PianoRolls';
@@ -43,7 +42,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
   const dragging = useRef(false);
   const lastY = useRef(0);
 
-
   // Tailwind-consistent responsive sizes
   const getResponsiveSize = () => {
     if (typeof window !== 'undefined') {
@@ -64,7 +62,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
 
   // Tailwind-consistent responsive sizes
   const getResponsiveStroke = () => {
@@ -90,7 +87,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
       setAngle(defaultAngle);
     }
   }, [defaultAngle]);
-
   
   const radius = (size - stroke) / 2;
   const center = size / 2;
@@ -113,7 +109,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
       if (onChange) {
         onChange(next);
       }
-
       return next;
     });
   };
@@ -198,17 +193,17 @@ const menu = [
   { id: '1/16 triplet', label: '1/16 triplet' },
 ];
 
-
-const DrumPadMachine = ({ onClose }) => {
-  const [isIconDropdownOpen, setIsIconDropdownOpen] = useState(false);
-  const [isOpen2, setIsOpen2] = useState(false);
-  const menuDropdownRef = useRef(null);
-  const [selectedMenuitems, setSelectedMenuitems] = useState('Off');
-  const [isSavePresetDropdownOpen, setIsSavePresetDropdownOpen] = useState(false);
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [isProcessingDrop, setIsProcessingDrop] = useState(false);
-  const [effectsSearchTerm, setEffectsSearchTerm] = useState('');
-  const [selectedEffectCategory, setSelectedEffectCategory] = useState(null);
+  const DrumPadMachine = ({ onClose }) => {
+    const [isIconDropdownOpen, setIsIconDropdownOpen] = useState(false);
+    const [isOpen2, setIsOpen2] = useState(false);
+    const menuDropdownRef = useRef(null);
+    const [selectedMenuitems, setSelectedMenuitems] = useState('Off');
+    const [isSavePresetDropdownOpen, setIsSavePresetDropdownOpen] = useState(false);
+    const [isDragOver, setIsDragOver] = useState(false);
+    const [isProcessingDrop, setIsProcessingDrop] = useState(false);
+    const [effectsSearchTerm, setEffectsSearchTerm] = useState('');
+    const [selectedEffectCategory, setSelectedEffectCategory] = useState(null);
+    const [audioUnlocked, setAudioUnlocked] = useState(false);
 
   const [currentType, setCurrentType] = useState(0);
   const [activePads, setActivePads] = useState(new Set());
@@ -225,6 +220,7 @@ const DrumPadMachine = ({ onClose }) => {
   const [activeView, setActiveView] = useState('Instruments'); // 'instrument', 'patterns', 'piano', 'effects'
   const audioContextRef = useRef(null);
   const reverbBufferRef = useRef(null);
+  const lastPlayTime = useRef({});
   const dispatch = useDispatch();
   const isRecording = useSelector((state) => state.studio?.isRecording || false);
   const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
@@ -250,6 +246,39 @@ const DrumPadMachine = ({ onClose }) => {
   // const tracks = useSelector((state) => state.studio?.tracks);
   // const activeView = useSelector((state) => state.studio?.activeView);
 
+  // Define getAudioContext function first
+  const getAudioContext = useCallback(() => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    
+    // Ensure audio context is resumed if suspended
+    if (audioContextRef.current.state === 'suspended') {
+      audioContextRef.current.resume().catch(console.error);
+    }
+    
+    return audioContextRef.current;
+  }, []);
+
+  // Initialize audio context on component mount
+  useEffect(() => {
+    const initAudio = () => {
+      try {
+        const audioContext = getAudioContext();
+        if (audioContext.state === 'running') {
+          setAudioUnlocked(true);
+          setDisplayDescription('Audio ready! Press keys or click pads to play');
+        }
+      } catch (error) {
+        console.warn('Audio initialization failed:', error);
+      }
+    };
+
+    // Try to initialize audio after a short delay
+    const timer = setTimeout(initAudio, 100);
+    return () => clearTimeout(timer);
+  }, [getAudioContext]);
+
   // Add useEffect to handle track data display and logging
   useEffect(() => {
     if (activeView === 'Patterns' && selectedTrackId && tracks) {
@@ -261,8 +290,28 @@ const DrumPadMachine = ({ onClose }) => {
     }
   }, [activeView, selectedTrackId, tracks]);
 
-
   const handlePadPress = (pad, timestamp) => {
+    // Prevent rapid-fire playing of the same pad
+    const now = Date.now();
+    const lastPlay = lastPlayTime.current[pad.id] || 0;
+    if (now - lastPlay < 50) { // 50ms debounce
+      return;
+    }
+    lastPlayTime.current[pad.id] = now;
+
+    // Unlock audio on first interaction
+    if (!audioUnlocked) {
+      const audioContext = getAudioContext();
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().then(() => {
+          setAudioUnlocked(true);
+          setDisplayDescription('Audio ready! Press keys or click pads to play');
+        }).catch(console.error);
+      } else {
+        setAudioUnlocked(true);
+      }
+    }
+
     if (isRecording) {
       const drumData = createDrumData(pad, selectedDrumMachine, timestamp || currentTime);
       const updatedData = [...drumRecordedData, drumData];
@@ -270,7 +319,6 @@ const DrumPadMachine = ({ onClose }) => {
     }
     playSound(pad);
   };
-
 
   // Clear drum recorded data when recording starts
   useEffect(() => {
@@ -396,7 +444,7 @@ const DrumPadMachine = ({ onClose }) => {
   // Function to create continuous audio blob from all drum recordings
   const createContinuousDrumAudioBlob = async (allDrumData) => {
     try {
-      const audioContext = getAudioContext(audioContextRef);
+      const audioContext = getAudioContext();
       const sampleRate = audioContext.sampleRate;
 
       // Calculate total duration
@@ -457,17 +505,6 @@ const DrumPadMachine = ({ onClose }) => {
     }
   };
 
-  // Define different drum machine types with synthetic sound parameters
-
-
-
-  const getAudioContext = useCallback(() => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    return audioContextRef.current;
-  }, []);
-
   // Create reverb impulse response
   const createReverbBuffer = useCallback(() => {
     if (reverbBufferRef.current) return reverbBufferRef.current;
@@ -486,7 +523,7 @@ const DrumPadMachine = ({ onClose }) => {
 
     reverbBufferRef.current = buffer;
     return buffer;
-  }, [getAudioContext]);
+  }, []);
 
   // Synthetic sound generators
   const createSynthSound = useCallback((pad, audioContext) => {
@@ -737,7 +774,7 @@ const DrumPadMachine = ({ onClose }) => {
 
   // Apply drum machine type effects to audio
   const applyTypeEffects = useCallback((audioNode, typeEffects) => {
-    const audioContext = getAudioContext(audioContextRef);
+    const audioContext = getAudioContext();
 
     // Create EQ for bass boost
     const lowShelf = audioContext.createBiquadFilter();
@@ -776,10 +813,11 @@ const DrumPadMachine = ({ onClose }) => {
   // Play sound with effects
   const playSound = useCallback((pad) => {
     try {
-      const audioContext = getAudioContext(audioContextRef);
-
+      const audioContext = getAudioContext();
+      
+      // Ensure audio context is running
       if (audioContext.state === 'suspended') {
-        audioContext.resume();
+        audioContext.resume().catch(console.error);
       }
 
       const padEffect = padEffects[pad.id] || {};
@@ -851,13 +889,12 @@ const DrumPadMachine = ({ onClose }) => {
         }]);
       }
     } catch (error) {
-      // console.error('Error playing sound:', error);
+      console.error('Error playing sound:', error);
       setDisplayDescription('Audio not available');
     }
   }, [volume, pan, reverb, soundDescriptions, drumMachineTypes, currentType, isRecording, padEffects, createReverbBuffer, applyTypeEffects]);
 
   const [pressedKeys, setPressedKeys] = useState(new Set());
-
 
   // Replace your existing keyboard handling useEffect with this improved version:
 
@@ -887,7 +924,11 @@ const DrumPadMachine = ({ onClose }) => {
         // Prevent default only for handled musical keys
         e.preventDefault();
         setPressedKeys(prev => new Set([...prev, key]));
-        handlePadPress(keyToPadMap[key]); // Call handlePadPress with the corresponding pad
+        
+        const pad = keyToPadMap[key];
+        if (pad) {
+          handlePadPress(pad);
+        }
       }
     };
 
@@ -914,8 +955,6 @@ const DrumPadMachine = ({ onClose }) => {
       document.removeEventListener('keyup', handleKeyUp);
     };
   }, [currentTypeData, pressedKeys, handlePadPress]); // Add handlePadPress to dependencies
-
-
 
   // Clean Pad Button Component
   const PadButton = ({ pad, index, isActive, onClick }) => {
@@ -978,7 +1017,7 @@ const DrumPadMachine = ({ onClose }) => {
   // Function to create audio blob for drum hit
   const createDrumAudioBlob = async (pad) => {
     try {
-      const audioContext = getAudioContext(audioContextRef);
+      const audioContext = getAudioContext();
       const sampleRate = audioContext.sampleRate;
       const duration = pad.decay * 2; // Duration in seconds
       const bufferLength = Math.floor(sampleRate * duration);
@@ -1231,6 +1270,14 @@ const DrumPadMachine = ({ onClose }) => {
                         <div className="flex flex-col items-center">
                           <Knob label="Volume" min={-135} max={135} defaultAngle={volume} onChange={(value) => setVolume(value)} />
                         </div>
+                      </div>
+
+                      {/* Audio Status */}
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${audioUnlocked ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <span className="text-xs text-gray-400">
+                          {audioUnlocked ? 'Audio Ready' : 'Click to Enable'}
+                        </span>
                       </div>
 
                       <div className='items-center '>

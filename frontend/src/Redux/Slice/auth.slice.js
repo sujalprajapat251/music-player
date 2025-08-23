@@ -4,7 +4,6 @@ import axios from 'axios';
 import { BASE_URL } from '../../Utils/baseUrl';
 import { setAlert } from './alert.slice';
 
-
 const handleErrors = (error, dispatch, rejectWithValue) => {
     const errorMessage = error.response?.data?.message || 'An error occurred';
     dispatch(setAlert({ text: errorMessage, color: 'error' }));
@@ -50,7 +49,6 @@ export const register = createAsyncThunk(
         }
     }
 );
-
 
 export const forgotPassword = createAsyncThunk(
     'auth/forgotPassword',
@@ -171,9 +169,7 @@ const authSlice = createSlice({
                 state.loading = false;
                 state.error = null;
                 state.message = action.payload?.message || "Login successfully";
-                // if (action.payload?.message) {
-                //     enqueueSnackbar(action.payload?.message, { variant: 'success' });
-                // }
+                
             })
             .addCase(login.rejected, (state, action) => {
                 state.loading = false;
@@ -188,9 +184,7 @@ const authSlice = createSlice({
                 state.loading = false;
                 state.error = null;
                 state.message = action.payload?.message || "Register successfully";
-                // if (action.payload?.message) {
-                //     enqueueSnackbar(action.payload?.message, { variant: 'success' });
-                // }
+                
             })
             .addCase(register.rejected, (state, action) => {
                 state.loading = false;
@@ -239,11 +233,8 @@ const authSlice = createSlice({
                 state.isAuthenticated = true;
                 state.loading = false;
                 state.error = null;
-
                 state.message = action.payload?.message || "Google Login successful";
-                // if (action.payload?.message) {
-                //     enqueueSnackbar(action.payload?.message, { variant: 'success' });
-                // }
+                
             })
             .addCase(googleLogin.rejected, (state, action) => {
                 state.loading = false;

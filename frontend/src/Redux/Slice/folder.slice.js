@@ -56,7 +56,6 @@ export const getFolderByUserId = createAsyncThunk(
   }
 );
 
-
 // Add this new async thunk to your existing folder slice
 export const updateFolderName = createAsyncThunk(
   "folder/updateFolderName",
@@ -79,7 +78,6 @@ export const updateFolderName = createAsyncThunk(
     }
   }
 );
-
 
 // Add delete folder action
 export const deleteFolderById = createAsyncThunk(

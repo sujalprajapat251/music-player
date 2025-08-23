@@ -54,7 +54,6 @@ const TopHeader = () => {
     // Add state for selected sound quality
     const [selectedSoundQuality, setSelectedSoundQuality] = useState('High');
 
-
     // Define sound quality options
     const soundQualityOptions = [
         { id: 'high', label: 'High' },
@@ -128,10 +127,8 @@ const TopHeader = () => {
         }, 10);
     };
 
-
     const { isDark, setIsDark } = useTheme();
     const [selectedtheme, setSelectedtheme] = useState('Dark Theme');
-
 
     // Define sound quality options
     const themesOptions = [
@@ -380,7 +377,6 @@ const TopHeader = () => {
                                         </p>
                                     )}
                                 </Menu.Item>
-
                                 <Menu.Item>
                                     {({ active }) => (
                                         <p className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
@@ -389,7 +385,6 @@ const TopHeader = () => {
                                         </p>
                                     )}
                                 </Menu.Item>
-
                                 <Menu.Item>
                                     {({ active }) => (
                                         <p className="flex gap-2 mb-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
@@ -665,7 +660,6 @@ const TopHeader = () => {
                     <PiArrowBendUpRightBold className="text-[#5a5a5a] md:text-[16px] lg:text-[20px] xl:text-[26px] hidden md600:block" />
                 </div >
 
-
                 <div className="flex gap-2 md:gap-3 lg:gap-5 xl:gap-7 items-center">
                     <div className="flex gap-2 items-center">
                         <img src={savedicon} alt="" className='h-[16px] md:h-full' />
@@ -673,7 +667,6 @@ const TopHeader = () => {
                     </div>
                     <p className='text-secondary-light dark:text-secondary-dark text-[12px] md:text-[14px]'>Untitled_song</p>
                 </div>
-
 
                 <div className="flex gap-2 md:gap-3 lg:gap-5 xl:gap-7">
                     <button
@@ -791,8 +784,6 @@ const TopHeader = () => {
                     </div>
                 </div>
             </Dialog>
-
-
         </>
     )
 }

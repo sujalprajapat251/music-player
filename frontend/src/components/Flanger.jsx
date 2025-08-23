@@ -49,7 +49,6 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const dragging = useRef(false);
     const lastY = useRef(0);
 
-
     // Tailwind-consistent responsive sizes
     const getResponsiveSize = () => {
         if (typeof window !== 'undefined') {
@@ -68,7 +67,6 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
-
 
     // Tailwind-consistent responsive sizes
     const getResponsiveStroke = () => {
@@ -89,10 +87,8 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         return () => window.removeEventListener('resize', handleResizeStroke);
     }, []);
 
-
     const radius = (size - stroke) / 2;
     const center = size / 2;
-
 
     const onMouseDown = (e) => {
         dragging.current = true;
@@ -201,7 +197,6 @@ function Knob2({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const dragging = useRef(false);
     const lastY = useRef(0);
 
-
     // Tailwind-consistent responsive sizes
     const getResponsiveSize = () => {
         if (typeof window !== 'undefined') {
@@ -221,7 +216,6 @@ function Knob2({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-
     // Tailwind-consistent responsive sizes
     const getResponsiveStroke = () => {
         if (typeof window !== 'undefined') {
@@ -240,7 +234,6 @@ function Knob2({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         window.addEventListener('resize', handleResizeStroke);
         return () => window.removeEventListener('resize', handleResizeStroke);
     }, []);
-
 
     const radius = (size - stroke) / 2;
     const center = size / 2;
@@ -363,7 +356,6 @@ const Flanger = () => {
     // Get the current effect's instanceId from activeEffects
     const currentEffect = activeEffects.find(effect => effect.name === "Flanger");
     const currentInstanceId = currentEffect?.instanceId;
-
 
     return (
         <div className='bg-[#141414]'>

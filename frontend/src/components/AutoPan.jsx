@@ -23,7 +23,6 @@ function describeArc(cx, cy, r, startAngle, endAngle) {
     ].join(" ");
 }
 
-
 function BadgeTooltip({ value, visible }) {
     if (!visible) return null;
 
@@ -90,10 +89,8 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         return () => window.removeEventListener('resize', handleResizeStroke);
     }, []);
 
-
     const radius = (size - stroke) / 2;
     const center = size / 2;
-
 
     const onMouseDown = (e) => {
         dragging.current = true;
@@ -194,7 +191,6 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         </div>
     );
 }
-
 
 const AutoPan = () => {
 

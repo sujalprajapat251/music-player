@@ -535,16 +535,12 @@ const getSampleUrlForPadFromRedux = (padId) => {
   return '/Audio/perc.mp3';
 };
 
-
 export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColor = '#FFB6C1', selectedRuler, sectionStartTime, sectionEndTime }) => async (dispatch, getState) => {
   if (trackId === undefined || trackId === null) return;
 
   // Calculate section and position
   const sectionIndex = Math.floor(beatIndex / 16);
   const beatInSection = beatIndex % 16;
-
-  // let blockStart, blockDuration, slotStart;
-
 
   let blockStart, blockDuration, slotStart;
   if (selectedRuler === "Time") {
@@ -708,8 +704,6 @@ export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColo
       else byPad[padId] = next;
     }
 
-
-
     if (Object.keys(byPad).length === 0 && newSeq.length === 0) {
       // Remove empty container
       dispatch(removeAudioClip({ trackId, clipId: container.id }));
@@ -735,7 +729,6 @@ export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColo
   }
 };
 
-
 export const clearPatternClips = (trackId) => (dispatch, getState) => {
   const state = getState();
   const track = state.studio?.tracks?.find(t => t.id == trackId);
@@ -744,7 +737,6 @@ export const clearPatternClips = (trackId) => (dispatch, getState) => {
     .filter(c => c?.fromPattern === true)
     .forEach(c => dispatch(removeAudioClip({ trackId, clipId: c.id })));
 };
-
 
 export const syncWholePatternToTimeline = ({ trackId, patternRows, bpm }) => (dispatch, getState) => {
   if (!trackId || !Array.isArray(patternRows)) return;
@@ -831,8 +823,6 @@ async function buildPatternWav({ drumSequence = [], blockStart = 0, blockDuratio
   }
 }
 
-
-
 async function createDrumSoundFromPattern(drumEvent, sampleRate, maxLength) {
   const { padId, type, freq, decay } = drumEvent;
 
@@ -865,8 +855,6 @@ async function createDrumSoundFromPattern(drumEvent, sampleRate, maxLength) {
   return createEnhancedSyntheticDrumSound(padData, sampleRate, maxLength);
 }
 
-
-
 // Function to get drum sample URL based on pad data from drumMachineUtils
 async function getDrumSampleUrl(padData) {
   // Map drum types to sample files in your public/Audio folder
@@ -887,7 +875,6 @@ async function getDrumSampleUrl(padData) {
 
   return sampleMap[padData.type] || sampleMap[padData.sound] || null;
 }
-
 
 // Function to load and process drum samples
 async function loadAndProcessDrumSample(sampleUrl, sampleRate, maxLength, decay) {
@@ -923,7 +910,6 @@ async function loadAndProcessDrumSample(sampleUrl, sampleRate, maxLength, decay)
     return new Float32Array(maxLength).fill(0);
   }
 }
-
 
 // Enhanced synthetic drum sound generation using drumMachineUtils parameters
 function createEnhancedSyntheticDrumSound(padData, sampleRate, maxLength) {
@@ -1030,7 +1016,6 @@ function createEnhancedSyntheticDrumSound(padData, sampleRate, maxLength) {
   return output;
 }
 
-
 // Keep the original synthetic function as fallback
 function createSyntheticDrumSound(type, freq, decay, sampleRate, maxLength) {
   const output = new Float32Array(maxLength);
@@ -1045,8 +1030,6 @@ function createSyntheticDrumSound(type, freq, decay, sampleRate, maxLength) {
 
   return output;
 }
-
-
 
 // Ensure the pattern container clip (single section) has an up-to-date waveform URL
 async function regenWaveForSection(dispatch, getState, { trackId, sectionIndex, blockStart, blockDuration }) {
@@ -1086,7 +1069,6 @@ async function regenWaveForSection(dispatch, getState, { trackId, sectionIndex, 
     }));
   }
 }
-
 
 // Add this new thunk after your existing thunks
 export const triggerPatternDrumPlayback = ({ trackId, clipId, currentTime }) => async (dispatch, getState) => {

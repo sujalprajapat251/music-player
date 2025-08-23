@@ -38,7 +38,6 @@ import EditTrackNameModal from "./EditTrackNameModal";
 
 const Timeline = () => {
 
-
   // Define drum machine types for drum recording display
   const drumMachineTypes = [
     {
@@ -158,8 +157,6 @@ const Timeline = () => {
     });
   }, [zoomLevel]);
 
-
-
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
       try {
@@ -245,11 +242,7 @@ const Timeline = () => {
   // Use custom hook for section labels management
   const { sectionLabels, resizeSection } = useSectionLabels();
 
-
-
-
   // Mute functionality
-
 
   useEffect(() => {
     // Force a re-render when recording state changes and we have drum data
@@ -264,8 +257,6 @@ const Timeline = () => {
     }
   }, [isRecording, drumRecordedData.length]);
 
-
-
   useEffect(() => {
     players.forEach(playerObj => {
       const track = tracks.find(t => t.id === playerObj.trackId);
@@ -279,9 +270,7 @@ const Timeline = () => {
     });
   }, [tracks, players, soloTrackId]);
 
-
   // Get audio state from Redux
-
 
   // Grid settings from Redux
   const { selectedGrid, selectedTime, selectedRuler } = useSelector(selectGridSettings);
@@ -325,7 +314,6 @@ const Timeline = () => {
         const audio = new Audio();
         audio.src = url;
 
-
         audio.oncanplaythrough = () => {
           const newColor = generateRandomHexColor();
 
@@ -351,7 +339,6 @@ const Timeline = () => {
       });
     }
   }, [pianoRecording, currentTrackId]);
-
 
   const getAudioDuration = async (blob) => {
     const arrayBuffer = await blob.arrayBuffer();
@@ -1145,15 +1132,11 @@ const Timeline = () => {
     e.preventDefault();
     e.stopPropagation();
 
-
-
     try {
       const data = e.dataTransfer.getData('text/plain');
 
-
       if (data) {
         const soundItem = JSON.parse(data);
-
 
         if (!soundItem.soundfile) {
           // console.error('No soundfile found in dropped item');
@@ -1165,7 +1148,6 @@ const Timeline = () => {
         const width = rect.width;
         const duration = audioDuration;
         const rawDropTime = (x / width) * duration;
-
 
         // Grid snapping for drop position
         const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
@@ -1216,7 +1198,6 @@ const Timeline = () => {
             soundData: soundItem
           };
 
-
           dispatch(addAudioClipToTrack({
             trackId: trackId,
             audioClip: newClip
@@ -1243,13 +1224,10 @@ const Timeline = () => {
             audioClips: [newClip]
           };
 
-
           dispatch(addTrack(newTrack));
         } else {
-
         }
       } else {
-
       }
     } catch (error) {
       // console.error('Error processing dropped item:', error);
@@ -1337,7 +1315,6 @@ const Timeline = () => {
           // Implement edit name functionality
           break;
         default:
-
           break;
       }
       return;
@@ -1495,7 +1472,6 @@ const Timeline = () => {
         dispatch(addSectionLabel(newSection));
         break;
       default:
-
     }
   }, [sectionContextMenu, sectionLabels, dispatch, audioDuration]);
 
@@ -1676,14 +1652,10 @@ const Timeline = () => {
     zoomLevel // Add zoom level dependency
   ]);
 
-
-
-
   // Calculate playhead position in pixels for smoother animation
   const playheadPosition = useMemo(() => {
     return localCurrentTime * timelineWidthPerSecond;
   }, [localCurrentTime, timelineWidthPerSecond]);
-
 
   // Handler for TimelineActionBoxes
   const handleAction = (action) => {
@@ -1760,7 +1732,6 @@ const Timeline = () => {
     }
   };
 
-  // Function to play drum sound (this will be called from drum clips)
   // Enhanced drum sound playback that works with timeline
   const playDrumSound = useCallback((drumData) => {
     // This integrates with your existing Tone.js setup
@@ -2008,7 +1979,6 @@ const Timeline = () => {
               ))}
 
               {tracks.map((track, index) => {
-
                 return (
                   <div
                     key={track.id}

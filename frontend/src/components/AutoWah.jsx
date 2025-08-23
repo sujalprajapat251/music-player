@@ -49,7 +49,6 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const dragging = useRef(false);
     const lastY = useRef(0);
 
-
     // Tailwind-consistent responsive sizes
     const getResponsiveSize = () => {
         if (typeof window !== 'undefined') {
@@ -193,7 +192,6 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         </div>
     );
 }
-
 
 const AutoWah = () => {
 

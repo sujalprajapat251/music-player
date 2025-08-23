@@ -103,7 +103,6 @@ const BottomToolbar = () => {
         dispatch(resetZoom());
     };
 
-
     // Sync local state with Redux state
     useEffect(() => {
         if (reduxSelectedKey !== null) {
@@ -273,7 +272,6 @@ const BottomToolbar = () => {
             return [];
         }
 
-
         // Define the scale patterns (intervals from root note)
         const scalePatterns = {
             'Major': [0, 2, 4, 5, 7, 9, 11], // Whole, Whole, Half, Whole, Whole, Whole, Half
@@ -292,19 +290,16 @@ const BottomToolbar = () => {
             return [];
         }
 
-
         const pattern = scalePatterns[scale];
         if (!pattern) {
             console.warn(`❌ Unknown scale: ${scale}`);
             return [];
         }
 
-
         // Calculate highlighted keys across multiple octaves (C0 to C8)
         const highlightedKeys = [];
         const startOctave = 0;
         const endOctave = 8;
-
 
         for (let octave = startOctave; octave <= endOctave; octave++) {
             pattern.forEach(interval => {
@@ -315,7 +310,6 @@ const BottomToolbar = () => {
                 }
             });
         }
-
 
         // Sort keys for better performance
         highlightedKeys.sort((a, b) => a - b);
@@ -348,14 +342,12 @@ const BottomToolbar = () => {
         setAppliedSelection(null); // Clear the applied selection too
     };
 
-
     const menu = [
         { id: 'Click', label: 'Click' },
         { id: 'Tick', label: 'Tick' },
         { id: 'Hihat', label: 'Hihat' },
         { id: 'Clave', label: 'Clave' }
     ];
-
 
     const menu1 = [
         { id: '2 bars', label: '2 bars' },
@@ -435,16 +427,13 @@ const BottomToolbar = () => {
         } else {
             startCountIn();
         }
-        // console.log("Recording started at:", new Date().toLocaleTimeString());
     };
 
     // Stop recording
     const handleStopRecord = () => {
         dispatch(setRecording(false));
         handlePlayPause();
-        // console.log("Recording stopped at:", new Date().toLocaleTimeString());
-        // console.log("Timeline recorded data:", recordedData);
-        // console.log("Drum recorded data:", drumRecordedData);
+
         if (tickIntervalRef.current) {
             clearInterval(tickIntervalRef.current);
             tickIntervalRef.current = null;
@@ -486,8 +475,6 @@ const BottomToolbar = () => {
         }
     };
 
-    
-
     useEffect(() => {
         if (!isRecording && recordedData.length > 0) {
             // console.log("Total recorded data:", recordedData);x
@@ -517,21 +504,6 @@ const BottomToolbar = () => {
                         />
                     </div>
                     <p className="text-secondary-light dark:text-secondary-dark sm:text-[10px] md:text-[16px] lg:text-[18px] self-center hidden sm:block w-[60px]">{formatTime(currentTime)}</p>
-                    {/* {isRecording ? (<button onClick={handleStopRecord} className="cursor-pointer">
-                        
-                        <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
-                                <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[16px]"><FaStop /></p>
-                            </div>
-                    </button>
-                    ) :
-                        (<button onClick={handleStartRecord} className="cursor-pointer">
-                            <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
-                                <p className="rounded-full p-[3px] sm:p-[3px] lg:p-2 bg-[#FF6767]"></p>
-                                <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px]">Rec</p>
-                            </div>
-                        </button>)
-                    } */}
-
                     <div className="relative flex flex-col items-center">
                         {isCounting && (
                             <div className="absolute top-[-100px] flex flex-col items-center bg-[#1f1f1f] text-white px-8 py-5 rounded-lg shadow-lg">
@@ -878,7 +850,6 @@ const BottomToolbar = () => {
                         title="Zoom Out (Ctrl + -)"
                     />
                 </div>
-
 
                 <style jsx>{`
                 .slider::-webkit-slider-thumb {

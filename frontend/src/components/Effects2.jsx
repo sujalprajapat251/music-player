@@ -16,39 +16,6 @@ import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, 
 import audioEffectsPlayer from '../components/AudioEffectsPlayer';
 import { showEffectsTwo } from '../Redux/Slice/effects.slice';
 
-// Import effect images
-// import Bitcrushar from "../Images/Bitcrushar.svg";
-// import ClassicDist from "../Images/ClassicDist.svg";
-// import Clipper from "../Images/Clipper.svg";
-// import Crusher from "../Images/Crusher.svg";
-// import Fuzz from "../Images/Fuzz.svg";
-// import JuicyDistrotion from "../Images/Juicy Distrotion.svg";
-// import Overdrive from "../Images/Overdrive.svg";
-// import AutoPan from "../Images/Auto Pan.svg";
-// import AutoWah from "../Images/Auto-Wah.svg";
-// import Chorus from "../Images/Chorus.svg";
-// import Flanger from "../Images/Flanger.svg";
-// import InstantSidechain from "../Images/Instant Sidechain.svg";
-// import Phaser from "../Images/Phaser.svg";
-// import PitchShifter from "../Images/PitchShifter.svg";
-// import Rotary from "../Images/Rotary.svg";
-// import RotaryPro from "../Images/Rotary Pro.svg";
-// import StereoChorus from "../Images/Stereo Chorus.svg";
-// import TapeWobble from "../Images/Tape Wobble.svg";
-// import Fuzz from "./Fuzz";
-// import Clipper from './Clipper';
-// import Chorus from './Chorus';
-// import Crusher from "./Crusher";
-// import JuicyDistrotion from './JuicyDistrotion';
-// import Overdrive from './Overdrive';
-// import AutoPan from './AutoPan';
-// import AutoWah from './AutoWah';
-// import Flanger from './Flanger';
-// import Phaser from './Phaser';
-// import Rotary from './Rotary';
-// import StereoChorus from './StereoChorus';
-// import TapeWobble from './TapeWobble';
-
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
     return {
@@ -73,7 +40,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const dragging = useRef(false);
     const lastY = useRef(0);
 
-
     const getResponsiveSize = () => {
         if (typeof window !== 'undefined') {
             if (window.innerWidth >= 1440) return 56;
@@ -95,7 +61,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-
     const getResponsiveStroke = () => {
         if (typeof window !== 'undefined') {
             if (window.innerWidth >= 768) return 3;
@@ -112,7 +77,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         window.addEventListener('resize', handleResizeStroke);
         return () => window.removeEventListener('resize', handleResizeStroke);
     }, []);
-
 
     const radius = (size - stroke) / 2;
     const center = size / 2;
@@ -159,7 +123,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         </div>
     );
 }
-
 
 const RangeSlider = ({
     min = 0,
@@ -229,7 +192,6 @@ const RangeSlider = ({
         </div>
     );
 };
-
 
 const INSTRUMENTS = [
     { id: 'acoustic_grand_piano', name: 'Piano', category: 'Jazz Chord Memos' },
@@ -308,8 +270,6 @@ const effects = [
     { id: 8, name: "Reggaeton Shake" }
 ];
 
-
-
 const Effects2 = () => {
 
     const { isDark } = useTheme();
@@ -326,7 +286,6 @@ const Effects2 = () => {
 
     const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas } = useSelector((state) => state.effects);
     console.log("activeEffects", activeEffects, "showEffectsLibrary", showEffectsLibrary,);
-
 
     const [effectsSearchTerm, setEffectsSearchTerm] = useState('');
     const [selectedEffectCategory, setSelectedEffectCategory] = useState(null);
@@ -492,31 +451,6 @@ const Effects2 = () => {
         dispatch(toggleEffectsOffcanvas());
     };
 
-    // const handleEffectPlayPause = async (effectId) => {
-    //     const effect = effects.find(e => e.id === effectId);
-    //     if (!effect) return;
-    //     try {
-    //         if (playingEffectId === effectId) {
-    //             audioEffectsPlayer.stopEffect();
-    //             setPlayingEffectId(null);
-    //         } else {
-    //             if (playingEffectId) {
-    //                 audioEffectsPlayer.stopEffect();
-    //             }
-    //             await audioEffectsPlayer.playEffect(effect.name);
-    //             setPlayingEffectId(effectId);
-    //             setTimeout(() => {
-    //                 if (playingEffectId === effectId) {
-    //                     audioEffectsPlayer.stopEffect();
-    //                     setPlayingEffectId(null);
-    //                 }
-    //             }, 4000);
-    //         }
-    //     } catch (error) {
-    //         console.error('Error playing effect:', error);
-    //         setPlayingEffectId(null);
-    //     }
-    // };
     useEffect(() => {
         return () => {
             audioEffectsPlayer.stopEffect();
@@ -525,8 +459,6 @@ const Effects2 = () => {
 
     return (
         <>
-
-
             <div
                 class="fixed z-40 w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[270px] sm:bottom-[337px] md600:bottom-[363px] md:bottom-[450px]  lg:bottom-[483px] xl:bottom-[492px] 2xl:bottom-[516px]"
                 tabindex="-1"
@@ -712,8 +644,6 @@ const Effects2 = () => {
                             </>
                         )}
 
-
-
                         {activeTab === 'Effects' && (
                             <div className={`w-full overflow-x-auto transition-all duration-200 ${isDragOver ? 'bg-[#409C9F] bg-opacity-10' : ''}`}
                                 onDragOver={(e) => {
@@ -816,8 +746,7 @@ const Effects2 = () => {
             </div >
 
             {/* Effects Library Modal */}
-            {
-                showEffectsLibrary && (
+            {showEffectsLibrary && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
                         <div className="bg-[#1a1a1a] rounded-lg w-full max-w-4xl max-h-[80vh] overflow-hidden">
                             <div className="flex items-center justify-between p-4 border-b border-[#FFFFFF1A]">
@@ -859,10 +788,8 @@ const Effects2 = () => {
                 )
             }
 
-
             {/* Effects Library Modal */}
-            {
-                showEffectsLibrary && (
+            {showEffectsLibrary && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
                         <div className="bg-[#1a1a1a] rounded-lg w-full max-w-4xl max-h-[80vh] overflow-hidden">
                             {/* Header */}

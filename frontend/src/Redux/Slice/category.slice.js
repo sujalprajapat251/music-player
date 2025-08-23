@@ -3,7 +3,6 @@ import axios from 'axios';
 import { BASE_URL } from '../../Utils/baseUrl';
 import { setAlert } from './alert.slice';
 
-
 const handleErrors = (error, dispatch, rejectWithValue) => {
     const errorMessage = error.response?.data?.message || 'An error occurred';
     if (dispatch) {

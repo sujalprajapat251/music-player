@@ -1,6 +1,3 @@
-// Cross-browser Web Audio context utilities
-// - Singleton AudioContext with webkit fallback
-// - Unlock helpers for autoplay-restricted environments (iOS Safari, mobile)
 
 let sharedAudioContext = null;
 
@@ -10,8 +7,17 @@ export function getAudioContext() {
 		throw new Error('Web Audio API not supported in this browser.');
 	}
 	if (!sharedAudioContext) {
-		sharedAudioContext = new AudioContextClass({ latencyHint: 'interactive' });
+		sharedAudioContext = new AudioContextClass({ 
+			latencyHint: 'interactive',
+			sampleRate: 44100
+		});
 	}
+	
+	// Ensure audio context is resumed if suspended
+	if (sharedAudioContext.state === 'suspended') {
+		sharedAudioContext.resume().catch(console.error);
+	}
+	
 	return sharedAudioContext;
 }
 
@@ -20,14 +26,14 @@ export async function ensureAudioUnlocked() {
 	try {
 		ctx = getAudioContext();
 	} catch (e) {
-		return; // Not supported, nothing to unlock
+		return false; // Not supported
 	}
 
-	if (ctx.state === 'running') return;
+	if (ctx.state === 'running') return true;
 
 	try {
 		await ctx.resume();
-		if (ctx.state === 'running') return;
+		if (ctx.state === 'running') return true;
 	} catch {}
 
 	// iOS Safari sometimes needs a silent buffer kick
@@ -37,8 +43,12 @@ export async function ensureAudioUnlocked() {
 		source.buffer = buffer;
 		source.connect(ctx.destination);
 		source.start(0);
+		source.stop(0.001);
 		await ctx.resume();
-	} catch {}
+		return ctx.state === 'running';
+	} catch {
+		return false;
+	}
 }
 
 export function attachAudioUnlockOnce() {

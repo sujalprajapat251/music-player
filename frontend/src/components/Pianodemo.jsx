@@ -5,7 +5,6 @@ import Soundfont from 'soundfont-player';
 
 const INSTRUMENTS = [
   'acoustic_grand_piano','Flopp', 'whistle', 'fx_1_rain', 'fx_2_soundtrack', 'fx_3_crystal', 'fx_4_atmosphere', 'fx_5_brightness', 'fx_6_goblins', 'fx_7_echoes', 'fx_8_scifi', 'glockenspiel', 'guitar_fret_noise', 'guitar_harmonics', 'gunshot', 'harmonica', 'harpsichord', 'helicopter', 'honkytonk_piano', 'kalimba', 'koto'
-
 ];
 
 const Pianodemo = () => {

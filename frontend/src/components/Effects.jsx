@@ -2,9 +2,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { IoSearch } from 'react-icons/io5'
 
-// import playblack from '../Images/playblack.svg';
-// import pauseblack from '../Images/pauseblack.svg';
-
 import { getAllCategory } from '../Redux/Slice/category.slice';
 import { useDispatch, useSelector } from 'react-redux';
 import { addEffect, setShowEffectsLibrary, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
@@ -168,10 +165,6 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
         }, 100);
     };
 
-    // const handleOpenEffectsLibrary = () => {
-    //     dispatch(setShowEffectsLibrary(true));
-    // };
-
     const filteredEffects = effects.filter(effect => {
 
         if (selectedCategory) {
@@ -232,18 +225,6 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
                             </div>
 
                             {/* Active Effects Summary */}
-                            {/* {activeEffects.length > 0 && (
-                            <div className="bg-[#1F1F1F] w-full py-2 md600:py-3 md:my-4 lg:py-5 lg:my-3 3xl:py-7">
-                                <p className="text-white text-[8px] sm:text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px] text-center mb-2">Active Effects ({activeEffects.length}/4)</p>
-                                <div className="flex flex-wrap gap-1 justify-center">
-                                    {activeEffects.map((effect, index) => (
-                                        <div key={effect.instanceId} className="bg-[#353535] px-2 py-1 rounded text-white text-[8px] sm:text-[10px] md600:text-[12px]">
-                                            {effect.name}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )} */}
 
                             <div className="bg-[#1F1F1F] w-full py-2 md600:py-3 md:my-4 lg:py-5 lg:my-3 3xl:py-7 hidden">
                                 <p className="text-white text-[8px] sm:text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px] text-center">Add a track to apply effects</p>

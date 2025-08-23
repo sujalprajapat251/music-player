@@ -44,7 +44,6 @@ const Sidebar2 = () => {
     dispatch(setSidebarScrollOffset(scrollTop));
   }
   
-
   const handleChangeTrack = (trackId) => {
     dispatch(setCurrentTrackId(trackId));
 

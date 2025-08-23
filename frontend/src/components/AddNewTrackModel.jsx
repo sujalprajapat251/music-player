@@ -96,15 +96,6 @@ const AddNewTrackModel = ({ onClose }) => {
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    // const newTrack = {
-    //   id: Date.now(),
-    //   name: file.name,
-    //   url: URL.createObjectURL(file),
-    //   color: getNextTrackColor(), // Use unique color for each new track
-    //   height: trackHeight,
-    // };
-    // dispatch(addTrack(newTrack));
-    // onClose();
 
     try {
       const blob = file;
@@ -185,7 +176,6 @@ const AddNewTrackModel = ({ onClose }) => {
         </div>
       </div>
 
-      
     </>
   )
 }
