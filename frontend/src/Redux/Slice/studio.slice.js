@@ -36,6 +36,7 @@ const initialState = {
   drumRecordedData: [], // Store drum pad recordings
   isPlayingDrumRecording: false, // Track if playing back drum recording
   drumPlaybackStartTime: null, // Track when drum playback started
+  persistentDrumData: [], // Store persistent drum data that remains after recording stops
   // TimelineTrack specific state
   selectedClipId: null,
   selectedTrackId: null,
@@ -326,6 +327,22 @@ const studioSlice = createSlice({
       console.log("=====================", action.payload)
       state.drumRecordedData = action.payload;
     },
+    updateDrumRecordedData: (state, action) => {
+      // Update drum recorded data with shifted times
+      const { delta } = action.payload;
+      state.drumRecordedData = state.drumRecordedData.map(hit => ({
+        ...hit,
+        currentTime: Math.max(0, (hit.currentTime || 0) + delta)
+      }));
+    },
+    persistDrumData: (state, action) => {
+      // Persist drum recorded data when recording stops
+      state.persistentDrumData = [...state.drumRecordedData];
+    },
+    clearPersistentDrumData: (state) => {
+      // Clear persistent drum data
+      state.persistentDrumData = [];
+    },
     setDrumPlayback: (state, action) => {
       state.isPlayingDrumRecording = action.payload;
     },
@@ -466,6 +483,9 @@ export const {
   setTrackVolume,
   drumDataProcessed,
   setDrumRecordedData,
+  updateDrumRecordedData,
+  persistDrumData,
+  clearPersistentDrumData,
   setDrumPlayback,
   setDrumPlaybackStartTime,
   setSelectedClip,

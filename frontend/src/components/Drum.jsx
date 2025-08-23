@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setDrumRecordedData, setDrumPlayback, setDrumPlaybackStartTime, addAudioClipToTrack, addTrack } from '../Redux/Slice/studio.slice';
+import { setDrumRecordedData, setDrumPlayback, setDrumPlaybackStartTime, addAudioClipToTrack, addTrack, persistDrumData, clearPersistentDrumData } from '../Redux/Slice/studio.slice';
 import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
 import Pattern from '../components/Pattern';
 import {
@@ -279,6 +279,8 @@ const DrumPadMachine = ({ onClose }) => {
       if (drumRecordedData.length > 0) {
         dispatch(setDrumRecordedData([]));
       }
+      // Also clear persistent drum data
+      dispatch(clearPersistentDrumData());
     }
   }, [isRecording, dispatch]);
 
@@ -335,6 +337,9 @@ const DrumPadMachine = ({ onClose }) => {
   // Create continuous drum recording when recording stops
   useEffect(() => {
     if (!isRecording && drumRecordedData.length > 0 && currentTrackId) {
+      // Persist drum data so it remains visible on timeline
+      dispatch(persistDrumData());
+      
       // Add a small delay to ensure Timeline has rendered the data
       const processTimeout = setTimeout(() => {
         createContinuousDrumAudioBlob(drumRecordedData).then((audioBlob) => {

@@ -2019,12 +2019,13 @@ const Timeline = () => {
       />
 
       {/* Piano Component */}
-      {showPiano || getTrackType == "Keys" && (
-        <Piano onClose={() => setShowPiano(false)} />
+      {(showPiano || getTrackType === "Keys") && (
+        <Piano onClose={() => {setShowPiano(false); dispatch(setTrackType(null)); }} />
       )}
 
-      {showDrum || getTrackType == "Drums & Machines" && (
-        <Drum onClose={() => setShowDrum(false)} />
+      {/* Drum Component */}
+      {(showDrum || getTrackType === "Drums & Machines") && (
+        <Drum onClose={() => { setShowDrum(false); dispatch(setTrackType(null)); }} />
       )}
 
       {/* Rename Section Modal */}
