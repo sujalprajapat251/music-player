@@ -221,7 +221,7 @@ const studioSlice = createSlice({
     },
     setCurrentTrackId: (state, action) => {
       state.currentTrackId = action.payload;
-      console.log('jsdbfjkasdjfjsdfjasdfkadfbhjksjhkshkfkj', action.payload);
+      // console.log('jsdbfjkasdjfjsdfjasdfkadfbhjksjhkshkfkj', action.payload);
     },
     toggleMuteTrack: (state, action) => {
       const trackId = action.payload;
