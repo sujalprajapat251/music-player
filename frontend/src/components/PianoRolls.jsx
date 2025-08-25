@@ -523,7 +523,21 @@ const PianoRolls = () => {
         if (Array.isArray(list) && list.length > 0) {
             const minStart = Math.min(...list.map(n => n.start));
             const maxEnd = Math.max(...list.map(n => n.start + n.duration));
-            try { dispatch(setPianoRecordingClip({ start: minStart, end: maxEnd, color: '#E44F65' })); } catch {}
+            try { 
+                dispatch(setPianoRecordingClip({ 
+                    start: minStart, 
+                    end: maxEnd, 
+                    color: '#E44F65',
+                    type: 'piano',
+                    name: `Piano Recording (${list.length} notes)`,
+                    duration: maxEnd - minStart,
+                    startTime: minStart,
+                    trimStart: 0,
+                    trimEnd: maxEnd - minStart,
+                    id: `piano_recording_${Date.now()}`,
+                    pianoData: list
+                })); 
+            } catch {}
         } else {
             try { dispatch(setPianoRecordingClip(null)); } catch {}
         }
