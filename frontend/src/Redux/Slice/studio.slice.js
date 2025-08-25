@@ -36,7 +36,7 @@ const initialState = {
   drumRecordedData: [], // Store drum pad recordings
   isPlayingDrumRecording: false, // Track if playing back drum recording
   drumPlaybackStartTime: null, // Track when drum playback started
-  persistentDrumData: [], // Store persistent drum data that remains after recording stops
+  drumRecordingClip: null, // transient info for background of last drum recording
   // TimelineTrack specific state
   selectedClipId: null,
   selectedTrackId: null,
@@ -335,14 +335,6 @@ const studioSlice = createSlice({
         currentTime: Math.max(0, (hit.currentTime || 0) + delta)
       }));
     },
-    persistDrumData: (state, action) => {
-      // Persist drum recorded data when recording stops
-      state.persistentDrumData = [...state.drumRecordedData];
-    },
-    clearPersistentDrumData: (state) => {
-      // Clear persistent drum data
-      state.persistentDrumData = [];
-    },
     setDrumPlayback: (state, action) => {
       state.isPlayingDrumRecording = action.payload;
     },
@@ -394,6 +386,10 @@ const studioSlice = createSlice({
     },
     setPianoRecordingClip: (state, action) => {
       state.pianoRecordingClip = action.payload; // {start, end, color}
+    },
+
+    setDrumRecordingClip: (state, action) => {
+      state.drumRecordingClip = action.payload; // {start, end, color, trackId}
     },
 
     // Key and Scale Selection actions
@@ -484,8 +480,6 @@ export const {
   drumDataProcessed,
   setDrumRecordedData,
   updateDrumRecordedData,
-  persistDrumData,
-  clearPersistentDrumData,
   setDrumPlayback,
   setDrumPlaybackStartTime,
   setSelectedClip,
@@ -496,6 +490,7 @@ export const {
   setPianoNotes,
   clearPianoNotes,
   setPianoRecordingClip,
+  setDrumRecordingClip,
   setSelectedKey,
   setSelectedScale,
   setHighlightedPianoKeys,

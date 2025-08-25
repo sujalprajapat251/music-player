@@ -418,7 +418,7 @@ export const createSynthSound = (pad, audioContext) => {
 };
 
 // Helper function to create drum data in the same format as Drum.jsx
-export const createDrumData = (pad, drumMachine, currentTime = 0) => {
+export const createDrumData = (pad, drumMachine, currentTime = 0, trackId = null) => {
   return {
     timestamp: Date.now(),
     currentTime: currentTime,
@@ -429,6 +429,7 @@ export const createDrumData = (pad, drumMachine, currentTime = 0) => {
     type: pad.type,
     drumMachine: drumMachine.name,
     effects: drumMachine.effects,
+    trackId: trackId,
   };
 };
 

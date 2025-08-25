@@ -10,6 +10,7 @@ import { getGridSpacing, getGridSpacingWithTimeSignature, parseTimeSignature } f
 import { IMAGE_URL } from "../Utils/baseUrl";
 import { getAudioContext as getSharedAudioContext, ensureAudioUnlocked } from "../Utils/audioContext";
 import { getNextTrackColor } from "../Utils/colorUtils";
+import { createSynthSound, drumMachineTypes } from "../Utils/drumMachineUtils";
 import magnetIcon from "../Images/magnet.svg";
 import settingIcon from "../Images/setting.svg";
 import reverceIcon from "../Images/reverce.svg";
@@ -38,25 +39,7 @@ import EditTrackNameModal from "./EditTrackNameModal";
 
 const Timeline = () => {
 
-  // Define drum machine types for drum recording display
-  const drumMachineTypes = [
-    {
-      name: "Classic 808",
-      color: '#7c3aed',
-    },
-    {
-      name: "Vintage 909",
-      color: '#dc2626',
-    },
-    {
-      name: "Modern Trap",
-      color: '#059669',
-    },
-    {
-      name: "Acoustic Kit",
-      color: '#d97706',
-    }
-  ];
+
 
   const dispatch = useDispatch();
 
@@ -1073,6 +1056,8 @@ const Timeline = () => {
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
       }
+      // Clear drum playback tracking
+      playedDrumHitsRef.current.clear();
     };
   }, []);
 
@@ -1732,15 +1717,133 @@ const Timeline = () => {
     }
   };
 
+  // Create reverb impulse response for drum playback
+  const createReverbBuffer = useCallback(() => {
+    const audioContext = getAudioContext();
+    const length = audioContext.sampleRate * 2;
+    const buffer = audioContext.createBuffer(2, length, audioContext.sampleRate);
+
+    for (let channel = 0; channel < 2; channel++) {
+      const channelData = buffer.getChannelData(channel);
+      for (let i = 0; i < length; i++) {
+        const decay = Math.pow(1 - i / length, 2);
+        channelData[i] = (Math.random() * 2 - 1) * decay;
+      }
+    }
+
+    return buffer;
+  }, []);
+
+  // Apply drum machine type effects to audio
+  const applyTypeEffects = useCallback((audioNode, typeEffects) => {
+    const audioContext = getAudioContext();
+
+    // Create EQ for bass boost
+    const lowShelf = audioContext.createBiquadFilter();
+    lowShelf.type = 'lowshelf';
+    lowShelf.frequency.setValueAtTime(200, audioContext.currentTime);
+    lowShelf.gain.setValueAtTime((typeEffects.bassBoost - 1) * 10, audioContext.currentTime);
+
+    // Create compressor
+    const compressor = audioContext.createDynamicsCompressor();
+    compressor.threshold.setValueAtTime(-24, audioContext.currentTime);
+    compressor.knee.setValueAtTime(30, audioContext.currentTime);
+    compressor.ratio.setValueAtTime(12, audioContext.currentTime);
+    compressor.attack.setValueAtTime(0.003, audioContext.currentTime);
+    compressor.release.setValueAtTime(0.25, audioContext.currentTime);
+
+    // Create waveshaper for saturation
+    const waveshaper = audioContext.createWaveShaper();
+    const samples = 44100;
+    const curve = new Float32Array(samples);
+    const deg = Math.PI / 180;
+    for (let i = 0; i < samples; i++) {
+      const x = (i * 2) / samples - 1;
+      curve[i] = (3 + typeEffects.saturation) * x * 20 * deg / (Math.PI + typeEffects.saturation * Math.abs(x));
+    }
+    waveshaper.curve = curve;
+    waveshaper.oversample = '4x';
+
+    // Connect effects chain
+    audioNode.connect(lowShelf);
+    lowShelf.connect(compressor);
+    compressor.connect(waveshaper);
+
+    return waveshaper;
+  }, []);
+
   // Enhanced drum sound playback that works with timeline
   const playDrumSound = useCallback((drumData) => {
-    // This integrates with your existing Tone.js setup
-    if (drumData && drumData.sound) {
-      // Use your existing drum sound loading logic here
-      console.log('Playing drum sound on timeline:', drumData);
-      // You can trigger actual drum sounds here using your drum component's sound system
+    try {
+      if (!drumData || !drumData.sound) return;
+
+      const audioContext = getAudioContext();
+      
+      // Ensure audio context is running
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().catch(console.error);
+      }
+
+      // Find the drum machine type based on the recorded data
+      const drumMachine = drumMachineTypes.find(dm => dm.name === drumData.drumMachine) || drumMachineTypes[0];
+      
+      // Create pad data from drum recording
+      const padData = {
+        id: drumData.padId,
+        sound: drumData.sound,
+        freq: drumData.freq,
+        decay: drumData.decay,
+        type: drumData.type
+      };
+
+      // Create synthetic sound using the same logic as Drum.jsx
+      const synthSource = createSynthSound(padData, audioContext);
+
+      // Create audio nodes for effects
+      const gainNode = audioContext.createGain();
+      const panNode = audioContext.createStereoPanner();
+      const dryGainNode = audioContext.createGain();
+      const wetGainNode = audioContext.createGain();
+      const convolver = audioContext.createConvolver();
+
+      // Set up reverb
+      const reverbBuffer = createReverbBuffer();
+      convolver.buffer = reverbBuffer;
+
+      // Set up gain (volume) - use default values
+      gainNode.gain.setValueAtTime(0.7, audioContext.currentTime);
+
+      // Set up pan (center)
+      panNode.pan.setValueAtTime(0, audioContext.currentTime);
+
+      // Set up reverb mix (default 20%)
+      dryGainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+      wetGainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+
+      // Apply drum machine type effects
+      const effectsOutput = applyTypeEffects(synthSource, drumMachine.effects);
+
+      // Connect nodes with type effects
+      effectsOutput.connect(gainNode);
+      gainNode.connect(panNode);
+
+      // Dry path
+      panNode.connect(dryGainNode);
+      dryGainNode.connect(audioContext.destination);
+
+      // Wet path (reverb)
+      panNode.connect(convolver);
+      convolver.connect(wetGainNode);
+      wetGainNode.connect(audioContext.destination);
+
+      console.log('Playing drum sound on timeline:', drumData.sound, 'from', drumData.drumMachine);
+    } catch (error) {
+      console.error('Error playing drum sound on timeline:', error);
     }
-  }, []);
+  }, [createReverbBuffer, applyTypeEffects]);
+
+  // Track which drum hits have been played to prevent duplicates
+  const playedDrumHitsRef = useRef(new Set());
 
   // Enhanced drum clip checking for timeline playback
   useEffect(() => {
@@ -1749,9 +1852,16 @@ const Timeline = () => {
       drumRecordedData.forEach(drumHit => {
         const hitTime = drumHit.currentTime;
         const tolerance = 0.05; // 50ms tolerance
+        const hitKey = `${drumHit.padId}-${Math.floor(hitTime * 10)}`; // Create unique key
 
-        if (Math.abs(currentTime - hitTime) <= tolerance) {
+        if (Math.abs(currentTime - hitTime) <= tolerance && !playedDrumHitsRef.current.has(hitKey)) {
           playDrumSound(drumHit);
+          playedDrumHitsRef.current.add(hitKey);
+          
+          // Remove from played set after a short delay to allow re-triggering
+          setTimeout(() => {
+            playedDrumHitsRef.current.delete(hitKey);
+          }, 100);
         }
       });
 
@@ -1766,8 +1876,15 @@ const Timeline = () => {
               if (currentTime >= clipStart && currentTime <= clipEnd) {
                 clip.drumSequence.forEach(drumHit => {
                   const adjustedHitTime = clipStart + (drumHit.currentTime - clip.startTime);
-                  if (Math.abs(currentTime - adjustedHitTime) <= 0.05) {
+                  const hitKey = `${drumHit.padId}-${Math.floor(adjustedHitTime * 10)}`;
+                  
+                  if (Math.abs(currentTime - adjustedHitTime) <= 0.05 && !playedDrumHitsRef.current.has(hitKey)) {
                     playDrumSound(drumHit);
+                    playedDrumHitsRef.current.add(hitKey);
+                    
+                    setTimeout(() => {
+                      playedDrumHitsRef.current.delete(hitKey);
+                    }, 100);
                   }
                 });
               }
@@ -1775,6 +1892,9 @@ const Timeline = () => {
           });
         }
       });
+    } else {
+      // Clear played hits when not playing
+      playedDrumHitsRef.current.clear();
     }
   }, [isPlaying, currentTime, tracks, drumRecordedData, playDrumSound]);
 
@@ -1787,6 +1907,8 @@ const Timeline = () => {
   useEffect(() => {
     if (!isPlaying) {
       stopAllPianoNotes();
+      // Clear drum playback tracking when playback stops
+      playedDrumHitsRef.current.clear();
     }
   }, [isPlaying, stopAllPianoNotes]);
 
@@ -1910,7 +2032,7 @@ const Timeline = () => {
                   );
                 })}
 
-                {drumRecordedData.length > 0 && (() => {
+                {/* {drumRecordedData.length > 0 && (() => {
                   const first = drumRecordedData[0];
                   const last = drumRecordedData[drumRecordedData.length - 1];
                   const start = first.currentTime;
@@ -1954,7 +2076,7 @@ const Timeline = () => {
                       )}
                     </div>
                   );
-                })()}
+                })()} */}
               </div>
             )}
 

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setDrumRecordedData, setDrumPlayback, setDrumPlaybackStartTime, addAudioClipToTrack, addTrack, persistDrumData, clearPersistentDrumData } from '../Redux/Slice/studio.slice';
+import { setDrumRecordedData, setDrumPlayback, setDrumPlaybackStartTime, addAudioClipToTrack, addTrack, setDrumRecordingClip } from '../Redux/Slice/studio.slice';
 import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
 import Pattern from '../components/Pattern';
 import {
@@ -313,24 +313,46 @@ const menu = [
     }
 
     if (isRecording) {
-      const drumData = createDrumData(pad, selectedDrumMachine, timestamp || currentTime);
+      const drumData = createDrumData(pad, selectedDrumMachine, timestamp || currentTime, currentTrackId);
       const updatedData = [...drumRecordedData, drumData];
       dispatch(setDrumRecordedData(updatedData));
+      
+      // Update drum recording clip bounds (similar to piano recording)
+      const notesForThisTrack = (updatedData || []).filter(n => n.trackId === (currentTrackId || null));
+      if (notesForThisTrack.length > 0) {
+        const minStart = Math.min(...notesForThisTrack.map(n => n.currentTime || 0));
+        const maxEnd = Math.max(...notesForThisTrack.map(n => (n.currentTime || 0) + (n.decay || 0.2)));
+        const drumClip = { 
+          start: minStart, 
+          end: maxEnd, 
+          color: selectedDrumMachine.color, 
+          trackId: currentTrackId || null,
+          type: 'drum',
+          name: `Drum Recording (${notesForThisTrack.length} hits)`,
+          duration: maxEnd - minStart,
+          startTime: minStart,
+          trimStart: 0,
+          trimEnd: maxEnd - minStart,
+          id: `drum_recording_${Date.now()}`,
+          drumData: notesForThisTrack
+        };
+        dispatch(setDrumRecordingClip(drumClip));
+      }
     }
     playSound(pad);
   };
 
   // Clear drum recorded data when recording starts
-  useEffect(() => {
-    if (isRecording) {
-      // Clear any existing drum recorded data when starting a new recording
-      if (drumRecordedData.length > 0) {
-        dispatch(setDrumRecordedData([]));
-      }
-      // Also clear persistent drum data
-      dispatch(clearPersistentDrumData());
-    }
-  }, [isRecording, dispatch]);
+  // useEffect(() => {
+  //   if (isRecording) {
+  //     // Clear any existing drum recorded data when starting a new recording
+  //     if (drumRecordedData.length > 0) {
+  //       dispatch(setDrumRecordedData([]));
+  //     }
+  //     // Clear drum recording clip
+  //     dispatch(setDrumRecordingClip(null));
+  //   }
+  // }, [isRecording, dispatch]);
 
   // Remove the automatic drum track creation - we'll use the selected track instead
 
@@ -357,7 +379,7 @@ const menu = [
 
         // Stop playback if we've reached the end
         const maxTimestamp = Math.max(...drumRecordedData.map(d => d.timestamp));
-        if (currentPlaybackTime > maxTimestamp + 1000) { // Add 1 second buffer
+        if (currentPlaybackTime > maxTimestamp + 1000) { 
           dispatch(setDrumPlayback(false));
           dispatch(setDrumPlaybackStartTime(null));
         }
@@ -385,8 +407,6 @@ const menu = [
   // Create continuous drum recording when recording stops
   useEffect(() => {
     if (!isRecording && drumRecordedData.length > 0 && currentTrackId) {
-      // Persist drum data so it remains visible on timeline
-      dispatch(persistDrumData());
       
       // Add a small delay to ensure Timeline has rendered the data
       const processTimeout = setTimeout(() => {
@@ -428,9 +448,10 @@ const menu = [
             }));
 
             // Only clear drum data after successful track creation
-            setTimeout(() => {
-              dispatch(setDrumRecordedData([]));
-            }, 500); // Give Timeline time to display
+            // setTimeout(() => {
+            //   dispatch(setDrumRecordedData([]));
+            //   dispatch(setDrumRecordingClip(null));
+            // }, 500); // Give Timeline time to display
           }
         }).catch((error) => {
           // console.error('Error creating continuous drum audio blob:', error);
@@ -1270,14 +1291,6 @@ const menu = [
                         <div className="flex flex-col items-center">
                           <Knob label="Volume" min={-135} max={135} defaultAngle={volume} onChange={(value) => setVolume(value)} />
                         </div>
-                      </div>
-
-                      {/* Audio Status */}
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${audioUnlocked ? 'bg-green-500' : 'bg-red-500'}`} />
-                        <span className="text-xs text-gray-400">
-                          {audioUnlocked ? 'Audio Ready' : 'Click to Enable'}
-                        </span>
                       </div>
 
                       <div className='items-center '>

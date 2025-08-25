@@ -251,7 +251,7 @@ const Pattern = () => {
 
       // Record pattern data if recording
       if (isRecordingPattern) {
-        const drumData = createDrumData(padData, selectedMachine, currentTime);
+        const drumData = createDrumData(padData, selectedMachine, currentTime, null);
         setPatternRecordedData(prev => [...prev, drumData]);
       }
     } catch (error) {
