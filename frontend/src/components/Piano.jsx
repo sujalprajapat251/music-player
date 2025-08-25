@@ -640,37 +640,38 @@ const Pianodemo = ({ onClose }) => {
 
 
     const playNote = (midiNumber) => {
-        const noteName = Tone.Frequency(midiNumber, "midi").toNote(); 
+        // Many soundfonts don't support notes below A0 (MIDI 21).
+        // Clamp to a safe, supported range for playback so low-octave keys still work.
+        const effectiveMidi = Math.max(21, midiNumber);
+        const noteName = Tone.Frequency(effectiveMidi, "midi").toNote();
         const currentTime = getRecordingTime();
-        
+       
         // Ensure audio context is resumed (required for audio to work)
         if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
             audioContextRef.current.resume();
         }
-        
-        // Append a beat dot immediately on key press (during recording)
+       
+        // Only push notes to timeline state when recording is active
         if (getIsRecording) {
-            // Create a unique event for each key press with current timestamp
-            const newEvent = { 
-                note: noteName, 
-                startTime: currentTime, 
-                duration: 0.05, 
-                midiNumber,
+            const newEvent = {
+                note: noteName,
+                startTime: currentTime,
+                duration: 0.05,
+                midiNumber: effectiveMidi,
                 trackId: currentTrackId || null,
-                id: `${midiNumber}-${Date.now()}-${Math.random()}` // Unique ID for each note
+                id: `${midiNumber}-${Date.now()}-${Math.random()}`
             };
-            const updated = [...pianoNotesRef.current, newEvent];
+            const updated = [...(pianoNotesRef.current || []), newEvent];
             dispatch(setPianoNotes(updated));
-            
-            // Update recording clip bounds
+
             const notesForThisTrack = (updated || []).filter(n => n.trackId === (currentTrackId || null));
             if (notesForThisTrack.length > 0) {
                 const minStart = Math.min(...notesForThisTrack.map(n => n.startTime));
                 const maxEnd = Math.max(...notesForThisTrack.map(n => n.startTime + (n.duration || 0.05)));
-                dispatch(setPianoRecordingClip({ 
-                    start: minStart, 
-                    end: maxEnd, 
-                    color: '#E44F65', 
+                dispatch(setPianoRecordingClip({
+                    start: minStart,
+                    end: maxEnd,
+                    color: '#E44F65',
                     trackId: currentTrackId || null,
                     type: 'piano',
                     name: `Piano Recording (${notesForThisTrack.length} notes)`,
@@ -684,13 +685,13 @@ const Pianodemo = ({ onClose }) => {
             }
             pianoNotesRef.current = updated;
         }
-
+ 
         setRecordedNotes((prevNotes) => [
             ...prevNotes,
             { midiNumber, time: Date.now(), type: 'play' },
         ]);
         if (pianoRef.current) {
-            const audioNode = pianoRef.current.play(midiNumber);
+            const audioNode = pianoRef.current.play(effectiveMidi);
             activeAudioNodes.current[midiNumber] = audioNode;
         }
     };
