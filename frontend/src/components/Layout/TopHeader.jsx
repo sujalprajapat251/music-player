@@ -228,9 +228,7 @@ const TopHeader = () => {
                             </MenuButton>
                         </div>
 
-                        <Menu.Items
-                            className="absolute left-[-20px] sm:left-0 z-[99] mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60   origin-top-right bg-primary-light dark:bg-primary-dark shadow-lg outline-none"
-                        >
+                        <Menu.Items className="absolute left-[-20px] sm:left-0 z-[99] mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60   origin-top-right bg-primary-light dark:bg-primary-dark shadow-lg outline-none">
                             <div className="">
                                 {/* First item: Print */}
                                 <Menu.Item>
@@ -247,11 +245,7 @@ const TopHeader = () => {
                                         </p>
                                     )}
                                 </Menu.Item>
-                                <div
-                                    className="relative "
-                                    onMouseEnter={() => handleSubmenuToggle('openrecentfolder', true)}
-                                    onMouseLeave={() => handleSubmenuToggle('openrecentfolder', false)}
-                                >
+                                <div className="relative " onMouseEnter={() => handleSubmenuToggle('openrecentfolder', true)} onMouseLeave={() => handleSubmenuToggle('openrecentfolder', false)}>
                                     <div className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
                                         <OpenFolderIcon className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Open Recent</span>
                                         <MdOutlineKeyboardArrowRight className="text-secondary-light dark:text-secondary-dark text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
@@ -290,11 +284,7 @@ const TopHeader = () => {
                                     )}
                                 </Menu.Item>
                                 {/* Changed: Import submenu with individual tracking */}
-                                <div
-                                    className="relative"
-                                    onMouseEnter={() => handleSubmenuToggle('import', true)}
-                                    onMouseLeave={() => handleSubmenuToggle('import', false)}
-                                >
+                                <div className="relative" onMouseEnter={() => handleSubmenuToggle('import', true)} onMouseLeave={() => handleSubmenuToggle('import', false)}>
                                     <div className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md600:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
                                         <Imports className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Import</span>
                                         <MdOutlineKeyboardArrowRight className="text-secondary-light dark:text-secondary-dark text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
@@ -343,9 +333,7 @@ const TopHeader = () => {
                             </MenuButton>
                         </div>
 
-                        <Menu.Items
-                            className="absolute left-0 z-[99] mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60   origin-top-right bg-primary-light dark:bg-primary-dark shadow-lg outline-none"
-                        >
+                        <Menu.Items className="absolute left-0 z-[99] mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60   origin-top-right bg-primary-light dark:bg-primary-dark shadow-lg outline-none">
                             <div className="">
                                 {/* First item: Print */}
                                 <Menu.Item>
@@ -400,11 +388,7 @@ const TopHeader = () => {
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <div
-                                            className="relative"
-                                            onMouseEnter={() => handleSubmenuToggle('effects', true)}
-                                            onMouseLeave={() => handleSubmenuToggle('effects', false)}
-                                        >
+                                        <div className="relative" onMouseEnter={() => handleSubmenuToggle('effects', true)} onMouseLeave={() => handleSubmenuToggle('effects', false)}>
                                             <p className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 border-t border-[#1414141A] dark:border-[#FFFFFF1A] cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
                                                 <Effect className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
                                                 <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Effects</span>
@@ -443,9 +427,7 @@ const TopHeader = () => {
                             </MenuButton>
                         </div>
 
-                        <Menu.Items
-                            className="absolute left-[-60px] sm:left-0 z-[99] mt-2 lg:mt-3 w-40 sm:w-44 md600:w-48 lg:w-60   origin-top-right bg-primary-light dark:bg-primary-dark shadow-lg outline-none"
-                        >
+                        <Menu.Items className="absolute left-[-60px] sm:left-0 z-[99] mt-2 lg:mt-3 w-40 sm:w-44 md600:w-48 lg:w-60   origin-top-right bg-primary-light dark:bg-primary-dark shadow-lg outline-none">
                             <div className="">
                                 <Menu.Item>
                                     {({ active }) => (
@@ -461,11 +443,7 @@ const TopHeader = () => {
                                         </p>
                                     )}
                                 </Menu.Item>
-                                <div
-                                    className="relative "
-                                    onMouseEnter={() => handleSubmenuToggle('keyboard', true)}
-                                    onMouseLeave={() => handleSubmenuToggle('keyboard', false)}
-                                >
+                                <div className="relative " onMouseEnter={() => handleSubmenuToggle('keyboard', true)} onMouseLeave={() => handleSubmenuToggle('keyboard', false)}>
                                     <div className="px-3 pt-2 pb-2 gap-2 md600:px-4 lg:px-6 md600:pt-2 md600:pb-3 lg:pb-4 items-center flex md600:gap-3 outline-none border-b border-[#FFFFFF1A] hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
                                         <Keyboard className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Keyboard</span>
                                         <MdOutlineKeyboardArrowRight className="text-secondary-light dark:text-secondary-dark text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
@@ -477,16 +455,8 @@ const TopHeader = () => {
                                                 Musical Typing
                                             </p>
                                             <div className='ms-auto '>
-                                                <label
-                                                    className="inline-flex cursor-pointer"
-                                                    onClick={e => e.stopPropagation()}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        className="sr-only peer"
-                                                        checked={isLowLatency2}
-                                                        onChange={() => setIsLowLatency2(prev => !prev)}
-                                                    />
+                                                <label className="inline-flex cursor-pointer" onClick={e => e.stopPropagation()}>
+                                                    <input type="checkbox" className="sr-only peer" checked={isLowLatency2} onChange={() => setIsLowLatency2(prev => !prev)}/>
                                                     <div className="relative w-8 md600:w-9 h-4 bg-gray-400 peer-focus:outline-none rounded-full peer dark:bg-[#353535] peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-[#357935] peer-checked:bg-[#357935] dark:peer-checked:bg-[#357935]"></div>
                                                 </label>
                                             </div>
@@ -499,14 +469,8 @@ const TopHeader = () => {
                                         <p className={`px-3 pb-2 pt-2 gap-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
                                             <Lowlatancy className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Low latency... </span>
                                             <div className='ms-auto '>
-                                                <label
-                                                    className="inline-flex cursor-pointer"
-                                                    onClick={e => e.stopPropagation()}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        className="sr-only peer"
-                                                        checked={isLowLatency}
+                                                <label className="inline-flex cursor-pointer" onClick={e => e.stopPropagation()}>
+                                                    <input type="checkbox" className="sr-only peer" checked={isLowLatency}
                                                         onChange={() => {
                                                             if (!isLowLatency) {
                                                                 // Only show modal when enabling low latency
@@ -524,11 +488,7 @@ const TopHeader = () => {
                                     )}
                                 </Menu.Item>
 
-                                <div
-                                    className="relative"
-                                    onMouseEnter={() => handleSubmenuToggle('soundquality', true)}
-                                    onMouseLeave={() => handleSubmenuToggle('soundquality', false)}
-                                >
+                                <div className="relative" onMouseEnter={() => handleSubmenuToggle('soundquality', true)} onMouseLeave={() => handleSubmenuToggle('soundquality', false)}>
                                     <div className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md600:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
                                         <Soundquality className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
                                         <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Sound quality</span>
@@ -538,9 +498,7 @@ const TopHeader = () => {
                                     {showSubmenu.soundquality && (
                                         <div className="absolute left-full top-0 z-50 w-28 md600:w-48 lg:w-56 lg:mt-0 bg-primary-light dark:bg-primary-dark shadow-lg outline-none">
                                             {soundQualityOptions.map((option) => (
-                                                <div
-                                                    key={option.id}
-                                                    className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-2 text-white cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"
+                                                <div key={option.id} className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-2 text-white cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"
                                                     onClick={() => handleSoundQualitySelect(option.id, option.label)}
                                                 >
                                                     <div className="flex items-center gap-2 md600:gap-3">
@@ -551,9 +509,7 @@ const TopHeader = () => {
                                                             )}
                                                         </div>
                                                         <div className="flex flex-col">
-                                                            <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>
-                                                                {option.label}
-                                                            </span>
+                                                            <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>{option.label}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -566,16 +522,8 @@ const TopHeader = () => {
                                         <p className={`px-3 py-1 mt-2 md600:px-4 lg:px-6 md:py-3 lg:py-4 flex gap-2 md600:gap-3 border-t border-b border-[#FFFFFF1A]  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
                                             <Songsections className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Song Sections</span>
                                             <div className='ms-auto '>
-                                                <label
-                                                    className="inline-flex cursor-pointer"
-                                                    onClick={e => e.stopPropagation()}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        className="sr-only peer"
-                                                        checked={isSongSection}
-                                                        onChange={() => dispatch(setIsSongSection(!isSongSection))}
-                                                    />
+                                                <label className="inline-flex cursor-pointer" onClick={e => e.stopPropagation()}>
+                                                    <input type="checkbox" className="sr-only peer" checked={isSongSection} onChange={() => dispatch(setIsSongSection(!isSongSection))}/>
                                                     <div className="relative w-9 h-4 bg-gray-400 peer-focus:outline-none rounded-full peer dark:bg-[#353535] peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-[#357935] peer-checked:bg-[#357935] dark:peer-checked:bg-[#357935]"></div>
                                                 </label>
                                             </div>
@@ -583,11 +531,7 @@ const TopHeader = () => {
                                     )}
                                 </Menu.Item>
 
-                                <div
-                                    className="relative"
-                                    onMouseEnter={() => handleSubmenuToggle('language', true)}
-                                    onMouseLeave={() => handleSubmenuToggle('language', false)}
-                                >
+                                <div className="relative" onMouseEnter={() => handleSubmenuToggle('language', true)} onMouseLeave={() => handleSubmenuToggle('language', false)}>
                                     <div className="flex gap-2 mt-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md600:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
                                         <Language className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
                                         <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Language</span>
@@ -597,9 +541,7 @@ const TopHeader = () => {
                                     {showSubmenu.language && (
                                         <div className="absolute left-full top-0 z-50 w-32 md600:w-48 lg:w-56 lg:mt-0 bg-primary-light dark:bg-primary-dark  shadow-lg outline-none ">
                                             {languageOptions.map((lang) => (
-                                                <div
-                                                    key={lang.id}
-                                                    className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-1 text-white cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"
+                                                <div key={lang.id} className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-1 text-white cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"
                                                     onClick={() => handleLanguage(lang.id, lang.label)}
                                                 >
                                                     <div className="flex items-center gap-2 md600:gap-3">
@@ -610,9 +552,7 @@ const TopHeader = () => {
                                                             )}
                                                         </div>
                                                         <div className="flex flex-col">
-                                                            <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>
-                                                                {lang.label}
-                                                            </span>
+                                                            <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>{lang.label}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -620,11 +560,7 @@ const TopHeader = () => {
                                         </div>
                                     )}
                                 </div>
-                                <div
-                                    className="relative"
-                                    onMouseEnter={() => handleSubmenuToggle('theme', true)}
-                                    onMouseLeave={() => handleSubmenuToggle('theme', false)}
-                                >
+                                <div className="relative" onMouseEnter={() => handleSubmenuToggle('theme', true)} onMouseLeave={() => handleSubmenuToggle('theme', false)}>
                                     <div className="flex gap-2 md600:gap-3 mt-2 w-full items-center px-3 py-2 md600:px-4 lg:px-6 md600:py-3 cursor-pointer border-t  border-[#FFFFFF1A] hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
                                         <Theme className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
                                         <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Themes</span>
@@ -647,9 +583,7 @@ const TopHeader = () => {
                                                             )}
                                                         </div>
                                                         <div className="flex flex-col">
-                                                            <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>
-                                                                {option.label}
-                                                            </span>
+                                                            <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>{option.label}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -676,30 +610,18 @@ const TopHeader = () => {
 
 
                 <div className="flex gap-2 md:gap-3 lg:gap-5 xl:gap-7">
-                    <button
-                        onClick={toggleTheme}
-                        className="relative w-[60px] h-[30px] rounded-full p-1 transition-colors duration-300 outline-none focus:outline-none d_customborder hidden md:block"
-                    >
+                    <button onClick={toggleTheme} className="relative w-[60px] h-[30px] rounded-full p-1 transition-colors duration-300 outline-none focus:outline-none d_customborder hidden md:block">
                         {/* Background slider */}
-                        <div
-                            className={`absolute top-0 left-0 w-[26px] h-[28px] bg-[#1F1F1F] rounded-full transition-transform duration-300 ${isDark ? 'translate-x-8' : 'translate-x-0'
-                                }`}
-                        />
+                        <div className={`absolute top-0 left-0 w-[26px] h-[28px] bg-[#1F1F1F] rounded-full transition-transform duration-300 ${isDark ? 'translate-x-8' : 'translate-x-0'}`}/>
 
                         {/* Sun icon */}
-                        <div
-                            className={`absolute top-0 left-0 w-[26px] h-[28px] flex items-center justify-center transition-opacity duration-300 ${isDark ? 'opacity-100' : 'opacity-50'
-                                }`}
-                        >
+                        <div className={`absolute top-0 left-0 w-[26px] h-[28px] flex items-center justify-center transition-opacity duration-300 ${isDark ? 'opacity-100' : 'opacity-50'}`}>
                             <GoSun className={`${isDark ? ' dark:text-secondary-dark' : "text-secondary-dark"} text-[16px]`} />
 
                         </div>
 
                         {/* Moon icon */}
-                        <div
-                            className={`absolute top-0 right-0 w-[26px] h-[28px] flex items-center justify-center transition-opacity duration-300 ${isDark ? 'opacity-50' : 'opacity-100'
-                                }`}
-                        >
+                        <div className={`absolute top-0 right-0 w-[26px] h-[28px] flex items-center justify-center transition-opacity duration-300 ${isDark ? 'opacity-50' : 'opacity-100'}`}>
                             <IoMoonOutline className={`${isDark ? 'dark:text-secondary-dark' : "text-secondary-light "} text-[16px]`} />
                         </div>
                     </button>
