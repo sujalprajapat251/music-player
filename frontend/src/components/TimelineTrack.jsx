@@ -490,6 +490,8 @@ const TimelineTrack = ({
   // Get piano notes from Redux
   const pianoNotes = useSelector((state) => state.studio.pianoNotes);
   const pianoRecordingClip = useSelector((state) => state.studio.pianoRecordingClip);
+  const currentTime = useSelector((state) => state.studio?.currentTime || 0);
+  const isRecording = useSelector((state) => state.studio?.isRecording || false);
 
   const currentTrackId = useSelector((state) => state.studio.currentTrackId);
   // Consider multiple naming variations to detect the piano track
@@ -517,91 +519,38 @@ const TimelineTrack = ({
   // Add state for dragging trim handles
   const [isDraggingTrim, setIsDraggingTrim] = useState(null);
 
-  // Implement handleTrimResize for piano recording clip
-  const handlePianoTrimResize = useCallback((type, newPosition) => {
-    if (frozen) return;
-    if (!trackPianoClip) return;
+  // Grid snap helper
+  const snapToGrid = useCallback((time) => {
+    if (!gridSpacing || gridSpacing <= 0) return Math.max(0, time);
+    return Math.max(0, Math.round(time / gridSpacing) * gridSpacing);
+  }, [gridSpacing]);
 
-    const currentStart = trackPianoClip.start;
-    const currentEnd = trackPianoClip.end;
-    const duration = currentEnd - currentStart;
+  // On recording start: if playhead is inside active clip -> edit; else create new
+  const wasRecordingRef = useRef(false);
+  useEffect(() => {
+    const started = isRecording && !wasRecordingRef.current;
+    wasRecordingRef.current = isRecording;
+    if (!started) return;
 
-    const snapToGrid = (time) => {
-      if (!gridSpacing || gridSpacing <= 0) return time;
-      const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
-      return Math.max(0, gridPosition);
-    };
+    const t = snapToGrid(currentTime);
+    const active = trackPianoClip;
+    const insideActive = !!(active && active.start != null && active.end != null && t >= active.start && t < active.end);
 
-    if (type === 'start') {
-      // newPosition is relative to the clip, convert to absolute time
-      const absoluteNewStart = currentStart + newPosition;
-      const snappedPosition = snapToGrid(absoluteNewStart);
-      const newStart = Math.max(0, Math.min(snappedPosition, currentEnd - gridSpacing));
-      
-      // Update the piano recording clip
-      const newClip = {
-        ...trackPianoClip,
-        start: newStart,
-        end: currentEnd,
-        trackId: trackId
-      };
-      dispatch(setPianoRecordingClip(newClip));
-
-      // Optionally filter out notes that are now outside the clip boundaries
-      const filteredNotes = (pianoNotes || []).map(note => {
-        if ((note?.trackId ?? null) !== trackId) return note;
-        const noteStartTime = note.startTime || 0;
-        const noteEndTime = noteStartTime + (note.duration || 0.05);
-        
-        // Keep notes that are still within bounds, or adjust their timing
-        if (noteStartTime < newStart) {
-          // Note starts before new clip start - could trim or remove
-          return note; // Keep as is for now
-        }
-        return note;
-      });
-      dispatch(setPianoNotes(filteredNotes));
-
-    } else if (type === 'end') {
-      // newPosition is relative to the clip, convert to absolute time
-      const absoluteNewEnd = currentStart + newPosition;
-      const snappedPosition = snapToGrid(absoluteNewEnd);
-      const newEnd = Math.max(currentStart + gridSpacing, snappedPosition);
-      
-      // Update the piano recording clip
-      const newClip = {
-        ...trackPianoClip,
-        start: currentStart,
-        end: newEnd,
-        trackId: trackId
-      };
-      dispatch(setPianoRecordingClip(newClip));
-
-      // Optionally filter out notes that are now outside the clip boundaries
-      const filteredNotes = (pianoNotes || []).map(note => {
-        if ((note?.trackId ?? null) !== trackId) return note;
-        const noteStartTime = note.startTime || 0;
-        const noteEndTime = noteStartTime + (note.duration || 0.05);
-        
-        // Keep notes that are still within bounds
-        if (noteEndTime > newEnd) {
-          // Note extends past new clip end - could trim or remove
-          return note; // Keep as is for now
-        }
-        return note;
-      });
-      dispatch(setPianoNotes(filteredNotes));
+    if (insideActive) {
+      // Keep editing the current clip (merge behavior)
+      dispatch(setPianoRecordingClip({ ...active, trackId }));
+      return;
     }
-  }, [trackPianoClip, pianoNotes, dispatch, trackId, gridSpacing, frozen]);
 
-  const handlePianoDragStart = useCallback((type) => {
-    if (frozen) return;
-    setIsDraggingTrim(type);
-  }, [frozen]);
-
-  const handlePianoDragEnd = useCallback(() => {
-    setIsDraggingTrim(null);
-  }, []);
+    // Outside active region: create new at playhead
+    const defaultDuration = Math.max(gridSpacing || 0.25, 2);
+    dispatch(setPianoRecordingClip({
+      start: t,
+      end: t + defaultDuration,
+      color: (active?.color || displayClip?.color || '#E44F65'),
+      trackId
+    }));
+  }, [isRecording, currentTime, gridSpacing, trackPianoClip, displayClip, dispatch, snapToGrid, trackId]);
 
   return (
     <div
