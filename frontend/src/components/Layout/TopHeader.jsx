@@ -40,10 +40,13 @@ import midi from '../../Images/midi.svg';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { setIsSongSection } from '../../Redux/Slice/ui.slice';
+import { setSoundQuality } from '../../Redux/Slice/audioSettings.slice';
+import audioQualityManager from '../../Utils/audioQualityManager';
 
 const TopHeader = () => {
     const dispatch = useDispatch();
     const isSongSection = useSelector((state) => state.ui.isSongSection);
+    const currentSoundQuality = useSelector((state) => state.audioSettings?.soundQuality || 'High');
 
     const [isActiveMenu, setIsActiveMenu] = useState("");
     const [isLowLatency, setIsLowLatency] = useState(false);
@@ -62,8 +65,24 @@ const TopHeader = () => {
         { id: 'extralow', label: 'Extra Low' }
     ];
 
-    const handleSoundQualitySelect = (qualityId, qualityLabel) => {
+    // Update the sound quality handler
+    const handleSoundQualitySelect = async (qualityId, qualityLabel) => {
         setSelectedSoundQuality(qualityLabel);
+        
+        try {
+            // Use audio quality manager to change quality
+            await audioQualityManager.changeQuality(qualityLabel);
+            
+            // Update Redux state
+            dispatch(setSoundQuality(qualityLabel));
+            
+            console.log(`Audio quality changed to ${qualityLabel}`);
+        } catch (error) {
+            console.error('Failed to change audio quality:', error);
+            // Revert the UI state if audio context recreation failed
+            setSelectedSoundQuality(currentSoundQuality);
+        }
+        
         // Close all submenus
         setShowSubmenu(prev => ({
             ...prev,

@@ -1,3 +1,4 @@
+import audioManager from './audioManager';
 
 let sharedAudioContext = null;
 
@@ -6,12 +7,16 @@ export function getAudioContext() {
 	if (!AudioContextClass) {
 		throw new Error('Web Audio API not supported in this browser.');
 	}
-	if (!sharedAudioContext) {
-		sharedAudioContext = new AudioContextClass({ 
-			latencyHint: 'interactive',
-			sampleRate: 44100
-		});
+	
+	if (sharedAudioContext) {
+		return sharedAudioContext;
 	}
+	
+	if (!audioManager.getAudioContext()) {
+		audioManager.initialize();
+	}
+	
+	sharedAudioContext = audioManager.getAudioContext();
 	
 	// Ensure audio context is resumed if suspended
 	if (sharedAudioContext.state === 'suspended') {
@@ -19,6 +24,27 @@ export function getAudioContext() {
 	}
 	
 	return sharedAudioContext;
+}
+
+export async function recreateAudioContext(sampleRate, latencyHint) {
+	try {
+		const qualityMap = {
+			48000: 'High',
+			44100: 'Medium', 
+			22050: 'Low',
+			11025: 'Extra Low'
+		};
+		
+		const quality = qualityMap[sampleRate] || 'Medium';
+		await audioManager.changeQuality(quality);
+
+		sharedAudioContext = audioManager.getAudioContext();
+		
+		return sharedAudioContext;
+	} catch (error) {
+		console.error('Failed to recreate audio context:', error);
+		throw error;
+	}
 }
 
 export async function ensureAudioUnlocked() {
@@ -64,4 +90,5 @@ export function attachAudioUnlockOnce() {
 	);
 }
 
+export { audioManager };
 
