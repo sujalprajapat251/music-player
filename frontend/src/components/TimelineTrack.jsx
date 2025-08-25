@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import WaveSurfer from "wavesurfer.js";
 import { Rnd } from "react-rnd";
 import reverceIcon from "../Images/reverce.svg";
@@ -251,7 +251,7 @@ const AudioClip = ({
     return () => {
       isMounted = false;
       isInitialized.current = false;
-      
+
       // Clean up listeners first
       if (wavesurfer.current) {
         try {
@@ -261,7 +261,7 @@ const AudioClip = ({
           // Ignore unsubscription errors
         }
       }
-      
+
       // Then destroy
       if (wavesurfer.current) {
         try {
@@ -460,6 +460,77 @@ const AudioClip = ({
   );
 };
 
+const GridBackground = ({ height, width, bpm, timelineWidthPerSecond }) => {
+  const horizontalLines = useMemo(() => {
+    return Array.from({ length: 7 }).map((_, i) => (
+      <div
+        key={`h-grid-${i}`}
+        style={{
+          position: 'absolute',
+          top: `${((i + 1) / 8) * 100}%`,
+          left: 0,
+          width: '100%',
+          height: '1px',
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          zIndex: 1,
+        }}
+      />
+    ));
+  }, []);
+
+  const verticalLines = useMemo(() => {
+    if (bpm <= 0 || timelineWidthPerSecond <= 0 || width <= 0) return [];
+
+    const secondsPerBar = (60 / bpm) * 4; // Assuming 4/4 time
+    const pixelsPerBar = secondsPerBar * timelineWidthPerSecond;
+    if (pixelsPerBar <= 0) return [];
+
+    const pixelsPer16th = pixelsPerBar / 16;
+    const num16ths = Math.floor(width / pixelsPer16th);
+
+    return Array.from({ length: num16ths }).map((_, i) => {
+      const isBarLine = i % 16 === 0;
+      const isBeatLine = i % 4 === 0;
+      const color = isBarLine
+        ? 'rgba(255, 255, 255, 0.15)'
+        : isBeatLine
+          ? 'rgba(255, 255, 255, 0.1)'
+          : 'rgba(255, 255, 255, 0.05)';
+
+      return (
+        <div
+          key={`v-grid-${i}`}
+          style={{
+            position: 'absolute',
+            left: `${i * pixelsPer16th}px`,
+            top: 0,
+            width: '1px',
+            height: '100%',
+            backgroundColor: color,
+            zIndex: 1,
+          }}
+        />
+      );
+    });
+  }, [width, bpm, timelineWidthPerSecond]);
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: `${width}px`,
+        height: '100%',
+        pointerEvents: 'none',
+      }}
+    >
+      {horizontalLines}
+      {verticalLines}
+    </div>
+  );
+};
+
 const NOTE_HEIGHT = 8; // px per note row
 const MIDI_MIN = 21; // A0
 const MIDI_MAX = 108; // C8
@@ -468,6 +539,232 @@ function midiToY(midi) {
   // 88-key piano: A0 (21) at bottom, C8 (108) at top
   return (MIDI_MAX - midi) * NOTE_HEIGHT;
 }
+
+// Individual Beat Clip Component
+// ... existing code ...
+// Individual Beat Clip Component
+const BeatClip = ({
+  clip,
+  height,
+  trackId,
+  onPositionChange,
+  onContextMenu,
+  onSelect,
+  isSelected = false,
+  timelineWidthPerSecond = 100,
+  gridSpacing = 0.25,
+  color,
+  bpm = 120, // Assuming a default BPM
+}) => {
+  const toPx = (seconds, scale) => Math.round(seconds * scale * 100) / 100;
+
+  const clipDuration = (clip.trimEnd || clip.duration) - (clip.trimStart || 0);
+  const startTime = clip.startTime || 0;
+
+  const visibleWidth = toPx(clipDuration > 0 ? clipDuration : 1, timelineWidthPerSecond);
+  const rndX = toPx(startTime, timelineWidthPerSecond);
+
+  const rawEvents = (clip && (clip.drumSequence || clip.events)) || [];
+
+  const handleDragStop = useCallback((e, d) => {
+    const rawStartTime = Math.max(0, d.x / timelineWidthPerSecond);
+
+    const snapToGrid = (time) => {
+      if (!gridSpacing || gridSpacing <= 0) return time;
+      const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+      return Math.max(0, gridPosition);
+    };
+
+    const snappedStartTime = snapToGrid(rawStartTime);
+
+    if (onPositionChange) {
+      onPositionChange(clip.id, snappedStartTime);
+    }
+  }, [clip.id, onPositionChange, timelineWidthPerSecond, gridSpacing]);
+
+  // Always render exactly 16 steps and sort rows by preferred pad order
+  const patternData = useMemo(() => {
+    const FIXED_STEPS = 16;
+    if (!clip.drumSequence || clip.drumSequence.length === 0) {
+      return { tracks: [], patternLength: FIXED_STEPS };
+    }
+
+    // Preferred order to match Pattern (extend if you have more pads)
+    const PAD_ORDER = ['Q', 'W', 'E', 'A', 'S', 'D', 'Z', 'X', 'C'];
+
+    // Group events by pad
+    const hitsByPad = {};
+    for (const hit of clip.drumSequence) {
+      const padId = hit.padId || hit.id || 'PAD';
+      if (!hitsByPad[padId]) hitsByPad[padId] = [];
+      hitsByPad[padId].push(hit);
+    }
+
+    // Stable vertical order
+    const padIds = Object.keys(hitsByPad);
+    const orderedPadIds = padIds.sort((a, b) => {
+      const ia = PAD_ORDER.indexOf(a);
+      const ib = PAD_ORDER.indexOf(b);
+      const na = ia === -1 ? Number.MAX_SAFE_INTEGER : ia;
+      const nb = ib === -1 ? Number.MAX_SAFE_INTEGER : ib;
+      if (na !== nb) return na - nb;
+      return a.localeCompare(b);
+    });
+
+    // Map absolute event times to fixed 16 buckets within this container
+    const sectionStart = startTime;
+    const sectionDuration = Math.max(1e-6, clipDuration > 0 ? clipDuration : 1);
+
+    const tracks = orderedPadIds.map((padId) => {
+      const buckets = new Array(FIXED_STEPS).fill(false);
+      const hits = hitsByPad[padId];
+
+      for (const hit of hits) {
+        const rel = (hit.currentTime - sectionStart) / sectionDuration; // [0,1)
+        if (rel < 0 || rel >= 1) continue;
+        const idx = Math.floor(rel * FIXED_STEPS + 1e-6);
+        if (idx >= 0 && idx < FIXED_STEPS) {
+          buckets[idx] = true;
+        }
+      }
+
+      const firstHit = hits[0] || {};
+      const name = firstHit.sound
+        ? firstHit.sound.charAt(0).toUpperCase() + firstHit.sound.slice(1)
+        : padId;
+
+      return { id: padId, name, pattern: buckets };
+    });
+
+    return { tracks, patternLength: FIXED_STEPS };
+  }, [clip.drumSequence, startTime, clipDuration]);
+
+  const { tracks } = patternData;
+
+  // // Keep this utility in case 'step' exists on events
+  // const bucketIndexForEvent = (ev) => {
+  //   if (typeof ev?.step === 'number') {
+  //     return Math.max(0, Math.min(15, ev.step | 0));
+  //   }
+  //   const start = clip?.startTime ?? clip?.start ?? 0;
+  //   const duration = clip?.duration ?? clip?.length ?? 1;
+  //   const t = (ev?.time ?? ev?.timestamp ?? ev?.t ?? start) - start;
+  //   const frac = duration ? Math.max(0, Math.min(0.999999, t / duration)) : 0;
+  //   return Math.floor(frac * 16);
+  // };
+
+  // NEW: Count duplicates per cell (per padId and 16th bucket) using the same mapping as above
+  const countsByPad = useMemo(() => {
+    const map = new Map();
+    const sectionStart = startTime;
+    const sectionDuration = Math.max(1e-6, clipDuration > 0 ? clipDuration : 1);
+    for (const hit of rawEvents) {
+      const padId = hit?.padId || hit?.id || 'PAD';
+      if (!map.has(padId)) map.set(padId, Array(16).fill(0));
+      const rel = (hit.currentTime - sectionStart) / sectionDuration;
+      if (rel < 0 || rel >= 1) continue;
+      const idx = Math.floor(rel * 16 + 1e-6);
+      if (idx >= 0 && idx < 16) {
+        map.get(padId)[idx] += 1;
+      }
+    }
+    return map;
+  }, [rawEvents, startTime, clipDuration]);
+
+  // NEW: small badge for stacked hits (only shows when count > 1)
+  const badgeStyle = {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    minWidth: 14,
+    height: 14,
+    padding: '0 3px',
+    borderRadius: 8,
+    background: 'rgba(0,0,0,0.7)',
+    color: '#fff',
+    fontSize: 10,
+    lineHeight: '14px',
+    textAlign: 'center',
+    pointerEvents: 'none',
+    userSelect: 'none',
+  };
+
+  return (
+    <Rnd
+      key={`${clip.id}-${timelineWidthPerSecond}`}
+      size={{
+        width: visibleWidth,
+        height: height,
+      }}
+      position={{
+        x: rndX,
+        y: 0,
+      }}
+      onDragStop={handleDragStop}
+      enableResizing={false}
+      dragAxis="x"
+      bounds="parent"
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect && onSelect(clip);
+      }}
+      onContextMenu={(e) => onContextMenu && onContextMenu(e, trackId, clip.id)}
+      style={{
+        background: color || 'rgba(50, 50, 50, 0.5)',
+        borderRadius: '8px',
+        border: isSelected ? "2px solid #AD00FF" : "1px solid rgba(255,255,255,0.1)",
+        boxShadow: isSelected ? "0 4px 20px rgba(173,0,255,0.3)" : "none",
+        overflow: 'hidden',
+        zIndex: 10,
+        position: 'relative',
+        boxSizing: 'border-box',
+      }}
+    >
+      {tracks.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
+          {tracks.map((track) => {
+            const rowCounts = countsByPad.get(track.id) || Array(16).fill(0);
+            return (
+              <div key={track.id} style={{ display: 'flex', flex: 1 }}>
+                {track.pattern.map((isActive, beatIndex) => {
+                  const count = rowCounts[beatIndex] || 0;
+                  return (
+                    <div
+                      key={beatIndex}
+                      style={{
+                        flex: 1, // 16 equal horizontal parts
+                        borderRight: '1px solid rgba(255, 255, 255, 0.05)',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                        boxSizing: 'border-box',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        position: 'relative', // allow overlay badge
+                      }}
+                    >
+                      {isActive && (
+                        <div
+                          style={{
+                            width: '80%',
+                            height: '2px', // dash
+                            backgroundColor: '#FFFFFF',
+                            borderRadius: '1px',
+                          }}
+                        />
+                      )}
+                      {count > 1 && <span style={badgeStyle}>{count}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Rnd>
+  );
+};
+// ... existing code ...
 
 // Main TimelineTrack Component
 const TimelineTrack = ({
@@ -490,6 +787,7 @@ const TimelineTrack = ({
   // Get piano notes from Redux
   const pianoNotes = useSelector((state) => state.studio.pianoNotes);
   const pianoRecordingClip = useSelector((state) => state.studio.pianoRecordingClip);
+  const bpm = useSelector((state) => state.studio.bpm || 120);
 
   const currentTrackId = useSelector((state) => state.studio.currentTrackId);
   // Consider multiple naming variations to detect the piano track
@@ -504,15 +802,30 @@ const TimelineTrack = ({
   // Derive a passive clip from this track's notes if there is no active clip
   const passiveClip = (!trackPianoClip && trackPianoNotes.length > 0)
     ? (() => {
-        const start = Math.min(...trackPianoNotes.map(n => n.startTime || 0));
-        const end = Math.max(...trackPianoNotes.map(n => (n.startTime || 0) + (n.duration || 0.05)));
-        if (Number.isFinite(start) && Number.isFinite(end) && end > start) {
-          return { start, end, color: '#E44F65', trackId };
-        }
-        return null;
-      })()
+      const start = Math.min(...trackPianoNotes.map(n => n.startTime || 0));
+      const end = Math.max(...trackPianoNotes.map(n => (n.startTime || 0) + (n.duration || 0.05)));
+      if (Number.isFinite(start) && Number.isFinite(end) && end > start) {
+        return { start, end, color: '#E44F65', trackId };
+      }
+      return null;
+    })()
     : null;
   const displayClip = trackPianoClip || passiveClip;
+
+  const totalWidth = useMemo(() => {
+    let maxTime = 16 / ((bpm || 120) / 60); // Default to at least a few bars
+    if (track.audioClips) {
+      track.audioClips.forEach(clip => {
+        const endTime = (clip.startTime || 0) + (clip.duration || 0);
+        if (endTime > maxTime) maxTime = endTime;
+      });
+    }
+    if (displayClip) {
+      const endTime = displayClip.end || 0;
+      if (endTime > maxTime) maxTime = endTime;
+    }
+    return (maxTime + (16 / ((bpm || 120) / 60))) * timelineWidthPerSecond; // Add extra bar
+  }, [track.audioClips, displayClip, timelineWidthPerSecond, bpm]);
 
   // Add state for dragging trim handles
   const [isDraggingTrim, setIsDraggingTrim] = useState(null);
@@ -537,7 +850,7 @@ const TimelineTrack = ({
       const absoluteNewStart = currentStart + newPosition;
       const snappedPosition = snapToGrid(absoluteNewStart);
       const newStart = Math.max(0, Math.min(snappedPosition, currentEnd - gridSpacing));
-      
+
       // Update the piano recording clip
       const newClip = {
         ...trackPianoClip,
@@ -552,7 +865,7 @@ const TimelineTrack = ({
         if ((note?.trackId ?? null) !== trackId) return note;
         const noteStartTime = note.startTime || 0;
         const noteEndTime = noteStartTime + (note.duration || 0.05);
-        
+
         // Keep notes that are still within bounds, or adjust their timing
         if (noteStartTime < newStart) {
           // Note starts before new clip start - could trim or remove
@@ -567,7 +880,7 @@ const TimelineTrack = ({
       const absoluteNewEnd = currentStart + newPosition;
       const snappedPosition = snapToGrid(absoluteNewEnd);
       const newEnd = Math.max(currentStart + gridSpacing, snappedPosition);
-      
+
       // Update the piano recording clip
       const newClip = {
         ...trackPianoClip,
@@ -582,7 +895,7 @@ const TimelineTrack = ({
         if ((note?.trackId ?? null) !== trackId) return note;
         const noteStartTime = note.startTime || 0;
         const noteEndTime = noteStartTime + (note.duration || 0.05);
-        
+
         // Keep notes that are still within bounds
         if (noteEndTime > newEnd) {
           // Note extends past new clip end - could trim or remove
@@ -612,6 +925,12 @@ const TimelineTrack = ({
         background: "transparent",
       }}
     >
+      <GridBackground
+        height={height}
+        width={totalWidth}
+        bpm={bpm}
+        timelineWidthPerSecond={timelineWidthPerSecond}
+      />
       {/* Background for last recording region with resizable handles */}
       {isPianoTrack && displayClip && displayClip.start != null && displayClip.end != null && (
         <div
@@ -657,10 +976,10 @@ const TimelineTrack = ({
               }
 
               if (!trackPianoClip) return;
-              
+
               e.preventDefault();
               e.stopPropagation();
-              
+
               // Handle dragging the entire clip
               const startX = e.clientX;
               const initialStart = trackPianoClip.start;
@@ -718,12 +1037,12 @@ const TimelineTrack = ({
               }}
               onMouseDown={(e) => {
                 if (frozen) return;
-                
+
                 e.preventDefault();
                 e.stopPropagation();
-                
+
                 setIsDraggingTrim('start');
-                
+
                 const startX = e.clientX;
                 const initialStart = trackPianoClip.start;
                 const clipEnd = trackPianoClip.end;
@@ -732,12 +1051,12 @@ const TimelineTrack = ({
                   const deltaX = moveEvent.clientX - startX;
                   const deltaTime = deltaX / timelineWidthPerSecond;
                   let newStart = initialStart + deltaTime;
-                  
+
                   // Snap to grid
                   if (gridSpacing && gridSpacing > 0) {
                     newStart = Math.round(newStart / gridSpacing) * gridSpacing;
                   }
-                  
+
                   // Ensure start doesn't go past end
                   newStart = Math.max(0, Math.min(newStart, clipEnd - (gridSpacing || 0.25)));
 
@@ -833,12 +1152,12 @@ const TimelineTrack = ({
               }}
               onMouseDown={(e) => {
                 if (frozen) return;
-                
+
                 e.preventDefault();
                 e.stopPropagation();
-                
+
                 setIsDraggingTrim('end');
-                
+
                 const startX = e.clientX;
                 const clipStart = trackPianoClip.start;
                 const initialEnd = trackPianoClip.end;
@@ -847,12 +1166,12 @@ const TimelineTrack = ({
                   const deltaX = moveEvent.clientX - startX;
                   const deltaTime = deltaX / timelineWidthPerSecond;
                   let newEnd = initialEnd + deltaTime;
-                  
+
                   // Snap to grid
                   if (gridSpacing && gridSpacing > 0) {
                     newEnd = Math.round(newEnd / gridSpacing) * gridSpacing;
                   }
-                  
+
                   // Ensure end doesn't go before start
                   newEnd = Math.max(clipStart + (gridSpacing || 0.25), newEnd);
 
@@ -892,51 +1211,70 @@ const TimelineTrack = ({
           )}
         </div>
       )}
-             {/* Render piano roll if this is a piano track and there are notes */}
-       {isPianoTrack && trackPianoNotes && trackPianoNotes.length > 0 && (
-         <div style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', zIndex: 9, pointerEvents: 'none' }}>
-           {trackPianoNotes.map((note, idx) => {
-             if (note.midiNumber < MIDI_MIN || note.midiNumber > MIDI_MAX) return null;
-             
-             // Only show notes that are within the recording clip boundaries
-             const noteStartTime = note.startTime || 0;
-             const noteEndTime = noteStartTime + (note.duration || 0.05);
-             
-             if (trackPianoClip && trackPianoClip.start != null && trackPianoClip.end != null) {
-               // Check if note is within the recording clip
-               if (noteStartTime < trackPianoClip.start || noteEndTime > trackPianoClip.end) {
-                 return null; // Don't render notes outside the clip
-               }
-             }
-             
-             const dotSize = 8; // slightly larger for visibility
-             const topY = (midiToY(note.midiNumber) % height) + Math.max(0, (NOTE_HEIGHT - dotSize) / 2);
-             const leftX = (note.startTime || 0) * timelineWidthPerSecond;
-             return (
-               <div
-                 key={idx}
-                 style={{
-                   position: 'absolute',
-                   left: `${leftX}px`,
-                   top: `${topY}px`,
-                   width: `${dotSize}px`,
-                   height: `2px`,
-                   background: '#FFFFFF',
-                   borderRadius: '2px',
-                   opacity: 0.95,
-                   zIndex: 20,
-                   pointerEvents: 'none',
-                   boxShadow: '0 0 2px rgba(255,255,255,0.9)',
-                   transform: 'translateZ(0)'
-                 }}
-                 title={`Note: ${note.note || ''} (MIDI ${note.midiNumber})`}
-               />
-             );
-           })}
-         </div>
-       )}
+      {/* Render piano roll if this is a piano track and there are notes */}
+      {isPianoTrack && trackPianoNotes && trackPianoNotes.length > 0 && (
+        <div style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', zIndex: 9, pointerEvents: 'none' }}>
+          {trackPianoNotes.map((note, idx) => {
+            if (note.midiNumber < MIDI_MIN || note.midiNumber > MIDI_MAX) return null;
+
+            // Only show notes that are within the recording clip boundaries
+            const noteStartTime = note.startTime || 0;
+            const noteEndTime = noteStartTime + (note.duration || 0.05);
+
+            if (trackPianoClip && trackPianoClip.start != null && trackPianoClip.end != null) {
+              // Check if note is within the recording clip
+              if (noteStartTime < trackPianoClip.start || noteEndTime > trackPianoClip.end) {
+                return null; // Don't render notes outside the clip
+              }
+            }
+
+            const dotSize = 8; // slightly larger for visibility
+            const topY = (midiToY(note.midiNumber) % height) + Math.max(0, (NOTE_HEIGHT - dotSize) / 2);
+            const leftX = (note.startTime || 0) * timelineWidthPerSecond;
+            return (
+              <div
+                key={idx}
+                style={{
+                  position: 'absolute',
+                  left: `${leftX}px`,
+                  top: `${topY}px`,
+                  width: `${dotSize}px`,
+                  height: `2px`,
+                  background: '#FFFFFF',
+                  borderRadius: '2px',
+                  opacity: 0.95,
+                  zIndex: 20,
+                  pointerEvents: 'none',
+                  boxShadow: '0 0 2px rgba(255,255,255,0.9)',
+                  transform: 'translateZ(0)'
+                }}
+                title={`Note: ${note.note || ''} (MIDI ${note.midiNumber})`}
+              />
+            );
+          })}
+        </div>
+      )}
       {/* Render each audio clip in the track */}
       {track.audioClips && track.audioClips.map((clip) => {
+        const isBeatClip = clip.drumSequence && clip.drumSequence.length > 0;
+        if (isBeatClip) {
+          return (
+            <BeatClip
+              key={clip.id}
+              clip={clip}
+              height={height}
+              trackId={trackId}
+              onPositionChange={onPositionChange}
+              timelineWidthPerSecond={timelineWidthPerSecond}
+              gridSpacing={gridSpacing}
+              onContextMenu={onContextMenu}
+              onSelect={onSelect}
+              isSelected={selectedClipId === clip.id}
+              color={color}
+              bpm={bpm}
+            />
+          );
+        }
         return (
           <AudioClip
             key={clip.id}
