@@ -796,6 +796,8 @@ const TimelineTrack = ({
 
   // console.log("==================data==================", drumRecordedData);
   // console.log("==================clip==================", drumRecordingClip);
+  const currentTime = useSelector((state) => state.studio?.currentTime || 0);
+  const isRecording = useSelector((state) => state.studio?.isRecording || false);
 
   const currentTrackId = useSelector((state) => state.studio.currentTrackId);
   // Consider multiple naming variations to detect the piano track
@@ -856,14 +858,18 @@ const TimelineTrack = ({
   // Add state for dragging trim handles
   const [isDraggingTrim, setIsDraggingTrim] = useState(null);
 
-  // Implement handleTrimResize for piano recording clip
-  const handlePianoTrimResize = useCallback((type, newPosition) => {
-    if (frozen) return;
-    if (!trackPianoClip) return;
+  // Grid snap helper
+  const snapToGrid = useCallback((time) => {
+    if (!gridSpacing || gridSpacing <= 0) return Math.max(0, time);
+    return Math.max(0, Math.round(time / gridSpacing) * gridSpacing);
+  }, [gridSpacing]);
 
-    const currentStart = trackPianoClip.start;
-    const currentEnd = trackPianoClip.end;
-    const duration = currentEnd - currentStart;
+  // On recording start: if playhead is inside active clip -> edit; else create new
+  const wasRecordingRef = useRef(false);
+  useEffect(() => {
+    const started = isRecording && !wasRecordingRef.current;
+    wasRecordingRef.current = isRecording;
+    if (!started) return;
 
     const   snapToGrid = (time) => {
       if (!gridSpacing || gridSpacing <= 0) return time;
@@ -931,16 +937,16 @@ const TimelineTrack = ({
       });
       dispatch(setPianoNotes(filteredNotes));
     }
-  }, [trackPianoClip, pianoNotes, dispatch, trackId, gridSpacing, frozen]);
 
-  const handlePianoDragStart = useCallback((type) => {
-    if (frozen) return;
-    setIsDraggingTrim(type);
-  }, [frozen]);
-
-  const handlePianoDragEnd = useCallback(() => {
-    setIsDraggingTrim(null);
-  }, []);
+    // Outside active region: create new at playhead
+    const defaultDuration = Math.max(gridSpacing || 0.25, 2);
+    dispatch(setPianoRecordingClip({
+      start: t,
+      end: t + defaultDuration,
+      color: (active?.color || displayClip?.color || '#E44F65'),
+      trackId
+    }));
+  }, [isRecording, currentTime, gridSpacing, trackPianoClip, displayClip, dispatch, snapToGrid, trackId]);
 
   return (
     <div
