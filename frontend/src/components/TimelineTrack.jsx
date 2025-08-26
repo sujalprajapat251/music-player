@@ -1269,25 +1269,6 @@ const TimelineTrack = ({
               })() : '#FF8014';
 
             return (
-              // <div
-              //   key={idx}
-              //   style={{
-              //     position: 'absolute',
-              //     left: `${leftX}px`,
-              //     top: `${topY}px`,
-              //     width: `${dotSize}px`,
-              //     height: `${dotSize}px`,
-              //     background: drumColor,
-              //     borderRadius: '50%',
-              //     opacity: 0.9,
-              //     zIndex: 20,
-              //     pointerEvents: 'none',
-              //     boxShadow: `0 0 8px ${drumColor}80`,
-              //     transform: 'translateZ(0)',
-              //     border: '2px solid rgba(255,255,255,0.8)'
-              //   }}
-              //   title={`${drumHit.sound || 'Drum'} - ${drumHit.drumMachine || 'Unknown'} - ${hitStartTime.toFixed(2)}s`}
-              // />
               <div
                 key={idx}
                 style={{
