@@ -595,7 +595,7 @@ export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColo
 
       // Remove existing event at this beat position
       const existingIndex = seq.findIndex(ev =>
-        Math.abs(ev.currentTime - slotStart) < 0.001
+        Math.abs(ev.currentTime - slotStart) < 0.001 && ev.padId === padId
       );
 
       if (existingIndex >= 0) {

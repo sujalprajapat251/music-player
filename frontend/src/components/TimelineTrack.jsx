@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import WaveSurfer from "wavesurfer.js";
 import { Rnd } from "react-rnd";
 import reverceIcon from "../Images/reverce.svg";
@@ -470,8 +470,234 @@ function midiToY(midi) {
   return (MIDI_MAX - midi) * NOTE_HEIGHT;
 }
 
+
+const BeatClip = ({
+  clip,
+  height,
+  trackId,
+  onPositionChange,
+  onContextMenu,
+  onSelect,
+  isSelected = false,
+  timelineWidthPerSecond = 100,
+  gridSpacing = 0.25,
+  color,
+  bpm = 120, // Assuming a default BPM
+}) => {
+  const toPx = (seconds, scale) => Math.round(seconds * scale * 100) / 100;
+
+  const clipDuration = (clip.trimEnd || clip.duration) - (clip.trimStart || 0);
+  const startTime = clip.startTime || 0;
+
+  const visibleWidth = toPx(clipDuration > 0 ? clipDuration : 1, timelineWidthPerSecond);
+  const rndX = toPx(startTime, timelineWidthPerSecond);
+
+  const rawEvents = (clip && (clip.drumSequence || clip.events)) || [];
+
+  const handleDragStop = useCallback((e, d) => {
+    const rawStartTime = Math.max(0, d.x / timelineWidthPerSecond);
+
+    const snapToGrid = (time) => {
+      if (!gridSpacing || gridSpacing <= 0) return time;
+      const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+      return Math.max(0, gridPosition);
+    };
+
+    const snappedStartTime = snapToGrid(rawStartTime);
+
+    if (onPositionChange) {
+      onPositionChange(clip.id, snappedStartTime);
+    }
+  }, [clip.id, onPositionChange, timelineWidthPerSecond, gridSpacing]);
+
+  // Always render exactly 16 steps and sort rows by preferred pad order
+  const patternData = useMemo(() => {
+    const FIXED_STEPS = 16;
+    if (!clip.drumSequence || clip.drumSequence.length === 0) {
+      return { tracks: [], patternLength: FIXED_STEPS };
+    }
+
+    // Preferred order to match Pattern (extend if you have more pads)
+    const PAD_ORDER = ['Q', 'W', 'E', 'A', 'S', 'D', 'Z', 'X', 'C'];
+
+    // Group events by pad
+    const hitsByPad = {};
+    for (const hit of clip.drumSequence) {
+      const padId = hit.padId || hit.id || 'PAD';
+      if (!hitsByPad[padId]) hitsByPad[padId] = [];
+      hitsByPad[padId].push(hit);
+    }
+
+    // Stable vertical order
+    const padIds = Object.keys(hitsByPad);
+    const orderedPadIds = padIds.sort((a, b) => {
+      const ia = PAD_ORDER.indexOf(a);
+      const ib = PAD_ORDER.indexOf(b);
+      const na = ia === -1 ? Number.MAX_SAFE_INTEGER : ia;
+      const nb = ib === -1 ? Number.MAX_SAFE_INTEGER : ib;
+      if (na !== nb) return na - nb;
+      return a.localeCompare(b);
+    });
+
+    // Map absolute event times to fixed 16 buckets within this container
+    const sectionStart = startTime;
+    const sectionDuration = Math.max(1e-6, clipDuration > 0 ? clipDuration : 1);
+
+    const tracks = orderedPadIds.map((padId) => {
+      const buckets = new Array(FIXED_STEPS).fill(false);
+      const hits = hitsByPad[padId];
+
+      for (const hit of hits) {
+        const rel = (hit.currentTime - sectionStart) / sectionDuration; // [0,1)
+        if (rel < 0 || rel >= 1) continue;
+        const idx = Math.floor(rel * FIXED_STEPS + 1e-6);
+        if (idx >= 0 && idx < FIXED_STEPS) {
+          buckets[idx] = true;
+        }
+      }
+
+      const firstHit = hits[0] || {};
+      const name = firstHit.sound
+        ? firstHit.sound.charAt(0).toUpperCase() + firstHit.sound.slice(1)
+        : padId;
+
+      return { id: padId, name, pattern: buckets };
+    });
+
+    return { tracks, patternLength: FIXED_STEPS };
+  }, [clip.drumSequence, startTime, clipDuration]);
+
+  const { tracks } = patternData;
+
+  // // Keep this utility in case 'step' exists on events
+  // const bucketIndexForEvent = (ev) => {
+  //   if (typeof ev?.step === 'number') {
+  //     return Math.max(0, Math.min(15, ev.step | 0));
+  //   }
+  //   const start = clip?.startTime ?? clip?.start ?? 0;
+  //   const duration = clip?.duration ?? clip?.length ?? 1;
+  //   const t = (ev?.time ?? ev?.timestamp ?? ev?.t ?? start) - start;
+  //   const frac = duration ? Math.max(0, Math.min(0.999999, t / duration)) : 0;
+  //   return Math.floor(frac * 16);
+  // };
+
+  // NEW: Count duplicates per cell (per padId and 16th bucket) using the same mapping as above
+  const countsByPad = useMemo(() => {
+    const map = new Map();
+    const sectionStart = startTime;
+    const sectionDuration = Math.max(1e-6, clipDuration > 0 ? clipDuration : 1);
+    for (const hit of rawEvents) {
+      const padId = hit?.padId || hit?.id || 'PAD';
+      if (!map.has(padId)) map.set(padId, Array(16).fill(0));
+      const rel = (hit.currentTime - sectionStart) / sectionDuration;
+      if (rel < 0 || rel >= 1) continue;
+      const idx = Math.floor(rel * 16 + 1e-6);
+      if (idx >= 0 && idx < 16) {
+        map.get(padId)[idx] += 1;
+      }
+    }
+    return map;
+  }, [rawEvents, startTime, clipDuration]);
+
+  // NEW: small badge for stacked hits (only shows when count > 1)
+  const badgeStyle = {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    minWidth: 14,
+    height: 14,
+    padding: '0 3px',
+    borderRadius: 8,
+    background: 'rgba(0,0,0,0.7)',
+    color: '#fff',
+    fontSize: 10,
+    lineHeight: '14px',
+    textAlign: 'center',
+    pointerEvents: 'none',
+    userSelect: 'none',
+  };
+
+  return (
+    <Rnd
+      key={`${clip.id}-${timelineWidthPerSecond}`}
+      size={{
+        width: visibleWidth,
+        height: height,
+      }}
+      position={{
+        x: rndX,
+        y: 0,
+      }}
+      onDragStop={handleDragStop}
+      enableResizing={false}
+      dragAxis="x"
+      bounds="parent"
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect && onSelect(clip);
+      }}
+      onContextMenu={(e) => onContextMenu && onContextMenu(e, trackId, clip.id)}
+      style={{
+        background: color || 'rgba(50, 50, 50, 0.5)',
+        borderRadius: '8px',
+        border: isSelected ? "2px solid #AD00FF" : "1px solid rgba(255,255,255,0.1)",
+        boxShadow: isSelected ? "0 4px 20px rgba(173,0,255,0.3)" : "none",
+        overflow: 'hidden',
+        zIndex: 10,
+        position: 'relative',
+        boxSizing: 'border-box',
+      }}
+    >
+      {tracks.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
+          {tracks.map((track) => {
+            const rowCounts = countsByPad.get(track.id) || Array(16).fill(0);
+            return (
+              <div key={track.id} style={{ display: 'flex', flex: 1 }}>
+                {track.pattern.map((isActive, beatIndex) => {
+                  const count = rowCounts[beatIndex] || 0;
+                  return (
+                    <div
+                      key={beatIndex}
+                      style={{
+                        flex: 1, // 16 equal horizontal parts
+                        borderRight: '1px solid rgba(255, 255, 255, 0.05)',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                        boxSizing: 'border-box',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        position: 'relative', // allow overlay badge
+                      }}
+                    >
+                      {isActive && (
+                        <div
+                          style={{
+                            width: '80%',
+                            height: '2px', // dash
+                            backgroundColor: '#FFFFFF',
+                            borderRadius: '1px',
+                          }}
+                        />
+                      )}
+                      {count > 1 && <span style={badgeStyle}>{count}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Rnd>
+  );
+};
+
+
+
+
 // Main TimelineTrack Component
-const TimelineTrack = ({  
+const TimelineTrack = ({
   track,
   onReady,
   height,
@@ -491,6 +717,7 @@ const TimelineTrack = ({
   // Get piano notes from Redux
   const pianoNotes = useSelector((state) => state.studio.pianoNotes);
   const pianoRecordingClip = useSelector((state) => state.studio.pianoRecordingClip);
+  const bpm = useSelector((state) => state.studio.bpm || 120);
 
   // Get drum recording data from Redux
   const drumRecordedData = useSelector((state) => state.studio.drumRecordedData);
@@ -552,7 +779,7 @@ const TimelineTrack = ({
     const currentEnd = trackPianoClip.end;
     const duration = currentEnd - currentStart;
 
-    const   snapToGrid = (time) => {
+    const snapToGrid = (time) => {
       if (!gridSpacing || gridSpacing <= 0) return time;
       const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
       return Math.max(0, gridPosition);
@@ -562,7 +789,7 @@ const TimelineTrack = ({
       // newPosition is relative to the clip, convert to absolute time
       const absoluteNewStart = currentEnd - newPosition;
       const snappedPosition = snapToGrid(absoluteNewStart);
-      const newStart = Math.max(0, Math.min(snappedPosition, currentEnd - gridSpacing));    
+      const newStart = Math.max(0, Math.min(snappedPosition, currentEnd - gridSpacing));
 
       // Update the piano recording clip
       const newClip = {
@@ -1293,6 +1520,25 @@ const TimelineTrack = ({
       )}
       {/* Render each audio clip in the track */}
       {track.audioClips && track.audioClips.map((clip) => {
+        const isBeatClip = clip.drumSequence && clip.drumSequence.length > 0;
+        if (isBeatClip) {
+          return (
+            <BeatClip
+              key={clip.id}
+              clip={clip}
+              height={height}
+              trackId={trackId}
+              onPositionChange={onPositionChange}
+              timelineWidthPerSecond={timelineWidthPerSecond}
+              gridSpacing={gridSpacing}
+              onContextMenu={onContextMenu}
+              onSelect={onSelect}
+              isSelected={selectedClipId === clip.id}
+              color={color}
+              bpm={bpm}
+            />
+          );
+        }
         return (
           <AudioClip
             key={clip.id}
