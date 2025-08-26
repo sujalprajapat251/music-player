@@ -1671,7 +1671,7 @@ const TimelineTrack = ({
             color={color}
           />
         );
-      })} */}
+      })} 
     </div>
   );
 };
