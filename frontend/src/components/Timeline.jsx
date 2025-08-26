@@ -16,7 +16,6 @@ import settingIcon from "../Images/setting.svg";
 import reverceIcon from "../Images/reverce.svg";
 import fxIcon from "../Images/fx.svg";
 import offce from "../Images/offce.svg";
-import magnetIcon from "../Images/magnet.svg";
 import GridSetting from "./GridSetting";
 import MusicOff from "./MusicOff";
 import WaveMenu from "./WaveMenu";
@@ -37,10 +36,6 @@ import ResizableSectionLabel from "./ResizableSectionLabel";
 import { useSectionLabels } from "../hooks/useSectionLabels";
 import { toggleEffectsOffcanvas } from "../Redux/Slice/effects.slice";
 import EditTrackNameModal from "./EditTrackNameModal";
-import { audioManager } from '../Utils/audioContext';
-import audioQualityManager from '../Utils/audioQualityManager';
-
-
 
 const Timeline = () => {
 
@@ -78,9 +73,6 @@ const Timeline = () => {
   const [resizeModal, setResizeModal] = useState(false);
   const [volumeIndicator, setVolumeIndicator] = useState({ show: false, volume: 0, trackName: '' });
   const [edirNameModel, setEdirNameModel] = useState(false);
-  const [isMagnetEnabled, setIsMagnetEnabled] = useState(false);
-  const gridSettingRef = useRef(null);
-  const [hasRecordingStarted, setHasRecordingStarted] = useState(false);
 
   // Piano playback functionality
   const pianoRef = useRef(null);
@@ -102,7 +94,7 @@ const Timeline = () => {
 
   const baseTimelineWidthPerSecond = 100; // Base width per second
   const timelineWidthPerSecond = baseTimelineWidthPerSecond * zoomLevel; // Apply zoom level
-
+  
   // Listen for anchor requests from the toolbar before zoom happens
   useEffect(() => {
     const onAnchor = (e) => {
@@ -148,9 +140,6 @@ const Timeline = () => {
     });
   }, [zoomLevel]);
 
-  // Get audio settings from Redux
-  const audioSettings = useSelector((state) => state.audioSettings);
-  
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
       try {
@@ -187,7 +176,7 @@ const Timeline = () => {
         }
         const audioNode = pianoRef.current.play(midiNumber, undefined, { duration });
         activePianoNotesRef.current.add(audioNode);
-
+        
         // Clean up after note duration
         setTimeout(() => {
           activePianoNotesRef.current.delete(audioNode);
@@ -235,13 +224,6 @@ const Timeline = () => {
 
   // Use custom hook for section labels management
   const { sectionLabels, resizeSection } = useSectionLabels();
-
-  // Track if recording has ever started during this session
-  useEffect(() => {
-    if (isRecording) {
-      setHasRecordingStarted(true);
-    }
-  }, [isRecording]);
 
   // Mute functionality
 
@@ -400,20 +382,22 @@ const Timeline = () => {
     });
   }, [tracks, players, masterVolume]);
 
-  // Handle clip position changes (drag) with conditional grid snapping
+  // Handle clip position changes (drag) with grid snapping
   const handleTrackPositionChange = useCallback((trackId, clipId, newStartTime) => {
-    let finalStartTime = Math.max(0, newStartTime);
+    // Grid snapping for clip position
+    const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
+    const snapToGrid = (time) => {
+      if (!gridSpacing || gridSpacing <= 0) return time;
+      const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+      return Math.max(0, gridPosition);
+    };
 
-    // Apply grid snapping if magnet is enabled
-    if (isMagnetEnabled && selectedGrid) {
-      const { snapToGrid } = require("../Utils/gridUtils");
-      finalStartTime = snapToGrid(finalStartTime, selectedGrid, audioDuration);
-    }
+    const snappedStartTime = snapToGrid(newStartTime);
 
     dispatch(updateAudioClip({
       trackId: trackId,
       clipId: clipId,
-      updates: { startTime: finalStartTime }
+      updates: { startTime: snappedStartTime }
     }));
 
     // Update the corresponding player
@@ -422,13 +406,13 @@ const Timeline = () => {
         if (playerObj.trackId === trackId && playerObj.clipId === clipId) {
           return {
             ...playerObj,
-            startTime: finalStartTime
+            startTime: snappedStartTime
           };
         }
         return playerObj;
       });
     });
-  }, [dispatch, isMagnetEnabled, selectedGrid, audioDuration]);
+  }, [dispatch, selectedGrid, selectedTime]);
 
   // Updated trim change handler to support position changes from left trim
   const handleTrimChange = useCallback((trackId, clipId, trimData) => {
@@ -439,15 +423,16 @@ const Timeline = () => {
 
     if (!track || !clip || !clip.duration) return;
 
-    // Apply grid snapping if magnet is enabled
-    let validatedTrimStart = Math.max(0, Math.min(trimStart, clip.duration));
-    let validatedTrimEnd = Math.max(validatedTrimStart, Math.min(trimEnd, clip.duration));
+    // Grid snapping for validation
+    const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
+    const snapToGrid = (time) => {
+      if (!gridSpacing || gridSpacing <= 0) return time;
+      const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+      return Math.max(0, Math.min(clip.duration, gridPosition));
+    };
 
-    if (isMagnetEnabled && selectedGrid) {
-      const { snapToGrid } = require("../Utils/gridUtils");
-      validatedTrimStart = snapToGrid(validatedTrimStart, selectedGrid, clip.duration);
-      validatedTrimEnd = snapToGrid(validatedTrimEnd, selectedGrid, clip.duration);
-    }
+    const validatedTrimStart = snapToGrid(Math.max(0, Math.min(trimStart, clip.duration - gridSpacing)));
+    const validatedTrimEnd = snapToGrid(Math.max(validatedTrimStart + gridSpacing, Math.min(trimEnd, clip.duration)));
 
     // Prepare updates object
     const updates = {
@@ -457,15 +442,8 @@ const Timeline = () => {
 
     // If newStartTime is provided (from left trim), update the position too
     if (newStartTime !== undefined) {
-      let finalStartTime = Math.max(0, newStartTime);
-
-      // Apply grid snapping if magnet is enabled
-      if (isMagnetEnabled && selectedGrid) {
-        const { snapToGrid } = require("../Utils/gridUtils");
-        finalStartTime = snapToGrid(finalStartTime, selectedGrid, audioDuration);
-      }
-
-      updates.startTime = finalStartTime;
+      const snappedStartTime = snapToGrid(Math.max(0, newStartTime));
+      updates.startTime = snappedStartTime;
     }
 
     dispatch(updateAudioClip({
@@ -486,15 +464,7 @@ const Timeline = () => {
 
           // Update startTime if provided
           if (newStartTime !== undefined) {
-            let finalStartTime = Math.max(0, newStartTime);
-
-            // Apply grid snapping if magnet is enabled
-            if (isMagnetEnabled && selectedGrid) {
-              const { snapToGrid } = require("../Utils/gridUtils");
-              finalStartTime = snapToGrid(finalStartTime, selectedGrid, audioDuration);
-            }
-
-            updatedPlayer.startTime = finalStartTime;
+            updatedPlayer.startTime = snapToGrid(Math.max(0, newStartTime));
           }
 
           return updatedPlayer;
@@ -502,13 +472,13 @@ const Timeline = () => {
         return playerObj;
       });
     });
-  }, [dispatch, tracks, isMagnetEnabled, selectedGrid, audioDuration]);
+  }, [dispatch, tracks, selectedGrid, selectedTime]);
 
   const handleReady = useCallback(async (wavesurfer, clip) => {
     if (!clip || !clip.url) return;
 
     try {
-      const audioContext = audioQualityManager.getAudioContext();
+      const audioContext = getAudioContext();
 
       // Check if we already have this player
       const existingPlayer = players.find(p => p.trackId === clip.trackId && p.clipId === clip.id);
@@ -525,9 +495,6 @@ const Timeline = () => {
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
       const player = new Player(audioBuffer).toDestination();
-      
-      // Register player with audio manager
-      audioManager.registerPlayer(player);
 
       // Find the track to get its volume
       const track = tracks.find(t => t.id === clip.trackId);
@@ -571,7 +538,7 @@ const Timeline = () => {
     } catch (error) {
       console.error("Error loading audio:", error);
     }
-  }, [masterVolume, tracks, players, tempoRatio]);
+  }, [masterVolume, tracks, players, getAudioContext, tempoRatio]);
 
   // Fixed seek logic to respect trim boundaries
   const movePlayhead = (e) => {
@@ -587,21 +554,23 @@ const Timeline = () => {
     let rawTime = (x / width) * duration;
     rawTime = Math.max(0, Math.min(duration, rawTime));
 
-    // Apply grid snapping if magnet is enabled
-    let finalTime = rawTime;
-    if (isMagnetEnabled && selectedGrid) {
-      const { snapToGrid } = require("../Utils/gridUtils");
-      finalTime = snapToGrid(rawTime, selectedGrid, duration);
-    }
+    // Grid snapping for playhead
+    const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
+    const snapToGrid = (time) => {
+      if (!gridSpacing || gridSpacing <= 0) return time;
+      const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+      return Math.max(0, Math.min(duration, gridPosition));
+    };
 
-    dispatch(setCurrentTime(finalTime));
+    const time = snapToGrid(rawTime);
+    dispatch(setCurrentTime(time));
 
     // Update wavesurfer visual progress
     waveSurfers.forEach((ws) => {
       if (ws && typeof ws.seekTo === 'function' && typeof ws.getDuration === 'function') {
         const wsDuration = ws.getDuration();
         if (wsDuration > 0) {
-          ws.seekTo(finalTime / wsDuration);
+          ws.seekTo(time / wsDuration);
         }
       }
     });
@@ -629,8 +598,8 @@ const Timeline = () => {
           const trimmedClipEnd = clipStartTime + (trimEnd - trimStart);
 
           // Only start if seeking to within the trimmed region
-          if (finalTime >= trimmedClipStart && finalTime < trimmedClipEnd) {
-            const offsetInTrimmedRegion = finalTime - trimmedClipStart;
+          if (time >= trimmedClipStart && time < trimmedClipEnd) {
+            const offsetInTrimmedRegion = time - trimmedClipStart;
             const startOffsetInOriginalAudio = trimStart + offsetInTrimmedRegion;
             const remainingTrimmedDuration = (trimEnd - trimStart) - offsetInTrimmedRegion;
 
@@ -647,7 +616,7 @@ const Timeline = () => {
 
       playbackStartRef.current = {
         systemTime: Date.now(),
-        audioTime: finalTime,
+        audioTime: time,
       };
     }
   };
@@ -731,7 +700,7 @@ const Timeline = () => {
           pianoNotes.forEach(note => {
             const noteStartTime = note.startTime || 0;
             const noteEndTime = noteStartTime + (note.duration || 0.5);
-
+            
             // Check if the current time is within the note's time range
             if (newTime >= noteStartTime && newTime <= noteEndTime) {
               // Check if we haven't already played this note in this time range
@@ -739,7 +708,7 @@ const Timeline = () => {
               if (!activePianoNotesRef.current.has(noteKey)) {
                 playPianoNote(note.midiNumber, note.duration || 0.5);
                 activePianoNotesRef.current.add(noteKey);
-
+                
                 // Remove the note key after the note duration
                 setTimeout(() => {
                   activePianoNotesRef.current.delete(noteKey);
@@ -812,45 +781,6 @@ const Timeline = () => {
       }
     };
   }, [isPlaying, audioDuration, players, isLoopEnabled, loopStart, loopEnd, tempoRatio, pianoNotes, playPianoNote]);
-
-  // Smooth playhead animation loop for continuous movement
-  useEffect(() => {
-    let smoothAnimationId = null;
-
-    if (isPlaying) {
-      const smoothUpdateLoop = () => {
-        // Update local current time for smooth playhead movement
-        const elapsedTime = (Date.now() - playbackStartRef.current.systemTime) / 1000;
-        const newTime = playbackStartRef.current.audioTime + (elapsedTime * tempoRatio);
-
-        // Apply loop logic
-        let finalTime = newTime;
-        if (isLoopEnabled && loopEnd > 0) {
-          if (finalTime >= loopEnd) {
-            finalTime = loopStart;
-            playbackStartRef.current = { systemTime: Date.now(), audioTime: loopStart };
-          }
-        } else if (finalTime >= audioDuration) {
-          // Stop playback when reaching the end
-          dispatch(setPlaying(false));
-          return;
-        }
-
-        // Update local time for smooth playhead movement
-        setLocalCurrentTime(finalTime);
-
-        smoothAnimationId = requestAnimationFrame(smoothUpdateLoop);
-      };
-
-      smoothAnimationId = requestAnimationFrame(smoothUpdateLoop);
-    }
-
-    return () => {
-      if (smoothAnimationId) {
-        cancelAnimationFrame(smoothAnimationId);
-      }
-    };
-  }, [isPlaying, audioDuration, isLoopEnabled, loopStart, loopEnd, tempoRatio, dispatch]);
 
   const debouncedVolumeUpdate = useMemo(() => {
     const updateVolumes = () => {
@@ -1202,16 +1132,17 @@ const Timeline = () => {
         const x = e.clientX - rect.left;
         const width = rect.width;
         const duration = audioDuration;
+        const rawDropTime = (x / width) * duration;
 
-        // Calculate drop position with conditional grid snapping
-        let dropTime = (x / width) * duration;
-        let finalDropTime = Math.max(0, Math.min(duration, dropTime));
+        // Grid snapping for drop position
+        const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
+        const snapToGrid = (time) => {
+          if (!gridSpacing || gridSpacing <= 0) return time;
+          const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+          return Math.max(0, gridPosition);
+        };
 
-        // Apply grid snapping if magnet is enabled
-        if (isMagnetEnabled && selectedGrid) {
-          const { snapToGrid } = require("../Utils/gridUtils");
-          finalDropTime = snapToGrid(finalDropTime, selectedGrid, duration);
-        }
+        const dropTime = snapToGrid(rawDropTime);
 
         const url = `${IMAGE_URL}uploads/soundfile/${soundItem.soundfile}`;
         let audioDurationSec = null;
@@ -1245,7 +1176,7 @@ const Timeline = () => {
             name: soundItem.soundname || 'New Clip',
             url: `${IMAGE_URL}uploads/soundfile/${soundItem.soundfile}`,
             color: track?.color || '#FFB6C1', // Use track's color or fallback to pink
-            startTime: finalDropTime,
+            startTime: dropTime,
             duration: audioDurationSec,
             trimStart: 0,
             trimEnd: audioDurationSec,
@@ -1264,7 +1195,7 @@ const Timeline = () => {
             name: soundItem.soundname || 'New Clip',
             url: `${IMAGE_URL}uploads/soundfile/${soundItem.soundfile}`,
             color: trackColor, // Use the track's color
-            startTime: finalDropTime,
+            startTime: dropTime,
             duration: audioDurationSec,
             trimStart: 0,
             trimEnd: audioDurationSec,
@@ -1286,7 +1217,7 @@ const Timeline = () => {
     } catch (error) {
       // console.error('Error processing dropped item:', error);
     }
-  }, [audioDuration, dispatch, trackHeight, selectedGrid, selectedTime, isMagnetEnabled]);
+  }, [audioDuration, dispatch, trackHeight, selectedGrid, selectedTime]);
 
   // Context menu handlers
   const handleContextMenu = useCallback((e, trackId, clipId = null) => {
@@ -1708,16 +1639,8 @@ const Timeline = () => {
 
   // Calculate playhead position in pixels for smoother animation
   const playheadPosition = useMemo(() => {
-    let time = localCurrentTime;
-
-    // Apply magnet snapping if enabled
-    if (isMagnetEnabled && selectedGrid) {
-      const { snapToGrid } = require("../Utils/gridUtils");
-      time = snapToGrid(time, selectedGrid, audioDuration);
-    }
-
-    return time * timelineWidthPerSecond;
-  }, [localCurrentTime, timelineWidthPerSecond, isMagnetEnabled, selectedGrid, audioDuration]);
+    return localCurrentTime * timelineWidthPerSecond;
+  }, [localCurrentTime, timelineWidthPerSecond]);
 
   // Handler for TimelineActionBoxes
   const handleAction = (action) => {
@@ -1999,133 +1922,8 @@ const Timeline = () => {
     };
   }, [stopAllPianoNotes]);
 
-  // Handle click outside grid settings dropdown
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (gridSettingRef.current && !gridSettingRef.current.contains(event.target)) {
-        setShowGridSetting(false);
-      }
-    };
-
-    if (showGridSetting) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showGridSetting]);
-
   const handleSave = (name) => {
     console.log("get name ::: > ", name);
-  };
-
-  // Listen for audio quality changes and recreate all audio
-  useEffect(() => {
-    const handleQualityChange = async (quality, settings) => {
-      console.log(`Timeline: Audio quality changed to ${quality}, recreating audio...`);
-      
-      // Stop all current playback
-      players.forEach((playerObj) => {
-        if (playerObj?.player && typeof playerObj.player.stop === 'function') {
-          try {
-            playerObj.player.stop();
-          } catch (error) {
-            // Ignore stop errors
-          }
-        }
-      });
-      
-      // Clear existing players
-      setPlayers([]);
-      setWaveSurfers([]);
-      
-      // Reinitialize audio context reference
-      audioContextRef.current = null;
-      
-      // Recreate all audio clips with new quality
-      recreateAllAudioClips();
-    };
-    
-    audioQualityManager.addListener(handleQualityChange);
-    
-    return () => {
-      audioQualityManager.removeListener(handleQualityChange);
-    };
-  }, [players]);
-
-  // Function to recreate all audio clips with new quality
-  const recreateAllAudioClips = async () => {
-    const newAudioContext = audioQualityManager.getAudioContext();
-    const newSampleRate = audioQualityManager.getCurrentSampleRate();
-    
-    // Recreate all existing audio clips with new sample rate
-    for (const track of tracks) {
-      if (track.audioClips) {
-        for (const clip of track.audioClips) {
-          if (clip.url) {
-            try {
-              // Reload audio with new quality
-              await reloadAudioClip(clip, newAudioContext, newSampleRate);
-            } catch (error) {
-              console.error('Error recreating audio clip:', error);
-            }
-          }
-        }
-      }
-    }
-  };
-
-  // Function to reload an audio clip with new quality
-  const reloadAudioClip = async (clip, audioContext, sampleRate) => {
-    try {
-      const response = await fetch(clip.url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch audio: ${response.statusText}`);
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-
-      // Create new player with updated audio buffer
-      const player = new Player(audioBuffer).toDestination();
-
-      // Find the track to get its volume
-      const track = tracks.find(t => t.id === clip.trackId);
-      const trackVolume = track?.volume || 80;
-
-      // Calculate combined volume
-      const masterVolumeDb = (masterVolume - 100) * 0.6;
-      const trackVolumeDb = (trackVolume - 100) * 0.6;
-      const combinedVolumeDb = masterVolumeDb + trackVolumeDb;
-
-      player.volume.value = combinedVolumeDb;
-      player.playbackRate = tempoRatio;
-
-      const clipDuration = clip.duration || audioBuffer.duration;
-      const trimStart = clip.trimStart || 0;
-      const trimEnd = clip.trimEnd || clipDuration;
-
-      // Add to players list
-      setPlayers((prev) => {
-        const filtered = prev.filter(p => !(p.trackId === clip.trackId && p.clipId === clip.id));
-        const playerData = {
-          player,
-          trackId: clip.trackId,
-          clipId: clip.id,
-          startTime: clip.startTime || 0,
-          duration: clipDuration,
-          trimStart: trimStart,
-          trimEnd: trimEnd,
-          originalDuration: audioBuffer.duration,
-          playbackRate: tempoRatio
-        };
-        return [...filtered, playerData];
-      });
-
-    } catch (error) {
-      console.error("Error reloading audio clip:", error);
-    }
   };
 
   return (
@@ -2142,8 +1940,6 @@ const Timeline = () => {
             onDrop={handleDrop}
             onWheel={handleWheel}
           >
-
-
             <div
               style={{ height: "100px", borderBottom: "1px solid #1414141A", position: "relative", top: 0, zIndex: 20, background: "#141414" }}
               onMouseDown={handleMouseDown}
@@ -2151,27 +1947,6 @@ const Timeline = () => {
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
             >
-              {/* Magnet Status Indicator */}
-              {isMagnetEnabled && (
-                <div style={{
-                  position: "absolute",
-                  top: "10px",
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  background: "#FF6B35",
-                  color: "white",
-                  padding: "4px 12px",
-                  borderRadius: "20px",
-                  fontSize: "12px",
-                  fontWeight: "bold",
-                  zIndex: 25,
-                  boxShadow: "0 2px 8px rgba(255, 107, 53, 0.3)",
-                  animation: "magnetSnap 2s ease-in-out infinite"
-                }}>
-                  🧲 Magnet: {selectedGrid || "Grid"} Active
-                </div>
-              )}
-
               <svg ref={svgRef} width={`${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`} height="100%" style={{ color: "white", background: "#141414" }} />
             </div>
 
@@ -2307,23 +2082,17 @@ const Timeline = () => {
 
             <style>
               {`
-                 @keyframes sectionLabelAppear {
-                   from {
-                     opacity: 0;
-                     transform: translateX(-50%) scale(0.8);
-                   }
-                   to {
-                     opacity: 1;
-                     transform: translateX(-50%) scale(1);
-                   }
-                 }
-                 
-                 @keyframes magnetSnap {
-                   0% { transform: translateX(-50%) scale(1); }
-                   50% { transform: translateX(-50%) scale(1.1); }
-                   100% { transform: translateX(-50%) scale(1); }
-                 }
-               `}
+                @keyframes sectionLabelAppear {
+                  from {
+                    opacity: 0;
+                    transform: translateX(-50%) scale(0.8);
+                  }
+                  to {
+                    opacity: 1;
+                    transform: translateX(-50%) scale(1);
+                  }
+                }
+              `}
             </style>
 
             <div style={{ overflow: "visible", position: "relative", minHeight: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px", height: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px", marginTop: "40px", }}>
@@ -2356,30 +2125,29 @@ const Timeline = () => {
                     onFocus={() => setSelectedTrackId(track.id)}
                     onContextMenu={(e) => handleContextMenu(e, track.id)}
                   >
-                    {hasRecordingStarted && (
-                      <TimelineTrack
-                        key={track.id}
-                        track={track}
-                        trackId={track.id}
-                        height={trackHeight}
-                        onReady={handleReady}
-                        onTrimChange={(clipId, trimData) => handleTrimChange(track.id, clipId, trimData)}
-                        onPositionChange={(clipId, newStartTime) => handleTrackPositionChange(track.id, clipId, newStartTime)}
-                        onRemoveClip={(clipId) => dispatch(removeAudioClip({
-                          trackId: track.id,
-                          clipId: clipId
-                        }))}
-                        timelineWidthPerSecond={timelineWidthPerSecond}
-                        frozen={track.frozen}
-                        onContextMenu={handleContextMenu}
-                        onSelect={(clip) => setSelectedClipId(clip.id)}
-                        selectedClipId={selectedClipId}
-                        color={track.color}
-                        bpm={120}              // Set your track's BPM
-                        beatsPerBar={4}        // Time signature (4/4, etc.)
-                        showBeatRectangles={true} // Toggle beat visualization
-                      />
-                    )}
+                    <TimelineTrack
+                      key={track.id}
+                      track={track}
+                      trackId={track.id}
+                      height={trackHeight}
+                      onReady={handleReady}
+                      onTrimChange={(clipId, trimData) => handleTrimChange(track.id, clipId, trimData)}
+                      onPositionChange={(clipId, newStartTime) => handleTrackPositionChange(track.id, clipId, newStartTime)}
+                      onRemoveClip={(clipId) => dispatch(removeAudioClip({
+                        trackId: track.id,
+                        clipId: clipId
+                      }))}
+                      timelineWidthPerSecond={timelineWidthPerSecond}
+                      frozen={track.frozen}
+                      gridSpacing={getGridSpacingWithTimeSignature(selectedGrid, selectedTime)}
+                      onContextMenu={handleContextMenu}
+                      onSelect={(clip) => setSelectedClipId(clip.id)}
+                      selectedClipId={selectedClipId}
+                      color={track.color}
+                      bpm={120}              // Set your track's BPM
+                      beatsPerBar={4}        // Time signature (4/4, 3/4, etc.)
+                      showBeatRectangles={true} // Toggle beat visualization
+                    />
                   </div>
                 );
               })}
@@ -2391,41 +2159,9 @@ const Timeline = () => {
             )}
 
             {/* Playhead - adjusted to account for loop bar */}
-            <div style={{
-              position: "absolute",
-              left: 0,
-              top: 0,
-              height: "100%",
-              width: "2px",
-              pointerEvents: "none",
-              zIndex: 26,
-              transform: `translateX(${playheadPosition}px)`,
-              willChange: "transform",
-              transition: isMagnetEnabled ? "none" : "transform 0.1s ease-out"
-            }}>
-              <div style={{
-                position: "absolute",
-                top: "60px",
-                left: "-8px",
-                width: "18px",
-                height: "18px",
-                background: "#AD00FF",
-                borderRadius: "3px",
-                border: "1px solid #fff",
-                transition: "background-color 0.2s ease",
-                // boxShadow: isMagnetEnabled ? "0 0 10px #FF6B35, 0 0 20px #FF6B35" : "none"
-              }} />
-              <div style={{
-                position: "absolute",
-                top: "78px",
-                left: 0,
-                bottom: 0,
-                width: "2px",
-                background: "#AD00FF",
-                transition: "background-color 0.2s ease",
-                // boxShadow: isMagnetEnabled ? "0 0 5px #FF6B35" : "none"
-              }} />
-
+            <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: "2px", pointerEvents: "none", zIndex: 26, transform: `translateX(${playheadPosition}px)`, willChange: "transform", }}>
+              <div style={{ position: "absolute", top: "60px", left: "-8px", width: "18px", height: "18px", background: "#AD00FF", borderRadius: "3px", border: "1px solid #fff", }} />
+              <div style={{ position: "absolute", top: "78px", left: 0, bottom: 0, width: "2px", background: "#AD00FF", }} />
             </div>
 
             {/* Grid lines - only show when there are tracks */}
@@ -2437,22 +2173,10 @@ const Timeline = () => {
 
         {/* Top right controls */}
         <div className="flex gap-2 absolute top-[60px] right-[10px] -translate-x-1/2 bg-[#141414] z-30">
-          {/* Magnet Button */}
-          <div className="relative">
-            <div
-              className={`w-[30px] h-[30px] flex items-center justify-center rounded-full cursor-pointer transition-all duration-200 ${isMagnetEnabled
-                  ? 'bg-[#A6A3AC]'
-                  : 'hover:bg-[#1F1F1F]'
-                }`}
-              onClick={() => setIsMagnetEnabled(prev => !prev)}
-              title={isMagnetEnabled ? "Magnet: ON" : "Magnet: OFF"}
-            >
-              <img src={magnetIcon} alt="Magnet" />
-            </div>
-
+          <div className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full">
+            <img src={magnetIcon} alt="Magnet" />
           </div>
-
-          <div ref={gridSettingRef} className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full relative" onClick={() => setShowGridSetting((prev) => !prev)}>
+          <div className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full relative" onClick={() => setShowGridSetting((prev) => !prev)}>
             <img src={settingIcon} alt="Settings" />
             {showGridSetting && (
               <div className="absolute top-full right-0 z-[50]">
@@ -2467,9 +2191,6 @@ const Timeline = () => {
               </div>
             )}
           </div>
-
-
-
           <div className={`w-[30px] h-[30px] flex items-center justify-center rounded-full ${isLoopEnabled ? 'bg-[#FF8014]' : 'hover:bg-[#1F1F1F]'}`} onClick={() => dispatch(toggleLoopEnabled())}>
             <img src={reverceIcon} alt="Reverse" />
           </div>
@@ -2566,7 +2287,7 @@ const Timeline = () => {
 
       {/* Piano Component */}
       {(showPiano || getTrackType === "Keys") && (
-        <Piano onClose={() => { setShowPiano(false); dispatch(setTrackType(null)); }} />
+        <Piano onClose={() => {setShowPiano(false); dispatch(setTrackType(null)); }} />
       )}
 
       {/* Drum Component */}
