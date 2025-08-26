@@ -439,7 +439,79 @@ const studioSlice = createSlice({
       }
       state.patternDrumEvents[trackId][clipId] = drumEvents;
     },
+// ... existing code ...
 
+        addBeatToPatternContainer: (state, action) => {
+            const { trackId, containerId, beat, isOn } = action.payload;
+            const track = state.present.tracks.find((t) => t.id === trackId);
+            if (!track?.audioClips) return;
+
+            let container = track.audioClips.find((clip) => clip.id === containerId);
+
+            if (isOn) {
+                if (!container) {
+                    container = {
+                        id: containerId,
+                        name: `Pattern ${track.audioClips.length + 1}`,
+                        type: 'pattern',
+                        start: beat.currentTime,
+                        end: beat.currentTime + 1, // Assuming a default length for a single beat container
+                        drumSequence: [],
+                        onBeatsByPad: {},
+                        fromPattern: true,
+                    };
+                    track.audioClips.push(container);
+                }
+
+                // Update or add the drum event in drumSequence
+                const existingEventIndex = container.drumSequence.findIndex(
+                    (event) => event.currentTime === beat.currentTime && event.padId === beat.padId
+                );
+
+                if (existingEventIndex !== -1) {
+                    container.drumSequence[existingEventIndex] = beat;
+                } else {
+                    container.drumSequence.push(beat);
+                }
+
+                // Update onBeatsByPad
+                if (!container.onBeatsByPad[beat.padId]) {
+                    container.onBeatsByPad[beat.padId] = [];
+                }
+                const existing = container.onBeatsByPad[beat.padId];
+                if (!existing.includes(beat.beatIndex)) {
+                    existing.push(beat.beatIndex);
+                }
+
+                // Sort drumSequence by currentTime to maintain order
+                container.drumSequence.sort((a, b) => a.currentTime - b.currentTime);
+
+            } else {
+                if (container) {
+                    // Remove from drumSequence
+                    container.drumSequence = container.drumSequence.filter(
+                        (event) => !(event.currentTime === beat.currentTime && event.padId === beat.padId)
+                    );
+
+                    // Remove from onBeatsByPad
+                    if (container.onBeatsByPad[beat.padId]) {
+                        container.onBeatsByPad[beat.padId] = container.onBeatsByPad[beat.padId].filter(
+                            (index) => index !== beat.beatIndex
+                        );
+                        if (container.onBeatsByPad[beat.padId].length === 0) {
+                            delete container.onBeatsByPad[beat.padId];
+                        }
+                    }
+
+                    // If container becomes empty, remove it
+                    if (container.drumSequence.length === 0 && Object.keys(container.onBeatsByPad).length === 0) {
+                        track.audioClips = track.audioClips.filter((clip) => clip.id !== containerId);
+                    }
+                }
+            }
+        },
+
+// ... existing code ...
   },
 });
 
@@ -1105,3 +1177,7 @@ export const triggerPatternDrumPlayback = ({ trackId, clipId, currentTime }) => 
     }
   }
 };
+
+
+
+
