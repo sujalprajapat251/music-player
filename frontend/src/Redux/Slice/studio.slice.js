@@ -45,6 +45,7 @@ const initialState = {
   selectedScale: null,
   highlightedPianoKeys: [], // Array of MIDI note numbers to highlight
   selectedSound: 'Click',
+  soundQuality: 'High', // Add this line
 };
 
 const studioSlice = createSlice({
@@ -413,6 +414,9 @@ const studioSlice = createSlice({
     setMetronomeSound(state, action) {
       state.selectedSound = action.payload;
     },
+    setSoundQuality(state, action) {
+      state.soundQuality = action.payload;
+    },
     // Add these new actions after your existing actions
     setPatternDrumPlayback: (state, action) => {
       const { trackId, clipId, isPlaying: isDrumPlaying } = action.payload;
@@ -496,6 +500,7 @@ export const {
   setHighlightedPianoKeys,
   clearKeyScaleSelection,
   setMetronomeSound,
+  setSoundQuality,
   setPatternDrumPlayback,
   setPatternDrumEvents,
 } = studioSlice.actions;
