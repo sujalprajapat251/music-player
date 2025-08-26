@@ -36,6 +36,8 @@ import ResizableSectionLabel from "./ResizableSectionLabel";
 import { useSectionLabels } from "../hooks/useSectionLabels";
 import { toggleEffectsOffcanvas } from "../Redux/Slice/effects.slice";
 import EditTrackNameModal from "./EditTrackNameModal";
+import { audioManager } from '../Utils/audioContext';
+import audioQualityManager from '../Utils/audioQualityManager';
 
 const Timeline = () => {
 
@@ -87,6 +89,8 @@ const Timeline = () => {
   const isPlaying = useSelector((state) => state.studio?.isPlaying || false);
   const currentTime = useSelector((state) => state.studio?.currentTime || 0);
   const audioDuration = useSelector((state) => state.studio?.audioDuration || 150);
+
+  const audioSettings = useSelector((state) => state.audioSettings);
 
   // Timeline.jsx (add near other refs)
   const pendingAnchorRef = useRef(null);
@@ -478,7 +482,7 @@ const Timeline = () => {
     if (!clip || !clip.url) return;
 
     try {
-      const audioContext = getAudioContext();
+      const audioContext = audioQualityManager.getAudioContext();
 
       // Check if we already have this player
       const existingPlayer = players.find(p => p.trackId === clip.trackId && p.clipId === clip.id);
@@ -495,6 +499,7 @@ const Timeline = () => {
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
       const player = new Player(audioBuffer).toDestination();
+      audioManager.registerPlayer(player);
 
       // Find the track to get its volume
       const track = tracks.find(t => t.id === clip.trackId);
@@ -538,7 +543,7 @@ const Timeline = () => {
     } catch (error) {
       console.error("Error loading audio:", error);
     }
-  }, [masterVolume, tracks, players, getAudioContext, tempoRatio]);
+  }, [masterVolume, tracks, players, tempoRatio]);
 
   // Fixed seek logic to respect trim boundaries
   const movePlayhead = (e) => {
@@ -1926,6 +1931,116 @@ const Timeline = () => {
     console.log("get name ::: > ", name);
   };
 
+
+
+  // sound quality code
+   // Listen for audio quality changes and recreate all audio
+   useEffect(() => {
+    const handleQualityChange = async (quality, settings) => {
+      console.log(`Timeline: Audio quality changed to ${quality}, recreating audio...`);
+      
+      // Stop all current playback
+      players.forEach((playerObj) => {
+        if (playerObj?.player && typeof playerObj.player.stop === 'function') {
+          try {
+            playerObj.player.stop();
+          } catch (error) {
+            // Ignore stop errors
+          }
+        }
+      });
+      
+      // Clear existing players
+      setPlayers([]);
+      setWaveSurfers([]);
+      
+      // Reinitialize audio context reference
+      audioContextRef.current = null;
+      
+      // Recreate all audio clips with new quality
+      recreateAllAudioClips();
+    };
+    
+    audioQualityManager.addListener(handleQualityChange);
+    
+    return () => {
+      audioQualityManager.removeListener(handleQualityChange);
+    };
+  }, [players]);
+
+  // Function to recreate all audio clips with new quality
+  const recreateAllAudioClips = async () => {
+    const newAudioContext = audioQualityManager.getAudioContext();
+    const newSampleRate = audioQualityManager.getCurrentSampleRate();
+    
+    // Recreate all existing audio clips with new sample rate
+    for (const track of tracks) {
+      if (track.audioClips) {
+        for (const clip of track.audioClips) {
+          if (clip.url) {
+            try {
+              // Reload audio with new quality
+              await reloadAudioClip(clip, newAudioContext, newSampleRate);
+            } catch (error) {
+              console.error('Error recreating audio clip:', error);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  // Function to reload an audio clip with new quality
+  const reloadAudioClip = async (clip, audioContext, sampleRate) => {
+    try {
+      const response = await fetch(clip.url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch audio: ${response.statusText}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+      // Create new player with updated audio buffer
+      const player = new Player(audioBuffer).toDestination();
+
+      // Find the track to get its volume
+      const track = tracks.find(t => t.id === clip.trackId);
+      const trackVolume = track?.volume || 80;
+
+      // Calculate combined volume
+      const masterVolumeDb = (masterVolume - 100) * 0.6;
+      const trackVolumeDb = (trackVolume - 100) * 0.6;
+      const combinedVolumeDb = masterVolumeDb + trackVolumeDb;
+
+      player.volume.value = combinedVolumeDb;
+      player.playbackRate = tempoRatio;
+
+      const clipDuration = clip.duration || audioBuffer.duration;
+      const trimStart = clip.trimStart || 0;
+      const trimEnd = clip.trimEnd || clipDuration;
+
+      // Add to players list
+      setPlayers((prev) => {
+        const filtered = prev.filter(p => !(p.trackId === clip.trackId && p.clipId === clip.id));
+        const playerData = {
+          player,
+          trackId: clip.trackId,
+          clipId: clip.id,
+          startTime: clip.startTime || 0,
+          duration: clipDuration,
+          trimStart: trimStart,
+          trimEnd: trimEnd,
+          originalDuration: audioBuffer.duration,
+          playbackRate: tempoRatio
+        };
+        return [...filtered, playerData];
+      });
+
+    } catch (error) {
+      console.error("Error reloading audio clip:", error);
+    }
+  };
   return (
     <>
       <EditTrackNameModal isOpen={edirNameModel} onClose={() => setEdirNameModel(false)} onSave={handleSave} />

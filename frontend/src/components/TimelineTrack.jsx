@@ -560,7 +560,7 @@ const TimelineTrack = ({
 
     if (type === 'start') {
       // newPosition is relative to the clip, convert to absolute time
-      const absoluteNewStart = currentStart + newPosition;
+      const absoluteNewStart = currentEnd - newPosition;
       const snappedPosition = snapToGrid(absoluteNewStart);
       const newStart = Math.max(0, Math.min(snappedPosition, currentEnd - gridSpacing));    
 
@@ -592,7 +592,7 @@ const TimelineTrack = ({
       // newPosition is relative to the clip, convert to absolute time
       const absoluteNewEnd = currentStart + newPosition;
       const snappedPosition = snapToGrid(absoluteNewEnd);
-      const newEnd = Math.max(currentStart + gridSpacing, snappedPosition);
+      const newEnd = Math.max(currentStart + gridSpacing, Math.min(snappedPosition, duration)); // Fixed: use duration instead of clip.duration
 
       // Update the piano recording clip
       const newClip = {
@@ -1311,7 +1311,7 @@ const TimelineTrack = ({
         </div>
       )}
       {/* Render each audio clip in the track */}
-      {/* {track.audioClips && track.audioClips.map((clip) => {
+      {track.audioClips && track.audioClips.map((clip) => {
         return (
           <AudioClip
             key={clip.id}
@@ -1331,7 +1331,7 @@ const TimelineTrack = ({
             color={color}
           />
         );
-      })} */}
+      })}
     </div>
   );
 };
