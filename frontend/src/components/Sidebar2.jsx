@@ -277,7 +277,7 @@ const Sidebar2 = () => {
       {showAddTrackModal && (
         <AddNewTrackModel onClose={() => setShowAddTrackModal(false)} />
       )}
-      {/* Instrument components are managed in Timeline via Redux newtrackType */}
+
     </>
   );
 };

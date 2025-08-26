@@ -470,7 +470,6 @@ function midiToY(midi) {
   return (MIDI_MAX - midi) * NOTE_HEIGHT;
 }
 
-
 const BeatClip = ({
   clip,
   height,
@@ -568,18 +567,6 @@ const BeatClip = ({
   }, [clip.drumSequence, startTime, clipDuration]);
 
   const { tracks } = patternData;
-
-  // // Keep this utility in case 'step' exists on events
-  // const bucketIndexForEvent = (ev) => {
-  //   if (typeof ev?.step === 'number') {
-  //     return Math.max(0, Math.min(15, ev.step | 0));
-  //   }
-  //   const start = clip?.startTime ?? clip?.start ?? 0;
-  //   const duration = clip?.duration ?? clip?.length ?? 1;
-  //   const t = (ev?.time ?? ev?.timestamp ?? ev?.t ?? start) - start;
-  //   const frac = duration ? Math.max(0, Math.min(0.999999, t / duration)) : 0;
-  //   return Math.floor(frac * 16);
-  // };
 
   // NEW: Count duplicates per cell (per padId and 16th bucket) using the same mapping as above
   const countsByPad = useMemo(() => {
@@ -1145,6 +1132,7 @@ const TimelineTrack = ({
           )}
         </div>
       )}
+
       {isDrumTrack && displayDrumClip && displayDrumClip.start != null && displayDrumClip.end != null && (
         <div
           style={{
@@ -1424,6 +1412,7 @@ const TimelineTrack = ({
           )}
         </div>
       )}
+
       {/* Render piano roll if this is a piano track and there are notes */}
       {isPianoTrack && trackPianoNotes && trackPianoNotes.length > 0 && (
         <div style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', zIndex: 9, pointerEvents: 'none' }}>

@@ -222,7 +222,6 @@ const studioSlice = createSlice({
     },
     setCurrentTrackId: (state, action) => {
       state.currentTrackId = action.payload;
-      // console.log('jsdbfjkasdjfjsdfjasdfkadfbhjksjhkshkfkj', action.payload);
     },
     toggleMuteTrack: (state, action) => {
       const trackId = action.payload;
@@ -235,17 +234,14 @@ const studioSlice = createSlice({
       state.soloTrackId = action.payload;
     },
     exportTrack: (state, action) => {
-      // This is just a placeholder action for tracking export events
-      // The actual export logic will be handled in the component
       return state;
     },
     setSidebarScrollOffset: (state, action) => {
       state.sidebarScrollOffset = action.payload;
     },
-    // Section labels actions
     addSectionLabel: (state, action) => {
       const newSection = {
-        id: Date.now() + Math.random(), // Ensure unique ID
+        id: Date.now() + Math.random(), 
         startTime: 0,
         endTime: 10,
         position: 0,
@@ -269,7 +265,6 @@ const studioSlice = createSlice({
     setSectionLabels: (state, action) => {
       state.sectionLabels = action.payload;
     },
-    // New action for resizing section labels
     resizeSectionLabel: (state, action) => {
       const { sectionId, newWidth, newStartTime, newEndTime, newPosition } = action.payload;
       const sectionIndex = state.sectionLabels.findIndex(section => section.id === sectionId);
@@ -281,7 +276,6 @@ const studioSlice = createSlice({
         section.position = newPosition || (newStartTime / state.audioDuration) * 100;
       }
     },
-    // New action for moving section labels
     moveSectionLabel: (state, action) => {
       const { sectionId, newStartTime, newEndTime, newPosition } = action.payload;
       const sectionIndex = state.sectionLabels.findIndex(section => section.id === sectionId);
@@ -293,7 +287,6 @@ const studioSlice = createSlice({
         section.position = newPosition || (newStartTime / state.audioDuration) * 100;
       }
     },
-    // Audio playback actions
     setPlaying: (state, action) => {
       state.isPlaying = action.payload;
     },
@@ -307,10 +300,8 @@ const studioSlice = createSlice({
       state.isPlaying = !state.isPlaying;
     },
     resetTrackColors: (state) => {
-      // Reset the color index to start from the beginning
       resetColorIndex();
     },
-    // Volume management actions
     setMasterVolume: (state, action) => {
       state.masterVolume = action.payload;
     },
@@ -345,7 +336,6 @@ const studioSlice = createSlice({
     setDrumDataProcessed: (state, action) => {
       state.drumDataProcessed = action.payload;
     },
-    // TimelineTrack specific actions
     setSelectedClip: (state, action) => {
       state.selectedClipId = action.payload;
     },
@@ -388,24 +378,18 @@ const studioSlice = createSlice({
     setPianoRecordingClip: (state, action) => {
       state.pianoRecordingClip = action.payload; // {start, end, color}
     },
-
     setDrumRecordingClip: (state, action) => {
       state.drumRecordingClip = action.payload; // {start, end, color, trackId}
     },
-
-    // Key and Scale Selection actions
     setSelectedKey: (state, action) => {
       state.selectedKey = action.payload;
     },
-
     setSelectedScale: (state, action) => {
       state.selectedScale = action.payload;
     },
-
     setHighlightedPianoKeys: (state, action) => {
       state.highlightedPianoKeys = action.payload;
     },
-
     clearKeyScaleSelection: (state) => {
       state.selectedKey = null;
       state.selectedScale = null;
@@ -417,7 +401,6 @@ const studioSlice = createSlice({
     setSoundQuality(state, action) {
       state.soundQuality = action.payload;
     },
-    // Add these new actions after your existing actions
     setPatternDrumPlayback: (state, action) => {
       const { trackId, clipId, isPlaying: isDrumPlaying } = action.payload;
       if (!state.patternDrumPlayback) {
@@ -428,7 +411,6 @@ const studioSlice = createSlice({
       }
       state.patternDrumPlayback[trackId][clipId] = isDrumPlaying;
     },
-
     setPatternDrumEvents: (state, action) => {
       const { trackId, clipId, drumEvents } = action.payload;
       if (!state.patternDrumEvents) {
@@ -439,79 +421,75 @@ const studioSlice = createSlice({
       }
       state.patternDrumEvents[trackId][clipId] = drumEvents;
     },
-// ... existing code ...
+    addBeatToPatternContainer: (state, action) => {
+      const { trackId, containerId, beat, isOn } = action.payload;
+      const track = state.present.tracks.find((t) => t.id === trackId);
+      if (!track?.audioClips) return;
 
-        addBeatToPatternContainer: (state, action) => {
-            const { trackId, containerId, beat, isOn } = action.payload;
-            const track = state.present.tracks.find((t) => t.id === trackId);
-            if (!track?.audioClips) return;
+      let container = track.audioClips.find((clip) => clip.id === containerId);
 
-            let container = track.audioClips.find((clip) => clip.id === containerId);
+      if (isOn) {
+        if (!container) {
+          container = {
+            id: containerId,
+            name: `Pattern ${track.audioClips.length + 1}`,
+            type: 'pattern',
+            start: beat.currentTime,
+            end: beat.currentTime + 1, // Assuming a default length for a single beat container
+            drumSequence: [],
+            onBeatsByPad: {},
+            fromPattern: true,
+          };
+          track.audioClips.push(container);
+        }
 
-            if (isOn) {
-                if (!container) {
-                    container = {
-                        id: containerId,
-                        name: `Pattern ${track.audioClips.length + 1}`,
-                        type: 'pattern',
-                        start: beat.currentTime,
-                        end: beat.currentTime + 1, // Assuming a default length for a single beat container
-                        drumSequence: [],
-                        onBeatsByPad: {},
-                        fromPattern: true,
-                    };
-                    track.audioClips.push(container);
-                }
+        // Update or add the drum event in drumSequence
+        const existingEventIndex = container.drumSequence.findIndex(
+          (event) => event.currentTime === beat.currentTime && event.padId === beat.padId
+        );
 
-                // Update or add the drum event in drumSequence
-                const existingEventIndex = container.drumSequence.findIndex(
-                    (event) => event.currentTime === beat.currentTime && event.padId === beat.padId
-                );
+        if (existingEventIndex !== -1) {
+          container.drumSequence[existingEventIndex] = beat;
+        } else {
+          container.drumSequence.push(beat);
+        }
 
-                if (existingEventIndex !== -1) {
-                    container.drumSequence[existingEventIndex] = beat;
-                } else {
-                    container.drumSequence.push(beat);
-                }
+        // Update onBeatsByPad
+        if (!container.onBeatsByPad[beat.padId]) {
+          container.onBeatsByPad[beat.padId] = [];
+        }
+        const existing = container.onBeatsByPad[beat.padId];
+        if (!existing.includes(beat.beatIndex)) {
+          existing.push(beat.beatIndex);
+        }
 
-                // Update onBeatsByPad
-                if (!container.onBeatsByPad[beat.padId]) {
-                    container.onBeatsByPad[beat.padId] = [];
-                }
-                const existing = container.onBeatsByPad[beat.padId];
-                if (!existing.includes(beat.beatIndex)) {
-                    existing.push(beat.beatIndex);
-                }
+        // Sort drumSequence by currentTime to maintain order
+        container.drumSequence.sort((a, b) => a.currentTime - b.currentTime);
 
-                // Sort drumSequence by currentTime to maintain order
-                container.drumSequence.sort((a, b) => a.currentTime - b.currentTime);
+      } else {
+        if (container) {
+          // Remove from drumSequence
+          container.drumSequence = container.drumSequence.filter(
+            (event) => !(event.currentTime === beat.currentTime && event.padId === beat.padId)
+          );
 
-            } else {
-                if (container) {
-                    // Remove from drumSequence
-                    container.drumSequence = container.drumSequence.filter(
-                        (event) => !(event.currentTime === beat.currentTime && event.padId === beat.padId)
-                    );
-
-                    // Remove from onBeatsByPad
-                    if (container.onBeatsByPad[beat.padId]) {
-                        container.onBeatsByPad[beat.padId] = container.onBeatsByPad[beat.padId].filter(
-                            (index) => index !== beat.beatIndex
-                        );
-                        if (container.onBeatsByPad[beat.padId].length === 0) {
-                            delete container.onBeatsByPad[beat.padId];
-                        }
-                    }
-
-                    // If container becomes empty, remove it
-                    if (container.drumSequence.length === 0 && Object.keys(container.onBeatsByPad).length === 0) {
-                        track.audioClips = track.audioClips.filter((clip) => clip.id !== containerId);
-                    }
-                }
+          // Remove from onBeatsByPad
+          if (container.onBeatsByPad[beat.padId]) {
+            container.onBeatsByPad[beat.padId] = container.onBeatsByPad[beat.padId].filter(
+              (index) => index !== beat.beatIndex
+            );
+            if (container.onBeatsByPad[beat.padId].length === 0) {
+              delete container.onBeatsByPad[beat.padId];
             }
-        },
+          }
 
-// ... existing code ...
+          // If container becomes empty, remove it
+          if (container.drumSequence.length === 0 && Object.keys(container.onBeatsByPad).length === 0) {
+            track.audioClips = track.audioClips.filter((clip) => clip.id !== containerId);
+          }
+        }
+      }
+    },
   },
 });
 
@@ -578,7 +556,6 @@ export const {
 } = studioSlice.actions;
 
 export default studioSlice.reducer;
-
 
 const PATTERN_SAMPLE_MAP = {
   Q: '/Audio/kick_1.mp3',
@@ -760,7 +737,7 @@ export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColo
     // Remove this beat
     const newSeq = seq.filter(ev =>
       !(Math.abs(ev.currentTime - slotStart) < 0.001 && ev.padId === padId)
-    );    
+    );
 
 
     const src = container.onBeatsByPad || {};
@@ -854,7 +831,6 @@ export const syncWholePatternToTimeline = ({ trackId, patternRows, bpm }) => (di
   });
 };
 
-// ... existing code ...
 async function buildPatternWav({ drumSequence = [], blockStart = 0, blockDuration = 1 }) {
   try {
     const sampleRate = 44100;

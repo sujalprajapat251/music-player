@@ -965,7 +965,7 @@ const PianoRolls = () => {
         <>
             {/* Zoom Controls */}
             <div
-                className={`relative w-full h-[450px] bg-[#1e1e1e] text-white ${selectedNoteIndex || pasteMenu ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'}  `}
+                className={`relative w-full h-[490px] bg-[#1e1e1e] text-white ${selectedNoteIndex || pasteMenu ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'}  `}
                 onWheel={handleWheel}
             >
                 {/* Control Icons - Right Side */}

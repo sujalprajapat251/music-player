@@ -11,7 +11,6 @@ import { IMAGE_URL } from "../Utils/baseUrl";
 import { getAudioContext as getSharedAudioContext, ensureAudioUnlocked } from "../Utils/audioContext";
 import { getNextTrackColor } from "../Utils/colorUtils";
 import { createSynthSound, drumMachineTypes } from "../Utils/drumMachineUtils";
-
 import settingIcon from "../Images/setting.svg";
 import reverceIcon from "../Images/reverce.svg";
 import fxIcon from "../Images/fx.svg";
@@ -39,8 +38,6 @@ import { toggleEffectsOffcanvas } from "../Redux/Slice/effects.slice";
 import EditTrackNameModal from "./EditTrackNameModal";
 import { audioManager } from '../Utils/audioContext';
 import audioQualityManager from '../Utils/audioQualityManager';
-
-
 
 const Timeline = () => {
 
@@ -1713,7 +1710,6 @@ const Timeline = () => {
     return time * timelineWidthPerSecond;
   }, [localCurrentTime, timelineWidthPerSecond, isMagnetEnabled, selectedGrid, audioDuration]);
 
-
   // Handler for TimelineActionBoxes
   const handleAction = (action) => {
     if (action === "Browse loops") {
@@ -2008,8 +2004,6 @@ const Timeline = () => {
     console.log("get name ::: > ", name);
   };
 
-
-
   // sound quality code
    // Listen for audio quality changes and recreate all audio
    useEffect(() => {
@@ -2133,7 +2127,6 @@ const Timeline = () => {
             onWheel={handleWheel}
           >
 
-
             <div
               style={{ height: "100px", borderBottom: "1px solid #1414141A", position: "relative", top: 0, zIndex: 20, background: "#141414" }}
               onMouseDown={handleMouseDown}
@@ -2210,90 +2203,6 @@ const Timeline = () => {
                 )}
               </div>
             )}
-
-            {/* {drumRecordedData && drumRecordedData.length > 0 && (
-              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 52 }}>
-                {drumRecordedData.map((drumRec, idx) => {
-                  // const drumColor = drumMachineTypes.find(dm => dm.name === drumRec.drumMachine)?.color || '#FF8014';
-                  const intensity = Math.min(1, (drumRec.volume || 50) / 100);
-
-                  return (
-                    <React.Fragment key={`drum-recorded-${idx}`}>
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: `${(drumRec.currentTime / audioDuration) * 100}%`,
-                          width: "4px",
-                          height: "100%",
-                          // background: `linear-gradient(180deg, ${drumColor} 0%, ${drumColor}80 50%, transparent 100%)`,
-                          opacity: 0.7 + (intensity * 0.3),
-                          zIndex: 53,
-                          borderRadius: "2px",
-                          // boxShadow: `0 0 8px ${drumColor}60`,
-                          transform: `scaleY(${0.8 + intensity * 0.4})`,
-                          transformOrigin: 'bottom'
-                        }}
-                        title={`${drumRec.sound.toUpperCase()} - ${drumRec.drumMachine} - ${drumRec.currentTime.toFixed(2)}s`}
-                      />
-
-                      <div
-                        style={{
-                          position: "absolute", top: "10px", left: `${(drumRec.currentTime / audioDuration) * 100}%`, transform: "translateX(-50%)", fontSize: "8px", // color: drumColor, fontWeight: "bold", // textShadow: `0 0 3px ${drumColor}`, zIndex: 54, pointerEvents: 'none', userSelect: 'none'
-                        }}>
-                        {drumRec.sound.charAt(0).toUpperCase()}
-                      </div>
-                    </React.Fragment>
-                  );
-                })}
-
-                {drumRecordedData.length > 0 && (() => {
-                  const first = drumRecordedData[0];
-                  const last = drumRecordedData[drumRecordedData.length - 1];
-                  const start = first.currentTime;
-                  const end = last.currentTime + 0.5;
-                  const leftPct = (start / audioDuration) * 100;
-                  const widthPct = ((end - start) / audioDuration) * 100;
-                  const drumMachineName = first?.drumMachine;
-                  const dmColor = drumMachineTypes.find(dm => dm.name === drumMachineName)?.color || '#FF8014';
-
-                  return (
-                    <div
-                      style={{
-                        position: 'absolute', top: 0, left: `${leftPct}%`, width: `${Math.max(widthPct, 2)}%`, height: '100%',
-                        background: isRecording
-                          ? `linear-gradient(90deg, transparent, ${dmColor}20, transparent)`
-                          : `linear-gradient(90deg, ${dmColor}10, ${dmColor}20, ${dmColor}10)`,
-                        border: `1px solid ${dmColor}${isRecording ? '60' : '40'}`,
-                        borderRadius: '6px',
-                        boxShadow: isRecording
-                          ? `0 0 20px ${dmColor}40`
-                          : `inset 0 0 10px ${dmColor}20`,
-                        pointerEvents: isRecording ? 'none' : 'auto',
-                        zIndex: 52,
-                        cursor: isRecording ? 'default' : 'pointer',
-                        animation: isRecording ? 'drumRecordingPulse 1s ease-in-out infinite' : 'none',
-                        transition: 'all 0.3s ease'
-                      }}
-                      onClick={() => {
-                        if (!isRecording) {
-                          console.log('Create drum track from recording');
-                        }
-                      }}
-                      title={isRecording
-                        ? `Recording... (${drumRecordedData.length} hits so far)`
-                        : `Drum Recording: ${drumRecordedData.length} hits (${start.toFixed(1)}s - ${end.toFixed(1)}s)`}
-                    >
-                      {!isRecording && (
-                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: dmColor, fontSize: '10px', fontWeight: 'bold', textShadow: `0 0 4px ${dmColor}`, whiteSpace: 'nowrap', opacity: 0.9 }}>
-                          🥁 {drumRecordedData.length} hits
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
-            )} */}
 
             <style>
               {`
@@ -2457,8 +2366,6 @@ const Timeline = () => {
               </div>
             )}
           </div>
-
-
 
           <div className={`w-[30px] h-[30px] flex items-center justify-center rounded-full ${isLoopEnabled ? 'bg-[#FF8014]' : 'hover:bg-[#1F1F1F]'}`} onClick={() => dispatch(toggleLoopEnabled())}>
             <img src={reverceIcon} alt="Reverse" />
