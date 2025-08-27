@@ -418,7 +418,11 @@ const BottomToolbar = () => {
             console.log("botoooooooooooooooooooooooooooo9")
             dispatch(setRecording(true));
             dispatch(setRecordedData([])); // Clear timeline 
-            dispatch(setDrumRecordedData([])); // Clear drum data
+            
+            // Instead of clearing drum data, we'll let the Drum component handle it
+            // This allows for appending new recordings to existing ones
+            // dispatch(setDrumRecordedData([])); // Remove this line
+            
             setRecordingStartTime(Date.now());
             handlePlayPause();
             tickIntervalRef.current = setInterval(() => {
