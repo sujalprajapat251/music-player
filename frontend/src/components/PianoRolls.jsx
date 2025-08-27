@@ -58,6 +58,8 @@ const PianoRolls = () => {
     const [scrollLeft, setScrollLeft] = useState(0); // Horizontal scroll position
 
     const pianoRecording = useSelector((state) => state.studio.pianoRecord);
+    const pianoNotes = useSelector((state) => state.studio.pianoNotes || []);
+    const pianoRecordingClip = useSelector((state) => state.studio.pianoRecordingClip);
     // console.log('pianoRecording ::: > ', pianoRecording)
 
     const baseWidth = 1000;  // Increased base width for more content
@@ -396,6 +398,9 @@ const PianoRolls = () => {
     const [notes, setNotes] = useState([]);
     const [startTime, setStartTime] = useState(null);
     const [activeNotes, setActiveNotes] = useState({});
+    const [selectedNoteIndex, setSelectedNoteIndex] = useState(null);
+    const [clipboardNote, setClipboardNote] = useState(null);
+
     let mouseDownTime = useRef(0);
     const handleMouseDown = () => {
         mouseDownTime.current = Date.now();
@@ -413,7 +418,22 @@ const PianoRolls = () => {
             handleGridClick(e);
         }
     };
-    // --- update handleGridClick to play sound and add note at correct position ---
+
+    // Note helpers (must be defined before any hook that uses them)
+    const noteNames = useMemo(() => ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'], []);
+    const noteNameToMidi = useCallback((note) => {
+        if (!note || typeof note !== 'string') return 60;
+        const match = note.match(/^([A-G])(#?)(-?\d+)$/i);
+        if (!match) return 60;
+        const [, letter, sharp, octaveStr] = match;
+        const letterUp = letter.toUpperCase();
+        const idxBase = noteNames.indexOf(letterUp + (sharp ? '#' : ''));
+        const octave = parseInt(octaveStr, 10);
+        if (idxBase < 0 || isNaN(octave)) return 60;
+        return (octave + 1) * 12 + idxBase;
+    }, [noteNames]);
+
+    // --- Enhanced handleGridClick with real-time recording and customization ---
     const handleGridClick = (e) => {
         if (menuVisible || selectedNoteIndex) return;
         if (pasteMenu) return;
@@ -426,25 +446,53 @@ const PianoRolls = () => {
         // Use the exact same time calculation as Timeline.jsx
         const start = x / timelineWidthPerSecond;
         const noteIndex = Math.floor(y / 30);
-        // Remove restriction: allow adding anywhere
+        
+        // Remove restriction: allow adding anywhere in the piano roll
         if (noteIndex >= 0 && noteIndex < NOTES.length) {
             const note = NOTES[noteIndex];
-            // Preview using selected instrument
+            
+            // Play sound immediately for real-time feedback
             playNoteForTrack(note, 0.2);
+
+            // Create note with real-time properties
+            const newNote = {
+                note,
+                start,
+                duration: 0.2, // Default duration
+                velocity: 0.8, // Default velocity
+                id: `note_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`, // Unique ID for real-time updates
+                trackId: currentTrackId || null,
+                timestamp: Date.now()
+            };
+            
+            // Add note to local state with real-time updates
             setNotes(prev => {
-                const updated = [
-                    ...prev,
-                    {
-                        note,
-                        start,
-                    duration: 0.1, // default duration
-                    },
-                ];
+                const updated = [...prev, newNote];
                 syncNotesToRedux(updated);
                 return updated;
             });
+            
+            // Dispatch to Redux for real-time timeline updates
+            const mappedNote = {
+                note: newNote.note,
+                startTime: newNote.start,
+                duration: newNote.duration,
+                midiNumber: noteNameToMidi(newNote.note),
+                trackId: newNote.trackId,
+                id: newNote.id,
+                velocity: newNote.velocity
+            };
+            
+            // Get current notes from Redux and add the new note
+            const currentReduxNotes = Array.isArray(pianoNotes) ? pianoNotes : [];
+            const updatedNotes = [...currentReduxNotes, mappedNote];
+            dispatch(setPianoNotes(updatedNotes));
+            
+            // Clip sizing stays controlled by TimelineTrack
         }
     };
+    
+    // No updateRecordingClip here; TimelineTrack manages the clip bounds
     const handleKeyDown = (note) => {
         if (activeNotes[note]) return;
 
@@ -491,23 +539,36 @@ const PianoRolls = () => {
         setNotes(prev => {
             const updated = [...prev];
             updated[index] = { ...updated[index], ...updates };
+            syncNotesToRedux(updated);
             return updated;
         });
     };
     
-    // Note helpers (must be defined before any hook that uses them)
-    const noteNames = useMemo(() => ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'], []);
-    const noteNameToMidi = useCallback((note) => {
-        if (!note || typeof note !== 'string') return 60;
-        const match = note.match(/^([A-G])(#?)(-?\d+)$/i);
-        if (!match) return 60;
-        const [, letter, sharp, octaveStr] = match;
-        const letterUp = letter.toUpperCase();
-        const idxBase = noteNames.indexOf(letterUp + (sharp ? '#' : ''));
-        const octave = parseInt(octaveStr, 10);
-        if (idxBase < 0 || isNaN(octave)) return 60;
-        return (octave + 1) * 12 + idxBase;
-    }, [noteNames]);
+    // Real-time note drag handler
+    const handleNoteDrag = (index, newStart, newNote) => {
+        const updatedNote = {
+            ...notes[index],
+            start: newStart,
+            note: newNote
+        };
+        
+        // Update note immediately
+        updateNote(index, updatedNote);
+        
+        // Play sound for real-time feedback
+        playNoteForTrack(newNote, 0.1);
+    };
+
+    // Real-time note resize handler
+    const handleNoteResize = (index, newDuration) => {
+        const updatedNote = {
+            ...notes[index],
+            duration: Math.max(0.05, newDuration) // Minimum duration
+        };
+
+        updateNote(index, updatedNote);
+    };
+
     
     // Sync notes to Redux so Timeline shows red region + white mini boxes
     const syncNotesToRedux = useCallback((list) => {
@@ -516,32 +577,39 @@ const PianoRolls = () => {
                 note: n.note,
                 startTime: n.start,
                 duration: n.duration,
-                midiNumber: noteNameToMidi(n.note)
+                midiNumber: noteNameToMidi(n.note),
+                trackId: n.trackId || currentTrackId,
+                id: n.id,
+                velocity: n.velocity || 0.8
             }));
             dispatch(setPianoNotes(mapped));
         } catch {}
-        if (Array.isArray(list) && list.length > 0) {
-            const minStart = Math.min(...list.map(n => n.start));
-            const maxEnd = Math.max(...list.map(n => n.start + n.duration));
-            try { 
-                dispatch(setPianoRecordingClip({ 
-                    start: minStart, 
-                    end: maxEnd, 
-                    color: '#E44F65',
-                    type: 'piano',
-                    name: `Piano Recording (${list.length} notes)`,
-                    duration: maxEnd - minStart,
-                    startTime: minStart,
-                    trimStart: 0,
-                    trimEnd: maxEnd - minStart,
-                    id: `piano_recording_${Date.now()}`,
-                    pianoData: list
-                })); 
-            } catch {}
-        } else {
-            try { dispatch(setPianoRecordingClip(null)); } catch {}
+        // do nothing for clip sizing here
+    }, [dispatch, noteNameToMidi, currentTrackId]);
+    
+    // Sync notes when track changes
+    useEffect(() => {
+        if (notes.length > 0) {
+            syncNotesToRedux(notes);
         }
-    }, [dispatch, noteNameToMidi]);
+    }, [currentTrackId, syncNotesToRedux]);
+    
+    // Load/refresh local notes whenever Redux notes for this track change
+    useEffect(() => {
+        if (!Array.isArray(pianoNotes)) return;
+        const trackNotes = pianoNotes.filter(note => (note.trackId ?? null) === (currentTrackId ?? null));
+        const localNotes = trackNotes.map(note => ({
+            note: note.note,
+            start: note.startTime,
+            duration: note.duration,
+            velocity: note.velocity || 0.8,
+            id: note.id,
+            trackId: note.trackId,
+            timestamp: Date.now()
+        }));
+        setNotes(localNotes);
+    }, [pianoNotes, currentTrackId]);
+    
     // piano key handling over
 
 
@@ -735,6 +803,63 @@ const PianoRolls = () => {
             } catch {}
         })();
     }, [studioIsPlaying, notes, studioCurrentTime]);
+    
+    // Keyboard shortcuts for real-time note creation and editing
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            // Only handle keyboard shortcuts when not in input fields
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            
+            switch (e.key) {
+                case 'Delete':
+                case 'Backspace':
+                    if (selectedNoteIndex !== null) {
+                        e.preventDefault();
+                        handleDelete();
+                    }
+                    break;
+                case 'c':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        if (selectedNoteIndex !== null) {
+                            handleCopy();
+                        }
+                    }
+                    break;
+                case 'v':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        if (clipboardNote) {
+                            handlePaste();
+                        }
+                    }
+                    break;
+                case 'x':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        if (selectedNoteIndex !== null) {
+                            handleCut();
+                        }
+                    }
+                    break;
+                case 'z':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        // TODO: Implement undo functionality
+                    }
+                    break;
+                case 'a':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        // TODO: Implement select all functionality
+                    }
+                    break;
+            }
+        };
+        
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [selectedNoteIndex, clipboardNote]);
 
     // If notes change, allow re-scheduling on next play
     useEffect(() => {
@@ -743,7 +868,7 @@ const PianoRolls = () => {
 
     // right click menu handler 
     const menuRef = useRef(null);
-    const [selectedNoteIndex, setSelectedNoteIndex] = useState(null);
+
     // console.log('selectedNoteIndex', selectedNoteIndex)
     const [menuVisible, setMenuVisible] = useState(false);
     useEffect(() => {
@@ -761,7 +886,7 @@ const PianoRolls = () => {
 
 
     // note copy cut and paste functionlity
-    const [clipboardNote, setClipboardNote] = useState(null);
+    
     const pasteMenuRef = useRef(null);
     const [position, setPosition] = useState({ x: 0, y: 0 });
 
@@ -1079,31 +1204,59 @@ const PianoRolls = () => {
                     {/* Transform the playhead for smooth movement without reflow */}
                     <style>{`.pianoroll-playhead-transform{transform: translateX(${(typeof localPlayheadTime === 'number' ? localPlayheadTime : 0) * timelineWidthPerSecond}px);}`}</style>
                     <div className="pianoroll-playhead-transform" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 24 }} />
-                    {/* White background for all notes */}
-                    {notes.length > 0 && (() => {
-                        const minStart = Math.min(...notes.map(n => n.start));
-                        const maxEnd = Math.max(...notes.map(n => n.start + n.duration)) + 0.1;
-                        const left = minStart * timelineWidthPerSecond;
-                        const width = (maxEnd - minStart) * timelineWidthPerSecond;
-                        return (
-                            <div
-                                className="note-bg-div border border-[#E44F65] "
-                                style={{
-                                    position: 'absolute',
-                                    left: `${left}px`,
-                                    top: 0,
-                                    width: `${width}px`,
-                                    height: '100%',
-                                    background: 'rgba(255, 0, 0, 0.1)',
-                                    zIndex: 0,
-                                    opacity: 1,
-                                    borderRadius: '5px',
-                                    transition: "left 0.2s ease-in-out, width 0.2s ease-in-out" // Smooth transition for zoom
-                                }}
-                                onMouseDown={handleMouseDown}
-                                onMouseUp={handleMouseUp}
-                            />
-                        );
+                    {/* Red background region - mirrors TimelineTrack clip when available */}
+                    {(() => {
+                        const activeClip = (pianoRecordingClip && (pianoRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? pianoRecordingClip : null;
+                        if (activeClip && activeClip.start != null && activeClip.end != null) {
+                            const left = (activeClip.start || 0) * timelineWidthPerSecond;
+                            const width = Math.max(0, (activeClip.end - activeClip.start)) * timelineWidthPerSecond;
+                            return (
+                                <div
+                                    className="note-bg-div border border-[#E44F65] "
+                                    style={{
+                                        position: 'absolute',
+                                        left: `${left}px`,
+                                        top: 0,
+                                        width: `${width}px`,
+                                        height: '100%',
+                                        background: 'rgba(255, 0, 0, 0.1)',
+                                        zIndex: 0,
+                                        opacity: 1,
+                                        borderRadius: '5px',
+                                        transition: "left 0.2s ease-in-out, width 0.2s ease-in-out"
+                                    }}
+                                    onMouseDown={handleMouseDown}
+                                    onMouseUp={handleMouseUp}
+                                />
+                            );
+                        }
+                        // Fallback: derive region from local notes if no active clip
+                        if (notes.length > 0) {
+                            const minStart = Math.min(...notes.map(n => n.start));
+                            const maxEnd = Math.max(...notes.map(n => n.start + n.duration)) + 0.1;
+                            const left = minStart * timelineWidthPerSecond;
+                            const width = (maxEnd - minStart) * timelineWidthPerSecond;
+                            return (
+                                <div
+                                    className="note-bg-div border border-[#E44F65] "
+                                    style={{
+                                        position: 'absolute',
+                                        left: `${left}px`,
+                                        top: 0,
+                                        width: `${width}px`,
+                                        height: '100%',
+                                        background: 'rgba(255, 0, 0, 0.1)',
+                                        zIndex: 0,
+                                        opacity: 1,
+                                        borderRadius: '5px',
+                                        transition: "left 0.2s ease-in-out, width 0.2s ease-in-out" // Smooth transition for zoom
+                                    }}
+                                    onMouseDown={handleMouseDown}
+                                    onMouseUp={handleMouseUp}
+                                />
+                            );
+                        }
+                        return null;
                     })()}
                     {/* {console.log('notes',notes)} */}
                     {notes.map((n, i) => {
@@ -1117,6 +1270,18 @@ const PianoRolls = () => {
                                 dragAxis="both"
                                 style={{
                                     transition: "transform 0.2s ease-in-out" // Smooth transition for zoom
+                                }}
+                                onDrag={(e, d) => {
+                                    // Real-time drag feedback
+                                    const snappedY = Math.round(d.y / 30) * 30;
+                                    const noteIndex = Math.round(d.y / 30);
+                                    const newNote = NOTES[noteIndex];
+                                    
+                                    // Use the same time calculation as Timeline.jsx
+                                    const newStartTime = d.x / timelineWidthPerSecond;
+                                    
+                                    // Update note in real-time during drag
+                                    handleNoteDrag(i, newStartTime, newNote);
                                 }}
                                 onDragStop={(e, d) => {
                                     const snappedY = Math.round(d.y / 30) * 30;
@@ -1133,6 +1298,14 @@ const PianoRolls = () => {
                                         return updated;
                                     });
                                 }}
+                                onResize={(e, direction, ref, delta, position) => {
+                                    // Real-time resize feedback
+                                    const newWidth = parseFloat(ref.style.width);
+                                    const newDuration = newWidth / timelineWidthPerSecond;
+                                    
+                                    // Update note in real-time during resize
+                                    handleNoteResize(i, newDuration);
+                                }}
                                 onResizeStop={(e, direction, ref, delta, position) => {
                                     const newWidth = parseFloat(ref.style.width);
                                     
@@ -1148,7 +1321,7 @@ const PianoRolls = () => {
                                 }}
                             >
                                 <div
-                                    className={`note-box bg-red-500 rounded w-full h-full m-1 relative z-1 ${selectedNoteIndex === i ? 'border-[2px]' : 'border'}`}
+                                    className={`note-box bg-red-500 rounded w-full h-full m-1 relative z-1 ${selectedNoteIndex === i ? 'border-[2px] border-yellow-400' : 'border'} transition-all duration-150 hover:bg-red-400`}
                                     onClick={(e) => {
                                         // Left click: just play the note
                                         e.stopPropagation();

@@ -222,6 +222,7 @@ const studioSlice = createSlice({
     },
     setCurrentTrackId: (state, action) => {
       state.currentTrackId = action.payload;
+      // console.log('jsdbfjkasdjfjsdfjasdfkadfbhjksjhkshkfkj', action.payload);
     },
     toggleMuteTrack: (state, action) => {
       const trackId = action.payload;
@@ -316,7 +317,7 @@ const studioSlice = createSlice({
       }
     },
     setDrumRecordedData: (state, action) => {
-      console.log("=====================", action.payload)
+      // console.log("=====================", action.payload)
       state.drumRecordedData = action.payload;
     },
     updateDrumRecordedData: (state, action) => {
@@ -759,7 +760,7 @@ export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColo
     // Remove this beat
     const newSeq = seq.filter(ev =>
       !(Math.abs(ev.currentTime - slotStart) < 0.001 && ev.padId === padId)
-    );
+    );    
 
 
     const src = container.onBeatsByPad || {};
