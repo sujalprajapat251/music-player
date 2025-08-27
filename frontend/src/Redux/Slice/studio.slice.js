@@ -241,7 +241,7 @@ const studioSlice = createSlice({
     },
     addSectionLabel: (state, action) => {
       const newSection = {
-        id: Date.now() + Math.random(), 
+        id: Date.now() + Math.random(),
         startTime: 0,
         endTime: 10,
         position: 0,
@@ -490,6 +490,25 @@ const studioSlice = createSlice({
         }
       }
     },
+    moveTrackDown: (state, action) => {
+      const trackId = action.payload;
+      const index = state.tracks.findIndex(t => t.id === trackId);
+      if (index !== -1 && index < state.tracks.length - 1) {
+        const tmp = state.tracks[index + 1];
+        state.tracks[index + 1] = state.tracks[index];
+        state.tracks[index] = tmp;
+      }
+    },
+    reorderTracks: (state, action) => {
+      const { fromIndex, toIndex } = action.payload;
+      if (fromIndex === toIndex) return;
+      if (fromIndex < 0 || toIndex < 0) return;
+      if (fromIndex >= state.tracks.length || toIndex > state.tracks.length) return;
+      const [moved] = state.tracks.splice(fromIndex, 1);
+      state.tracks.splice(toIndex, 0, moved);
+    },
+
+    // ... existing code ...
   },
 });
 
@@ -553,6 +572,9 @@ export const {
   setSoundQuality,
   setPatternDrumPlayback,
   setPatternDrumEvents,
+  moveTrackUp,
+  moveTrackDown,
+  reorderTracks
 } = studioSlice.actions;
 
 export default studioSlice.reducer;

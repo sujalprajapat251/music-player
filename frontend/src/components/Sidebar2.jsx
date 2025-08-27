@@ -12,7 +12,7 @@ import headphone from "../Images/headphone.svg";
 import mute from "../Images/mute.svg";
 import more from "../Images/more.svg";
 import TrackMenu from "./TrackMenu";
-import { renameTrack, setCurrentTrackId, setSidebarScrollOffset, toggleMuteTrack, setSoloTrackId, setTrackVolume, setTrackType } from "../Redux/Slice/studio.slice";
+import { renameTrack, setCurrentTrackId, setSidebarScrollOffset, toggleMuteTrack, setSoloTrackId, setTrackVolume, setTrackType, reorderTracks } from "../Redux/Slice/studio.slice";
 import FreezeIcon from "../Images/freeze.svg";
 import { ReactComponent as Track1 } from '../Images/track1.svg'
 import { ReactComponent as Track2 } from '../Images/track2.svg'
@@ -39,6 +39,7 @@ const Sidebar2 = () => {
   const isRecording = useSelector(state => state.studio.isRecording);
   const openTrackType = useSelector((state) => state.studio.newtrackType);
 
+  const [dragIndex, setDragIndex] = useState(null);  
   const handleScroll = (e) => {
     const scrollTop = e.target.scrollTop;
     dispatch(setSidebarScrollOffset(scrollTop));
@@ -150,6 +151,16 @@ const Sidebar2 = () => {
                     borderLeftColor: track.id === currentTrackId && borderColor ? borderColor : '#232323',
                   }}
                   onClick={() => handleChangeTrack(track.id)}
+                  draggable
+                  onDragStart={() => setDragIndex(idx)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => {
+                    if (dragIndex !== null && dragIndex !== idx) {
+                      dispatch(reorderTracks({ fromIndex: dragIndex, toIndex: idx }));
+                    }
+                    setDragIndex(null);
+                  }}
+                  onDragEnd={() => setDragIndex(null)}
                 >
                   <div className="flex items-center w-16 justify-center">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${track.frozen ? 'bg-[#7F7B87]' : 'bg-black'}`} style={{ backgroundColor: isComponentOpen ? borderColor : (track.frozen ? '#7F7B87' : '#000000') }} onClick={(e) => handleIconToggle(e, track)}>

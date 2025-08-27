@@ -2279,7 +2279,29 @@ const Timeline = () => {
                         showBeatRectangles={true} // Toggle beat visualization
                       />
                     )}
-                  </div>
+                    <TimelineTrack
+                      key={track.id}
+                      track={track}
+                      trackId={track.id}
+                      height={trackHeight}
+                      onReady={handleReady}
+                      onTrimChange={(clipId, trimData) => handleTrimChange(track.id, clipId, trimData)}
+                      onPositionChange={(clipId, newStartTime) => handleTrackPositionChange(track.id, clipId, newStartTime)}
+                      onRemoveClip={(clipId) => dispatch(removeAudioClip({
+                        trackId: track.id,
+                        clipId: clipId
+                      }))}
+                      timelineWidthPerSecond={timelineWidthPerSecond}
+                      frozen={track.frozen}
+                      onContextMenu={handleContextMenu}
+                      onSelect={(clip) => setSelectedClipId(clip.id)}
+                      selectedClipId={selectedClipId}
+                      color={track.color}
+                      bpm={120}
+                      beatsPerBar={4}
+                      showBeatRectangles={true}
+                    />
+                </div>
                 );
               })}
             </div>
