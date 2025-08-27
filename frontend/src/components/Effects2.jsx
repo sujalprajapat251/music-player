@@ -12,7 +12,7 @@ import piano from "../Images/piano.svg";
 import Drumkit from "../Images/Drumgroup.svg";
 import { useTheme } from '../Utils/ThemeContext';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
+import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsTwo } from '../Redux/Slice/effects.slice';
 import audioEffectsPlayer from '../components/AudioEffectsPlayer';
 import { showEffectsTwo } from '../Redux/Slice/effects.slice';
 
@@ -284,7 +284,7 @@ const Effects2 = () => {
     const [activeTab, setActiveTab] = useState('Instruments');
     const [playingEffectId, setPlayingEffectId] = useState(null);
 
-    const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas } = useSelector((state) => state.effects);
+    const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas, showEffectsTwo } = useSelector((state) => state.effects);
     console.log("activeEffects", activeEffects, "showEffectsLibrary", showEffectsLibrary,);
 
     const [effectsSearchTerm, setEffectsSearchTerm] = useState('');
@@ -489,7 +489,7 @@ const Effects2 = () => {
                 <div className="  border-b border-[#FFFFFF1A] h-full">
                     <div className=" bg-[#1F1F1F] flex items-center px-1md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                         <div>
-                            <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => setShowOffcanvas(false)} />
+                            <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => dispatch(setShowEffectsTwo(false))} />
                         </div>
                     </div>
                     <div className=" bg-[#1F1F1F] flex space-x-2 pb-3 sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3">
@@ -505,7 +505,6 @@ const Effects2 = () => {
                         {activeTab === 'Instruments' && (
                             <>
                                 <div className=" bg-[#1F1F1F] flex items-center justify-between sm:justify-center px-1  md600:px-2 pt-2 pb-2 sm:gap-4 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
-                                    {/* Instrument Selector */}
                                     <div className="bg-[#353535] p-1 md600:p-2 lg:p-3 rounded-lg">
                                         <div className="flex items-center justify-between">
                                             <button
@@ -672,7 +671,7 @@ const Effects2 = () => {
                                     }
                                 }}
                             >
-                                <div className="flex items-center justify-center p-2 sm:p-4 min-w-max bg-black">
+                                <div className="flex items-center justify-center p-2 sm:p-4 min-w-max">
                                     <div className="flex gap-2 sm:gap-4 min-w-max">
                                         {activeEffects.map((effect) => (
                                             <div key={effect.instanceId} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-white flex flex-col shrink-0">

@@ -1568,7 +1568,7 @@ const menu = [
                       }
                     }}
                   >
-                    <div className="flex items-center justify-center p-16 sm:p-11 md600:p-14 md:p-3 lg:p-10 3xl:p-16 min-w-max bg-black">
+                    <div className="flex items-center justify-center p-16 sm:p-11 md600:p-14 md:p-3 lg:p-10 3xl:p-16 min-w-max">
                       <div className="flex gap-2 sm:gap-4 min-w-max">
                         {activeEffects.map((effect) => (
                           <div key={effect.instanceId} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-white flex flex-col shrink-0">

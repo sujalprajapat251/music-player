@@ -4,7 +4,7 @@ import { IoSearch } from 'react-icons/io5'
 
 import { getAllCategory } from '../Redux/Slice/category.slice';
 import { useDispatch, useSelector } from 'react-redux';
-import { addEffect, setShowEffectsLibrary, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
+import { addEffect, setShowEffectsLibrary, toggleEffectsOffcanvas, setShowEffectsTwo } from '../Redux/Slice/effects.slice';
 
 import { FaPlus } from "react-icons/fa6";
 import subscription from "../Images/subscription.svg";
@@ -186,7 +186,7 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
     return (
     <>
     <div>
-        <div className={`transition-all duration-300 flex ${showOffcanvas ? 'w-[75%]' : 'w-full'} self-start`}>{showEffectsTwoState ? <Effects2 /> : ""}</div>  
+        <div className={`transition-all duration-300 flex ${showOffcanvas ? 'w-[75%]' : 'w-full'} self-start`}>{showEffectsTwo ? <Effects2 /> : ""}</div>  
         {showOffcanvas && (
             <>
             <div className="absolute top-0 bg-primary-light dark:bg-primary-dark right-0 h-[calc(100vh-82px)] sm:h-[calc(100vh-66px)] md:h-[calc(100vh-96px)] z-50 shadow-lg transition-transform duration-300 ease-in-in transform translate-x-0 overflow-auto w-[70%] md600:w-[30%] 2xl:w-[25%] 3xl:w-[23%]">
@@ -268,7 +268,7 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
                                                             setTimeout(() => {
                                                                 e.target.style.transform = 'scale(1)';
                                                             }, 150);
-                                                            dispatch(showEffectsTwo(true));
+                                                            // dispatch(setShowEffectsTwo(true));
                                                         }
                                                     }} src={effect.image} alt={effect.name} className="w-full transition-transform duration-150"
                                                 />

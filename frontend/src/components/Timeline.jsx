@@ -343,6 +343,8 @@ const Timeline = () => {
   };
 
   const getTrackType = useSelector((state) => state.studio.newtrackType);
+  console.log(getTrackType);
+  
 
   // Mute functionality
 
@@ -2491,6 +2493,14 @@ const Timeline = () => {
       {/* Drum Component */}
       {(showDrum || getTrackType === "Drums & Machines") && (
         <Drum onClose={() => { setShowDrum(false); dispatch(setTrackType(null)); }} />
+      )}
+
+      {(showDrum || getTrackType === "Bass & 808") && (
+        <Piano onClose={() => { setShowPiano(false); dispatch(setTrackType(null)); }} />
+      )}
+
+      {(showDrum || getTrackType === "Guitar") && (
+        <Piano onClose={() => { setShowPiano(false); dispatch(setTrackType(null)); }} />
       )}
 
       {/* Rename Section Modal */}

@@ -189,6 +189,7 @@ const initialState = {
     selectedEffect: null,
     showEffectsLibrary: false, 
     showEffectsOffcanvas: false,
+    showEffectsTwo: false, // Add this line
 };
 
 const effectsSlice = createSlice({
@@ -255,7 +256,10 @@ const effectsSlice = createSlice({
             const { fromIndex, toIndex } = action.payload;
             const [removed] = state.activeEffects.splice(fromIndex, 1);
             state.activeEffects.splice(toIndex, 0, removed);
-        }
+        },
+        setShowEffectsTwo: (state, action) => {
+            state.showEffectsTwo = action.payload;
+        },
     }
 });
 
@@ -268,7 +272,8 @@ export const {
     setShowEffectsOffcanvas,
     toggleEffectsOffcanvas,
     clearAllEffects,
-    reorderEffects
+    reorderEffects,
+    setShowEffectsTwo
 } = effectsSlice.actions;
 
 export default effectsSlice.reducer; 
