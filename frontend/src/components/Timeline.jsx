@@ -3,7 +3,7 @@ import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
 import Soundfont from 'soundfont-player';
-import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio, setCurrentTrackId, setTrackType } from "../Redux/Slice/studio.slice";
+import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio, setCurrentTrackId, setTrackType, triggerPatternDrumPlayback } from "../Redux/Slice/studio.slice";
 import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM, zoomIn, zoomOut, resetZoom } from "../Redux/Slice/grid.slice";
 import { setAudioDuration as setLoopAudioDuration, toggleLoopEnabled, setLoopEnd, setLoopRange, selectIsLoopEnabled } from "../Redux/Slice/loop.slice";
 import { getGridSpacing, getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
@@ -85,6 +85,8 @@ const Timeline = () => {
   const { zoomLevel } = useSelector(selectGridSettings);
   const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
   const pianoNotes = useSelector((state) => state.studio.pianoNotes || []);
+  const patternDrumPlayback = useSelector((state) => state.studio?.patternDrumPlayback || {});
+  const patternDrumEvents = useSelector((state) => state.studio?.patternDrumEvents || {});
   // console.log("FFFFFFFFFFFFFFFFFF",drumRecordedData)
 
   const isPlaying = useSelector((state) => state.studio?.isPlaying || false);
@@ -1760,6 +1762,7 @@ const Timeline = () => {
     };
     dispatch(addTrack(newTrack));
   };
+
   // Rename submit handler
   const handleRenameSubmit = () => {
     if (renameSectionId && renameValue.trim()) {
@@ -1950,7 +1953,7 @@ const Timeline = () => {
                     playedDrumHitsRef.current.add(hitKey);
                   }
                 });
-              } 
+              }
             }
           });
         }
@@ -1961,6 +1964,42 @@ const Timeline = () => {
       playedDrumHitsRef.current.clear();
     }
   }, [isPlaying, currentTime, tracks, drumRecordedData, playDrumSound]);
+
+  // Enhance the existing playDrumSound function to handle pattern drum events
+  useEffect(() => {
+    // Check for pattern drum events that need to be played
+    Object.entries(patternDrumEvents).forEach(([trackId, trackEvents]) => {
+      Object.entries(trackEvents).forEach(([clipId, drumEvents]) => {
+        if (patternDrumPlayback[trackId]?.[clipId]) {
+          // Play each drum event
+          drumEvents.forEach(drumEvent => {
+            playDrumSound(drumEvent);
+          });
+        }
+      });
+    });
+  }, [patternDrumEvents, patternDrumPlayback, playDrumSound]);
+
+  // Add this useEffect after the existing drum playback effect
+  useEffect(() => {
+    if (isPlaying && currentTime > 0) {
+      // Check each track for pattern drum clips
+      tracks.forEach(track => {
+        if (track.audioClips) {
+          track.audioClips.forEach(clip => {
+            if (clip.fromPattern && clip.drumSequence) {
+              // Dispatch the thunk to check and trigger drum events
+              dispatch(triggerPatternDrumPlayback({
+                trackId: track.id,
+                clipId: clip.id,
+                currentTime
+              }));
+            }
+          });
+        }
+      });
+    }
+  }, [isPlaying, currentTime, tracks, dispatch]);
 
   // Initialize piano for playback when component mounts
   useEffect(() => {
