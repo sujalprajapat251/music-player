@@ -24,9 +24,11 @@ import { ReactComponent as Track7 } from '../Images/track7.svg'
 import { ReactComponent as Track8 } from '../Images/track8.svg'
 import { ReactComponent as Wav } from '../Images/wav.svg'
 import Drum from "./Drum";
+import NewProject from "./NewProjectModel";
 
 const Sidebar2 = () => {
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
+  const [showNewProject, setShowNewProject] = useState(true);
   const [editingTrackId, setEditingTrackId] = useState(null);
   const [editingName, setEditingName] = useState("");
   // Use Redux for open instrument; avoid local UI duplication
@@ -114,6 +116,7 @@ const Sidebar2 = () => {
 
   return (
     <>
+      <div style={{ pointerEvents: showNewProject ? 'none' : 'auto' }}>
       <TopHeader />
       <div className="flex h-[calc(100vh-82px)] sm:h-[calc(100vh-66px)] md:h-[calc(100vh-96px)] relative">
         <div className="border-r border-[#1414141A] dark:border-[#b463631a] w-[20%] sm:w-[23%] md:w-[22%] lg:w-[20%] xl:w-[17%] 2xl:w-[15%] bg-primary-light dark:bg-primary-dark">
@@ -285,6 +288,8 @@ const Sidebar2 = () => {
         </div>
       </div>
       <BottomToolbar />
+      </div>
+      <NewProject open={showNewProject} setOpen={setShowNewProject} />
       {showAddTrackModal && (
         <AddNewTrackModel onClose={() => setShowAddTrackModal(false)} />
       )}

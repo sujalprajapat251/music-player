@@ -285,6 +285,36 @@ const Pianodemo = ({ onClose }) => {
     const [reverb, setReverb] = useState(-90);
     const [pan, setPan] = useState(0);
     const [isDragOver, setIsDragOver] = useState(false);
+    const pianoSectionsRef = useRef(null);
+
+    useEffect(() => {
+        const containerEl = pianoSectionsRef.current;
+        if (!containerEl) return;
+
+        const handleWheelForOctaves = (event) => {
+            const isHorizontal = Math.abs(event.deltaX) > Math.abs(event.deltaY);
+            if (event.shiftKey) {
+                event.preventDefault();
+                const delta = isHorizontal ? event.deltaX : event.deltaY;
+                setActivePianoSection((prev) => {
+                    if (delta > 0) return Math.min(prev + 1, 2);
+                    if (delta < 0) return Math.max(prev - 1, 0);
+                    return prev;
+                });
+                return;
+            }
+
+            // Block accidental horizontal scrolling entirely
+            if (isHorizontal) {
+                event.preventDefault();
+            }
+        };
+
+        containerEl.addEventListener('wheel', handleWheelForOctaves, { passive: false });
+        return () => {
+            containerEl.removeEventListener('wheel', handleWheelForOctaves);
+        };
+    }, []);
 
     // const audioContextRef = useRef(null);
     const panNodeRef = useRef(null);
@@ -695,8 +725,26 @@ const Pianodemo = ({ onClose }) => {
             return () => clearTimeout(timer);
         }, [highlightedPianoKeys, noteRange]);
         
+        const handleLocalWheel = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        useEffect(() => {
+            const el = pianoRef.current;
+            if (!el) return;
+            const blockWheel = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            };
+            el.addEventListener('wheel', blockWheel, { passive: false, capture: true });
+            return () => {
+                el.removeEventListener('wheel', blockWheel, { capture: true });
+            };
+        }, []);
+
         return (
-            <div className="relative h-[93%]" ref={pianoRef}>
+            <div className="relative h-[93%] overscroll-none" ref={pianoRef} onWheel={handleLocalWheel}>
                 <Piano noteRange={noteRange} playNote={playNote} stopNote={stopNote} keyboardShortcuts={keyboardShortcuts}/>
                 <style jsx>{`
                     .ReactPiano__Keyboard{
@@ -1869,7 +1917,7 @@ const handlePlusButtonClick = () => {
                                 </div>
                             </div>
                         }
-                        <div className="w-full h-[105px] sm:h-[150px] md600:h-[140px] md:h-[290px] lg:h-[250px] overflow-x-auto pt-1 md600:pt-2 lg:pt-3 ">
+                        <div ref={pianoSectionsRef} className="w-full h-[105px] sm:h-[150px] md600:h-[140px] md:h-[290px] lg:h-[250px] overflow-x-hidden pt-1 md600:pt-2 lg:pt-3 overscroll-none ">
                             <div className="w-full h-full">
                                 <div className="flex transition-transform duration-300 ease-in-out h-full" style={{ transform: `translateX(-${activePianoSection * 100}%)` }}>
                                     {pianoSections.map((section, index) => (

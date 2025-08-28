@@ -8,7 +8,7 @@ import mm3 from '../Images/np-3.png';
 
 const NewProject = ({ open, setOpen }) => {
   return (
-    <Dialog open={open} onClose={setOpen} className="relative z-10">
+    <Dialog open={open} onClose={() => {}} className="relative z-10">
       <DialogBackdrop className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4 text-center">
@@ -30,17 +30,17 @@ const NewProject = ({ open, setOpen }) => {
                     label: 'New Project',
                     content: (
                       <div className="flex flex-col items-center">
-                        <div className="bg-blue-100 rounded-t-lg w-full flex flex-col items-center justify-center py-8">
+                        <div className="bg-blue-100 rounded-t-lg w-full flex flex-col items-center justify-center py-8 cursor-pointer" onClick={() => setOpen(false)}>
                           <img src={newProjectIcon} alt="Music Note" className="w-12 h-12 mb-2" />
                         </div>
-                        <button className="w-full bg-blue-500 text-white py-3 rounded-b-lg font-medium text-lg hover:bg-blue-600 transition-colors">Music</button>
+                        <button className="w-full bg-blue-500 text-white py-3 rounded-b-lg font-medium text-lg hover:bg-blue-600 transition-colors" onClick={() => setOpen(false)}>Music</button>
                       </div>
                     ),
                   },
                   {
                     label: 'Demos',
                     content: (
-                      <div className="flex flex-col items-center justify-center min-h-[120px] text-white opacity-60">
+                      <div className="items-center justify-center min-h-[120px] text-white opacity-60">
                         <div className="flex gap-4">
                           <div className="flex flex-col items-center w-[120px]">
                             <img src={mm1} alt="Hyperpop" className="w-full h-[90px] object-cover rounded-t-md" />
