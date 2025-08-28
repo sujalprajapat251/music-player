@@ -11,39 +11,39 @@ import Home2 from './components/Home2';
 import Demoproject from './Pages/Demoproject';
 import ContactUs from './Pages/ContactUs';
 import Faqs from './Pages/Faqs';
-import Drum from './components/Drum';
-import TopHeader from './components/Layout/TopHeader';
+// import Drum from './components/Drum';
+// import TopHeader from './components/Layout/TopHeader';
 import Sidebar2 from './components/Sidebar2';
 import Pricing from './Pages/Pricing';
 import TearmsOfUse from './Pages/TearmsOfUse';
 import PrivacyPolicy from './Pages/PrivacyPolicy';
 import Animation from './components/Animation';
-import Demo from './Pages/Demo';
-import Pianodemo from './components/Pianodemo';
+// import Demo from './Pages/Demo';
+// import Pianodemo from './components/Pianodemo';
 import Piano from './components/Piano';
 import Profile from './Pages/Profile';
 import Timeline from './components/Timeline';
 import { ThemeProvider } from './Utils/ThemeContext';
-import Loops from './components/Loops';
-import GridSetting from './components/GridSetting';
-import Knob from './components/Knob';
-import Pattern from './components/Pattern';
+// import Loops from './components/Loops';
+// import GridSetting from './components/GridSetting';
+// import Knob from './components/Knob';
+// import Pattern from './components/Pattern';
 import Effects from './components/Effects';
 import Effects2 from './components/Effects2';
-import Fuzz from './components/Fuzz';
-import Overdrive from "./components/Overdrive";
-import AutoPan from "./components/AutoPan";
-import AutoWah from "./components/AutoWah";
-import Chorus from "./components/Chorus";
-import Flanger from "./components/Flanger";
-import Phaser from "./components/Phaser";
-import Rotary from "./components/Rotary";
-import StereoChorus from "./components/StereoChorus";
-import Clipper from "./components/Clipper";
-import Crusher from "./components/Crusher";
+// import Fuzz from './components/Fuzz';
+// import Overdrive from "./components/Overdrive";
+// import AutoPan from "./components/AutoPan";
+// import AutoWah from "./components/AutoWah";
+// import Chorus from "./components/Chorus";
+// import Flanger from "./components/Flanger";
+// import Phaser from "./components/Phaser";
+// import Rotary from "./components/Rotary";
+// import StereoChorus from "./components/StereoChorus";
+// import Clipper from "./components/Clipper";
+// import Crusher from "./components/Crusher";
 import SDemo from './components/SDemo';
-import JuicyDistrotion from './components/JuicyDistrotion';
-import TapeWobble from './components/TapeWobble';
+// import JuicyDistrotion from './components/JuicyDistrotion';
+// import TapeWobble from './components/TapeWobble';
 import VoiceTransformer from './components/VoiceTransfrom';
 import React, { useEffect } from "react";
 import * as soundtouch from 'soundtouchjs';
@@ -105,7 +105,7 @@ function App() {
           <Route path='ani' element={<Animation />} />
           <Route path='piano' element={<Piano />} />
           <Route path='effcts2' element={<Effects2 />} />
-          <Route path='fuzz' element={<Fuzz />} />
+          {/* <Route path='fuzz' element={<Fuzz />} />
           <Route path='Overdrive' element={<Overdrive />} />
           <Route path='autopan' element={<AutoPan />} />
           <Route path='autowah' element={<AutoWah />} />
@@ -117,7 +117,7 @@ function App() {
           <Route path='Clipper' element={<Clipper />} />
           <Route path='Crusher' element={<Crusher />} />
           <Route path='JuicyDistrotion' element={<JuicyDistrotion />} />
-          <Route path='TapeWobble' element={<TapeWobble />} />
+          <Route path='TapeWobble' element={<TapeWobble />} /> */}
 
 
           <Route path='/login' element={<Login />} />
@@ -130,8 +130,8 @@ function App() {
 
           <Route path='/sidebar' element={<ThemeProvider><Sidebar2 /></ThemeProvider>} >
             <Route path='timeline' element={<Timeline />} />
-            <Route path='knob' element={<Knob />} />
-            <Route path='loop' element={<Loops />} />
+            {/* <Route path='knob' element={<Knob />} />
+            <Route path='loop' element={<Loops />} /> */}
             <Route path="effects" element={<Effects />} />
             <Route path="savani" element={<SDemo />} />
             <Route path="piano" element={<Piano />} />

@@ -23,11 +23,13 @@ import { Link } from 'react-router-dom';
 import NewProjectModel from './NewProjectModel';
 
 const Home2 = () => {
+
     const { openOffcanvas } = useOffcanvas();
 
     const dispatch = useDispatch();
     const sounds = useSelector((state) => state.sound.allsounds).slice(0, 5)
     const folders = useSelector(state => state.folder.folders);
+    console.log('folder', folders);
     const audioRefs = useRef([]);
     const [playingIndex, setPlayingIndex] = useState(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -38,18 +40,19 @@ const Home2 = () => {
     const [editingFolderId, setEditingFolderId] = useState(null);
     const [editingFolderName, setEditingFolderName] = useState('');
     const [newProjectModalOpen, setNewProjectModalOpen] = useState(false);
-
+    const [searchText, setSearchText] = useState("");
 
     const [activeSearch, setActiveSearch] = useState(false);
     const userId = sessionStorage.getItem("userId");
 
+    // Add these to your sortOptions array if needed
     const sortOptions = [
         { value: 'Last updated', label: 'Last updated' },
         { value: 'Oldest updated', label: 'Oldest updated' },
         { value: 'Last created', label: 'Last created' },
         { value: 'Title', label: 'Title' }
     ];
-
+    
     useEffect(() => {
         dispatch(getAllSound());
     }, [dispatch])
@@ -61,7 +64,6 @@ const Home2 = () => {
                 setIsSortDropdownOpen(false);
             }
         };
-
         document.addEventListener('mousedown', handleClickOutside);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
@@ -98,7 +100,6 @@ const Home2 = () => {
         setIsSortDropdownOpen(!isSortDropdownOpen);
     };
 
-
     useEffect(() => {
         if (userId) {
             dispatch(getFolderByUserId(userId));
@@ -111,7 +112,6 @@ const Home2 = () => {
         setAddFolderModal(true);
         formik.setFieldValue('folderName', currentName);
     };
-
 
     const handleDeleteClick = async (folderId) => {
         await dispatch(deleteFolderById(folderId))
@@ -146,6 +146,44 @@ const Home2 = () => {
         },
     });
 
+    // Add this sorting function after the existing state declarations
+    const getSortedAndFilteredFolders = () => {
+        if (!folders || folders.length === 0) return [];
+        
+        // First filter by search text
+        let filtered = folders.filter((folder) =>
+            folder.folderName.toLowerCase().includes(searchText.toLowerCase())
+        );
+        
+        // Then sort based on selected option
+        const sorted = [...filtered].sort((a, b) => {
+            switch (sortBy) {
+                case 'Last updated':
+                    // Sort by updatedAt in descending order (most recent first)
+                    return new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt);
+                
+                case 'Oldest updated':
+                    // Sort by updatedAt in ascending order (oldest first)
+                    return new Date(a.updatedAt || a.createdAt) - new Date(b.updatedAt || b.createdAt);
+                
+                case 'Last created':
+                    // Sort by createdAt in descending order (most recent first)
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                
+                case 'Title':
+                    // Sort alphabetically by folder name
+                    return a.folderName.toLowerCase().localeCompare(b.folderName.toLowerCase());
+                
+                default:
+                    return 0;
+            }
+        });
+        
+        return sorted;
+    };
+    
+    // Replace the existing filteredFolders line with:
+    const sortedAndFilteredFolders = getSortedAndFilteredFolders();
 
     return (
         <>
@@ -223,12 +261,10 @@ const Home2 = () => {
                                             </div>
                                         </div>
                                     ))}
-
                                 </div>
                             </div>
                         </div>
                     </div>
-
 
                     <div className='mt-4 md:mt-5 lg:mt-8 xl:mt-10 2xl:mt-12 3xl:mt-14 flex justify-between pb-2  md:pb-2 lg:pb-3  2xl:pb-4 3xl:pb-5 border-b border-[#FFFFFF1A]'>
                         <div className='my-auto'>
@@ -241,8 +277,14 @@ const Home2 = () => {
                                 <div className='bg-[#FFFFFF0F]'>
                                     <div className="flex gap-1 sm:gap-2 md600:gap-4 md:gap-3 lg:gap-4 2xl:gap-5 py-1 px-2  sm:px-3 md600:py-2 md600:px-5 md:py-1 md:px-4 lg:py-2 lg:px-5 items-center justify-center">
                                         <FiSearch className="text-white text-[14px] sm:text-[18px] md:text-[20px] lg:text-[24px]" />
-                                        <input type="text" className='outline-none w-32 sm:w-40 md:w-full text-[10px] sm:text-[12px] md600:text-[16px] md:text-[20px] border-0 bg-transparent text-white' placeholder="Search..." />
-                                        <IoClose  className="text-white ms-auto cursor-pointer sm:text-[18px] md:text-[20px] lg:text-[24px]" onClick={() => setActiveSearch(false)} />
+                                        <input
+                                            type="text"
+                                            className="outline-none w-32 sm:w-40 md:w-full text-[10px] sm:text-[12px] md600:text-[16px] md:text-[20px] border-0 bg-transparent text-white"
+                                            placeholder="Search..."
+                                            value={searchText}
+                                            onChange={(e) => setSearchText(e.target.value)}
+                                        />
+                                        <IoClose className="text-white ms-auto cursor-pointer sm:text-[18px] md:text-[20px] lg:text-[24px]" onClick={() => { setActiveSearch(false); setSearchText(""); }} />
                                     </div>
                                 </div>
                                 :
@@ -312,12 +354,11 @@ const Home2 = () => {
                                         </div>
                                     </MenuItems>
                                 </Menu>
-
                             </div>
                         </div>
                     </div>
 
-                    {folders?.map((ele, index) => (
+                    {sortedAndFilteredFolders?.map((ele, index) => (
                         <div key={ele._id} className="flex pt-2  md600:pt-3  lg:pt-3 ps-2 md600:ps-3 2xl:pt-4 2xl:ps-4 3xl:pt-5 3xl:ps-5 pe-2 md600:pe-3 md:pe-2 border-b border-[#FFFFFF1A] pb-2">
                             <img src={folder} alt="" className='w-[16px] h-[16px] sm:w-[24px] sm:h-[24px] lg:w-[30px] lg:h-[30px] my-auto' />
                             <p className="text-white ps-2 md600:ps-3 lg:ps-4  my-auto text-[12px] sm:text-[14px] md:text-[16px] ">{ele?.folderName}</p>
@@ -359,10 +400,9 @@ const Home2 = () => {
                             </div>
                         </div>
                     ))}
-                    
+
                 </div>
             </div>
-
 
             {/* New Folder Modal */}
             <Dialog open={addfoldermodal} onClose={setAddFolderModal} className="relative z-10">

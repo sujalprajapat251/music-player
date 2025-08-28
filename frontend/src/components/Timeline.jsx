@@ -810,12 +810,15 @@ const Timeline = () => {
     };
   }, [isPlaying, audioDuration, players, isLoopEnabled, loopStart, loopEnd, tempoRatio, pianoNotes, playPianoNote]);
 
-  // Smooth playhead animation loop for continuous movement
-  useEffect(() => {
-    let smoothAnimationId = null;
+// Smooth playhead animation loop for continuous movement
+useEffect(() => {
+  let smoothAnimationId = null;
+  let lastRenderTime = 0;
 
-    if (isPlaying) {
-      const smoothUpdateLoop = () => {
+  if (isPlaying) {
+    const smoothUpdateLoop = (timestamp) => {
+      // Limit updates to once per frame for better performance
+      if (!lastRenderTime || timestamp - lastRenderTime > 16) { // ~60fps
         // Update local current time for smooth playhead movement
         const elapsedTime = (Date.now() - playbackStartRef.current.systemTime) / 1000;
         const newTime = playbackStartRef.current.audioTime + (elapsedTime * tempoRatio);
@@ -826,28 +829,39 @@ const Timeline = () => {
           if (finalTime >= loopEnd) {
             finalTime = loopStart;
             playbackStartRef.current = { systemTime: Date.now(), audioTime: loopStart };
-          }
+          } 
         } else if (finalTime >= audioDuration) {
           // Stop playback when reaching the end
           dispatch(setPlaying(false));
           return;
         }
 
+        // Round to nearest 0.1 second for more precise decimal tracking
+        const roundedTime = Math.round(finalTime * 10) / 10;
+        
         // Update local time for smooth playhead movement
-        setLocalCurrentTime(finalTime);
-
-        smoothAnimationId = requestAnimationFrame(smoothUpdateLoop);
-      };
+        setLocalCurrentTime(roundedTime);
+        
+        // Also update Redux state every 0.1 seconds for consistency
+        if (Math.abs(roundedTime - currentTime) >= 0.1) {
+          dispatch(setCurrentTime(roundedTime));
+        }
+        
+        lastRenderTime = timestamp;
+      }
 
       smoothAnimationId = requestAnimationFrame(smoothUpdateLoop);
-    }
-
-    return () => {
-      if (smoothAnimationId) {
-        cancelAnimationFrame(smoothAnimationId);
-      }
     };
-  }, [isPlaying, audioDuration, isLoopEnabled, loopStart, loopEnd, tempoRatio, dispatch]);
+
+    smoothAnimationId = requestAnimationFrame(smoothUpdateLoop);
+  }
+
+  return () => {
+    if (smoothAnimationId) {
+      cancelAnimationFrame(smoothAnimationId);
+    }
+  };
+}, [isPlaying, audioDuration, isLoopEnabled, loopStart, loopEnd, tempoRatio, dispatch, currentTime]);
 
   const debouncedVolumeUpdate = useMemo(() => {
     const updateVolumes = () => {
@@ -899,107 +913,120 @@ const Timeline = () => {
     // Use the zoomed timeline width for the scale
     const xScale = d3.scaleLinear().domain([0, duration]).range([0, timelineWidth]);
 
-    // Use time signature-aware grid spacing
-    const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
-    const gridColor = "#FFFFFF";
+// Use time signature-aware grid spacing
+const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
+const gridColor = "#FFFFFF";
 
-    // Calculate label interval based on ruler type
-    let labelInterval;
+// Calculate label interval based on ruler type
+let labelInterval;
+if (selectedRuler === "Beats") {
+  // For beats ruler, show labels every bar
+  const { beats } = parseTimeSignature(selectedTime);
+  const secondsPerBeat = 0.5; // Fixed at 120 BPM equivalent
+  labelInterval = beats * secondsPerBeat;
+} else {
+  // For time ruler, show labels every 0.1 seconds for finer precision
+  labelInterval = 0.1;
+}
+
+// Create a set to track which labels have been added to avoid duplicates
+const addedLabels = new Set();
+
+// Use a finer step for the ruler to show decimal increments
+const rulerStep = selectedRuler === "Time" ? 0.1 : gridSpacing;
+
+for (let time = 0; time <= duration; time += rulerStep) {
+  const x = xScale(time);
+
+  // Determine tick importance based on time signature
+  const secondsPerBeat = 0.5; // Fixed at 120 BPM equivalent
+  const { beats } = parseTimeSignature(selectedTime);
+  const secondsPerBar = secondsPerBeat * beats;
+
+  const isMainBeat = Math.abs(time % secondsPerBeat) < 0.01;
+  const isBarStart = Math.abs(time % secondsPerBar) < 0.01;
+  const isHalfBeat = Math.abs(time % (secondsPerBeat / 2)) < 0.01;
+  const isQuarterBeat = Math.abs(time % (secondsPerBeat / 4)) < 0.01;
+  const isDecimalMark = Math.abs(time % 0.1) < 0.001; // For 0.1, 0.2, 0.3, etc.
+  const isWholeSecond = Math.abs(time % 1) < 0.01; // For whole seconds
+
+  // Improved label logic to prevent duplicates
+    let isLabeled = false;
     if (selectedRuler === "Beats") {
-      // For beats ruler, show labels every bar
-      const { beats } = parseTimeSignature(selectedTime);
-      const secondsPerBeat = 0.5; // Fixed at 120 BPM equivalent
-      labelInterval = beats * secondsPerBeat;
+      isLabeled = isBarStart;
     } else {
-      // For time ruler, show labels every second
-      labelInterval = 1;
+      // For time ruler, show labels at whole seconds and at 0.5 seconds
+      if (isWholeSecond) {
+        isLabeled = true;
+      } else if (Math.abs(time % 0.5) < 0.01) {
+        // Show labels at half-seconds too
+        isLabeled = true;
+      } else if (Math.abs(time % 0.1) < 0.01 && zoomLevel > 2) {
+        // Show decimal labels (0.1, 0.2, etc.) only when zoomed in enough
+        isLabeled = true;
+      }
     }
 
-    // Create a set to track which labels have been added to avoid duplicates
-    const addedLabels = new Set();
+  let tickHeight = 4;
+  let strokeWidth = 0.5;
+  let opacity = 0.6;
 
-    for (let time = 0; time <= duration; time += gridSpacing) {
-      const x = xScale(time);
+  if (isBarStart || isWholeSecond) {
+    tickHeight = 20;
+    strokeWidth = 1.5;
+    opacity = 1;
+  } else if (isMainBeat) {
+    tickHeight = 16;
+    strokeWidth = 1.2;
+    opacity = 0.9;
+  } else if (isHalfBeat || Math.abs(time % 0.5) < 0.01) {
+    tickHeight = 12;
+    strokeWidth = 1;
+    opacity = 0.7;
+  } else if (isQuarterBeat || isDecimalMark) {
+    tickHeight = 8;
+    strokeWidth = 0.8;
+    opacity = 0.6;
+  }
 
-      // Determine tick importance based on time signature
-      const secondsPerBeat = 0.5; // Fixed at 120 BPM equivalent
-      const { beats } = parseTimeSignature(selectedTime);
-      const secondsPerBar = secondsPerBeat * beats;
+  svg
+    .append("line")
+    .attr("x1", x)
+    .attr("y1", axisY)
+    .attr("x2", x)
+    .attr("y2", axisY - tickHeight)
+    .attr("stroke", gridColor)
+    .attr("stroke-width", strokeWidth)
+    .attr("opacity", opacity);
 
-      const isMainBeat = Math.abs(time % secondsPerBeat) < 0.01;
-      const isBarStart = Math.abs(time % secondsPerBar) < 0.01;
-      const isHalfBeat = Math.abs(time % (secondsPerBeat / 2)) < 0.01;
-      const isQuarterBeat = Math.abs(time % (secondsPerBeat / 4)) < 0.01;
+  if (isLabeled) {
+    let label;
+    if (selectedRuler === "Beats") {
+      // Show musical notation (bars:beats)
+      const barNumber = Math.floor(time / secondsPerBar) + 1;
+      label = `${barNumber}`;
+    } else {
+      // Show time notation with decimal precision
+      const minutes = Math.floor(time / 60);
+      const seconds = Math.floor(time % 60);
+      const tenths = Math.floor((time % 1) * 10);
+      label = `${minutes}:${seconds.toString().padStart(2, '0')}.${tenths}`;
+    }
 
-      // Improved label logic to prevent duplicates
-      let isLabeled = false;
-      if (selectedRuler === "Beats") {
-        isLabeled = isBarStart;
-      } else {
-        // For time ruler, only show labels at whole seconds
-        const roundedTime = Math.round(time);
-        isLabeled = Math.abs(time - roundedTime) < 0.01 && roundedTime % Math.max(1, Math.round(labelInterval)) === 0;
-      }
-
-      let tickHeight = 4;
-      let strokeWidth = 0.5;
-      let opacity = 0.6;
-
-      if (isBarStart) {
-        tickHeight = 20;
-        strokeWidth = 1.5;
-        opacity = 1;
-      } else if (isMainBeat) {
-        tickHeight = 16;
-        strokeWidth = 1.2;
-        opacity = 0.9;
-      } else if (isHalfBeat) {
-        tickHeight = 12;
-        strokeWidth = 1;
-        opacity = 0.7;
-      } else if (isQuarterBeat) {
-        tickHeight = 8;
-        strokeWidth = 0.8;
-        opacity = 0.6;
-      }
-
+    // Only add label if it hasn't been added before
+    if (!addedLabels.has(label)) {
       svg
-        .append("line")
-        .attr("x1", x)
-        .attr("y1", axisY)
-        .attr("x2", x)
-        .attr("y2", axisY - tickHeight)
-        .attr("stroke", gridColor)
-        .attr("stroke-width", strokeWidth)
-        .attr("opacity", opacity);
-
-      if (isLabeled) {
-        let label;
-        if (selectedRuler === "Beats") {
-          // Show musical notation (bars:beats)
-          const barNumber = Math.floor(time / secondsPerBar) + 1;
-          label = `${barNumber}`;
-        } else {
-          // Show time notation (minutes:seconds)
-          const minutes = Math.floor(time / 60);
-          const seconds = Math.floor(time % 60);
-          label = `${minutes}:${seconds.toString().padStart(2, "0")}`;
-        }
-
-        // Only add label if it hasn't been added before
-        if (!addedLabels.has(label)) {
-          svg
-            .append("text")
-            .attr("x", x + 4)
-            .attr("y", axisY - tickHeight - 5)
-            .attr("fill", "white")
-            .attr("font-size", 12)
-            .attr("text-anchor", "start")
-            .text(label);
-          addedLabels.add(label);
-        }
-      }
+        .append("text")
+        .attr("x", x + 4)
+        .attr("y", axisY - tickHeight - 5)
+        .attr("fill", "white")
+        .attr("font-size", 12)
+        .attr("text-anchor", "start")
+        .text(label);
+      addedLabels.add(label);
     }
+  }
+}
 
     svg
       .append("line")
@@ -2362,9 +2389,9 @@ const Timeline = () => {
               pointerEvents: "none",
               zIndex: 26,
               transform: `translateX(${playheadPosition}px)`,
-              willChange: "transform",
-              transition: isMagnetEnabled ? "none" : "transform 0.1s ease-out"
-            }}>
+          willChange: "transform",
+          transition: isMagnetEnabled ? "none" : "transform 0.05s linear" // Smoother linear transition
+        }}>
               <div style={{
                 position: "absolute",
                 top: "60px",
