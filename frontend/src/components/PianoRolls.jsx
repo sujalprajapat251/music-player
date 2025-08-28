@@ -76,6 +76,38 @@ const PianoRolls = () => {
     // Get grid settings from Redux
     const { selectedGrid, selectedTime, selectedRuler } = useSelector(selectGridSettings);
 
+    // piano key handling start
+    const [notes, setNotes] = useState([]);
+    const [startTime, setStartTime] = useState(null);
+    const [activeNotes, setActiveNotes] = useState({});
+    const [selectedNoteIndex, setSelectedNoteIndex] = useState(null);
+    const [clipboardNote, setClipboardNote] = useState(null);
+
+    // Get track bounds for constraining notes
+    const getTrackBounds = useCallback(() => {
+        const activeClip = (pianoRecordingClip && (pianoRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? pianoRecordingClip : null;
+        if (activeClip && activeClip.start != null && activeClip.end != null) {
+            return {
+                start: activeClip.start,
+                end: activeClip.end
+            };
+        }
+        // Fallback: derive from notes if no active clip
+        if (notes.length > 0) {
+            const minStart = Math.min(...notes.map(n => n.start));
+            const maxEnd = Math.max(...notes.map(n => n.start + n.duration)) + 0.1;
+            return {
+                start: minStart,
+                end: maxEnd
+            };
+        }
+        // Default bounds if no notes
+        return {
+            start: 0,
+            end: 8 // Default 8 seconds
+        };
+    }, [pianoRecordingClip, currentTrackId, notes]);
+
     const renderRuler = useCallback(() => {
         if (!timelineHeaderRef.current) return;
     
@@ -391,16 +423,6 @@ const PianoRolls = () => {
         }
     };
 
-    // timeline handling over
-
-    // piano key handling start
-
-    const [notes, setNotes] = useState([]);
-    const [startTime, setStartTime] = useState(null);
-    const [activeNotes, setActiveNotes] = useState({});
-    const [selectedNoteIndex, setSelectedNoteIndex] = useState(null);
-    const [clipboardNote, setClipboardNote] = useState(null);
-
     let mouseDownTime = useRef(0);
     const handleMouseDown = () => {
         mouseDownTime.current = Date.now();
@@ -438,7 +460,8 @@ const PianoRolls = () => {
         if (menuVisible || selectedNoteIndex) return;
         if (pasteMenu) return;
         // Only respond to clicks on the grid background, not on notes
-        if (e.target.tagName !== 'svg' && !e.target.classList.contains('bg-red-500') && !e.target.classList.contains('note-bg-div')) return;
+        if (e.target.closest && e.target.closest('.note-box')) return;
+        if (e.target.tagName !== 'svg' && !e.target.classList.contains('note-bg-div')) return;
         const rect = svgRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
@@ -535,28 +558,36 @@ const PianoRolls = () => {
 
     const getYFromNote = (note) => NOTES.indexOf(note) * 30;
 
-    const updateNote = (index, updates) => {
+    const updateNote = (index, updates, { syncRedux = false } = {}) => {
         setNotes(prev => {
             const updated = [...prev];
             updated[index] = { ...updated[index], ...updates };
-            syncNotesToRedux(updated);
+            if (syncRedux) {
+                syncNotesToRedux(updated);
+            }
             return updated;
         });
     };
     
-    // Real-time note drag handler
+    // Real-time note drag handler (fast, follows cursor, avoids Redux during drag)
+    const lastDragNoteRef = useRef({});
+    const dragCacheRef = useRef({});
     const handleNoteDrag = (index, newStart, newNote) => {
+        // Update every frame so the note stays under the cursor
+        dragCacheRef.current[index] = { start: newStart, note: newNote };
         const updatedNote = {
             ...notes[index],
             start: newStart,
             note: newNote
         };
-        
-        // Update note immediately
-        updateNote(index, updatedNote);
-        
-        // Play sound for real-time feedback
-        playNoteForTrack(newNote, 0.1);
+        // Update local state only for smooth UI; sync to Redux onDragStop
+        updateNote(index, updatedNote, { syncRedux: false });
+
+        // Play note only when vertical lane (pitch) changes
+        if (lastDragNoteRef.current[index] !== newNote) {
+            lastDragNoteRef.current[index] = newNote;
+            playNoteForTrack(newNote, 0.08);
+        }
     };
 
     // Real-time note resize handler
@@ -566,7 +597,7 @@ const PianoRolls = () => {
             duration: Math.max(0.05, newDuration) // Minimum duration
         };
 
-        updateNote(index, updatedNote);
+        updateNote(index, updatedNote, { syncRedux: false });
     };
 
     
@@ -1182,7 +1213,12 @@ const PianoRolls = () => {
                     style={{ background: "#1e1e1e" }}
                     onScroll={handleScroll}
                     onMouseDown={handleMouseDown}
-                    onMouseUp={handleMouseUp}
+                    onMouseUp={(e) => {
+                        if (e.button !== 0) return; // only left click
+                        // Do not create a new note when clicking on an existing note
+                        if (e.target.closest && e.target.closest('.note-box')) return;
+                        handleMouseUp(e);
+                    }}
                     onContextMenu={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
@@ -1260,6 +1296,13 @@ const PianoRolls = () => {
                     })()}
                     {/* {console.log('notes',notes)} */}
                     {notes.map((n, i) => {
+                        const trackBounds = getTrackBounds();
+                        
+                        // Skip notes that are completely outside track bounds
+                        if (n.start >= trackBounds.end || (n.start + n.duration) <= trackBounds.start) {
+                            return null;
+                        }
+                        
                         return (
                             <Rnd
                                 key={i}
@@ -1268,9 +1311,8 @@ const PianoRolls = () => {
                                 bounds="parent"
                                 enableResizing={{ right: true }}
                                 dragAxis="both"
-                                style={{
-                                    transition: "transform 0.2s ease-in-out" // Smooth transition for zoom
-                                }}
+                                dragGrid={[1, 30]}
+                                style={{ willChange: 'transform' }}
                                 onDrag={(e, d) => {
                                     // Real-time drag feedback
                                     const snappedY = Math.round(d.y / 30) * 30;
@@ -1297,6 +1339,10 @@ const PianoRolls = () => {
                                         syncNotesToRedux(updated);
                                         return updated;
                                     });
+                                    // clear drag cache for this note
+                                    if (dragCacheRef.current) {
+                                        delete dragCacheRef.current[i];
+                                    }
                                 }}
                                 onResize={(e, direction, ref, delta, position) => {
                                     // Real-time resize feedback
@@ -1318,10 +1364,14 @@ const PianoRolls = () => {
                                         syncNotesToRedux(updated);
                                         return updated;
                                     });
+                                    // clear drag cache for this note
+                                    if (dragCacheRef.current) {
+                                        delete dragCacheRef.current[i];
+                                    }
                                 }}
                             >
                                 <div
-                                    className={`note-box bg-red-500 rounded w-full h-full m-1 relative z-1 ${selectedNoteIndex === i ? 'border-[2px] border-yellow-400' : 'border'} transition-all duration-150 hover:bg-red-400`}
+                                    className={`note-box bg-red-500 rounded w-full h-full relative z-1 ${selectedNoteIndex === i ? 'border-[2px] border-yellow-400' : 'border'} transition-colors duration-75 hover:bg-red-400 cursor-grab active:cursor-grabbing`}
                                     onClick={(e) => {
                                         // Left click: just play the note
                                         e.stopPropagation();

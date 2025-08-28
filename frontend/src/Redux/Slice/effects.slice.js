@@ -190,6 +190,7 @@ const initialState = {
     showEffectsLibrary: false, 
     showEffectsOffcanvas: false,
     showEffectsTwo: false, // Add this line
+    activeTabs: ''
 };
 
 const effectsSlice = createSlice({
@@ -260,6 +261,9 @@ const effectsSlice = createSlice({
         setShowEffectsTwo: (state, action) => {
             state.showEffectsTwo = action.payload;
         },
+        setActiveTabs: (state, action) => {
+            state.activeTabs = action.payload;
+        }
     }
 });
 
@@ -273,7 +277,8 @@ export const {
     toggleEffectsOffcanvas,
     clearAllEffects,
     reorderEffects,
-    setShowEffectsTwo
+    setShowEffectsTwo,
+    setActiveTabs
 } = effectsSlice.actions;
 
 export default effectsSlice.reducer; 

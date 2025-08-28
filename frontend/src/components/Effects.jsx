@@ -4,7 +4,7 @@ import { IoSearch } from 'react-icons/io5'
 
 import { getAllCategory } from '../Redux/Slice/category.slice';
 import { useDispatch, useSelector } from 'react-redux';
-import { addEffect, setShowEffectsLibrary, toggleEffectsOffcanvas, setShowEffectsTwo } from '../Redux/Slice/effects.slice';
+import { addEffect, setShowEffectsLibrary, toggleEffectsOffcanvas, setShowEffectsTwo, setActiveTabs } from '../Redux/Slice/effects.slice';
 
 import { FaPlus } from "react-icons/fa6";
 import subscription from "../Images/subscription.svg";
@@ -79,6 +79,7 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
     const category = useSelector((state) => state.category?.category || []);
+    const [dispatchedOnce, setDispatchedOnce] = useState(false);
 
     const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas, showEffectsTwo, showEffectsTwoState } = useSelector((state) => state.effects);
     // console.log("hhhh", showEffectsTwoState);
@@ -268,7 +269,10 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
                                                             setTimeout(() => {
                                                                 e.target.style.transform = 'scale(1)';
                                                             }, 150);
-                                                            // dispatch(setShowEffectsTwo(true));
+                                                            if (!dispatchedOnce) {
+                                                                dispatch(setActiveTabs("Effects"));
+                                                                setDispatchedOnce(true);
+                                                            }
                                                         }
                                                     }} src={effect.image} alt={effect.name} className="w-full transition-transform duration-150"
                                                 />
