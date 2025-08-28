@@ -788,7 +788,8 @@ const TimelineTrack = ({
       dispatch(setPianoRecordingClip(newClip));
 
       // Optionally filter out notes that are now outside the clip boundaries
-      const filteredNotes = (pianoNotes || []).map(note => {
+      const currentNotes = Array.isArray(pianoNotes) ? pianoNotes : [];
+      const filteredNotes = currentNotes.map(note => {
         if ((note?.trackId ?? null) !== trackId) return note;
         const noteStartTime = note.startTime || 0;
         const noteEndTime = noteStartTime + (note.duration || 0.05);
@@ -818,7 +819,8 @@ const TimelineTrack = ({
       dispatch(setPianoRecordingClip(newClip));
 
       // Optionally filter out notes that are now outside the clip boundaries
-      const filteredNotes = (pianoNotes || []).map(note => {
+      const currentNotes = Array.isArray(pianoNotes) ? pianoNotes : [];
+      const filteredNotes = currentNotes.map(note => {
         if ((note?.trackId ?? null) !== trackId) return note;
         const noteStartTime = note.startTime || 0;
         const noteEndTime = noteStartTime + (note.duration || 0.05);
@@ -863,7 +865,7 @@ const TimelineTrack = ({
             height: height,
             zIndex: 6,
             background: 'red', // translucent
-            border: `1px solid ${(pianoRecordingClip.color || '#AD00FF')}55`,
+            border: `1px solid ${(pianoRecordingClip?.color || '#AD00FF')}55`,
             borderRadius: 6,
             pointerEvents: 'none'
           }}
@@ -914,7 +916,8 @@ const TimelineTrack = ({
 
                 // Shift only this track's notes by the same delta
                 const delta = newStart - trackPianoClip.start;
-                const shifted = (pianoNotes || []).map(n => {
+                const currentNotes = Array.isArray(pianoNotes) ? pianoNotes : [];
+                const shifted = currentNotes.map(n => {
                   if ((n?.trackId ?? null) !== trackId) return n;
                   return { ...n, startTime: Math.max(0, (n.startTime || 0) + delta) };
                 });
@@ -1194,7 +1197,8 @@ const TimelineTrack = ({
 
                 // Shift only this track's notes by the same delta
                 const delta = newStart - trackDrumClip.start;
-                const shifted = (drumRecordedData || []).map(n => {
+                const currentDrumData = Array.isArray(drumRecordedData) ? drumRecordedData : [];
+                const shifted = currentDrumData.map(n => {
                   if ((n?.trackId ?? null) !== trackId) return n;
                   return { ...n, currentTime: Math.max(0, (n.currentTime || 0) + delta) };
                 });
@@ -1430,8 +1434,10 @@ const TimelineTrack = ({
               }
             }
 
-            const dotSize = 8; // slightly larger for visibility
-            const topY = (midiToY(note.midiNumber) % height) + Math.max(0, (NOTE_HEIGHT - dotSize) / 2);
+            const minPixelWidth = 6; // ensure visibility
+            const heightPx = 2; // thin bar
+            const durationPx = Math.max(minPixelWidth, (note.duration || 0.05) * timelineWidthPerSecond);
+            const topY = (midiToY(note.midiNumber) % height) + Math.max(0, (NOTE_HEIGHT - heightPx) / 2);
             const leftX = (note.startTime || 0) * timelineWidthPerSecond;
             return (
               <div
@@ -1440,8 +1446,8 @@ const TimelineTrack = ({
                   position: 'absolute',
                   left: `${leftX}px`,
                   top: `${topY}px`,
-                  width: `${dotSize}px`,
-                  height: `2px`,
+                  width: `${durationPx}px`,
+                  height: `${heightPx}px`,
                   background: '#FFFFFF',
                   borderRadius: '2px',
                   opacity: 0.95,
