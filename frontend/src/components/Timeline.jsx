@@ -345,7 +345,6 @@ const Timeline = () => {
   };
 
   const getTrackType = useSelector((state) => state.studio.newtrackType);
-  console.log(getTrackType);
   
 
   // Mute functionality
@@ -1913,7 +1912,7 @@ const Timeline = () => {
       convolver.connect(wetGainNode);
       wetGainNode.connect(audioContext.destination);
 
-      console.log('Playing drum sound on timeline:', drumData.sound, 'from', drumData.drumMachine);
+      // console.log('Playing drum sound on timeline:', drumData.sound, 'from', drumData.drumMachine);
     } catch (error) {
       console.error('Error playing drum sound on timeline:', error);
     }

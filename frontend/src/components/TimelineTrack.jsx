@@ -680,9 +680,6 @@ const BeatClip = ({
   );
 };
 
-
-
-
 // Main TimelineTrack Component
 const TimelineTrack = ({
   track,
@@ -728,13 +725,15 @@ const TimelineTrack = ({
   const trackDrumNotes = Array.isArray(drumRecordedData) ? drumRecordedData.filter(n => (n?.trackId ?? null) === trackId) : [];
   const trackDrumClip = (drumRecordingClip && (drumRecordingClip.trackId ?? null) === trackId) ? drumRecordingClip : null;
 
+  
+
   // Derive a passive clip from this track's notes if there is no active clip
   const passiveClip = (!trackPianoClip && trackPianoNotes.length > 0)
     ? (() => {
       const start = Math.min(...trackPianoNotes.map(n => n.startTime || 0));
       const end = Math.max(...trackPianoNotes.map(n => (n.startTime || 0) + (n.duration || 0.05)));
       if (Number.isFinite(start) && Number.isFinite(end) && end > start) {
-        return { start, end, color: '#E44F65', trackId };
+        return { start, end, color: trackPianoClip?.color, trackId };
       }
       return null;
     })()
@@ -745,14 +744,18 @@ const TimelineTrack = ({
       const start = Math.min(...trackDrumNotes.map(n => n.currentTime || 0));
       const end = Math.max(...trackDrumNotes.map(n => (n.currentTime || 0) + (n.decay || 0.2)));
       if (Number.isFinite(start) && Number.isFinite(end) && end > start) {
-        return { start, end, color: '#FF8014', trackId };
+        return { start, end, color: trackDrumClip?.color, trackId };
       }
       return null;
     })()
     : null;
 
+
+
+
   const displayClip = trackPianoClip || passiveClip;
   const displayDrumClip = trackDrumClip || passiveDrumClip;
+
 
   // Add state for dragging trim handles
   const [isDraggingTrim, setIsDraggingTrim] = useState(null);
@@ -864,8 +867,8 @@ const TimelineTrack = ({
             width: Math.max(0, (displayClip.end - displayClip.start)) * timelineWidthPerSecond,
             height: height,
             zIndex: 6,
-            background: 'red', // translucent
-            border: `1px solid ${(pianoRecordingClip?.color || '#AD00FF')}55`,
+            background: 'transparent',
+            border: `1px solid ${((color || pianoRecordingClip?.color || displayClip.color))}`,
             borderRadius: 6,
             pointerEvents: 'none'
           }}
@@ -878,8 +881,8 @@ const TimelineTrack = ({
               top: 0,
               width: '100%',
               height: '100%',
-              background: displayClip.color,
-              border: `1px solid ${(displayClip.color || '#E44F65')}55`,
+              background: (color || displayClip.color),
+              border: `1px solid ${((color || displayClip.color))}`,
               borderRadius: 6,
               cursor: 'grab',
               pointerEvents: 'auto'
@@ -1145,8 +1148,8 @@ const TimelineTrack = ({
             width: Math.max(0, (displayDrumClip.end - displayDrumClip.start)) * timelineWidthPerSecond,
             height: height,
             zIndex: 6,
-            background: 'red', // translucent
-            border: `1px solid ${(displayDrumClip.color || '#AD00FF')}55`,
+            background: 'transparent', 
+            border: `1px solid ${(color || displayDrumClip.color)}`,
             borderRadius: 6,
             pointerEvents: 'none'
           }}
@@ -1159,8 +1162,8 @@ const TimelineTrack = ({
               top: 0,
               width: '100%',
               height: '100%',
-              background: displayDrumClip.color,
-              border: `1px solid ${(displayDrumClip.color || '#E44F65')}55`,
+              background: (color || displayDrumClip.color),
+              border: `1px solid ${(color || displayDrumClip.color)}`,
               borderRadius: 6,
               cursor: 'grab',
               pointerEvents: 'auto'
@@ -1423,16 +1426,9 @@ const TimelineTrack = ({
           {trackPianoNotes.map((note, idx) => {
             if (note.midiNumber < MIDI_MIN || note.midiNumber > MIDI_MAX) return null;
 
-            // Only show notes that are within the recording clip boundaries
+            // Always show notes, even if they fall outside an active clip
             const noteStartTime = note.startTime || 0;
             const noteEndTime = noteStartTime + (note.duration || 0.05);
-
-            if (trackPianoClip && trackPianoClip.start != null && trackPianoClip.end != null) {
-              // Check if note is within the recording clip
-              if (noteStartTime < trackPianoClip.start || noteEndTime > trackPianoClip.end) {
-                return null; // Don't render notes outside the clip
-              }
-            }
 
             const minPixelWidth = 6; // ensure visibility
             const heightPx = 2; // thin bar
@@ -1463,54 +1459,138 @@ const TimelineTrack = ({
         </div>
       )}
 
-      {/* Render drum hits if this is a drum track and there are notes */}
+      {/* Render drum hits in type-wise manner if this is a drum track and there are notes */}
       {isDrumTrack && trackDrumNotes && trackDrumNotes.length > 0 && (
         <div style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', zIndex: 9, pointerEvents: 'none' }}>
-          {trackDrumNotes.map((drumHit, idx) => {
-            // Only show drum hits that are within the recording clip boundaries
-            const hitStartTime = drumHit.currentTime || 0;
-            const hitEndTime = hitStartTime + (drumHit.decay || 0.2);
-
-            if (trackDrumClip && trackDrumClip.start != null && trackDrumClip.end != null) {
-              // Check if hit is within the recording clip
-              if (hitStartTime < trackDrumClip.start || hitEndTime > trackDrumClip.end) {
-                return null; // Don't render hits outside the clip
+          {/* Drum Type Labels */}
+          {(() => {
+            // Group drum hits by pad ID to determine which types are present
+            const hitsByPad = {};
+            trackDrumNotes.forEach((drumHit) => {
+              const padId = drumHit.padId || 'unknown';
+              if (!hitsByPad[padId]) {
+                hitsByPad[padId] = [];
               }
-            }
+              hitsByPad[padId].push(drumHit);
+            });
 
-            const dotSize = 12; // larger for drum hits
-            const topY = Math.max(0, (height - dotSize) / 2); // Center vertically
-            const leftX = (hitStartTime || 0) * timelineWidthPerSecond;
+            // Get drum types in preferred order
+            const PAD_ORDER = ['Q', 'W', 'E', 'A', 'S', 'D', 'Z', 'X', 'C'];
+            const orderedPadIds = Object.keys(hitsByPad).sort((a, b) => {
+              const ia = PAD_ORDER.indexOf(a);
+              const ib = PAD_ORDER.indexOf(b);
+              const na = ia === -1 ? Number.MAX_SAFE_INTEGER : ia;
+              const nb = ib === -1 ? Number.MAX_SAFE_INTEGER : ib;
+              if (na !== nb) return na - nb;
+              return a.localeCompare(b);
+            });
 
-            // Get drum machine color for this hit
-            const drumColor = drumHit.drumMachine ?
-              (() => {
-                // Find the drum machine color from drumMachineTypes
-                const machine = drumMachineTypes.find(dm => dm.name === drumHit.drumMachine);
-                return machine ? machine.color : '#FF8014';
-              })() : '#FF8014';
+            const rowHeight = Math.max(2, Math.floor(height / orderedPadIds.length));
+            const rowSpacing = 1;
 
-            return (
-              <div
-                key={idx}
-                style={{
-                  position: 'absolute',
-                  left: `${leftX}px`,
-                  top: `${topY}px`,
-                  width: `${dotSize}px`,
-                  height: `2px`,
-                  background: '#FFFFFF',
-                  borderRadius: '2px',
-                  opacity: 0.95,
-                  zIndex: 20,
-                  pointerEvents: 'none',
-                  boxShadow: '0 0 2px rgba(255,255,255,0.9)',
-                  transform: 'translateZ(0)'
-                }}
-                title={`${drumHit.sound || 'Drum'} - ${drumHit.drumMachine || 'Unknown'} - ${hitStartTime.toFixed(2)}s`}
-              />
-            );
-          })}
+            return orderedPadIds.map((padId, rowIndex) => {
+              const hits = hitsByPad[padId];
+              const firstHit = hits[0];
+              const topY = rowIndex * (rowHeight + rowSpacing);
+
+              return (
+                <div
+                  key={`label-${padId}`}
+                  style={{
+                    position: 'absolute',
+                    left: '-60px',
+                    top: `${topY}px`,
+                    width: '55px',
+                    height: `${rowHeight}px`,
+                    color: '#FFFFFF',
+                    fontSize: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-end',
+                    paddingRight: '5px',
+                    pointerEvents: 'none',
+                    zIndex: 21,
+                    fontFamily: 'monospace',
+                    opacity: 0.8
+                  }}
+                  title={`${firstHit?.sound || 'Drum'} (${padId})`}
+                >
+                  {firstHit?.sound ? firstHit.sound.charAt(0).toUpperCase() + firstHit.sound.slice(1) : padId}
+                </div>
+              );
+            });
+          })()}
+          {(() => {
+            // Group drum hits by pad ID (drum type)
+            const hitsByPad = {};
+            trackDrumNotes.forEach((drumHit, idx) => {
+              const padId = drumHit.padId || 'unknown';
+              if (!hitsByPad[padId]) {
+                hitsByPad[padId] = [];
+              }
+              hitsByPad[padId].push({ ...drumHit, originalIndex: idx });
+            });
+
+            // Get drum types in preferred order
+            const PAD_ORDER = ['Q', 'W', 'E', 'A', 'S', 'D', 'Z', 'X', 'C'];
+            const orderedPadIds = Object.keys(hitsByPad).sort((a, b) => {
+              const ia = PAD_ORDER.indexOf(a);
+              const ib = PAD_ORDER.indexOf(b);
+              const na = ia === -1 ? Number.MAX_SAFE_INTEGER : ia;
+              const nb = ib === -1 ? Number.MAX_SAFE_INTEGER : ib;
+              if (na !== nb) return na - nb;
+              return a.localeCompare(b);
+            });
+
+            // Calculate row height and spacing
+            const rowHeight = Math.max(2, Math.floor(height / orderedPadIds.length));
+            const rowSpacing = 1;
+
+            return orderedPadIds.map((padId, rowIndex) => {
+              const hits = hitsByPad[padId];
+              const topY = rowIndex * (rowHeight + rowSpacing);
+
+              return hits.map((drumHit) => {
+                // Always show drum hits, even if they fall outside an active clip
+                const hitStartTime = drumHit.currentTime || 0;
+                const hitEndTime = hitStartTime + (drumHit.decay || 0.2);
+
+                const leftX = (hitStartTime || 0) * timelineWidthPerSecond;
+                let hitWidth = Math.max(2, (drumHit.decay || 0.2) * timelineWidthPerSecond);
+
+                // Get drum machine color for this hit
+                const drumColor = drumHit.drumMachine ?
+                  (() => {
+                    // Find the drum machine color from drumMachineTypes
+                    const machine = drumMachineTypes.find(dm => dm.name === drumHit.drumMachine);
+                    return machine ? machine.color : '#FF8014';
+                  })() : '#FF8014';
+
+                return (
+                  <div
+                    key={`${padId}-${drumHit.originalIndex}`}
+                    style={{
+                      position: 'absolute',
+                      left: `${leftX}px`,
+                      top: `${topY}px`,
+                      width: `5px`,
+                      height: `2px`,
+                      background: '#FFFFFF',
+                      borderRadius: '1px',
+                      opacity: 0.95,
+                      zIndex: 20,
+                      pointerEvents: 'none',
+                      boxShadow: '0 0 2px rgba(255,255,255,0.9)',
+                      transform: 'translateZ(0)'
+                    }}
+                    title={`${drumHit.sound || 'Drum'} (${padId}) - ${drumHit.drumMachine || 'Unknown'} - ${hitStartTime.toFixed(2)}s`}
+                  />
+                );
+              });
+            });
+          })()}
+
+          {/* Grid Overlay for Beat Divisions */}
         </div>
       )}
       {/* Render each audio clip in the track */}

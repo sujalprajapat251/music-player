@@ -300,6 +300,7 @@ const Pianodemo = ({ onClose }) => {
     const currentTrackId = useSelector((state) => state.studio.currentTrackId);
     const studioCurrentTime = useSelector((state) => state.studio.currentTime || 0);
     const existingPianoNotes = useSelector((state) => state.studio.pianoNotes || []);
+    const tracks = useSelector((state) => state.studio?.tracks || []);
     const pianoNotesRef = useRef([]);
     useEffect(() => { pianoNotesRef.current = existingPianoNotes || []; }, [existingPianoNotes]);
 
@@ -550,10 +551,11 @@ const Pianodemo = ({ onClose }) => {
             if (notesForThisTrack.length > 0) {
                 const minStart = Math.min(...notesForThisTrack.map(n => n.startTime));
                 const maxEnd = Math.max(...notesForThisTrack.map(n => n.startTime + (n.duration || 0.05)));
+                const trackColor = (tracks.find(t => t.id === currentTrackId)?.color);
                 dispatch(setPianoRecordingClip({
                     start: minStart,
                     end: maxEnd,
-                    color: '#E44F65',
+                    color: trackColor,
                     trackId: currentTrackId || null,
                     type: 'piano',
                     name: `Piano Recording (${notesForThisTrack.length} notes)`,

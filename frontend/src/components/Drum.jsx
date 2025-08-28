@@ -325,10 +325,11 @@ const menu = [
         if (notesForThisTrack.length > 0) {
             const minStart = Math.min(...notesForThisTrack.map(n => n.currentTime || 0));
             const maxEnd = Math.max(...notesForThisTrack.map(n => (n.currentTime || 0) + (n.decay || 0.2)));
+            const trackColor = (tracks.find(t => t.id === currentTrackId)?.color) || selectedDrumMachine.color;
             const drumClip = { 
                 start: minStart, 
                 end: maxEnd, 
-                color: selectedDrumMachine.color, 
+                color: trackColor, 
                 trackId: currentTrackId || null,
                 type: 'drum',
                 name: `Drum Recording (${notesForThisTrack.length} hits)`,
@@ -340,6 +341,7 @@ const menu = [
                 drumData: notesForThisTrack
             };
             dispatch(setDrumRecordingClip(drumClip));
+            console.log("Drummmmmmmmmmmmmmmmmmmm",drumClip)
         }
     }
     
@@ -421,14 +423,14 @@ const menu = [
             const firstDrumHit = drumRecordedData[0];
             const totalDuration = (lastDrumHit.timestamp - firstDrumHit.timestamp) / 1000 + lastDrumHit.decay * 2;
 
-            // Create a single timeline clip for all drum recordings
+            const trackColor = (tracks.find(t => t.id === currentTrackId)?.color) || selectedDrumMachine.color;
             const drumClip = {
               id: `drum_recording_${Date.now()}`,
               name: `Drum Recording (${drumRecordedData.length} hits)`,
               type: 'drum',
               startTime: firstDrumHit.currentTime,
               duration: totalDuration,
-              color: selectedDrumMachine.color,
+              color: trackColor,
               drumData: drumRecordedData, // Store all drum data
               url: URL.createObjectURL(audioBlob), // Create URL from blob
               trimStart: 0,
@@ -450,7 +452,7 @@ const menu = [
               trackId: currentTrackId,
               audioClip: drumClip
             }));
-
+            
             // Only clear drum data after successful track creation
             // setTimeout(() => {
             //   dispatch(setDrumRecordedData([]));
