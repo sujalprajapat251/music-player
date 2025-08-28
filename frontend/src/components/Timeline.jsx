@@ -2255,7 +2255,7 @@ const Timeline = () => {
                     onFocus={() => setSelectedTrackId(track.id)}
                     onContextMenu={(e) => handleContextMenu(e, track.id)}
                   >
-                    {hasRecordingStarted && (
+                    {/* {hasRecordingStarted && ( */}
                       <TimelineTrack
                         key={track.id}
                         track={track}
@@ -2278,8 +2278,8 @@ const Timeline = () => {
                         beatsPerBar={4}        // Time signature (4/4, etc.)
                         showBeatRectangles={true} // Toggle beat visualization
                       />
-                    )}
-                    <TimelineTrack
+                    {/* )} */}
+                    {/* <TimelineTrack
                       key={track.id}
                       track={track}
                       trackId={track.id}
@@ -2300,7 +2300,7 @@ const Timeline = () => {
                       bpm={120}
                       beatsPerBar={4}
                       showBeatRectangles={true}
-                    />
+                    /> */}
                 </div>
                 );
               })}

@@ -313,32 +313,36 @@ const menu = [
     }
 
     if (isRecording) {
-      const drumData = createDrumData(pad, selectedDrumMachine, timestamp || currentTime, currentTrackId);
-      const updatedData = [...drumRecordedData, drumData];
-      dispatch(setDrumRecordedData(updatedData));
-      
-      // Update drum recording clip bounds (similar to piano recording)
-      const notesForThisTrack = (updatedData || []).filter(n => n.trackId === (currentTrackId || null));
-      if (notesForThisTrack.length > 0) {
-        const minStart = Math.min(...notesForThisTrack.map(n => n.currentTime || 0));
-        const maxEnd = Math.max(...notesForThisTrack.map(n => (n.currentTime || 0) + (n.decay || 0.2)));
-        const drumClip = { 
-          start: minStart, 
-          end: maxEnd, 
-          color: selectedDrumMachine.color, 
-          trackId: currentTrackId || null,
-          type: 'drum',
-          name: `Drum Recording (${notesForThisTrack.length} hits)`,
-          duration: maxEnd - minStart,
-          startTime: minStart,
-          trimStart: 0,
-          trimEnd: maxEnd - minStart,
-          id: `drum_recording_${Date.now()}`,
-          drumData: notesForThisTrack
-        };
-        dispatch(setDrumRecordingClip(drumClip));
-      }
+        const drumData = createDrumData(pad, selectedDrumMachine, timestamp || currentTime, currentTrackId);
+        
+        // Instead of replacing the entire array, append to existing data
+        // This allows multiple recording sessions to accumulate beats
+        const updatedData = [...drumRecordedData, drumData];
+        dispatch(setDrumRecordedData(updatedData));
+        
+        // Update drum recording clip bounds (similar to piano recording)
+        const notesForThisTrack = (updatedData || []).filter(n => n.trackId === (currentTrackId || null));
+        if (notesForThisTrack.length > 0) {
+            const minStart = Math.min(...notesForThisTrack.map(n => n.currentTime || 0));
+            const maxEnd = Math.max(...notesForThisTrack.map(n => (n.currentTime || 0) + (n.decay || 0.2)));
+            const drumClip = { 
+                start: minStart, 
+                end: maxEnd, 
+                color: selectedDrumMachine.color, 
+                trackId: currentTrackId || null,
+                type: 'drum',
+                name: `Drum Recording (${notesForThisTrack.length} hits)`,
+                duration: maxEnd - minStart,
+                startTime: minStart,
+                trimStart: 0,
+                trimEnd: maxEnd - minStart,
+                id: `drum_recording_${Date.now()}`,
+                drumData: notesForThisTrack
+            };
+            dispatch(setDrumRecordingClip(drumClip));
+        }
     }
+    
     playSound(pad);
   };
 
