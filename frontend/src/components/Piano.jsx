@@ -331,6 +331,15 @@ const Pianodemo = ({ onClose }) => {
     const studioCurrentTime = useSelector((state) => state.studio.currentTime || 0);
     const existingPianoNotes = useSelector((state) => state.studio.pianoNotes || []);
     const tracks = useSelector((state) => state.studio?.tracks || []);
+
+    const getActiveTabs = useSelector((state) => state.effects.activeTabs);
+
+    useEffect(() => {
+      if (getActiveTabs) {
+        setActiveTab(getActiveTabs);
+      }
+    }, [getActiveTabs]);
+
     const pianoNotesRef = useRef([]);
     useEffect(() => { pianoNotesRef.current = existingPianoNotes || []; }, [existingPianoNotes]);
 
@@ -793,7 +802,7 @@ const Pianodemo = ({ onClose }) => {
   const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas, showEffectsTwo } = useSelector((state) => state.effects);
 
   const getTrackType = useSelector((state) => state.studio.newtrackType);
-  console.log(getTrackType);
+  // console.log(getTrackType);
 
   // === REFS FOR TONE.JS OBJECTS ===
   const synths = useRef(null);
@@ -1408,7 +1417,7 @@ const Pianodemo = ({ onClose }) => {
           simplePlayerSynth
         };
         
-        console.log("✅ Created", Object.keys(synths.current).length, "professional synths");
+        // console.log("✅ Created", Object.keys(synths.current).length, "professional synths");
   
         Tone.Transport.bpm.value = 120;
        
@@ -2105,7 +2114,7 @@ const handlePlusButtonClick = () => {
                           }
                       }}
                   >
-                      <div className="flex items-center justify-center p-2 sm:p-4 min-w-max">
+                      <div className="flex items-center justify-center p-2 sm:p-4 min-w-max bg-[#1f1f1f]">
                           <div className="flex gap-2 sm:gap-4 min-w-max">
                               {activeEffects.map((effect) => (
                                   <div key={effect.instanceId} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-white flex flex-col shrink-0">
