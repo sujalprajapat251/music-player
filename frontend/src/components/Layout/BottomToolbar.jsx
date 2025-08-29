@@ -125,7 +125,6 @@ const BottomToolbar = () => {
         }, 500);
     };
 
-    // Format time for display
     const formatTime = (timeInSeconds) => {
         const minutes = Math.floor(timeInSeconds / 60);
         const seconds = Math.floor(timeInSeconds % 60);
@@ -386,7 +385,7 @@ const BottomToolbar = () => {
 
         // Update audio whenever selectedSound changes
         useEffect(() => {
-            audioRef.current = new Audio(`/Audio/metronome/${selectedSound.toLowerCase()}.wav`);
+            audioRef.current = new Audio(`/Audio/metronome/${selectedSound?.toLowerCase()}.wav`);
             audioRef.current.volume = volume1 / 100;
         }, [selectedSound]);
 
@@ -418,11 +417,11 @@ const BottomToolbar = () => {
             console.log("botoooooooooooooooooooooooooooo9")
             dispatch(setRecording(true));
             dispatch(setRecordedData([])); // Clear timeline 
-            
+
             // Instead of clearing drum data, we'll let the Drum component handle it
             // This allows for appending new recordings to existing ones
             // dispatch(setDrumRecordedData([])); // Remove this line
-            
+
             setRecordingStartTime(Date.now());
             handlePlayPause();
             tickIntervalRef.current = setInterval(() => {
@@ -484,6 +483,19 @@ const BottomToolbar = () => {
             // console.log("Total recorded data:", recordedData);x
         }
     }, [isRecording, recordedData]);
+
+    // Handle move 0.1 second ahead
+const handleMoveForwardSmall = () => {
+    const newTime = Math.min(currentTime + 0.1, audioDuration);
+    dispatch(setCurrentTime(Math.round(newTime * 10) / 10));
+};
+
+// Handle move 0.1 second behind
+const handleMoveBackwardSmall = () => {
+    const newTime = Math.max(currentTime - 0.1, 0);
+    dispatch(setCurrentTime(Math.round(newTime * 10) / 10));
+};
+
 
     return (
         <>
@@ -883,4 +895,5 @@ const BottomToolbar = () => {
 }
 
 export default BottomToolbar
+
 
