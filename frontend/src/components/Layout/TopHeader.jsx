@@ -42,6 +42,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setIsSongSection } from '../../Redux/Slice/ui.slice';
 import { setSoundQuality } from '../../Redux/Slice/audioSettings.slice';
 import audioQualityManager from '../../Utils/audioQualityManager';
+import ExportPopup from '../ExportProjectModel';
 
 const TopHeader = () => {
     const dispatch = useDispatch();
@@ -53,6 +54,7 @@ const TopHeader = () => {
     const [isLowLatency2, setIsLowLatency2] = useState(false);
     const [lowlatencyomodal, setLowLatencyModel] = useState(false);
     const [midikeyboardmodal, setMidiKeyboardModel] = useState(false);
+    const [exportProjectModal, setExportProjectModal] = useState(false);
 
     // Add state for selected sound quality
     const [selectedSoundQuality, setSelectedSoundQuality] = useState('High');
@@ -232,8 +234,13 @@ const TopHeader = () => {
         }, 10);
     };
 
+    const handleExportModal = () => {
+        setExportProjectModal(true);
+    }
+
     return (
         <>
+            <ExportPopup open={exportProjectModal} onClose={() => setExportProjectModal(false)} />
             <div className="flex justify-between bg-primary-light dark:bg-primary-dark border-b border-[#1414141A] dark:border-[#FFFFFF1A] px-2 py-2 sm:px-3 sm:py-1 md:px-5 md:py-2 xl:px-7">
                 <div className="flex gap-1 sm:gap-2 md:gap-3 lg:gap-5 xl:gap-7 items-center">
                     <p className="text-secondary-light dark:text-secondary-dark text-[12px] md:text-[14px] lg:text-[16px] xl:text-[18px]">LOGO</p>
@@ -637,7 +644,7 @@ const TopHeader = () => {
                             <IoMoonOutline className={`${isDark ? 'dark:text-secondary-dark' : "text-secondary-light "} text-[16px]`} />
                         </div>
                     </button>
-                    <div className="flex xl:gap-2 md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full d_customborder">
+                    <div onClick={handleExportModal} className="flex xl:gap-2 md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full d_customborder cursor-pointer items-center">
                         <HiDownload className="text-secondary-light dark:text-secondary-dark xl:text-[18px]" />
                         <p className="text-secondary-light dark:text-secondary-dark text-[12px] hidden xl:block"> Export</p>
                     </div>

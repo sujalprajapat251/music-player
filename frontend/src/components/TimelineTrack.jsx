@@ -680,6 +680,21 @@ const BeatClip = ({
   );
 };
 
+// Utility function to filter notes/hits based on trimmed boundaries
+// This ensures that only notes/hits within the trimmed region are played
+const filterByTrimBoundaries = (items, trimStart, trimEnd, getTimeKey = 'startTime', getDurationKey = 'duration') => {
+  if (!trimStart && !trimEnd) return items;
+  
+  return items.filter(item => {
+    const startTime = item[getTimeKey] || 0;
+    const duration = item[getDurationKey] || 0.05;
+    const endTime = startTime + duration;
+    
+    // Only include items that overlap with the trimmed region
+    return startTime < trimEnd && endTime > trimStart;
+  });
+};
+
 // Main TimelineTrack Component
 const TimelineTrack = ({
   track,
@@ -711,21 +726,36 @@ const TimelineTrack = ({
   // console.log("==================clip==================", drumRecordingClip);
 
   const currentTrackId = useSelector((state) => state.studio.currentTrackId);
-  // Consider multiple naming variations to detect the piano track
   const typeName = (track?.type || '').toString().toLowerCase();
   const displayName = (track?.name || '').toString().toLowerCase();
   const isPianoTrack = typeName === 'keys' || displayName === 'keys' || displayName.includes('piano') || displayName.includes('key');
   const isDrumTrack = typeName === 'drum' || displayName === 'drum' || displayName.includes('drum') || displayName.includes('percussion');
 
-  // Derive per-track piano data
-  const trackPianoNotes = Array.isArray(pianoNotes) ? pianoNotes.filter(n => (n?.trackId ?? null) === trackId) : [];
+  // Get the actual clip objects for this track
   const trackPianoClip = (pianoRecordingClip && (pianoRecordingClip.trackId ?? null) === trackId) ? pianoRecordingClip : null;
-
-  // Derive per-track drum data
-  const trackDrumNotes = Array.isArray(drumRecordedData) ? drumRecordedData.filter(n => (n?.trackId ?? null) === trackId) : [];
   const trackDrumClip = (drumRecordingClip && (drumRecordingClip.trackId ?? null) === trackId) ? drumRecordingClip : null;
 
-  
+  // Derive per-track piano data with trimming applied
+  const trackPianoNotes = useMemo(() => {
+    const notes = Array.isArray(pianoNotes) ? pianoNotes.filter(n => (n?.trackId ?? null) === trackId) : [];
+    
+    if (trackPianoClip && trackPianoClip.start != null && trackPianoClip.end != null) {
+      return filterByTrimBoundaries(notes, trackPianoClip.start, trackPianoClip.end, 'startTime', 'duration');
+    }
+    
+    return notes;
+  }, [pianoNotes, trackId, trackPianoClip]);
+
+  // Derive per-track drum data with trimming applied
+  const trackDrumNotes = useMemo(() => {
+    const notes = Array.isArray(drumRecordedData) ? drumRecordedData.filter(n => (n?.trackId ?? null) === trackId) : [];
+    
+    if (trackDrumClip && trackDrumClip.start != null && trackDrumClip.end != null) {
+      return filterByTrimBoundaries(notes, trackDrumClip.start, trackDrumClip.end, 'currentTime', 'decay');
+    }
+    
+    return notes;
+  }, [drumRecordedData, trackId, trackDrumClip]);
 
   // Derive a passive clip from this track's notes if there is no active clip
   const passiveClip = (!trackPianoClip && trackPianoNotes.length > 0)
@@ -1429,6 +1459,13 @@ const TimelineTrack = ({
             // Always show notes, even if they fall outside an active clip
             const noteStartTime = note.startTime || 0;
             const noteEndTime = noteStartTime + (note.duration || 0.05);
+
+            if (trackPianoClip && trackPianoClip.start != null && trackPianoClip.end != null) {
+              // Check if note is within the recording clip
+              if (noteStartTime < trackPianoClip.start || noteEndTime > trackPianoClip.end) {
+                return null; // Don't render notes outside the clip
+              }
+            }
 
             const minPixelWidth = 6; // ensure visibility
             const heightPx = 2; // thin bar

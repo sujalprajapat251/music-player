@@ -85,6 +85,8 @@ const Timeline = () => {
   const { zoomLevel } = useSelector(selectGridSettings);
   const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
   const pianoNotes = useSelector((state) => state.studio.pianoNotes || []);
+  const pianoRecordingClip = useSelector((state) => state.studio.pianoRecordingClip || null);
+  const drumRecordingClip = useSelector((state) => state.studio.drumRecordingClip || null);
   const patternDrumPlayback = useSelector((state) => state.studio?.patternDrumPlayback || {});
   const patternDrumEvents = useSelector((state) => state.studio?.patternDrumEvents || {});
   // console.log("FFFFFFFFFFFFFFFFFF",drumRecordedData)
@@ -647,6 +649,43 @@ const Timeline = () => {
     }
   };
 
+  
+  // Filter piano notes based on trimmed boundaries for playback
+  // This ensures that only notes within the trimmed region are played
+  const filteredPianoNotes = useMemo(() => {
+    if (!pianoRecordingClip || !pianoRecordingClip.start || !pianoRecordingClip.end) {
+      return pianoNotes;
+    }
+    
+    return pianoNotes.filter(note => {
+      if (note.trackId !== pianoRecordingClip.trackId) return true;
+      
+      const noteStartTime = note.startTime || 0;
+      const noteEndTime = noteStartTime + (note.duration || 0.05);
+      
+      // Only include notes that overlap with the trimmed region
+      return noteStartTime < pianoRecordingClip.end && noteEndTime > pianoRecordingClip.start;
+    });
+  }, [pianoNotes, pianoRecordingClip]);
+
+  // Filter drum hits based on trimmed boundaries for playback
+  // This ensures that only hits within the trimmed region are played
+  const filteredDrumData = useMemo(() => {
+    if (!drumRecordingClip || !drumRecordingClip.start || !drumRecordingClip.end) {
+      return drumRecordedData;
+    }
+    
+    return drumRecordedData.filter(hit => {
+      if (hit.trackId !== drumRecordingClip.trackId) return true;
+      
+      const hitStartTime = hit.currentTime || 0;
+      const hitEndTime = hitStartTime + (hit.decay || 0.2);
+      
+      // Only include hits that overlap with the trimmed region
+      return hitStartTime < drumRecordingClip.end && hitEndTime > drumRecordingClip.start;
+    });
+  }, [drumRecordedData, drumRecordingClip]);
+
   // Fixed animation loop to respect trim boundaries and looping
   useEffect(() => {
     let localAnimationId = null;
@@ -722,8 +761,8 @@ const Timeline = () => {
         setLocalCurrentTime(newTime);
 
         // Piano playback logic
-        if (pianoNotes.length > 0) {
-          pianoNotes.forEach(note => {
+        if (filteredPianoNotes.length > 0) {
+          filteredPianoNotes.forEach(note => {
             const noteStartTime = note.startTime || 0;
             const noteEndTime = noteStartTime + (note.duration || 0.5);
 
@@ -807,7 +846,7 @@ const Timeline = () => {
       }
       playedDrumHitsRef.current.clear();
     };
-  }, [isPlaying, audioDuration, players, isLoopEnabled, loopStart, loopEnd, tempoRatio, pianoNotes, playPianoNote]);
+  }, [isPlaying, audioDuration, players, isLoopEnabled, loopStart, loopEnd, tempoRatio, filteredPianoNotes, playPianoNote]);
 
 // Smooth playhead animation loop for continuous movement
 useEffect(() => {
@@ -1951,7 +1990,7 @@ for (let time = 0; time <= duration; time += rulerStep) {
   useEffect(() => {
     if (isPlaying && currentTime > 0) {
       // Check drum recorded data for playback
-      drumRecordedData.forEach(drumHit => {
+      filteredDrumData.forEach(drumHit => {
         const hitTime = drumHit.currentTime;
         const tolerance = 0.05; // 50ms tolerance
         const hitKey = `${drumHit.padId}-${Math.floor(hitTime * 10)}`; // Create unique key
@@ -1989,7 +2028,7 @@ for (let time = 0; time <= duration; time += rulerStep) {
       // Clear played hits when not playing
       playedDrumHitsRef.current.clear();
     }
-  }, [isPlaying, currentTime, tracks, drumRecordedData, playDrumSound]);
+  }, [isPlaying, currentTime, tracks, filteredDrumData, playDrumSound]);
 
   // Enhance the existing playDrumSound function to handle pattern drum events
   useEffect(() => {
