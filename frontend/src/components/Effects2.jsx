@@ -789,52 +789,48 @@ const Effects2 = () => {
 
             {/* Effects Library Modal */}
             {showEffectsLibrary && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                        <div className="bg-[#1a1a1a] rounded-lg w-full max-w-4xl max-h-[80vh] overflow-hidden">
-                            {/* Header */}
-                            <div className="flex items-center justify-between p-4 border-b border-[#FFFFFF1A]">
-                                <h2 className="text-white text-lg font-medium">Effects Library</h2>
-                                <button className="text-white text-xl hover:text-gray-400 transition-colors" onClick={() => dispatch(setShowEffectsLibrary(false))}>✖</button>
-                            </div>
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-[#1a1a1a] rounded-lg w-full max-w-4xl max-h-[80vh] overflow-hidden">
+                        <div className="flex items-center justify-between p-4 border-b border-[#FFFFFF1A]">
+                            <h2 className="text-white text-lg font-medium">Effects Library</h2>
+                            <button className="text-white text-xl hover:text-gray-400 transition-colors" onClick={() => dispatch(setShowEffectsLibrary(false))}>✖</button>
+                        </div>
 
-                            {/* Search and Categories */}
-                            <div className="p-4 border-b border-[#FFFFFF1A]">
-                                <div className="relative mb-4">
-                                    <IoSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                                    <input type="text" placeholder="Search effects..." className="w-full bg-[#2a2a2a] border border-[#FFFFFF1A] text-white placeholder-gray-400 rounded-md pl-10 pr-4 py-2 outline-none focus:border-white transition-colors" value={effectsSearchTerm} onChange={handleEffectsSearchChange} />
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                    {categories.map((category) => {
-                                        const isSelected = selectedEffectCategory === category;
-                                        return (
-                                            <button key={category} className={`px-3 py-1 rounded-md text-xs transition-colors ${isSelected ? 'bg-white text-black' : 'bg-[#2a2a2a] text-white hover:bg-[#3a3a3a]'}`} onClick={() => handleEffectCategoryClick(category)}>{category}</button>
-                                        );
-                                    })}
-                                </div>
+                        <div className="p-4 border-b border-[#FFFFFF1A]">
+                            <div className="relative mb-4">
+                                <IoSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                <input type="text" placeholder="Search effects..." className="w-full bg-[#2a2a2a] border border-[#FFFFFF1A] text-white placeholder-gray-400 rounded-md pl-10 pr-4 py-2 outline-none focus:border-white transition-colors" value={effectsSearchTerm} onChange={handleEffectsSearchChange} />
                             </div>
+                            <div className="flex flex-wrap gap-2">
+                                {categories.map((category) => {
+                                    const isSelected = selectedEffectCategory === category;
+                                    return (
+                                        <button key={category} className={`px-3 py-1 rounded-md text-xs transition-colors ${isSelected ? 'bg-white text-black' : 'bg-[#2a2a2a] text-white hover:bg-[#3a3a3a]'}`} onClick={() => handleEffectCategoryClick(category)}>{category}</button>
+                                    );
+                                })}
+                            </div>
+                        </div>
 
-                            {/* Effects Grid */}
-                            <div className="p-4 overflow-y-auto max-h-[60vh]">
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {filteredEffects.map((effect) => (
-                                        <div key={effect.id} className="bg-[#2a2a2a] rounded-lg p-4 cursor-pointer hover:bg-[#3a3a3a] transition-colors" onClick={() => handleAddEffectFromLibrary(effect)}>
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-white text-sm font-medium">{effect.name}</span>
-                                                </div>
-                                                {effect.subscription && (
-                                                    <span className="text-xs bg-yellow-500 text-black px-2 py-1 rounded">PRO</span>
-                                                )}
+                        <div className="p-4 overflow-y-auto max-h-[60vh]">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {filteredEffects.map((effect) => (
+                                    <div key={effect.id} className="bg-[#2a2a2a] rounded-lg p-4 cursor-pointer hover:bg-[#3a3a3a] transition-colors" onClick={() => handleAddEffectFromLibrary(effect)}>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-white text-sm font-medium">{effect.name}</span>
                                             </div>
-                                            <div className="text-gray-400 text-xs">{effect.category}</div>
+                                            {effect.subscription && (
+                                                <span className="text-xs bg-yellow-500 text-black px-2 py-1 rounded">PRO</span>
+                                            )}
                                         </div>
-                                    ))}
-                                </div>
+                                        <div className="text-gray-400 text-xs">{effect.category}</div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
-                )
-            }
+                </div>
+            )}
         </>
     )
 }
