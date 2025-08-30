@@ -2339,7 +2339,7 @@ const Timeline = () => {
           <div
             ref={timelineContainerRef}
             className="timeline-container"
-            style={{ minWidth: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`, position: "relative", height: "100vh", transition: "min-width 0.2s ease-in-out", }}
+            style={{ minWidth: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`, position: "relative", height:"100%", transition: "min-width 0.2s ease-in-out", }}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -2527,9 +2527,7 @@ const Timeline = () => {
             </div>
 
             {/* Show action boxes when there are no tracks */}
-            {tracks.length === 0 && (
-              <TimelineActionBoxes onAction={handleAction} />
-            )}
+            <TimelineActionBoxes onAction={handleAction} />
 
             {/* Playhead - adjusted to account for loop bar */}
             <div style={{

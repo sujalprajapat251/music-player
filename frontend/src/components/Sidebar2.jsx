@@ -118,20 +118,11 @@ const Sidebar2 = () => {
     <>
       <div style={{ pointerEvents: showNewProject ? 'none' : 'auto' }}>
       <TopHeader />
-      <div className="flex h-[calc(100vh-82px)] sm:h-[calc(100vh-66px)] md:h-[calc(100vh-96px)] relative">
-        <div className="border-r border-[#1414141A] dark:border-[#b463631a] w-[20%] sm:w-[23%] md:w-[22%] lg:w-[20%] xl:w-[17%] 2xl:w-[15%] bg-primary-light dark:bg-primary-dark">
-          {/* Timeline ruler space - matches the ruler height in Timeline component */}
+      <div className="flex relative">
+        <div className="border-r border-[#1414141A] dark:border-[#b463631a] w-full bg-primary-light dark:bg-primary-dark">
           <div className="h-[100px] border-b border-[#1414141A] dark:border-[#FFFFFF1A] flex items-end pb-2"></div>
 
-          {/* Tracks container */}
-          <div style={{
-            maxHeight: 'calc(100vh - 240px)',
-            marginTop: "40px",
-            scrollbarWidth: 'none', /* Firefox */
-            msOverflowStyle: 'none', /* Internet Explorer 10+ */
-          }}
-            onScroll={handleScroll}
-          >
+          <div onScroll={handleScroll}>
             <style jsx>{`
               div::-webkit-scrollbar {
                 display: none; 
@@ -145,14 +136,8 @@ const Sidebar2 = () => {
               const isComponentOpen = (track.id === currentTrackId) && ((openTrackType === 'Drums & Machines' && isDrumTrack) || (openTrackType === 'Keys' && isPianoTrack));
 
               return (
-                <div
-                  key={track.id}
-                  className={`flex items-center justify-between px-3 border-l-4 border-b border-b-[#1414141A] dark:border-b-[#FFFFFF1A] bg-[#232323] cursor-pointer hover:bg-[#2A2A2A] transition-colors duration-200`}
-                  style={{
-                    height: `${trackHeight + 1}px`, 
-                    minHeight: `${trackHeight + 1}px`,
-                    borderLeftColor: track.id === currentTrackId && borderColor ? borderColor : '#232323',
-                  }}
+                <div key={track.id} className={`flex items-center justify-between px-3 border-l-4 border-b border-b-[#1414141A] dark:border-b-[#FFFFFF1A] bg-[#232323] cursor-pointer hover:bg-[#2A2A2A] transition-colors duration-200`}
+                  style={{ height: `${trackHeight + 1}px`,  minHeight: `${trackHeight + 1}px`, borderLeftColor: track.id === currentTrackId && borderColor ? borderColor : '#232323', }}
                   onClick={() => handleChangeTrack(track.id)}
                   draggable
                   onDragStart={() => setDragIndex(idx)}
@@ -182,12 +167,7 @@ const Sidebar2 = () => {
                   <div className="flex flex-col border-e-[0.5px] border-[#FFFFFF1A] pe-2 flex-1">
                     <div className="flex items-center gap-2">
                       {editingTrackId === track.id ? (
-                        <input
-                          type="text"
-                          className="font-bold text-white text-sm truncate bg-[#232323] border border-[#AD00FF] rounded px-1 py-0.5 outline-none"
-                          value={editingName}
-                          autoFocus
-                          onChange={e => setEditingName(e.target.value)}
+                        <input type="text" className="font-bold text-white text-sm truncate bg-[#232323] border border-[#AD00FF] rounded px-1 py-0.5 outline-none" value={editingName} autoFocus onChange={e => setEditingName(e.target.value)}
                           onBlur={() => {
                             if (editingName.trim() && editingName !== track.name) {
                               dispatch(renameTrack({ trackId: track.id, newName: editingName.trim() }));
@@ -207,33 +187,21 @@ const Sidebar2 = () => {
                           }}
                         />
                       ) : (
-                        <span className={`font-bold text-sm truncate flex-[0_0_auto] overflow-hidden whitespace-normal break-all w-[120px] [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical] ${track.frozen ? 'text-[#4CAF50]' : 'text-white'
-                          }`}>
+                        <span className={`font-bold text-sm truncate flex-[0_0_auto] overflow-hidden whitespace-normal break-all w-[120px] [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical] ${track.frozen ? 'text-[#4CAF50]' : 'text-white'}`}>
                           {track.name || `Track ${idx + 1}`}
                         </span>
                       )}
                       {track.frozen && (
-                        <img
-                          src={FreezeIcon}
-                          alt="Frozen"
-                          className="w-4 h-4 opacity-80"
-                          style={{ filter: "invert(1) brightness(1.5)" }}
-                        />
+                        <img src={FreezeIcon} alt="Frozen" className="w-4 h-4 opacity-80" style={{ filter: "invert(1) brightness(1.5)" }}/>
                       )}
                     </div>
                     <div className="flex flex-row items-center justify-around gap-x-2 mt-1">
-                      <span className={`w-6 h-6 rounded text-xs font-bold flex items-center justify-center ${isRecording ? 'bg-[#FF006B]' : 'bg-[#444]'} text-white`}>
-                        R
-                      </span>
+                      <span className={`w-6 h-6 rounded text-xs font-bold flex items-center justify-center ${isRecording ? 'bg-[#FF006B]' : 'bg-[#444]'} text-white`}>R</span>
                       <span className="w-8 h-8 rounded-full bg-transparent">
                         <img src={tk} alt="" className={`w-full h-full opacity-60`} />
                       </span>
                       <span>
-                        <VolumeKnob 
-                          initialVolume={track.volume || 80}
-                          onChange={handleTrackVolumeChange}
-                          trackId={track.id}
-                        />
+                        <VolumeKnob  initialVolume={track.volume || 80} onChange={handleTrackVolumeChange} trackId={track.id}/>
                       </span>
                     </div>
                   </div>
@@ -248,18 +216,13 @@ const Sidebar2 = () => {
                       }}
                     />
                     <div className="flex items-center justify-center gap-x-4 w-full pb-4">
-                      <img
-                        src={headphone}
-                        alt="Headphone"
-                        className={`${soloTrackId === track.id ? 'd_muteicon' : ''}`}
+                      <img src={headphone} alt="Headphone" className={`${soloTrackId === track.id ? 'd_muteicon' : ''}`}
                         onClick={e => {
                           e.stopPropagation();
                           handleSoloTrack(track.id);
                         }}
                       />
-                      <img
-                        src={mute}
-                        alt="Mute"
+                      <img src={mute} alt="Mute"
                         onClick={e => {
                           e.stopPropagation();
                           handleMuteTrack(track.id);
@@ -272,11 +235,7 @@ const Sidebar2 = () => {
             })}
 
             {/* Add New Track Button */}
-            <div
-              className="flex items-center justify-center gap-2 py-3 px-4 text-secondary-light dark:text-secondary-dark bg-[#1414141A] dark:bg-[#FFFFFF1A] hover:bg-[#232323] cursor-pointer"
-              onClick={() => setShowAddTrackModal(true)}
-              style={{ height: `${trackHeight + 8}px` }}
-            >
+            <div className="flex items-center justify-center gap-2 py-3 px-4 text-secondary-light dark:text-secondary-dark cursor-pointer" onClick={() => setShowAddTrackModal(true)} style={{ height: `${trackHeight + 8}px` }}>
               <span className="text-xl font-bold">+</span>
               <span>Add New Track</span>
             </div>
