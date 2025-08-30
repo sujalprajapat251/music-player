@@ -38,6 +38,7 @@ import { toggleEffectsOffcanvas } from "../Redux/Slice/effects.slice";
 import EditTrackNameModal from "./EditTrackNameModal";
 import { audioManager } from '../Utils/audioContext';
 import audioQualityManager from '../Utils/audioQualityManager';
+import { getEffectsProcessor } from '../Utils/audioEffectsProcessor';
 
 const Timeline = () => {
 
@@ -548,6 +549,21 @@ const Timeline = () => {
 
 // ... existing code ...
 
+  // Add effects processor reference
+  const effectsProcessorRef = useRef(null);
+  
+  // Get active effects from Redux
+  const activeEffects = useSelector((state) => state.effects.activeEffects);
+
+  // Initialize effects processor
+  useEffect(() => {
+    const audioContext = getAudioContext();
+    if (audioContext && !effectsProcessorRef.current) {
+      effectsProcessorRef.current = getEffectsProcessor(audioContext);
+    }
+  }, []);
+
+  // Update the handleReady function to apply effects
   const handleReady = useCallback(async (wavesurfer, clip) => {
     if (!clip || !clip.url) return;
 
@@ -568,7 +584,7 @@ const Timeline = () => {
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-      const player = new Player(audioBuffer).toDestination();
+      const player = new Player(audioBuffer);
       audioManager.registerPlayer(player);
 
       // Find the track to get its volume
@@ -585,6 +601,39 @@ const Timeline = () => {
       // Set playback rate based on tempo
       player.playbackRate = tempoRatio;
 
+      // Apply effects if any are active
+      let finalOutput = player;
+      const appliedEffects = [];
+
+      if (effectsProcessorRef.current && activeEffects.length > 0) {
+        // Apply effects in chain order
+        activeEffects.forEach((effect) => {
+          if (effect.name === "Classic Dist" && effect.parameters) {
+            const parameters = {
+              mix: effectsProcessorRef.current.angleToParameter(effect.parameters[0]?.value || -90),
+              amount: effectsProcessorRef.current.angleToParameter(effect.parameters[1]?.value || 0),
+              makeup: effectsProcessorRef.current.angleToParameter(effect.parameters[2]?.value || 90)
+            };
+            
+            // Create effect chain using Web Audio API nodes
+            const effectChain = effectsProcessorRef.current.createClassicDistortion(parameters);
+            
+            // Disconnect player from destination and connect through effects
+            player.disconnect();
+            player.connect(effectChain.input);
+            
+            finalOutput = effectChain.output;
+            appliedEffects.push({
+              effectId: effect.instanceId,
+              chain: effectChain
+            });
+          }
+        });
+      }
+
+      // Connect final output to destination
+      finalOutput.toDestination();
+
       const clipDuration = clip.duration || audioBuffer.duration;
       const trimStart = clip.trimStart || 0;
       const trimEnd = clip.trimEnd || clipDuration;
@@ -600,7 +649,8 @@ const Timeline = () => {
           trimStart: trimStart,
           trimEnd: trimEnd,
           originalDuration: audioBuffer.duration,
-          playbackRate: tempoRatio // Store the playback rate
+          playbackRate: tempoRatio,
+          appliedEffects: appliedEffects // Store applied effects
         };
         return [...filtered, playerData];
       });
@@ -613,7 +663,32 @@ const Timeline = () => {
     } catch (error) {
       console.error("Error loading audio:", error);
     }
-  }, [masterVolume, tracks, players, tempoRatio]);
+  }, [masterVolume, tracks, players, tempoRatio, activeEffects]);
+
+  // Listen for effect parameter changes and update audio
+  useEffect(() => {
+    if (!effectsProcessorRef.current) return;
+
+    activeEffects.forEach((effect) => {
+      if (effect.name === "Classic Dist" && effect.parameters) {
+        const parameters = {
+          mix: effectsProcessorRef.current.angleToParameter(effect.parameters[0]?.value || -90),
+          amount: effectsProcessorRef.current.angleToParameter(effect.parameters[1]?.value || 0),
+          makeup: effectsProcessorRef.current.angleToParameter(effect.parameters[2]?.value || 90)
+        };
+
+        // Update all active players with this effect
+        players.forEach((playerObj) => {
+          if (playerObj.appliedEffects) {
+            const appliedEffect = playerObj.appliedEffects.find(ae => ae.effectId === effect.instanceId);
+            if (appliedEffect && appliedEffect.chain.updateParameters) {
+              appliedEffect.chain.updateParameters(parameters);
+            }
+          }
+        });
+      }
+    });
+  }, [activeEffects, players]);
 
   // Fixed seek logic to respect trim boundaries
   const movePlayhead = (e) => {
@@ -2237,23 +2312,23 @@ const Timeline = () => {
     }
   };
 
-  // Add this function near other playback-related functions
-  const playPatternDrumSound = useCallback((padData) => {
-    const audioContext = getAudioContext();
-    if (audioContext.state === 'suspended') {
-      audioContext.resume();
-    }
+  // // Add this function near other playback-related functions
+  // const playPatternDrumSound = useCallback((padData) => {
+  //   const audioContext = getAudioContext();
+  //   if (audioContext.state === 'suspended') {
+  //     audioContext.resume();
+  //   }
  
-    const synthSource = createSynthSound(padData, audioContext);
-    synthSource.connect(audioContext.destination);
-  }, [getAudioContext]);
+  //   const synthSource = createSynthSound(padData, audioContext);
+  //   synthSource.connect(audioContext.destination);
+  // }, [getAudioContext]);
  
-  // Modify the useEffect that handles patternDrumPlayback
-  useEffect(() => {
-    if (patternDrumPlayback.padData && isPlaying) {
-      playPatternDrumSound(patternDrumPlayback.padData);
-    }
-  }, [patternDrumPlayback, isPlaying, playPatternDrumSound]);
+  // // Modify the useEffect that handles patternDrumPlayback
+  // useEffect(() => {
+  //   if (patternDrumPlayback.padData && isPlaying) {
+  //     playPatternDrumSound(patternDrumPlayback.padData);
+  //   }
+  // }, [patternDrumPlayback, isPlaying, playPatternDrumSound]);
 
 
   return (

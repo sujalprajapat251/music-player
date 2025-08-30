@@ -1658,25 +1658,25 @@ const TimelineTrack = ({
             />
           );
         }
-        // return (
-        //   <AudioClip
-        //     key={clip.id}
-        //     clip={clip}
-        //     onReady={onReady}
-        //     height={height}
-        //     trackId={trackId}
-        //     onTrimChange={onTrimChange}
-        //     onPositionChange={onPositionChange}
-        //     onRemoveClip={onRemoveClip}
-        //     timelineWidthPerSecond={timelineWidthPerSecond}
-        //     frozen={frozen}
-        //     gridSpacing={gridSpacing}
-        //     onContextMenu={onContextMenu}
-        //     onSelect={onSelect}
-        //     isSelected={selectedClipId === clip.id}
-        //     color={color}
-        //   />
-        // );
+        return (
+          <AudioClip
+            key={clip.id}
+            clip={clip}
+            onReady={onReady}
+            height={height}
+            trackId={trackId}
+            onTrimChange={onTrimChange}
+            onPositionChange={onPositionChange}
+            onRemoveClip={onRemoveClip}
+            timelineWidthPerSecond={timelineWidthPerSecond}
+            frozen={frozen}
+            gridSpacing={gridSpacing}
+            onContextMenu={onContextMenu}
+            onSelect={onSelect}
+            isSelected={selectedClipId === clip.id}
+            color={color}
+          />
+        );
       })}
       
     </div>
