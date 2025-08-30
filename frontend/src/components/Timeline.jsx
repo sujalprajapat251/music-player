@@ -2236,6 +2236,26 @@ const Timeline = () => {
       console.error("Error reloading audio clip:", error);
     }
   };
+
+  // Add this function near other playback-related functions
+  const playPatternDrumSound = useCallback((padData) => {
+    const audioContext = getAudioContext();
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
+ 
+    const synthSource = createSynthSound(padData, audioContext);
+    synthSource.connect(audioContext.destination);
+  }, [getAudioContext]);
+ 
+  // Modify the useEffect that handles patternDrumPlayback
+  useEffect(() => {
+    if (patternDrumPlayback.padData && isPlaying) {
+      playPatternDrumSound(patternDrumPlayback.padData);
+    }
+  }, [patternDrumPlayback, isPlaying, playPatternDrumSound]);
+
+
   return (
     <>
       <EditTrackNameModal isOpen={edirNameModel} onClose={() => setEdirNameModel(false)} onSave={handleSave} />
@@ -2373,10 +2393,11 @@ const Timeline = () => {
                       if (e.target === e.currentTarget) {
                         setSelectedClipId(null);
                         setSelectedTrackId(track.id);
+                        dispatch(setCurrentTrackId(track.id));
                       }
                     }}
                     tabIndex={0}
-                    onFocus={() => setSelectedTrackId(track.id)}
+                    onFocus={() => { setSelectedTrackId(track.id); dispatch(setCurrentTrackId(track.id)); }}
                     onContextMenu={(e) => handleContextMenu(e, track.id)}
                   >
                     {/* {hasRecordingStarted && ( */}
