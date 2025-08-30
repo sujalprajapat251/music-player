@@ -18,9 +18,9 @@ import TapeWobble from '../../components/TapeWobble';
 const EFFECT_CONFIGS = {
     "Classic Dist": {
         parameters: [
-            { name: "Dist", min: -135, max: 135, defaultAngle: 45 },
-            { name: "Tone", min: -135, max: 135, defaultAngle: 0 },
-            { name: "Low cut", min: -135, max: 135, defaultAngle: -45 }
+            { name: "Mix", min: -135, max: 135, defaultAngle: -90, value: -90 },
+            { name: "Amount", min: -135, max: 135, defaultAngle: 0, value: 0 },
+            { name: "Makeup", min: -135, max: 135, defaultAngle: 90, value: 90 }
         ]
     },
     "Bitcrushar": {
@@ -217,9 +217,9 @@ const effectsSlice = createSlice({
                 instanceId: Date.now(),
                 component: component,
                 parameters: EFFECT_CONFIGS[effect.name]?.parameters || [
-                    { name: "Parameter 1", min: -135, max: 135, defaultAngle: 0 },
-                    { name: "Parameter 2", min: -135, max: 135, defaultAngle: 45 },
-                    { name: "Parameter 3", min: -135, max: 135, defaultAngle: 90 }
+                    { name: "Parameter 1", min: -135, max: 135, defaultAngle: 0, value: 0 },
+                    { name: "Parameter 2", min: -135, max: 135, defaultAngle: 45, value: 45 },
+                    { name: "Parameter 3", min: -135, max: 135, defaultAngle: 90, value: 90 }
                 ]
             };
             console.log('====================================');
