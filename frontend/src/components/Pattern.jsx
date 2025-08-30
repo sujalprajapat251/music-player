@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Volume2, ChevronDown, Plus, Mic } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
-import { setDrumRecordedData, addAudioClipToTrack } from '../Redux/Slice/studio.slice';
+import { setDrumRecordedData, addAudioClipToTrack, setDrumRecordingClip } from '../Redux/Slice/studio.slice';
 import {
   drumMachineTypes,
   createSynthSound,
   createDrumData,
   getAudioContext
 } from '../Utils/drumMachineUtils';
-import { handleBeatToggleSync } from '../Utils/patternTimelineBridge';
+// import { handleBeatToggleSync } from '../Utils/patternTimelineBridge';
 
 const Pattern = () => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -47,6 +47,9 @@ const Pattern = () => {
   };
 
   const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
+  const drumRecordingClip = useSelector((state) => state.studio?.drumRecordingClip || null);
+  console.log("drumRecordingClip0",drumRecordingClip);
+  console.log("drumRecordedData",drumRecordedData);
   const currentTime = useSelector((state) => state.studio?.currentTime || 0);
   const currentTrackId = useSelector((state) => state.studio?.currentTrackId || null);
   const isRecording = useSelector((state) => state.studio?.isRecording || false);
@@ -350,22 +353,92 @@ const Pattern = () => {
           const nextIsOn = !newPattern[beatIndex];
           newPattern[beatIndex] = nextIsOn;
 
-          // NEW: push to timeline in real-time
-          handleBeatToggleSync({
-            dispatch,
-            trackId: (selectedTrackId || currentTrackId), // whichever you already use
-            padId: track.padId,
-            beatIndex,
-            bpm,
-            isOn: nextIsOn,
-          });
+          // Require a current track context
+          const targetTrackId = (selectedTrackId || currentTrackId);
+          if (targetTrackId) {
+            // Map pattern index → timeline seconds using fixed 1s per 16-step block
+            const sectionIndex = Math.floor(beatIndex / 16);
+            const beatInSection = beatIndex % 16;
+            const slotStart = sectionIndex * 1.0 + (beatInSection / 16);
+
+            // Resolve pad meta from current drum machine
+            const kit = drumMachineTypes[currentDrumMachine] || {};
+            const pad = (kit.pads || []).find(p => p.id === track.padId);
+            const meta = pad
+              ? { sound: pad.sound, type: pad.type, freq: pad.freq, decay: pad.decay, drumMachine: kit.name }
+              : { sound: track.name?.toLowerCase?.() || 'perc', type: 'perc', freq: 1000, decay: 0.2, drumMachine: kit.name || 'Pattern' };
+
+            if (nextIsOn) {
+              // Add hit if not already present at this time for this pad/track
+              const exists = drumRecordedData.some(h => (
+                h.trackId === targetTrackId && h.padId === track.padId && Math.abs((h.currentTime || 0) - slotStart) < 1e-3
+              ));
+              if (!exists) {
+                const hit = {
+                  id: `pattern_${track.padId}_${beatIndex}_${Date.now()}`,
+                  padId: track.padId,
+                  currentTime: slotStart,
+                  timestamp: Date.now(),
+                  trackId: targetTrackId,
+                  ...meta,
+                };
+                const updated = [...drumRecordedData, hit];
+                dispatch(setDrumRecordedData(updated));
+
+                // Update this track's drum clip bounds
+                const notesForTrack = updated.filter(n => n.trackId === targetTrackId);
+                if (notesForTrack.length > 0) {
+                  const minStart = Math.min(...notesForTrack.map(n => n.currentTime || 0));
+                  const maxEnd = Math.max(...notesForTrack.map(n => (n.currentTime || 0) + (n.decay || 0.2)));
+                  const trackColor = (allTracks.find(t => t.id === targetTrackId)?.color) || '#FF8014';
+                  dispatch(setDrumRecordingClip({
+                    start: minStart,
+                    end: maxEnd,
+                    color: trackColor,
+                    trackId: targetTrackId,
+                    type: 'drum'
+                  }));
+                }
+              }
+            } else {
+              // Remove closest matching hit at this pad/time for this track
+              let removeIndex = -1;
+              for (let i = 0; i < drumRecordedData.length; i++) {
+                const h = drumRecordedData[i];
+                if (h.trackId === targetTrackId && h.padId === track.padId && Math.abs((h.currentTime || 0) - slotStart) < 1e-3) {
+                  removeIndex = i;
+                  break;
+                }
+              }
+              if (removeIndex !== -1) {
+                const updated = [...drumRecordedData.slice(0, removeIndex), ...drumRecordedData.slice(removeIndex + 1)];
+                dispatch(setDrumRecordedData(updated));
+
+                const notesForTrack = updated.filter(n => n.trackId === targetTrackId);
+                if (notesForTrack.length > 0) {
+                  const minStart = Math.min(...notesForTrack.map(n => n.currentTime || 0));
+                  const maxEnd = Math.max(...notesForTrack.map(n => (n.currentTime || 0) + (n.decay || 0.2)));
+                  const trackColor = (allTracks.find(t => t.id === targetTrackId)?.color) || '#FF8014';
+                  dispatch(setDrumRecordingClip({
+                    start: minStart,
+                    end: maxEnd,
+                    color: trackColor,
+                    trackId: targetTrackId,
+                    type: 'drum'
+                  }));
+                } else {
+                  dispatch(setDrumRecordingClip(null));
+                }
+              }
+            }
+          }
 
           return { ...track, pattern: newPattern };
         }
         return track;
       });
     });
-  }, [expandPatternIfNeeded, dispatch, bpm, selectedTrackId, currentTrackId, patternLength]);
+  }, [expandPatternIfNeeded, dispatch, selectedTrackId, currentTrackId, drumRecordedData, allTracks, currentDrumMachine]);
 
   const removeTrack = (trackId) => {
     setTracks(prev => prev.filter(track => track.id !== trackId));
@@ -569,7 +642,7 @@ const Pattern = () => {
           </div>
 
           {/* Selected Track Info */}
-          {selectedTrackHasDrumData() && (
+          {/* {selectedTrackHasDrumData() && (
             <div className="mb-4 p-3 bg-blue-800/50 rounded-lg border border-blue-600/50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -594,10 +667,10 @@ const Pattern = () => {
                 </div>
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Recording Info */}
-          {drumRecordedData.length > 0 && (
+          {/* {drumRecordedData.length > 0 && (
             <div className="mb-4 p-3 bg-purple-800/50 rounded-lg border border-purple-600/50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -619,7 +692,7 @@ const Pattern = () => {
                 </div>
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Beat Indicator Dots */}
           <div className="mt-6 max-h-[300px] overflow-auto">

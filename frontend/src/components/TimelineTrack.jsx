@@ -1430,6 +1430,12 @@ const TimelineTrack = ({
             const noteStartTime = note.startTime || 0;
             const noteEndTime = noteStartTime + (note.duration || 0.05);
 
+            if (trackPianoClip && trackPianoClip.start != null && trackPianoClip.end != null) {
+              // Check if note is within the recording clip
+              if (noteStartTime < trackPianoClip.start || noteEndTime > trackPianoClip.end) {
+                return null; // Don't render notes outside the clip
+              }
+            }
             const minPixelWidth = 6; // ensure visibility
             const heightPx = 2; // thin bar
             const durationPx = Math.max(minPixelWidth, (note.duration || 0.05) * timelineWidthPerSecond);
@@ -1551,9 +1557,16 @@ const TimelineTrack = ({
               const topY = rowIndex * (rowHeight + rowSpacing);
 
               return hits.map((drumHit) => {
-                // Always show drum hits, even if they fall outside an active clip
                 const hitStartTime = drumHit.currentTime || 0;
                 const hitEndTime = hitStartTime + (drumHit.decay || 0.2);
+
+                // Check if hit is within the recording clip - only hide if completely outside
+                if (trackDrumClip && trackDrumClip.start != null && trackDrumClip.end != null) {
+                  // Only hide if the hit is completely outside the clip boundaries
+                  if (hitEndTime <= trackDrumClip.start || hitStartTime >= trackDrumClip.end) {
+                    return null; // Don't render hits completely outside the clip
+                  }
+                }
 
                 const leftX = (hitStartTime || 0) * timelineWidthPerSecond;
                 let hitWidth = Math.max(2, (drumHit.decay || 0.2) * timelineWidthPerSecond);
@@ -1589,10 +1602,11 @@ const TimelineTrack = ({
               });
             });
           })()}
-
+ 
           {/* Grid Overlay for Beat Divisions */}
         </div>
       )}
+ 
       {/* Render each audio clip in the track */}
       {track.audioClips && track.audioClips.map((clip) => {
         const isBeatClip = clip.drumSequence && clip.drumSequence.length > 0;
@@ -1634,6 +1648,7 @@ const TimelineTrack = ({
         //   />
         // );
       })}
+      
     </div>
   );
 };
