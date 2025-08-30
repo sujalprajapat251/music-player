@@ -8,6 +8,7 @@ const initialStateUsers = {
     success: false,
     message: '',
     loading: false,
+    musicType: ''
 };
 
 const handleErrors = (error, dispatch, rejectWithValue) => {
@@ -36,7 +37,11 @@ export const getAllSound = createAsyncThunk(
 const soundSlice = createSlice({
     name: 'sound',
     initialState: initialStateUsers,
-    reducers: {},
+    reducers: {
+        setMusicTypeExtention: (state, action) => {
+            state.musicType = action.payload;
+        },
+    },
     extraReducers: (builder) => {
         builder
         .addCase(getAllSound.pending, (state) => {
@@ -56,5 +61,9 @@ const soundSlice = createSlice({
         })
     }
 });
+
+export const {
+    setMusicTypeExtention
+} = soundSlice.actions;
 
 export default soundSlice.reducer;

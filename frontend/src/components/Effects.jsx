@@ -270,8 +270,10 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
                                                         setTimeout(() => {
                                                             e.target.style.transform = 'scale(1)';
                                                         }, 150);
-                                                        dispatch(setTrackType("Keys"));
-                                                        // dispatch(setShowEffectsTwo(true));
+                                                        if (!dispatchedOnce) {
+                                                            dispatch(setActiveTabs("Effects"));
+                                                            setDispatchedOnce(true);
+                                                        }
                                                     }
                                                 }} src={effect.image} alt={effect.name} className="w-full transition-transform duration-150"
                                             />
