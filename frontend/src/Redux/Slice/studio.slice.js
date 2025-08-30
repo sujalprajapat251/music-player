@@ -491,6 +491,15 @@ const studioSlice = createSlice({
         }
       }
     },
+    moveTrackUp: (state, action) => {
+      const trackId = action.payload;
+      const index = state.tracks.findIndex(t => t.id === trackId);
+      if (index !== -1 && index > 0) {
+        const tmp = state.tracks[index - 1];
+        state.tracks[index - 1] = state.tracks[index];
+        state.tracks[index] = tmp;
+      }
+    },
     moveTrackDown: (state, action) => {
       const trackId = action.payload;
       const index = state.tracks.findIndex(t => t.id === trackId);
@@ -624,6 +633,7 @@ export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColo
     blockDuration = 1.0;
     slotStart = blockStart + (beatInSection / 16) * 1.0;
   }
+  
   // Resolve pad meta (for playback)
   const resolvePadMeta = (id) => {
     try {
@@ -652,7 +662,6 @@ export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColo
   if (isOn) {
     if (container) {
       // Update existing container
-      // const byPad = { ...(container.onBeatsByPad || {}) };
       const seq = Array.isArray(container.drumSequence) ? [...container.drumSequence] : [];
 
       // Add or update this beat
@@ -677,7 +686,6 @@ export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColo
       }
 
       // Update beat tracking
-      // Deep-clone nested arrays to avoid mutating frozen state
       const src = container.onBeatsByPad || {};
       const byPad = Object.keys(src).reduce((acc, key) => {
         acc[key] = Array.isArray(src[key]) ? [...src[key]] : [];
@@ -702,7 +710,7 @@ export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColo
           trimEnd: blockDuration,
           ruler: selectedRuler,
           bpm: bpm,
-          musicalBeat: selectedRuler === "Beats" ? (sectionIndex % 4) + 1 : null // Track which musical beat this represents
+          musicalBeat: selectedRuler === "Beats" ? (sectionIndex % 4) + 1 : null
         }
       }));
 
@@ -754,14 +762,12 @@ export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColo
     // Turning OFF: remove this beat
     if (!container) return;
 
-    // const byPad = { ...(container.onBeatsByPad || {}) };
     const seq = Array.isArray(container.drumSequence) ? [...container.drumSequence] : [];
 
     // Remove this beat
     const newSeq = seq.filter(ev =>
       !(Math.abs(ev.currentTime - slotStart) < 0.001 && ev.padId === padId)
     );    
-
 
     const src = container.onBeatsByPad || {};
     const byPad = Object.keys(src).reduce((acc, key) => {
@@ -799,6 +805,166 @@ export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColo
       });
     }
   }
+};
+
+// Function to sync recorded drum data to timeline clips
+export const syncRecordedDrumDataToTimeline = ({ trackId, drumRecordedData, bpm = 120, clipColor = '#FF8014' }) => async (dispatch, getState) => {
+  if (!trackId || !Array.isArray(drumRecordedData) || drumRecordedData.length === 0) return;
+
+  const state = getState();
+  const selectedRuler = state.grid?.selectedRuler || "Time";
+  const track = state.studio?.tracks?.find(t => t.id == trackId);
+  
+  if (!track) return;
+
+  // Clear existing pattern clips for this track
+  dispatch(clearPatternClips(trackId));
+
+  // Group recorded data by pad type
+  const dataByPad = {};
+  drumRecordedData.forEach(hit => {
+    const padId = hit.padId || 'unknown';
+    if (!dataByPad[padId]) {
+      dataByPad[padId] = [];
+    }
+    dataByPad[padId].push(hit);
+  });
+
+  // Process each pad type
+  Object.entries(dataByPad).forEach(([padId, hits]) => {
+    // Sort hits by time
+    hits.sort((a, b) => (a.currentTime || 0) - (b.currentTime || 0));
+    
+    // Group hits into sections (16 beats per section)
+    const sections = {};
+    hits.forEach(hit => {
+      const time = hit.currentTime || 0;
+      const sectionIndex = Math.floor(time / 1.0); // 1 second per section
+      const beatInSection = Math.floor((time % 1.0) * 16); // 16 beats per second
+      
+      if (!sections[sectionIndex]) {
+        sections[sectionIndex] = {
+          startTime: sectionIndex * 1.0,
+          duration: 1.0,
+          hits: [],
+          beatsByPad: {}
+        };
+      }
+      
+      sections[sectionIndex].hits.push({
+        ...hit,
+        beatIndex: sectionIndex * 16 + beatInSection,
+        beatInSection: beatInSection
+      });
+      
+      if (!sections[sectionIndex].beatsByPad[padId]) {
+        sections[sectionIndex].beatsByPad[padId] = [];
+      }
+      sections[sectionIndex].beatsByPad[padId].push(sectionIndex * 16 + beatInSection);
+    });
+
+    // Create timeline clips for each section
+    Object.entries(sections).forEach(([sectionIndex, sectionData]) => {
+      if (sectionData.hits.length === 0) return;
+
+      const audioClip = {
+        name: `Recorded ${padId} - Section ${parseInt(sectionIndex) + 1}`,
+        color: clipColor,
+        startTime: sectionData.startTime,
+        duration: sectionData.duration,
+        trimStart: 0,
+        trimEnd: sectionData.duration,
+        type: 'drum',
+        fromPattern: true,
+        fromRecording: true, // Mark as from recording
+        blockIndex: parseInt(sectionIndex),
+        blockSize: 16,
+        onBeatsByPad: sectionData.beatsByPad,
+        ruler: selectedRuler,
+        bpm: bpm,
+        drumSequence: sectionData.hits.map(hit => ({
+          currentTime: hit.currentTime - sectionData.startTime, // Relative to section start
+          padId: hit.padId,
+          sound: hit.sound,
+          type: hit.type,
+          freq: hit.freq,
+          decay: hit.decay,
+          drumMachine: hit.drumMachine,
+          beatIndex: hit.beatIndex,
+          beatInSection: hit.beatInSection,
+          originalTime: hit.currentTime // Keep original absolute time
+        }))
+      };
+
+      dispatch(addAudioClipToTrack({ trackId, audioClip }));
+    });
+  });
+};
+
+// Function to sync recorded piano data to timeline clips
+export const syncRecordedPianoDataToTimeline = ({ trackId, pianoNotes, bpm = 120, clipColor = '#4CAF50' }) => async (dispatch, getState) => {
+  if (!trackId || !Array.isArray(pianoNotes) || pianoNotes.length === 0) return;
+
+  const state = getState();
+  const track = state.studio?.tracks?.find(t => t.id == trackId);
+  
+  if (!track) return;
+
+  // Clear existing piano clips for this track
+  const existingPianoClips = track.audioClips?.filter(c => c.type === 'piano' && c.fromRecording) || [];
+  existingPianoClips.forEach(clip => {
+    dispatch(removeAudioClip({ trackId, clipId: clip.id }));
+  });
+
+  // Group notes by time sections
+  const notesBySection = {};
+  pianoNotes.forEach(note => {
+    const startTime = note.startTime || 0;
+    const endTime = startTime + (note.duration || 0.5);
+    const sectionIndex = Math.floor(startTime / 2.0); // 2 seconds per section
+    
+    if (!notesBySection[sectionIndex]) {
+      notesBySection[sectionIndex] = {
+        startTime: sectionIndex * 2.0,
+        duration: 2.0,
+        notes: []
+      };
+    }
+    
+    notesBySection[sectionIndex].notes.push({
+      ...note,
+      relativeStartTime: startTime - (sectionIndex * 2.0)
+    });
+  });
+
+  // Create timeline clips for each section
+  Object.entries(notesBySection).forEach(([sectionIndex, sectionData]) => {
+    if (sectionData.notes.length === 0) return;
+
+    const audioClip = {
+      name: `Recorded Piano - Section ${parseInt(sectionIndex) + 1}`,
+      color: clipColor,
+      startTime: sectionData.startTime,
+      duration: sectionData.duration,
+      trimStart: 0,
+      trimEnd: sectionData.duration,
+      type: 'piano',
+      fromPattern: false,
+      fromRecording: true,
+      blockIndex: parseInt(sectionIndex),
+      blockSize: 2,
+      pianoSequence: sectionData.notes.map(note => ({
+        midiNumber: note.midiNumber,
+        note: note.note,
+        startTime: note.relativeStartTime,
+        duration: note.duration,
+        velocity: note.velocity || 0.8,
+        originalTime: note.startTime
+      }))
+    };
+
+    dispatch(addAudioClipToTrack({ trackId, audioClip }));
+  });
 };
 
 export const clearPatternClips = (trackId) => (dispatch, getState) => {

@@ -27,7 +27,6 @@ const Pattern = () => {
   const [isRecordingPattern, setIsRecordingPattern] = useState(false);
   const [patternRecordedData, setPatternRecordedData] = useState([]);
 
-  const intervalRef = useRef(null);
   const audioContextRef = useRef(null);
   const dropdownRef = useRef(null);
   const dispatch = useDispatch();
@@ -48,8 +47,8 @@ const Pattern = () => {
 
   const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
   const drumRecordingClip = useSelector((state) => state.studio?.drumRecordingClip || null);
-  console.log("drumRecordingClip0",drumRecordingClip);
-  console.log("drumRecordedData",drumRecordedData);
+  console.log("drumRecordingClip0", drumRecordingClip);
+  console.log("drumRecordedData", drumRecordedData);
   const currentTime = useSelector((state) => state.studio?.currentTime || 0);
   const currentTrackId = useSelector((state) => state.studio?.currentTrackId || null);
   const isRecording = useSelector((state) => state.studio?.isRecording || false);
@@ -301,32 +300,30 @@ const Pattern = () => {
 
   // Playback logic
   useEffect(() => {
+    let intervalId = null;
+    
     if (isPlaying) {
       const beatDuration = (60 / bpm / 4) * 1000;
-
-      intervalRef.current = setInterval(() => {
+      
+      intervalId = setInterval(() => {
         setCurrentBeat(prev => {
           const nextBeat = (prev + 1) % patternLength;
-
+          
           tracks.forEach(track => {
             if (track.pattern[nextBeat]) {
-              // Pass the entire track object to playDrumSound
               playDrumSound(track);
             }
           });
-
+          
           return nextBeat;
         });
       }, beatDuration);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
     }
-
+  
+    // Cleanup function - this will run when component unmounts or dependencies change
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+      if (intervalId) {
+        clearInterval(intervalId);
       }
     };
   }, [isPlaying, bpm, tracks, patternLength, playDrumSound]);
@@ -337,7 +334,8 @@ const Pattern = () => {
     }
     setIsPlaying(!isPlaying);
   };
-
+  
+  // Update stopAndReset function
   const stopAndReset = () => {
     setIsPlaying(false);
     setCurrentBeat(0);
@@ -373,6 +371,7 @@ const Pattern = () => {
               const exists = drumRecordedData.some(h => (
                 h.trackId === targetTrackId && h.padId === track.padId && Math.abs((h.currentTime || 0) - slotStart) < 1e-3
               ));
+
               if (!exists) {
                 const hit = {
                   id: `pattern_${track.padId}_${beatIndex}_${Date.now()}`,
@@ -382,23 +381,12 @@ const Pattern = () => {
                   trackId: targetTrackId,
                   ...meta,
                 };
+
                 const updated = [...drumRecordedData, hit];
                 dispatch(setDrumRecordedData(updated));
 
-                // Update this track's drum clip bounds
-                const notesForTrack = updated.filter(n => n.trackId === targetTrackId);
-                if (notesForTrack.length > 0) {
-                  const minStart = Math.min(...notesForTrack.map(n => n.currentTime || 0));
-                  const maxEnd = Math.max(...notesForTrack.map(n => (n.currentTime || 0) + (n.decay || 0.2)));
-                  const trackColor = (allTracks.find(t => t.id === targetTrackId)?.color) || '#FF8014';
-                  dispatch(setDrumRecordingClip({
-                    start: minStart,
-                    end: maxEnd,
-                    color: trackColor,
-                    trackId: targetTrackId,
-                    type: 'drum'
-                  }));
-                }
+                // Update drumRecordingClip with new bounds
+                updateDrumRecordingClip(updated, targetTrackId);
               }
             } else {
               // Remove closest matching hit at this pad/time for this track
@@ -410,22 +398,14 @@ const Pattern = () => {
                   break;
                 }
               }
+
               if (removeIndex !== -1) {
                 const updated = [...drumRecordedData.slice(0, removeIndex), ...drumRecordedData.slice(removeIndex + 1)];
                 dispatch(setDrumRecordedData(updated));
 
-                const notesForTrack = updated.filter(n => n.trackId === targetTrackId);
-                if (notesForTrack.length > 0) {
-                  const minStart = Math.min(...notesForTrack.map(n => n.currentTime || 0));
-                  const maxEnd = Math.max(...notesForTrack.map(n => (n.currentTime || 0) + (n.decay || 0.2)));
-                  const trackColor = (allTracks.find(t => t.id === targetTrackId)?.color) || '#FF8014';
-                  dispatch(setDrumRecordingClip({
-                    start: minStart,
-                    end: maxEnd,
-                    color: trackColor,
-                    trackId: targetTrackId,
-                    type: 'drum'
-                  }));
+                // Update drumRecordingClip with new bounds
+                if (updated.length > 0) {
+                  updateDrumRecordingClip(updated, targetTrackId);
                 } else {
                   dispatch(setDrumRecordingClip(null));
                 }
@@ -440,24 +420,55 @@ const Pattern = () => {
     });
   }, [expandPatternIfNeeded, dispatch, selectedTrackId, currentTrackId, drumRecordedData, allTracks, currentDrumMachine]);
 
+  // Helper function to update drumRecordingClip
+  const updateDrumRecordingClip = useCallback((drumData, trackId) => {
+    if (!drumData || drumData.length === 0) {
+      dispatch(setDrumRecordingClip(null));
+      return;
+    }
+
+    // Filter data for the specific track
+    const notesForTrack = drumData.filter(n => n.trackId === trackId);
+
+    if (notesForTrack.length === 0) {
+      dispatch(setDrumRecordingClip(null));
+      return;
+    }
+
+    // Calculate new bounds
+    const minStart = Math.min(...notesForTrack.map(n => n.currentTime || 0));
+    const maxEnd = Math.max(...notesForTrack.map(n => (n.currentTime || 0) + (n.decay || 0.2)));
+
+    // Get track color
+    const trackColor = (allTracks.find(t => t.id === trackId)?.color) || '#FF8014';
+
+    // Update drumRecordingClip
+    dispatch(setDrumRecordingClip({
+      start: minStart,
+      end: maxEnd,
+      color: trackColor,
+      trackId: trackId,
+      type: 'drum'
+    }));
+  }, [dispatch, allTracks]);
+
   const removeTrack = (trackId) => {
     setTracks(prev => prev.filter(track => track.id !== trackId));
     setActiveDropdown(null);
   };
 
-  const addTrack = () => {
+  const addTrack = (trackId) => {
     // Find first unused instrument name
     const usedNames = tracks.map(track => track.name);
     const unusedName = getInstrumentOptions().find(option => !usedNames.includes(option.name)) || getInstrumentOptions()[0];
 
     const newTrack = {
-      id: `track_${nextTrackId}`,
+      id: trackId,
       name: unusedName.name,
       padId: unusedName.padId,
       pattern: new Array(patternLength).fill(false)
     };
     setTracks(prev => [...prev, newTrack]);
-    setNextTrackId(prev => prev + 1);
   };
 
   // Get available instruments for a specific track (excluding already used ones including current)
@@ -641,59 +652,6 @@ const Pattern = () => {
             </div>
           </div>
 
-          {/* Selected Track Info */}
-          {/* {selectedTrackHasDrumData() && (
-            <div className="mb-4 p-3 bg-blue-800/50 rounded-lg border border-blue-600/50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  {(() => {
-                    const selectedTrack = allTracks.find(track => track.id === selectedTrackId);
-                    const totalHits = selectedTrack?.audioClips?.reduce((total, clip) =>
-                      total + (clip.drumData?.length || 0), 0) || 0;
-                    return (
-                      <>
-                        <span className="text-sm text-blue-200">
-                          🎵 Selected Track: "{selectedTrack?.name}" - {totalHits} drum hits
-                        </span>
-                        <span className="text-sm text-blue-300">
-                          BPM: {bpm}
-                        </span>
-                      </>
-                    );
-                  })()}
-                </div>
-                <div className="text-xs text-blue-400">
-                  Click "Apply Track Data" to convert to beat pattern
-                </div>
-              </div>
-            </div>
-          )} */}
-
-          {/* Recording Info */}
-          {/* {drumRecordedData.length > 0 && (
-            <div className="mb-4 p-3 bg-purple-800/50 rounded-lg border border-purple-600/50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-purple-200">
-                    📊 Recorded Data: {drumRecordedData.length} drum hits
-                  </span>
-                  <span className="text-sm text-purple-300">
-                    Duration: {drumRecordedData.length > 1
-                      ? `${((drumRecordedData[drumRecordedData.length - 1].timestamp - drumRecordedData[0].timestamp) / 1000).toFixed(2)}s`
-                      : '0s'
-                    }
-                  </span>
-                  <span className="text-sm text-purple-300">
-                    BPM: {bpm}
-                  </span>
-                </div>
-                <div className="text-xs text-purple-400">
-                  Pattern will auto-fill when recording stops, or click "Apply Recording" to manually apply
-                </div>
-              </div>
-            </div>
-          )} */}
-
           {/* Beat Indicator Dots */}
           <div className="mt-6 max-h-[300px] overflow-auto">
             <div className="flex">
@@ -754,7 +712,7 @@ const Pattern = () => {
                   {/* Add Track Button */}
                   {hasAvailableInstruments() && (
                     <button
-                      onClick={addTrack}
+                      onClick={() => addTrack(tracks.length + 1)}
                       className="w-full bg-[#1F1F1F] border-dashed rounded p-3 text-center text-white hover:bg-[#474747] transition-colors flex items-center justify-center gap-2"
                     >
                       <Plus size={16} />

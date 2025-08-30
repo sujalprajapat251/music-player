@@ -470,6 +470,7 @@ function midiToY(midi) {
   return (MIDI_MAX - midi) * NOTE_HEIGHT;
 }
 
+// Enhanced BeatClip component to handle recorded data
 const BeatClip = ({
   clip,
   height,
@@ -481,7 +482,7 @@ const BeatClip = ({
   timelineWidthPerSecond = 100,
   gridSpacing = 0.25,
   color,
-  bpm = 120, // Assuming a default BPM
+  bpm = 120,
 }) => {
   const toPx = (seconds, scale) => Math.round(seconds * scale * 100) / 100;
 
@@ -509,7 +510,7 @@ const BeatClip = ({
     }
   }, [clip.id, onPositionChange, timelineWidthPerSecond, gridSpacing]);
 
-  // Always render exactly 16 steps and sort rows by preferred pad order
+  // Enhanced pattern data processing for recorded clips
   const patternData = useMemo(() => {
     const FIXED_STEPS = 16;
     if (!clip.drumSequence || clip.drumSequence.length === 0) {
@@ -547,7 +548,16 @@ const BeatClip = ({
       const hits = hitsByPad[padId];
 
       for (const hit of hits) {
-        const rel = (hit.currentTime - sectionStart) / sectionDuration; // [0,1)
+        // For recorded clips, use the relative time within the clip
+        let rel;
+        if (clip.fromRecording) {
+          // Use the relative time stored in the clip
+          rel = (hit.currentTime || 0) / sectionDuration;
+        } else {
+          // Use the original pattern logic
+          rel = (hit.currentTime - sectionStart) / sectionDuration;
+        }
+        
         if (rel < 0 || rel >= 1) continue;
         const idx = Math.floor(rel * FIXED_STEPS + 1e-6);
         if (idx >= 0 && idx < FIXED_STEPS) {
@@ -564,19 +574,29 @@ const BeatClip = ({
     });
 
     return { tracks, patternLength: FIXED_STEPS };
-  }, [clip.drumSequence, startTime, clipDuration]);
+  }, [clip.drumSequence, startTime, clipDuration, clip.fromRecording]);
 
   const { tracks } = patternData;
 
-  // NEW: Count duplicates per cell (per padId and 16th bucket) using the same mapping as above
+  // Enhanced count calculation for recorded clips
   const countsByPad = useMemo(() => {
     const map = new Map();
     const sectionStart = startTime;
     const sectionDuration = Math.max(1e-6, clipDuration > 0 ? clipDuration : 1);
+    
     for (const hit of rawEvents) {
       const padId = hit?.padId || hit?.id || 'PAD';
       if (!map.has(padId)) map.set(padId, Array(16).fill(0));
-      const rel = (hit.currentTime - sectionStart) / sectionDuration;
+      
+      let rel;
+      if (clip.fromRecording) {
+        // For recorded clips, use the relative time within the clip
+        rel = (hit.currentTime || 0) / sectionDuration;
+      } else {
+        // Use the original pattern logic
+        rel = (hit.currentTime - sectionStart) / sectionDuration;
+      }
+      
       if (rel < 0 || rel >= 1) continue;
       const idx = Math.floor(rel * 16 + 1e-6);
       if (idx >= 0 && idx < 16) {
@@ -584,7 +604,7 @@ const BeatClip = ({
       }
     }
     return map;
-  }, [rawEvents, startTime, clipDuration]);
+  }, [rawEvents, startTime, clipDuration, clip.fromRecording]);
 
   // NEW: small badge for stacked hits (only shows when count > 1)
   const badgeStyle = {
@@ -635,6 +655,24 @@ const BeatClip = ({
         boxSizing: 'border-box',
       }}
     >
+      {/* Clip label for recorded clips */}
+      {clip.fromRecording && (
+        <div style={{
+          position: 'absolute',
+          top: '2px',
+          left: '4px',
+          background: 'rgba(0,0,0,0.8)',
+          color: '#fff',
+          fontSize: '10px',
+          padding: '2px 4px',
+          borderRadius: '3px',
+          zIndex: 25,
+          pointerEvents: 'none'
+        }}>
+          {clip.name}
+        </div>
+      )}
+
       {tracks.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
           {tracks.map((track) => {
@@ -1658,25 +1696,25 @@ const TimelineTrack = ({
             />
           );
         }
-        return (
-          <AudioClip
-            key={clip.id}
-            clip={clip}
-            onReady={onReady}
-            height={height}
-            trackId={trackId}
-            onTrimChange={onTrimChange}
-            onPositionChange={onPositionChange}
-            onRemoveClip={onRemoveClip}
-            timelineWidthPerSecond={timelineWidthPerSecond}
-            frozen={frozen}
-            gridSpacing={gridSpacing}
-            onContextMenu={onContextMenu}
-            onSelect={onSelect}
-            isSelected={selectedClipId === clip.id}
-            color={color}
-          />
-        );
+        // return (
+        //   <AudioClip
+        //     key={clip.id}
+        //     clip={clip}
+        //     onReady={onReady}
+        //     height={height}
+        //     trackId={trackId}
+        //     onTrimChange={onTrimChange}
+        //     onPositionChange={onPositionChange}
+        //     onRemoveClip={onRemoveClip}
+        //     timelineWidthPerSecond={timelineWidthPerSecond}
+        //     frozen={frozen}
+        //     gridSpacing={gridSpacing}
+        //     onContextMenu={onContextMenu}
+        //     onSelect={onSelect}
+        //     isSelected={selectedClipId === clip.id}
+        //     color={color}
+        //   />
+        // );
       })}
       
     </div>
