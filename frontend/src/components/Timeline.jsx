@@ -404,8 +404,8 @@ const Timeline = () => {
   const handleTrackPositionChange = useCallback((trackId, clipId, newStartTime) => {
     let finalStartTime = Math.max(0, newStartTime);
 
-    // Apply grid snapping if magnet is enabled
-    if (isMagnetEnabled && selectedGrid) {
+    // Apply grid snapping if magnet is enabled and not playing
+    if (isMagnetEnabled && selectedGrid && !isPlaying) {
       const { snapToGrid } = require("../Utils/gridUtils");
       finalStartTime = snapToGrid(finalStartTime, selectedGrid, audioDuration);
     }
@@ -443,7 +443,7 @@ const Timeline = () => {
     let validatedTrimStart = Math.max(0, Math.min(trimStart, clip.duration));
     let validatedTrimEnd = Math.max(validatedTrimStart, Math.min(trimEnd, clip.duration));
 
-    if (isMagnetEnabled && selectedGrid) {
+    if (isMagnetEnabled && selectedGrid && !isPlaying) {
       const { snapToGrid } = require("../Utils/gridUtils");
       validatedTrimStart = snapToGrid(validatedTrimStart, selectedGrid, clip.duration);
       validatedTrimEnd = snapToGrid(validatedTrimEnd, selectedGrid, clip.duration);
@@ -459,8 +459,8 @@ const Timeline = () => {
     if (newStartTime !== undefined) {
       let finalStartTime = Math.max(0, newStartTime);
 
-      // Apply grid snapping if magnet is enabled
-      if (isMagnetEnabled && selectedGrid) {
+      // Apply grid snapping if magnet is enabled and not playing
+      if (isMagnetEnabled && selectedGrid && !isPlaying) {
         const { snapToGrid } = require("../Utils/gridUtils");
         finalStartTime = snapToGrid(finalStartTime, selectedGrid, audioDuration);
       }
@@ -488,8 +488,8 @@ const Timeline = () => {
           if (newStartTime !== undefined) {
             let finalStartTime = Math.max(0, newStartTime);
 
-            // Apply grid snapping if magnet is enabled
-            if (isMagnetEnabled && selectedGrid) {
+            // Apply grid snapping if magnet is enabled and not playing
+            if (isMagnetEnabled && selectedGrid && !isPlaying) {
               const { snapToGrid } = require("../Utils/gridUtils");
               finalStartTime = snapToGrid(finalStartTime, selectedGrid, audioDuration);
             }
@@ -704,9 +704,9 @@ const Timeline = () => {
     let rawTime = (x / width) * duration;
     rawTime = Math.max(0, Math.min(duration, rawTime));
 
-    // Apply grid snapping if magnet is enabled
+    // Apply grid snapping if magnet is enabled and not playing
     let finalTime = rawTime;
-    if (isMagnetEnabled && selectedGrid) {
+    if (isMagnetEnabled && selectedGrid && !isPlaying) {
       const { snapToGrid } = require("../Utils/gridUtils");
       finalTime = snapToGrid(rawTime, selectedGrid, duration);
     }
@@ -1360,8 +1360,8 @@ const Timeline = () => {
         let dropTime = (x / width) * duration;
         let finalDropTime = Math.max(0, Math.min(duration, dropTime));
 
-        // Apply grid snapping if magnet is enabled
-        if (isMagnetEnabled && selectedGrid) {
+        // Apply grid snapping if magnet is enabled and not playing
+        if (isMagnetEnabled && selectedGrid && !isPlaying) {
           const { snapToGrid } = require("../Utils/gridUtils");
           finalDropTime = snapToGrid(finalDropTime, selectedGrid, duration);
         }
@@ -1863,8 +1863,8 @@ const Timeline = () => {
   const playheadPosition = useMemo(() => {
     let time = localCurrentTime;
 
-    // Apply magnet snapping if enabled
-    if (isMagnetEnabled && selectedGrid) {
+    // Apply magnet snapping if enabled and not playing
+    if (isMagnetEnabled && selectedGrid && !isPlaying) {
       const { snapToGrid } = require("../Utils/gridUtils");
       time = snapToGrid(time, selectedGrid, audioDuration);
     }
@@ -2542,7 +2542,7 @@ const Timeline = () => {
               zIndex: 26,
               transform: `translateX(${playheadPosition}px)`,
               willChange: "transform",
-              transition: isMagnetEnabled ? "none" : "transform 0.05s linear" // Smoother linear transition
+              transition: (isMagnetEnabled && isDragging.current) ? "none" : "transform 0.05s linear" // Only disable during mouse drag with magnet
             }}>
               <div style={{
                 position: "absolute",
