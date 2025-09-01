@@ -1679,21 +1679,148 @@ const TimelineTrack = ({
       {track.audioClips && track.audioClips.map((clip) => {
         const isBeatClip = clip.drumSequence && clip.drumSequence.length > 0;
         if (isBeatClip) {
+          // Render drum clips directly in TimelineTrack
+          const clipDuration = (clip.trimEnd || clip.duration) - (clip.trimStart || 0);
+          const startTime = clip.startTime || 0;
+          const visibleWidth = Math.round((clipDuration > 0 ? clipDuration : 1) * timelineWidthPerSecond * 100) / 100;
+          const rndX = Math.round(startTime * timelineWidthPerSecond * 100) / 100;
+
+          // Group drum hits by pad ID
+          const hitsByPad = {};
+          (clip.drumSequence || []).forEach(hit => {
+            const padId = hit.padId || 'unknown';
+            if (!hitsByPad[padId]) {
+              hitsByPad[padId] = [];
+            }
+            hitsByPad[padId].push(hit);
+          });
+
+          // Get drum types in preferred order
+          const PAD_ORDER = ['Q', 'W', 'E', 'A', 'S', 'D', 'Z', 'X', 'C'];
+          const orderedPadIds = Object.keys(hitsByPad).sort((a, b) => {
+            const ia = PAD_ORDER.indexOf(a);
+            const ib = PAD_ORDER.indexOf(b);
+            const na = ia === -1 ? Number.MAX_SAFE_INTEGER : ia;
+            const nb = ib === -1 ? Number.MAX_SAFE_INTEGER : ib;
+            if (na !== nb) return na - nb;
+            return a.localeCompare(b);
+          });
+
+          const rowHeight = Math.max(2, Math.floor(height / orderedPadIds.length));
+          const rowSpacing = 1;
+
           return (
-            <BeatClip
+            <Rnd
               key={clip.id}
-              clip={clip}
-              height={height}
-              trackId={trackId}
-              onPositionChange={onPositionChange}
-              timelineWidthPerSecond={timelineWidthPerSecond}
-              gridSpacing={gridSpacing}
-              onContextMenu={onContextMenu}
-              onSelect={onSelect}
-              isSelected={selectedClipId === clip.id}
-              color={color}
-              bpm={bpm}
-            />
+              size={{
+                width: visibleWidth,
+                height: height,
+              }}
+              position={{
+                x: rndX,
+                y: 0,
+              }}
+              onDragStop={(e, d) => {
+                const rawStartTime = Math.max(0, d.x / timelineWidthPerSecond);
+                const snapToGrid = (time) => {
+                  if (!gridSpacing || gridSpacing <= 0) return time;
+                  const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
+                  return Math.max(0, gridPosition);
+                };
+                const snappedStartTime = snapToGrid(rawStartTime);
+                if (onPositionChange) {
+                  onPositionChange(clip.id, snappedStartTime);
+                }
+              }}
+              enableResizing={false}
+              dragAxis="x"
+              bounds="parent"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect && onSelect(clip);
+              }}
+              onContextMenu={(e) => onContextMenu && onContextMenu(e, trackId, clip.id)}
+              style={{
+                background: color || 'rgba(50, 50, 50, 0.5)',
+                borderRadius: '8px',
+                border: selectedClipId === clip.id ? "2px solid #AD00FF" : "1px solid rgba(255,255,255,0.1)",
+                boxShadow: selectedClipId === clip.id ? "0 4px 20px rgba(173,0,255,0.3)" : "none",
+                overflow: 'hidden',
+                zIndex: 10,
+                position: 'relative',
+                boxSizing: 'border-box',
+              }}
+            >
+              {/* Drum clip content */}
+              <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
+                {orderedPadIds.map((padId, rowIndex) => {
+                  const hits = hitsByPad[padId];
+                  const firstHit = hits[0];
+                  const topY = rowIndex * (rowHeight + rowSpacing);
+
+                  return (
+                    <div key={padId} style={{ 
+                      display: 'flex', 
+                      flex: 1,
+                      position: 'relative',
+                      borderBottom: rowIndex < orderedPadIds.length - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none'
+                    }}>
+                      {/* Drum type label */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          left: '-60px',
+                          top: '0px',
+                          width: '55px',
+                          height: '100%',
+                          color: '#FFFFFF',
+                          fontSize: '10px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'flex-end',
+                          paddingRight: '5px',
+                          pointerEvents: 'none',
+                          zIndex: 21,
+                          fontFamily: 'monospace',
+                          opacity: 0.8
+                        }}
+                        title={`${firstHit?.sound || 'Drum'} (${padId})`}
+                      >
+                        {firstHit?.sound ? firstHit.sound.charAt(0).toUpperCase() + firstHit.sound.slice(1) : padId}
+                      </div>
+
+                      {/* Drum hits visualization */}
+                      {hits.map((drumHit, hitIndex) => {
+                        const hitStartTime = drumHit.currentTime || 0;
+                        const hitEndTime = hitStartTime + (drumHit.decay || 0.2);
+                        const leftX = (hitStartTime - startTime) * timelineWidthPerSecond;
+
+                        return (
+                          <div
+                            key={`${padId}-${hitIndex}`}
+                            style={{
+                              position: 'absolute',
+                              left: `${leftX}px`,
+                              top: '0px',
+                              width: '5px',
+                              height: '100%',
+                              background: '#FFFFFF',
+                              borderRadius: '1px',
+                              opacity: 0.95,
+                              zIndex: 20,
+                              pointerEvents: 'none',
+                              boxShadow: '0 0 2px rgba(255,255,255,0.9)',
+                              transform: 'translateZ(0)'
+                            }}
+                            title={`${drumHit.sound || 'Drum'} (${padId}) - ${drumHit.drumMachine || 'Unknown'} - ${hitStartTime.toFixed(2)}s`}
+                          />
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            </Rnd>
           );
         }
         // return (
