@@ -8,6 +8,7 @@ import * as d3 from 'd3';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectGridSettings } from '../Redux/Slice/grid.slice';
 import { setPlaying, setCurrentTime as setStudioCurrentTime, setPianoNotes, setPianoRecordingClip, setRecordingAudio } from '../Redux/Slice/studio.slice';
+import { selectStudioState } from '../Redux/rootReducer';
 import { getGridDivisions, parseTimeSignature, getGridSpacingWithTimeSignature } from '../Utils/gridUtils';
 import { getAudioContext, ensureAudioUnlocked } from '../Utils/audioContext';
 import { drumMachineTypes, createSynthSound } from '../Utils/drumMachineUtils';
@@ -52,28 +53,28 @@ const PianoRolls = () => {
     const timelineWidthPerSecond = baseTimelineWidthPerSecond * zoomLevel; // Apply zoom level
     
     // Sync time and play state with Redux studio slice
-    const studioIsPlaying = useSelector((state) => state.studio?.isPlaying || false);
-    const studioCurrentTime = useSelector((state) => state.studio?.currentTime || 0);
-    const studioBpm = useSelector((state) => state.studio?.bpm ?? 120);
+    const studioIsPlaying = useSelector((state) => selectStudioState(state)?.isPlaying || false);
+    const studioCurrentTime = useSelector((state) => selectStudioState(state)?.currentTime || 0);
+    const studioBpm = useSelector((state) => selectStudioState(state)?.bpm ?? 120);
     const [scrollLeft, setScrollLeft] = useState(0); // Horizontal scroll position
     const [isManualScrolling, setIsManualScrolling] = useState(false); // Track manual scrolling
 
-    const pianoRecording = useSelector((state) => state.studio.pianoRecord);
-    const pianoNotes = useSelector((state) => state.studio.pianoNotes || []);
-    const pianoRecordingClip = useSelector((state) => state.studio.pianoRecordingClip);
+    const pianoRecording = useSelector((state) => selectStudioState(state).pianoRecord);
+    const pianoNotes = useSelector((state) => selectStudioState(state).pianoNotes || []);
+    const pianoRecordingClip = useSelector((state) => selectStudioState(state).pianoRecordingClip);
     // console.log('pianoRecording ::: > ', pianoRecording)
 
     const baseWidth = 1000;  // Increased base width for more content
     const height = 600;
     const rowHeight = 30;
     // Match Timeline.jsx: use Redux audioDuration so ruler length stays in sync
-    const audioDuration = useSelector((state) => state.studio?.audioDuration || 150);
+    const audioDuration = useSelector((state) => selectStudioState(state)?.audioDuration || 150);
     const PIANO_KEYS_WIDTH = 96;
 
     // get data from redux
-    const track = useSelector((state)=>state.studio.tracks)
-    const tracks = useSelector((state)=>state.studio.tracks || [])
-    const currentTrackId = useSelector((state)=>state.studio.currentTrackId)
+    const track = useSelector((state)=>selectStudioState(state).tracks)
+    const tracks = useSelector((state)=>selectStudioState(state).tracks || [])
+    const currentTrackId = useSelector((state)=>selectStudioState(state).currentTrackId)
     const selectedTrack = useMemo(()=>tracks.find(t=>t.id===currentTrackId),[tracks,currentTrackId])
     // console.log('track',audio);
     // Get grid settings from Redux

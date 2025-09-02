@@ -10,8 +10,9 @@ import { ReactComponent as Track8 } from '../Images/track8.svg'
 import { ReactComponent as ImpIcon } from '../Images/import.svg'
 import { ReactComponent as Loop } from '../Images/loop.svg'
 import { useDispatch } from "react-redux";
-import { addTrack, setCurrentTrackId, setTrackType } from "../Redux/Slice/studio.slice";
+import { addTrack, setCurrentTrackId, setTrackType, createTrackWithDefaults } from "../Redux/Slice/studio.slice";
 import { getNextTrackColor } from "../Utils/colorUtils";
+import { selectStudioState } from "../Redux/rootReducer";
 
 const instrumentOptions = [
   {
@@ -71,10 +72,11 @@ const AddNewTrackModel = ({ onClose }) => {
       name: option.label,
       iconKey: option.icon,
       height: trackHeight,
+      type: option.label,
     };
-    dispatch(addTrack(newTrack));
-    dispatch(setTrackType(option.label));
-    dispatch(setCurrentTrackId(newTrack.id));
+    
+    // Use the grouped action creator for better undo/redo
+    dispatch(createTrackWithDefaults(newTrack));
     onClose();
   };
 
@@ -120,9 +122,11 @@ const AddNewTrackModel = ({ onClose }) => {
         color: trackColor,
         volume: 80,
         audioClips: [newClip],
+        type: 'audio',
       };
 
-      dispatch(addTrack(newTrack));
+      // Use the grouped action creator for better undo/redo
+      dispatch(createTrackWithDefaults(newTrack));
     } catch (err) {
       // Failed to import audio file
     } finally {

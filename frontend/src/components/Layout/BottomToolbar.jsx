@@ -31,6 +31,7 @@ import {
     setMetronomeSound
 } from '../../Redux/Slice/studio.slice';
 import { zoomIn, zoomOut, selectGridSettings, resetZoom } from '../../Redux/Slice/grid.slice';
+import { selectStudioState } from '../../Redux/rootReducer';
 
 const BottomToolbar = () => {
     const [volume1, setVolume1] = useState(50);
@@ -57,20 +58,20 @@ const BottomToolbar = () => {
     const dispatch = useDispatch();
 
     // Get play/pause state from Redux
-    const isPlaying = useSelector((state) => state.studio?.isPlaying || false);
-    const currentTime = useSelector((state) => state.studio?.currentTime || 0);
-    const audioDuration = useSelector((state) => state.studio?.audioDuration || 150);
-    const masterVolume = useSelector((state) => state.studio?.masterVolume || 80);
-    const bpm = useSelector(state => state.studio.bpm);
-    const tracks = useSelector((state) => state.studio?.tracks || []);
-    const isRecording = useSelector((state) => state.studio?.isRecording || false);
-    const recordedData = useSelector((state) => state.studio?.recordedData || []);
-    const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
-    const pianoRecord = useSelector((state) => state.studio?.pianoRecord || []);
+    const isPlaying = useSelector((state) => selectStudioState(state)?.isPlaying || false);
+    const currentTime = useSelector((state) => selectStudioState(state)?.currentTime || 0);
+    const audioDuration = useSelector((state) => selectStudioState(state)?.audioDuration || 150);
+    const masterVolume = useSelector((state) => selectStudioState(state)?.masterVolume || 80);
+    const bpm = useSelector(state => selectStudioState(state).bpm);
+    const tracks = useSelector((state) => selectStudioState(state)?.tracks || []);
+    const isRecording = useSelector((state) => selectStudioState(state)?.isRecording || false);
+    const recordedData = useSelector((state) => selectStudioState(state)?.recordedData || []);
+    const drumRecordedData = useSelector((state) => selectStudioState(state)?.drumRecordedData || []);
+    const pianoRecord = useSelector((state) => selectStudioState(state)?.pianoRecord || []);
 
     // Get key and scale selection from Redux
-    const reduxSelectedKey = useSelector((state) => state.studio?.selectedKey || null);
-    const reduxSelectedScale = useSelector((state) => state.studio?.selectedScale || null);
+    const reduxSelectedKey = useSelector((state) => selectStudioState(state)?.selectedKey || null);
+    const reduxSelectedScale = useSelector((state) => selectStudioState(state)?.selectedScale || null);
 
     const { selectedGrid, zoomLevel } = useSelector(selectGridSettings);
     // BottomToolbar.jsx – add this small helper near your handlers

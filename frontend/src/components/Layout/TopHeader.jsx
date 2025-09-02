@@ -43,11 +43,34 @@ import { setIsSongSection } from '../../Redux/Slice/ui.slice';
 import { setSoundQuality } from '../../Redux/Slice/audioSettings.slice';
 import audioQualityManager from '../../Utils/audioQualityManager';
 import ExportPopup from '../ExportProjectModel';
+import { useUndoRedo } from '../../hooks/useUndoRedo';
 
 const TopHeader = () => {
     const dispatch = useDispatch();
     const isSongSection = useSelector((state) => state.ui.isSongSection);
     const currentSoundQuality = useSelector((state) => state.audioSettings?.soundQuality || 'High');
+
+    // Undo/Redo functionality
+    const { undo: originalUndo, redo: originalRedo, canUndo, canRedo, historyLength, futureLength } = useUndoRedo();
+
+    // Enhanced undo/redo with toast notifications
+    const handleUndo = () => {
+        if (canUndo) {
+            originalUndo();
+            setToastMessage('Undo');
+            setShowUndoRedoToast(true);
+            setTimeout(() => setShowUndoRedoToast(false), 2000);
+        }
+    };
+
+    const handleRedo = () => {
+        if (canRedo) {
+            originalRedo();
+            setToastMessage('Redo');
+            setShowUndoRedoToast(true);
+            setTimeout(() => setShowUndoRedoToast(false), 2000);
+        }
+    };
 
     const [isActiveMenu, setIsActiveMenu] = useState("");
     const [isLowLatency, setIsLowLatency] = useState(false);
@@ -55,6 +78,8 @@ const TopHeader = () => {
     const [lowlatencyomodal, setLowLatencyModel] = useState(false);
     const [midikeyboardmodal, setMidiKeyboardModel] = useState(false);
     const [exportProjectModal, setExportProjectModal] = useState(false);
+    const [showUndoRedoToast, setShowUndoRedoToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
 
     // Add state for selected sound quality
     const [selectedSoundQuality, setSelectedSoundQuality] = useState('High');
@@ -67,24 +92,47 @@ const TopHeader = () => {
         { id: 'extralow', label: 'Extra Low' }
     ];
 
+    // Keyboard shortcuts for undo/redo
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            // Ignore shortcuts while typing into inputs/textareas/contenteditable
+            const target = e.target;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+                return;
+            }
+
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 'z' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (canUndo) handleUndo();
+                } else if ((e.key === 'y') || (e.key === 'z' && e.shiftKey)) {
+                    e.preventDefault();
+                    if (canRedo) handleRedo();
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handleUndo, handleRedo, canUndo, canRedo]);
     // Update the sound quality handler
     const handleSoundQualitySelect = async (qualityId, qualityLabel) => {
         setSelectedSoundQuality(qualityLabel);
-        
+
         try {
             // Use audio quality manager to change quality
             await audioQualityManager.changeQuality(qualityLabel);
-            
+
             // Update Redux state
             dispatch(setSoundQuality(qualityLabel));
-            
+
             console.log(`Audio quality changed to ${qualityLabel}`);
         } catch (error) {
             console.error('Failed to change audio quality:', error);
             // Revert the UI state if audio context recreation failed
             setSelectedSoundQuality(currentSoundQuality);
         }
-        
+
         // Close all submenus
         setShowSubmenu(prev => ({
             ...prev,
@@ -477,7 +525,7 @@ const TopHeader = () => {
                                             </p>
                                             <div className='ms-auto '>
                                                 <label className="inline-flex cursor-pointer" onClick={e => e.stopPropagation()}>
-                                                    <input type="checkbox" className="sr-only peer" checked={isLowLatency2} onChange={() => setIsLowLatency2(prev => !prev)}/>
+                                                    <input type="checkbox" className="sr-only peer" checked={isLowLatency2} onChange={() => setIsLowLatency2(prev => !prev)} />
                                                     <div className="relative w-8 md600:w-9 h-4 bg-gray-400 peer-focus:outline-none rounded-full peer dark:bg-[#353535] peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-[#357935] peer-checked:bg-[#357935] dark:peer-checked:bg-[#357935]"></div>
                                                 </label>
                                             </div>
@@ -544,7 +592,7 @@ const TopHeader = () => {
                                             <Songsections className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Song Sections</span>
                                             <div className='ms-auto '>
                                                 <label className="inline-flex cursor-pointer" onClick={e => e.stopPropagation()}>
-                                                    <input type="checkbox" className="sr-only peer" checked={isSongSection} onChange={() => dispatch(setIsSongSection(!isSongSection))}/>
+                                                    <input type="checkbox" className="sr-only peer" checked={isSongSection} onChange={() => dispatch(setIsSongSection(!isSongSection))} />
                                                     <div className="relative w-9 h-4 bg-gray-400 peer-focus:outline-none rounded-full peer dark:bg-[#353535] peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-[#357935] peer-checked:bg-[#357935] dark:peer-checked:bg-[#357935]"></div>
                                                 </label>
                                             </div>
@@ -616,8 +664,38 @@ const TopHeader = () => {
                         </Menu.Items>
                     </Menu >
 
-                    <PiArrowBendUpLeftBold className="text-[#5a5a5a] md:text-[16px] lg:text-[20px] xl:text-[26px] hidden md600:block" />
-                    <PiArrowBendUpRightBold className="text-[#5a5a5a] md:text-[16px] lg:text-[20px] xl:text-[26px] hidden md600:block" />
+                    <button
+                        onClick={handleUndo}
+                        disabled={!canUndo}
+                        className={`transition-all duration-200 hidden md600:block relative ${canUndo
+                                ? 'text-[#5a5a5a] hover:text-[#ffffff] cursor-pointer'
+                                : 'text-[#2a2a2a] cursor-not-allowed'
+                            }`}
+                        title={canUndo ? `Undo (Ctrl+Z) - ${historyLength} steps available` : 'Nothing to undo'}
+                    >
+                        <PiArrowBendUpLeftBold className="md:text-[16px] lg:text-[20px] xl:text-[26px]" />
+                        {canUndo && historyLength > 0 && (
+                            <span className="absolute -top-2 -right-2 bg-[#AD00FF] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                {historyLength > 9 ? '9+' : historyLength}
+                            </span>
+                        )}
+                    </button>
+                    <button
+                        onClick={handleRedo}
+                        disabled={!canRedo}
+                        className={`transition-all duration-200 hidden md600:block relative ${canRedo
+                                ? 'text-[#5a5a5a] hover:text-[#ffffff] cursor-pointer'
+                                : 'text-[#2a2a2a] cursor-not-allowed'
+                            }`}
+                        title={canRedo ? `Redo (Ctrl+Y) - ${futureLength} steps available` : 'Nothing to redo'}
+                    >
+                        <PiArrowBendUpRightBold className="md:text-[16px] lg:text-[20px] xl:text-[26px]" />
+                        {canRedo && futureLength > 0 && (
+                            <span className="absolute -top-2 -right-2 bg-[#AD00FF] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                {futureLength > 9 ? '9+' : futureLength}
+                            </span>
+                        )}
+                    </button>
                 </div >
 
                 <div className="flex gap-2 md:gap-3 lg:gap-5 xl:gap-7 items-center">
@@ -631,7 +709,7 @@ const TopHeader = () => {
                 <div className="flex gap-2 md:gap-3 lg:gap-5 xl:gap-7">
                     <button onClick={toggleTheme} className="relative w-[60px] h-[30px] rounded-full p-1 transition-colors duration-300 outline-none focus:outline-none d_customborder hidden md:block">
                         {/* Background slider */}
-                        <div className={`absolute top-0 left-0 w-[26px] h-[28px] bg-[#1F1F1F] rounded-full transition-transform duration-300 ${isDark ? 'translate-x-8' : 'translate-x-0'}`}/>
+                        <div className={`absolute top-0 left-0 w-[26px] h-[28px] bg-[#1F1F1F] rounded-full transition-transform duration-300 ${isDark ? 'translate-x-8' : 'translate-x-0'}`} />
 
                         {/* Sun icon */}
                         <div className={`absolute top-0 left-0 w-[26px] h-[28px] flex items-center justify-center transition-opacity duration-300 ${isDark ? 'opacity-100' : 'opacity-50'}`}>
@@ -658,7 +736,7 @@ const TopHeader = () => {
                         <IoIosShareAlt className="text-secondary-dark dark:text-secondary-light xl:text-[18px]" />
                         <p className="text-secondary-dark dark:text-secondary-light text-[12px] hidden md:block">Share</p>
                     </div>
-                                
+
                     <Link to='/project' className="text-center hidden xl:block">
                         <RxExit className='text-secondary-light dark:text-secondary-dark xl:text-[14px]' />
                         <p className="text-secondary-light dark:text-secondary-dark text-[10px]">Exit</p>
@@ -732,6 +810,32 @@ const TopHeader = () => {
                     </div>
                 </div>
             </Dialog>
+
+            {/* Undo/Redo Toast Notification */}
+            {showUndoRedoToast && (
+                <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-[#1F1F1F] border border-[#444] rounded-lg px-4 py-3 shadow-lg animate-fade-in">
+                    <div className="text-white text-center">
+                        <div className="text-sm opacity-80">{toastMessage}</div>
+                        <div className="text-xs opacity-60 mt-1">Action completed</div>
+                    </div>
+                </div>
+            )}
+
+            <style jsx>{`
+                @keyframes fade-in {
+                    from {
+                        opacity: 0;
+                        transform: translate(-50%, -10px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translate(-50%, 0);
+                    }
+                }
+                .animate-fade-in {
+                    animation: fade-in 0.3s ease-out;
+                }
+            `}</style>
         </>
     )
 }

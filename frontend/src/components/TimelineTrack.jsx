@@ -4,6 +4,7 @@ import { Rnd } from "react-rnd";
 import reverceIcon from "../Images/reverce.svg";
 import { useSelector, useDispatch } from 'react-redux';
 import { setPianoNotes, setPianoRecordingClip, setDrumRecordedData, setDrumRecordingClip } from '../Redux/Slice/studio.slice';
+import { selectStudioState } from '../Redux/rootReducer';
 import { drumMachineTypes } from '../Utils/drumMachineUtils';
 
 // Custom Resizable Trim Handle Component
@@ -752,18 +753,18 @@ const TimelineTrack = ({
 }) => {
   const dispatch = useDispatch();
   // Get piano notes from Redux
-  const pianoNotes = useSelector((state) => state.studio.pianoNotes);
-  const pianoRecordingClip = useSelector((state) => state.studio.pianoRecordingClip);
-  const bpm = useSelector((state) => state.studio.bpm || 120);
+  const pianoNotes = useSelector((state) => selectStudioState(state).pianoNotes);
+  const pianoRecordingClip = useSelector((state) => selectStudioState(state).pianoRecordingClip);
+  const bpm = useSelector((state) => selectStudioState(state).bpm || 120);
 
   // Get drum recording data from Redux
-  const drumRecordedData = useSelector((state) => state.studio.drumRecordedData);
-  const drumRecordingClip = useSelector((state) => state.studio.drumRecordingClip);
+  const drumRecordedData = useSelector((state) => selectStudioState(state).drumRecordedData);
+  const drumRecordingClip = useSelector((state) => selectStudioState(state).drumRecordingClip);
 
   // console.log("==================data==================", drumRecordedData);
   // console.log("==================clip==================", drumRecordingClip);
 
-  const currentTrackId = useSelector((state) => state.studio.currentTrackId);
+  const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
   const typeName = (track?.type || '').toString().toLowerCase();
   const displayName = (track?.name || '').toString().toLowerCase();
   const isPianoTrack = typeName === 'keys' || displayName === 'keys' || displayName.includes('piano') || displayName.includes('key');

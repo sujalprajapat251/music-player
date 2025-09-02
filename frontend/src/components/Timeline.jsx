@@ -4,6 +4,7 @@ import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
 import Soundfont from 'soundfont-player';
 import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio, setCurrentTrackId, setTrackType, triggerPatternDrumPlayback } from "../Redux/Slice/studio.slice";
+import { selectStudioState } from "../Redux/rootReducer";
 import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM, zoomIn, zoomOut, resetZoom } from "../Redux/Slice/grid.slice";
 import { setAudioDuration as setLoopAudioDuration, toggleLoopEnabled, setLoopEnd, setLoopRange, selectIsLoopEnabled } from "../Redux/Slice/loop.slice";
 import { getGridSpacing, getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
@@ -84,17 +85,17 @@ const Timeline = () => {
   const activePianoNotesRef = useRef(new Set());
 
   const { zoomLevel } = useSelector(selectGridSettings);
-  const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
-  const pianoNotes = useSelector((state) => state.studio.pianoNotes || []);
-  const pianoRecordingClip = useSelector((state) => state.studio.pianoRecordingClip || null);
-  const drumRecordingClip = useSelector((state) => state.studio.drumRecordingClip || null);
-  const patternDrumPlayback = useSelector((state) => state.studio?.patternDrumPlayback || {});
-  const patternDrumEvents = useSelector((state) => state.studio?.patternDrumEvents || {});
+  const drumRecordedData = useSelector((state) => selectStudioState(state)?.drumRecordedData || []);
+  const pianoNotes = useSelector((state) => selectStudioState(state).pianoNotes || []);
+  const pianoRecordingClip = useSelector((state) => selectStudioState(state).pianoRecordingClip || null);
+  const drumRecordingClip = useSelector((state) => selectStudioState(state).drumRecordingClip || null);
+  const patternDrumPlayback = useSelector((state) => selectStudioState(state)?.patternDrumPlayback || {});
+  const patternDrumEvents = useSelector((state) => selectStudioState(state)?.patternDrumEvents || {});
   // console.log("FFFFFFFFFFFFFFFFFF",drumRecordedData)
 
-  const isPlaying = useSelector((state) => state.studio?.isPlaying || false);
-  const currentTime = useSelector((state) => state.studio?.currentTime || 0);
-  const audioDuration = useSelector((state) => state.studio?.audioDuration || 150);
+  const isPlaying = useSelector((state) => selectStudioState(state)?.isPlaying || false);
+  const currentTime = useSelector((state) => selectStudioState(state)?.currentTime || 0);
+  const audioDuration = useSelector((state) => selectStudioState(state)?.audioDuration || 150);
 
   const audioSettings = useSelector((state) => state.audioSettings);
 
@@ -224,13 +225,13 @@ const Timeline = () => {
     sectionId: null
   });
 
-  const tracks = useSelector((state) => state.studio?.tracks || []);
-  const trackHeight = useSelector((state) => state.studio?.trackHeight || 100);
-  const recordedData = useSelector((state) => state.studio?.recordedData || []);
-  const isRecording = useSelector((state) => state.studio?.isRecording || false);
+  const tracks = useSelector((state) => selectStudioState(state)?.tracks || []);
+  const trackHeight = useSelector((state) => selectStudioState(state)?.trackHeight || 100);
+  const recordedData = useSelector((state) => selectStudioState(state)?.recordedData || []);
+  const isRecording = useSelector((state) => selectStudioState(state)?.isRecording || false);
 
-  const sidebarScrollOffset = useSelector((state) => state.studio?.sidebarScrollOffset || 0);
-  const soloTrackId = useSelector((state) => state.studio.soloTrackId);
+  const sidebarScrollOffset = useSelector((state) => selectStudioState(state)?.sidebarScrollOffset || 0);
+  const soloTrackId = useSelector((state) => selectStudioState(state).soloTrackId);
 
   // Use custom hook for section labels management
   const { sectionLabels, resizeSection } = useSectionLabels();
@@ -279,9 +280,9 @@ const Timeline = () => {
   const { loopStart, loopEnd, isLoopEnabled } = useSelector((state) => state.loop);
 
   // Add masterVolume selector after other selectors
-  const masterVolume = useSelector((state) => state.studio?.masterVolume ?? 80);
+  const masterVolume = useSelector((state) => selectStudioState(state)?.masterVolume ?? 80);
 
-  const bpm = useSelector((state) => state.studio?.bpm ?? 120);
+  const bpm = useSelector((state) => selectStudioState(state)?.bpm ?? 120);
 
   // UI state selector for MySection visibility
   const isSongSection = useSelector((state) => state.ui?.isSongSection ?? false);
@@ -293,8 +294,8 @@ const Timeline = () => {
     return bpm / ORIGINAL_BPM;
   }, [bpm]);
 
-  const pianoRecording = useSelector((state) => state.studio.pianoRecord);
-  const currentTrackId = useSelector((state) => state.studio.currentTrackId);
+  const pianoRecording = useSelector((state) => selectStudioState(state).pianoRecord);
+  const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
   const lastProcessedRef = useRef(null);
 
   function generateRandomHexColor() {
@@ -347,7 +348,7 @@ const Timeline = () => {
     return audioBuffer.duration;
   };
 
-  const getTrackType = useSelector((state) => state.studio.newtrackType);
+  const getTrackType = useSelector((state) => selectStudioState(state).newtrackType);
 
 
   // Mute functionality

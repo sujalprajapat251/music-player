@@ -7,11 +7,12 @@ import {
   resizeSectionLabel, 
   moveSectionLabel 
 } from '../Redux/Slice/studio.slice';
+import { selectStudioState } from '../Redux/rootReducer';
 
 export const useSectionLabels = () => {
   const dispatch = useDispatch();
-  const sectionLabels = useSelector((state) => state.studio?.sectionLabels || []);
-  const audioDuration = useSelector((state) => state.studio?.audioDuration || 150);
+  const sectionLabels = useSelector((state) => selectStudioState(state)?.sectionLabels || []);
+  const audioDuration = useSelector((state) => selectStudioState(state)?.audioDuration || 150);
 
   const createSection = useCallback((sectionData = {}) => {
     const newSection = {
