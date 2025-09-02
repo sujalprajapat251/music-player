@@ -56,6 +56,7 @@ const PianoRolls = () => {
     const studioCurrentTime = useSelector((state) => state.studio?.currentTime || 0);
     const studioBpm = useSelector((state) => state.studio?.bpm ?? 120);
     const [scrollLeft, setScrollLeft] = useState(0); // Horizontal scroll position
+    const [isManualScrolling, setIsManualScrolling] = useState(false); // Track manual scrolling
 
     const pianoRecording = useSelector((state) => state.studio.pianoRecord);
     const pianoNotes = useSelector((state) => state.studio.pianoNotes || []);
@@ -65,7 +66,9 @@ const PianoRolls = () => {
     const baseWidth = 1000;  // Increased base width for more content
     const height = 600;
     const rowHeight = 30;
-    const audioDuration = 1 * 60; // Default duration in seconds
+    // Match Timeline.jsx: use Redux audioDuration so ruler length stays in sync
+    const audioDuration = useSelector((state) => state.studio?.audioDuration || 150);
+    const PIANO_KEYS_WIDTH = 96;
 
     // get data from redux
     const track = useSelector((state)=>state.studio.tracks)
@@ -140,19 +143,19 @@ const PianoRolls = () => {
             labelInterval = 1;
         }
     
-        // Draw the main ruler line
+        // Draw the main ruler line (offset by piano keys width)
         svg
             .append("line")
-            .attr("x1", 0)
+            .attr("x1", PIANO_KEYS_WIDTH)
             .attr("y1", axisY)
-            .attr("x2", width)
+            .attr("x2", width + PIANO_KEYS_WIDTH)
             .attr("y2", axisY)
             .attr("stroke", gridColor)
             .attr("stroke-width", 1);
         const addedLabels = new Set();
-        // Draw tick marks and labels
+        // Draw tick marks and labels (offset by piano keys width)
         for (let time = 0; time <= duration; time += gridSpacing) {
-            const x = xForTime(time);
+            const x = xForTime(time) + PIANO_KEYS_WIDTH;
       
             // Determine tick importance based on time signature
             const secondsPerBeat = 0.5; // Fixed at 120 BPM equivalent
@@ -221,14 +224,29 @@ const PianoRolls = () => {
       
               // Only add label if it hasn't been added before
               if (!addedLabels.has(label)) {
-                svg
+                // Add clickable area for the grid number
+                const textElement = svg
                   .append("text")
                   .attr("x", x + 4)
                   .attr("y", axisY - tickHeight - 5)
                   .attr("fill", "white")
                   .attr("font-size", 12)
                   .attr("text-anchor", "start")
+                  .attr("cursor", "pointer")
+                  .attr("class", "grid-number-label")
                   .text(label);
+                
+                // Add click event to the text element
+                textElement.on("click", function() {
+                  // Calculate the time position for this label
+                  const labelTime = time;
+                  
+                  // Move playhead to this position
+                  dispatch(setStudioCurrentTime(labelTime));
+                  try { Tone.Transport.seconds = labelTime; } catch {}
+                  setLocalPlayheadTime(labelTime);
+                });
+                
                 addedLabels.add(label);
               }
             }
@@ -237,6 +255,9 @@ const PianoRolls = () => {
 
     useEffect(() => {
         renderRuler();
+        // Ensure header starts aligned with grid on mount/update
+        const startLeft = wrapperRef.current?.scrollLeft || 0;
+        if (timelineContainerRef.current) timelineContainerRef.current.scrollLeft = startLeft;
     }, [renderRuler, audioDuration, selectedGrid, timelineWidthPerSecond]);
 
     const drawGrid = useCallback(() => {
@@ -335,9 +356,18 @@ const PianoRolls = () => {
         const scrollLeft = e.target.scrollLeft;
         setScrollLeft(scrollLeft);
 
-        // Sync timeline header scroll with grid scroll
-        if (timelineContainerRef.current) {
+        // Bidirectional sync: keep header and grid in lockstep
+        if (timelineContainerRef.current && e.target !== timelineContainerRef.current) {
             timelineContainerRef.current.scrollLeft = scrollLeft;
+        }
+        if (wrapperRef.current && e.target !== wrapperRef.current) {
+            wrapperRef.current.scrollLeft = scrollLeft;
+        }
+        
+        // Force re-render of playhead to update its position after scroll
+        // This ensures the playhead stays visually aligned with the timeline
+        if (playheadRef.current) {
+            playheadRef.current.style.transform = `translateX(${localPlayheadTime * timelineWidthPerSecond - scrollLeft}px)`;
         }
     };
 
@@ -455,7 +485,7 @@ const PianoRolls = () => {
         return (octave + 1) * 12 + idxBase;
     }, [noteNames]);
 
-    // --- Enhanced handleGridClick with real-time recording and customization ---
+    
     const handleGridClick = (e) => {
         if (menuVisible || selectedNoteIndex) return;
         if (pasteMenu) return;
@@ -785,10 +815,22 @@ const PianoRolls = () => {
             setLocalPlayheadTime(studioCurrentTime);
         }
     }, [studioIsPlaying, studioCurrentTime]);
+    
+    // Update playhead position whenever localPlayheadTime or scrollLeft changes
+    useEffect(() => {
+        if (playheadRef.current && timelineContainerRef.current) {
+            const scrollLeft = timelineContainerRef.current.scrollLeft || 0;
+            playheadRef.current.style.transform = `translateX(${localPlayheadTime * timelineWidthPerSecond - scrollLeft}px)`;
+        }
+    }, [localPlayheadTime, scrollLeft, timelineWidthPerSecond]);
     // Auto-scroll the grid to follow the playhead
     useEffect(() => {
         const wrapper = wrapperRef.current;
         if (!wrapper) return;
+        
+        // Only auto-scroll when playing, not when manually scrolled
+        if (!studioIsPlaying) return;
+        
         const px = localPlayheadTime * timelineWidthPerSecond;
         const viewportLeft = wrapper.scrollLeft;
         const viewportRight = viewportLeft + wrapper.clientWidth;
@@ -798,7 +840,7 @@ const PianoRolls = () => {
         } else if (px < viewportLeft + edgePadding) {
             wrapper.scrollLeft = Math.max(0, px - edgePadding);
         }
-    }, [localPlayheadTime, timelineWidthPerSecond]);
+    }, [localPlayheadTime, timelineWidthPerSecond, studioIsPlaying]);
 
     // Keep Tone.Transport position in sync with Redux time
     useEffect(() => {
@@ -1130,11 +1172,22 @@ const PianoRolls = () => {
                 {/* Timeline Header Container with Horizontal Scroll */}
                 <div
                     ref={timelineContainerRef}
-                    className="fixed  ms-[0px] left-0 right-  h-[80px] overflow-x-auto overflow-y-hidden z-[2]"
+                    className="fixed left-0 right-0 h-[80px] overflow-x-auto overflow-y-hidden z-[2]"
                     style={{ background: "#1F1F1F" }}
                     onClick={handleTimelineClick}
                     onMouseDown={onHeaderMouseDown}
                     onScroll={handleScroll}
+                    onWheel={(e) => {
+                        // Smooth horizontal scrolling on header (trackpads and mouse wheels)
+                        if (e.ctrlKey || e.metaKey) return; // let zoom handler handle this
+                        const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+                        if (delta) {
+                            e.preventDefault();
+                            const next = Math.max(0, (timelineContainerRef.current?.scrollLeft || 0) + delta);
+                            if (timelineContainerRef.current) timelineContainerRef.current.scrollLeft = next;
+                            if (wrapperRef.current) wrapperRef.current.scrollLeft = next;
+                        }
+                    }}
                 >
                     <div style={{
                         width: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`,
@@ -1144,14 +1197,12 @@ const PianoRolls = () => {
                         transition: "width 0.2s ease-in-out"
                     }}>
                         <svg
-                            className='ms-16'
                             ref={timelineHeaderRef}
                             width="100%"
                             height="100%"
                             style={{ 
                                 color: "white", 
                                 width: "100%", 
-                                marginLeft: '96px',
                                 transition: "width 0.2s ease-in-out"
                             }}
                         />
@@ -1164,15 +1215,29 @@ const PianoRolls = () => {
                     style={{
                         position: "fixed",
                         top: "110px",
-                        left: 0,
-                        marginLeft: '96px',
+                        left: `${PIANO_KEYS_WIDTH}px`,
                         height: "100%",
                         width: "2px",
                         background: "#AD00FF",
                         zIndex: 25,
-                        pointerEvents: "none",
-                        transform: `translateX(${localPlayheadTime * timelineWidthPerSecond}px)`,
+                        pointerEvents: "auto",
+                        cursor: "pointer",
+                        transform: `translateX(${localPlayheadTime * timelineWidthPerSecond - (timelineContainerRef.current?.scrollLeft || 0)}px)`,
                         willChange: "transform"
+                    }}
+                    onClick={(e) => {
+                        // Calculate the time position based on click location
+                        const rect = playheadRef.current.getBoundingClientRect();
+                        const x = e.clientX - rect.left + (timelineContainerRef.current?.scrollLeft || 0);
+                        const width = Math.max(audioDuration, 12) * timelineWidthPerSecond;
+                        const rawTime = (x / width) * audioDuration;
+                        const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
+                        const snappedTime = Math.max(0, Math.min(audioDuration, Math.round(rawTime / gridSpacing) * gridSpacing));
+                        
+                        // Dispatch the same action that Timeline uses
+                        dispatch(setStudioCurrentTime(snappedTime));
+                        try { Tone.Transport.seconds = snappedTime; } catch {}
+                        setLocalPlayheadTime(snappedTime);
                     }}
                 >
                     {/* Purple triangle at top */}
@@ -1192,7 +1257,7 @@ const PianoRolls = () => {
                 </div>
 
                 {/* Piano Keys Column */}
-                <div className="absolute left-0 top-[80px] w-24 h-[560px] bg-[#1a1a1a] border-r border-gray-700" style={{zIndex: 1}}>
+                <div className="absolute left-0 top-[80px] w-24 h-[560px] bg-[#1a1a1a] border-r border-gray-700" style={{zIndex: 3}}>
                     {NOTES.map((note) => (
                         <button
                             key={note}
@@ -1210,7 +1275,7 @@ const PianoRolls = () => {
                 <div
                     ref={wrapperRef}
                     className={`absolute left-24 top-[80px] right-0 ${selectedNoteIndex || pasteMenu ? 'overflow-hidden' : ' overflow-x-auto overflow-y-auto'}`}
-                    style={{ background: "#1e1e1e" }}
+                    style={{ background: "#1e1e1e", zIndex: 2 }}
                     onScroll={handleScroll}
                     onMouseDown={handleMouseDown}
                     onMouseUp={(e) => {
@@ -1219,6 +1284,23 @@ const PianoRolls = () => {
                         if (e.target.closest && e.target.closest('.note-box')) return;
                         handleMouseUp(e);
                     }}
+                                         onClick={(e) => {
+                         // Handle clicks on the grid background to move playhead
+                         if (e.target === wrapperRef.current || e.target.tagName === 'svg' || e.target.classList.contains('note-bg-div')) {
+                             const rect = wrapperRef.current.getBoundingClientRect();
+                             const x = e.clientX - rect.left + wrapperRef.current.scrollLeft;
+                             
+                             // Calculate time directly from x position without width scaling
+                             const rawTime = x / timelineWidthPerSecond;
+                             const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
+                             const snappedTime = Math.max(0, Math.min(audioDuration, Math.round(rawTime / gridSpacing) * gridSpacing));
+                             
+                             // Sync playhead with timeline
+                             dispatch(setStudioCurrentTime(snappedTime));
+                             try { Tone.Transport.seconds = snappedTime; } catch {}
+                             setLocalPlayheadTime(snappedTime);
+                         }
+                     }}
                     onContextMenu={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
