@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setDrumRecordedData, setDrumPlayback, setDrumPlaybackStartTime, addAudioClipToTrack, addTrack, setDrumRecordingClip } from '../Redux/Slice/studio.slice';
+import { selectStudioState } from '../Redux/rootReducer';
 import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
 import Pattern from '../components/Pattern';
 import {
@@ -87,7 +88,7 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
       setAngle(defaultAngle);
     }
   }, [defaultAngle]);
-  
+
   const radius = (size - stroke) / 2;
   const center = size / 2;
   const onMouseDown = (e) => {
@@ -193,17 +194,17 @@ const menu = [
   { id: '1/16 triplet', label: '1/16 triplet' },
 ];
 
-  const DrumPadMachine = ({ onClose }) => {
-    const [isIconDropdownOpen, setIsIconDropdownOpen] = useState(false);
-    const [isOpen2, setIsOpen2] = useState(false);
-    const menuDropdownRef = useRef(null);
-    const [selectedMenuitems, setSelectedMenuitems] = useState('Off');
-    const [isSavePresetDropdownOpen, setIsSavePresetDropdownOpen] = useState(false);
-    const [isDragOver, setIsDragOver] = useState(false);
-    const [isProcessingDrop, setIsProcessingDrop] = useState(false);
-    const [effectsSearchTerm, setEffectsSearchTerm] = useState('');
-    const [selectedEffectCategory, setSelectedEffectCategory] = useState(null);
-    const [audioUnlocked, setAudioUnlocked] = useState(false);
+const DrumPadMachine = ({ onClose }) => {
+  const [isIconDropdownOpen, setIsIconDropdownOpen] = useState(false);
+  const [isOpen2, setIsOpen2] = useState(false);
+  const menuDropdownRef = useRef(null);
+  const [selectedMenuitems, setSelectedMenuitems] = useState('Off');
+  const [isSavePresetDropdownOpen, setIsSavePresetDropdownOpen] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isProcessingDrop, setIsProcessingDrop] = useState(false);
+  const [effectsSearchTerm, setEffectsSearchTerm] = useState('');
+  const [selectedEffectCategory, setSelectedEffectCategory] = useState(null);
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
 
   const [currentType, setCurrentType] = useState(0);
   const [activePads, setActivePads] = useState(new Set());
@@ -222,14 +223,19 @@ const menu = [
   const reverbBufferRef = useRef(null);
   const lastPlayTime = useRef({});
   const dispatch = useDispatch();
-  const isRecording = useSelector((state) => state.studio?.isRecording || false);
-  const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
-  const currentTime = useSelector((state) => state.studio?.currentTime || 0);
-  const isPlayingDrumRecording = useSelector((state) => state.studio?.isPlayingDrumRecording || false);
-  const drumPlaybackStartTime = useSelector((state) => state.studio?.drumPlaybackStartTime || null);
-  const tracks = useSelector((state) => state.studio?.tracks || []);
-  const currentTrackId = useSelector((state) => state.studio?.currentTrackId || null);
-  const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas } = useSelector((state) => state.effects);
+  const isRecording = useSelector((state) => selectStudioState(state)?.isRecording || false);
+  const drumRecordedData = useSelector((state) => selectStudioState(state)?.drumRecordedData || []);
+  const currentTime = useSelector((state) => selectStudioState(state)?.currentTime || 0);
+  const isPlayingDrumRecording = useSelector((state) => selectStudioState(state)?.isPlayingDrumRecording || false);
+  const drumPlaybackStartTime = useSelector((state) => selectStudioState(state)?.drumPlaybackStartTime || null);
+  const tracks = useSelector((state) => selectStudioState(state)?.tracks || []);
+  const currentTrackId = useSelector((state) => selectStudioState(state)?.currentTrackId || null);
+  const {
+    activeEffects = [],
+    showEffectsLibrary,
+    effectsLibrary = [],
+    showEffectsOffcanvas
+  } = useSelector(state => state.effects && state.effects.present !== undefined ? state.effects.present : state.effects) || {};
   // console.log("activeEffects", activeEffects, "showEffectsLibrary", showEffectsLibrary,);
 
   const currentTypeData = drumMachineTypes[currentType];
@@ -242,7 +248,7 @@ const menu = [
     setIsOpen2(false)
   };
 
-  const selectedTrackId = useSelector((state) => state.studio?.currentTrackId);
+  const selectedTrackId = useSelector((state) => selectStudioState(state)?.currentTrackId);
   // const tracks = useSelector((state) => state.studio?.tracks);
   // const activeView = useSelector((state) => state.studio?.activeView);
 
@@ -251,12 +257,12 @@ const menu = [
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
     }
-    
+
     // Ensure audio context is resumed if suspended
     if (audioContextRef.current.state === 'suspended') {
       audioContextRef.current.resume().catch(console.error);
     }
-    
+
     return audioContextRef.current;
   }, []);
 
@@ -313,37 +319,38 @@ const menu = [
     }
 
     if (isRecording) {
-        const drumData = createDrumData(pad, selectedDrumMachine, timestamp || currentTime, currentTrackId);
-        
-        // Instead of replacing the entire array, append to existing data
-        // This allows multiple recording sessions to accumulate beats
-        const updatedData = [...drumRecordedData, drumData];
-        dispatch(setDrumRecordedData(updatedData));
-        
-        // Update drum recording clip bounds (similar to piano recording)
-        const notesForThisTrack = (updatedData || []).filter(n => n.trackId === (currentTrackId || null));
-        if (notesForThisTrack.length > 0) {
-            const minStart = Math.min(...notesForThisTrack.map(n => n.currentTime || 0));
-            const maxEnd = Math.max(...notesForThisTrack.map(n => (n.currentTime || 0) + (n.decay || 0.2)));
-            const trackColor = (tracks.find(t => t.id === currentTrackId)?.color) || selectedDrumMachine.color;
-            const drumClip = { 
-                start: minStart, 
-                end: maxEnd, 
-                color: trackColor, 
-                trackId: currentTrackId || null,
-                type: 'drum',
-                name: `Drum Recording (${notesForThisTrack.length} hits)`,
-                duration: maxEnd - minStart,
-                startTime: minStart,
-                trimStart: 0,
-                trimEnd: maxEnd - minStart,
-                id: `drum_recording_${Date.now()}`,
-                drumData: notesForThisTrack
-            };
-            dispatch(setDrumRecordingClip(drumClip));
-        }
+      const drumData = createDrumData(pad, selectedDrumMachine, timestamp || currentTime, currentTrackId);
+
+      // Instead of replacing the entire array, append to existing data
+      // This allows multiple recording sessions to accumulate beats
+      const updatedData = [...drumRecordedData, drumData];
+      dispatch(setDrumRecordedData(updatedData));
+
+      // Update drum recording clip bounds (similar to piano recording)
+      const notesForThisTrack = (updatedData || []).filter(n => n.trackId === (currentTrackId || null));
+      if (notesForThisTrack.length > 0) {
+        const minStart = Math.min(...notesForThisTrack.map(n => n.currentTime || 0));
+        const maxEnd = Math.max(...notesForThisTrack.map(n => (n.currentTime || 0) + (n.decay || 0.2)));
+        const trackColor = (tracks.find(t => t.id === currentTrackId)?.color) || selectedDrumMachine.color;
+        const drumClip = {
+          start: minStart,
+          end: maxEnd,
+          color: trackColor,
+          trackId: currentTrackId || null,
+          type: 'drum',
+          name: `Drum Recording (${notesForThisTrack.length} hits)`,
+          duration: maxEnd - minStart,
+          startTime: minStart,
+          trimStart: 0,
+          trimEnd: maxEnd - minStart,
+          id: `drum_recording_${Date.now()}`,
+          drumData: notesForThisTrack
+        };
+        dispatch(setDrumRecordingClip(drumClip));
+        console.log("Drummmmmmmmmmmmmmmmmmmm", drumClip)
+      }
     }
-    
+
     playSound(pad);
   };
 
@@ -384,7 +391,7 @@ const menu = [
 
         // Stop playback if we've reached the end
         const maxTimestamp = Math.max(...drumRecordedData.map(d => d.timestamp));
-        if (currentPlaybackTime > maxTimestamp + 1000) { 
+        if (currentPlaybackTime > maxTimestamp + 1000) {
           dispatch(setDrumPlayback(false));
           dispatch(setDrumPlaybackStartTime(null));
         }
@@ -412,7 +419,7 @@ const menu = [
   // Create continuous drum recording when recording stops
   useEffect(() => {
     if (!isRecording && drumRecordedData.length > 0 && currentTrackId) {
-      
+
       // Add a small delay to ensure Timeline has rendered the data
       const processTimeout = setTimeout(() => {
         createContinuousDrumAudioBlob(drumRecordedData).then((audioBlob) => {
@@ -451,7 +458,7 @@ const menu = [
               trackId: currentTrackId,
               audioClip: drumClip
             }));
-            
+
             // Only clear drum data after successful track creation
             // setTimeout(() => {
             //   dispatch(setDrumRecordedData([]));
@@ -840,7 +847,7 @@ const menu = [
   const playSound = useCallback((pad) => {
     try {
       const audioContext = getAudioContext();
-      
+
       // Ensure audio context is running
       if (audioContext.state === 'suspended') {
         audioContext.resume().catch(console.error);
@@ -950,7 +957,7 @@ const menu = [
         // Prevent default only for handled musical keys
         e.preventDefault();
         setPressedKeys(prev => new Set([...prev, key]));
-        
+
         const pad = keyToPadMap[key];
         if (pad) {
           handlePadPress(pad);
@@ -1398,7 +1405,6 @@ const menu = [
                           {/* Hi-hat - Small disk */}
                           <div
                             className="absolute right-[43%] top-[8%] sm:right-[45%] sm:top-[8%] md600:right-[43%] md600:top-[10%] md:right-[39%] md:top-[17%] lg:right-[55%] lg:top-[18%] xl:right-[55%] xl:top-[20%] 2xl:right-[59%] 2xl:top-[20%] 3xl:right-[53.5%] 3xl:top-[25%] cursor-pointer z-20"
-
                             style={pressedKeys.has('E') ? styles.pressedButton : {}}
                             onClick={() => handlePadPress(currentTypeData.pads[2])}
                           >
@@ -1620,24 +1626,28 @@ const menu = [
                             <p className="text-center text-sm leading-snug">Drop effects here or<br />select from library</p>
                           </div>
                         )}
-                        {Array.from({ length: 4 - activeEffects.length - 1 }, (_, index) => (
-                          <div key={index} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl shrink-0 border-2 border-dashed border-gray-600"
-                            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; e.currentTarget.style.borderColor = '#409C9F'; e.currentTarget.style.backgroundColor = '#2a2a2a'; }}
-                            onDragLeave={(e) => { e.currentTarget.style.borderColor = '#4B5563'; e.currentTarget.style.backgroundColor = '#1a1a1a'; }}
-                            onDrop={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              e.currentTarget.style.borderColor = '#4B5563';
-                              e.currentTarget.style.backgroundColor = '#1a1a1a';
-                              try {
-                                const effectData = JSON.parse(e.dataTransfer.getData('application/json'));
-                                handleAddEffectFromLibrary(effectData);
-                              } catch (error) {
-                                console.error('Error parsing dropped effect data:', error);
-                              }
-                            }}
-                          ></div>
-                        ))}
+                        {(() => {
+                          const aeLen = (activeEffects || []).length;
+                          const count = Math.max(0, 4 - aeLen - 1);
+                          return Array.from({ length: count }, (_, index) => (
+                            <div key={index} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl shrink-0 border-2 border-dashed border-gray-600"
+                              onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; e.currentTarget.style.borderColor = '#409C9F'; e.currentTarget.style.backgroundColor = '#2a2a2a'; }}
+                              onDragLeave={(e) => { e.currentTarget.style.borderColor = '#4B5563'; e.currentTarget.style.backgroundColor = '#1a1a1a'; }}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                e.currentTarget.style.borderColor = '#4B5563';
+                                e.currentTarget.style.backgroundColor = '#1a1a1a';
+                                try {
+                                  const effectData = JSON.parse(e.dataTransfer.getData('application/json'));
+                                  handleAddEffectFromLibrary(effectData);
+                                } catch (error) {
+                                  console.error('Error parsing dropped effect data:', error);
+                                }
+                              }}
+                            ></div>
+                          ))
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -1646,7 +1656,8 @@ const menu = [
             </div>
           </div>
         </>
-      )}</>
+      )}
+    </>
   );
 };
 

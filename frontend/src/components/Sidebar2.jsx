@@ -13,6 +13,7 @@ import mute from "../Images/mute.svg";
 import more from "../Images/more.svg";
 import TrackMenu from "./TrackMenu";
 import { renameTrack, setCurrentTrackId, setSidebarScrollOffset, toggleMuteTrack, setSoloTrackId, setTrackVolume, setTrackType, reorderTracks } from "../Redux/Slice/studio.slice";
+import { selectStudioState } from "../Redux/rootReducer";
 import FreezeIcon from "../Images/freeze.svg";
 import { ReactComponent as Track1 } from '../Images/track1.svg'
 import { ReactComponent as Track2 } from '../Images/track2.svg'
@@ -32,14 +33,14 @@ const Sidebar2 = () => {
   const [editingTrackId, setEditingTrackId] = useState(null);
   const [editingName, setEditingName] = useState("");
   // Use Redux for open instrument; avoid local UI duplication
-  const tracks = useSelector((state) => state.studio.tracks);
-  const trackHeight = useSelector((state) => state.studio.trackHeight);
+  const tracks = useSelector((state) => selectStudioState(state).tracks);
+  const trackHeight = useSelector((state) => selectStudioState(state).trackHeight);
   const dispatch = useDispatch();
 
-  const currentTrackId = useSelector((state) => state.studio.currentTrackId);
-  const soloTrackId = useSelector((state) => state.studio.soloTrackId);
-  const isRecording = useSelector(state => state.studio.isRecording);
-  const openTrackType = useSelector((state) => state.studio.newtrackType);
+  const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
+  const soloTrackId = useSelector((state) => selectStudioState(state).soloTrackId);
+  const isRecording = useSelector(state => selectStudioState(state).isRecording);
+  const openTrackType = useSelector((state) => selectStudioState(state).newtrackType);
 
   const [dragIndex, setDragIndex] = useState(null);  
   const handleScroll = (e) => {

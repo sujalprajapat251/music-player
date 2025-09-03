@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Volume2, ChevronDown, Plus, Mic } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { setDrumRecordedData, addAudioClipToTrack, setDrumRecordingClip, removeAudioClip } from '../Redux/Slice/studio.slice';
+import { selectStudioState } from '../Redux/rootReducer';
 import {
   drumMachineTypes,
   createSynthSound,
@@ -30,10 +31,10 @@ const Pattern = () => {
   const audioContextRef = useRef(null);
   const dropdownRef = useRef(null);
   const dispatch = useDispatch();
-  const selectedTrackId = useSelector((state) => state.studio?.currentTrackId);
+  const selectedTrackId = useSelector((state) => selectStudioState(state)?.currentTrackId);
 
   // Get all tracks from Redux store
-  const allTracks = useSelector((state) => state.studio?.tracks || []);
+  const allTracks = useSelector((state) => selectStudioState(state)?.tracks || []);
 
   // Available instrument options based on drum machine pads
   const getInstrumentOptions = () => {
@@ -45,13 +46,13 @@ const Pattern = () => {
     }));
   };
 
-  const drumRecordedData = useSelector((state) => state.studio?.drumRecordedData || []);
-  const drumRecordingClip = useSelector((state) => state.studio?.drumRecordingClip || null);
+  const drumRecordedData = useSelector((state) => selectStudioState(state)?.drumRecordedData || []);
+  const drumRecordingClip = useSelector((state) => selectStudioState(state)?.drumRecordingClip || null);
   // console.log("drumRecordingClip0", drumRecordingClip);
   // console.log("drumRecordedData", drumRecordedData);
-  const currentTime = useSelector((state) => state.studio?.currentTime || 0);
-  const currentTrackId = useSelector((state) => state.studio?.currentTrackId || null);
-  const isRecording = useSelector((state) => state.studio?.isRecording || false);
+  const currentTime = useSelector((state) => selectStudioState(state)?.currentTime || 0);
+  const currentTrackId = useSelector((state) => selectStudioState(state)?.currentTrackId || null);
+  const isRecording = useSelector((state) => selectStudioState(state)?.isRecording || false);
 
   // Function to convert recorded drum timing to beat positions
   const convertRecordedDataToPattern = useCallback((recordedData, targetBpm = bpm, targetPatternLength = patternLength) => {

@@ -9,6 +9,7 @@ import FreezeIcon from '../Images/freeze.svg'
 import waveIcon from '../Images/wave.svg'
 import { useDispatch, useSelector } from "react-redux";
 import { updateTrack, renameTrack, removeTrack, freezeTrack, duplicateTrack, updateTrackAudio, exportTrack } from "../Redux/Slice/studio.slice";
+import { selectStudioState } from "../hooks/useUndoRedo";
 const MENU_COLORS = [
   "#F05959", "#49B1A5", "#C579C8", "#5572F9",
   "#25A6CA", "#C059F0", "#4CAA47", "#F0F059",
@@ -25,7 +26,7 @@ const TrackMenu = ({ trackId, color, onRename }) => {
 
   // Get track data to check frozen state
   const track = useSelector((state) =>
-    state.studio.tracks.find(t => t.id === trackId)
+    selectStudioState(state).tracks.find(t => t.id === trackId)
   );
   
   const isFrozen = track?.frozen || false;

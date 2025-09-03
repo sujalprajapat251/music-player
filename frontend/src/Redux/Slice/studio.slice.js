@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import { getNextTrackColor, resetColorIndex } from '../../Utils/colorUtils';
 import { drumMachineTypes } from '../../Utils/drumMachineUtils';
 import WavEncoder from 'wav-encoder';
+import { selectStudioState } from '../rootReducer';
 const initialState = {
   tracks: [],
   trackHeight: 70, // Standard height for each track
@@ -1343,6 +1344,247 @@ export const triggerPatternDrumPlayback = ({ trackId, clipId, currentTime }) => 
   }
 };
 
+// Add these action creators at the end of the file, before the export
+// export const createTrackWithDefaults = (trackData) => (dispatch) => {
+//   const trackId = trackData.id || Date.now();
+  
+//   // Create a batch of actions that will be grouped together
+//   const actions = [
+//     addTrack({
+//       ...trackData,
+//       id: trackId,
+//       frozen: false,
+//       muted: false,
+//       volume: trackData.volume || 80,
+//       color: trackData.color || getNextTrackColor(),
+//       audioClips: trackData.audioClips || []
+//     }),
+//     setCurrentTrackId(trackId),
+//     setTrackType(trackData.type || 'audio')
+//   ];
+  
+//   // Dispatch all actions in sequence
+//   actions.forEach(action => dispatch(action));
+// };
 
+// export const deleteTrackWithCleanup = (trackId) => (dispatch, getState) => {
+//   const state = getState();
+//   const studioState = selectStudioState(state);
+//   const track = studioState.tracks.find(t => t.id === trackId);
+  
+//   if (!track) return;
+  
+//   // Create a batch of cleanup actions
+//   const actions = [
+//     removeTrack(trackId)
+//   ];
+  
+//   // If this was the current track, clear the current track ID
+//   if (studioState.currentTrackId === trackId) {
+//     const remainingTracks = studioState.tracks.filter(t => t.id !== trackId);
+//     if (remainingTracks.length > 0) {
+//       actions.push(setCurrentTrackId(remainingTracks[0].id));
+//     } else {
+//       actions.push(setCurrentTrackId(null));
+//     }
+//   }
+  
+//   // Dispatch all actions in sequence
+//   actions.forEach(action => dispatch(action));
+// };
+
+// export const addAudioClipWithMetadata = (trackId, audioClip) => (dispatch) => {
+//   const clipId = Date.now() + Math.random();
+  
+//   const actions = [
+//     addAudioClipToTrack({
+//       trackId,
+//       audioClip: {
+//         ...audioClip,
+//         id: clipId,
+//         addedAt: Date.now()
+//       }
+//     }),
+//     updateTrack({
+//       id: trackId,
+//       updates: {
+//         lastModified: Date.now()
+//       }
+//     })
+//   ];
+  
+//   actions.forEach(action => dispatch(action));
+// };
+
+// export const recordPianoSequence = (trackId, notes, recordingClip) => (dispatch) => {
+//   const actions = [
+//     setPianoNotes(notes),
+//     setPianoRecordingClip(recordingClip),
+//     updateTrack({
+//       id: trackId,
+//       updates: {
+//         lastModified: Date.now(),
+//         hasPianoData: true
+//       }
+//     })
+//   ];
+  
+//   actions.forEach(action => dispatch(action));
+// };
+
+// export const recordDrumSequence = (trackId, drumData, recordingClip) => (dispatch) => {
+//   const actions = [
+//     setDrumRecordedData(drumData),
+//     setDrumRecordingClip(recordingClip),
+//     updateTrack({
+//       id: trackId,
+//       updates: {
+//         lastModified: Date.now(),
+//         hasDrumData: true
+//       }
+//     })
+//   ];
+  
+//   actions.forEach(action => dispatch(action));
+// };
+
+// export const updateTrackWithHistory = (trackId, updates) => (dispatch) => {
+//   const actions = [
+//     updateTrack({
+//       id: trackId,
+//       updates: {
+//         ...updates,
+//         lastModified: Date.now()
+//       }
+//     })
+//   ];
+  
+//   actions.forEach(action => dispatch(action));
+// };
+
+// Add these to your studio.slice.js file
+
+// Create track with all default properties as one group
+export const createTrackWithDefaults = (trackData) => (dispatch) => {
+  const trackId = trackData.id || Date.now();
+  
+  // Create a batch of actions that will be grouped together
+  const actions = [
+    addTrack({
+      ...trackData,
+      id: trackId,
+      frozen: false,
+      muted: false,
+      volume: trackData.volume || 80,
+      color: trackData.color || getNextTrackColor(),
+      audioClips: trackData.audioClips || []
+    }),
+    setCurrentTrackId(trackId),
+    setTrackType(trackData.type || 'audio')
+  ];
+  
+  // Dispatch all actions in sequence
+  actions.forEach(action => dispatch(action));
+};
+
+// Delete track with cleanup as one group
+export const deleteTrackWithCleanup = (trackId) => (dispatch, getState) => {
+  const state = getState();
+  const studioState = selectStudioState(state);
+  const track = studioState.tracks.find(t => t.id === trackId);
+  
+  if (!track) return;
+  
+  // Create a batch of cleanup actions
+  const actions = [
+    removeTrack(trackId)
+  ];
+  
+  // If this was the current track, clear the current track ID
+  if (studioState.currentTrackId === trackId) {
+    const remainingTracks = studioState.tracks.filter(t => t.id !== trackId);
+    if (remainingTracks.length > 0) {
+      actions.push(setCurrentTrackId(remainingTracks[0].id));
+    } else {
+      actions.push(setCurrentTrackId(null));
+    }
+  }
+  
+  // Dispatch all actions in sequence
+  actions.forEach(action => dispatch(action));
+};
+
+// Add audio clip with metadata as one group
+export const addAudioClipWithMetadata = (trackId, audioClip) => (dispatch) => {
+  const clipId = Date.now() + Math.random();
+  
+  const actions = [
+    addAudioClipToTrack({
+      trackId,
+      audioClip: {
+        ...audioClip,
+        id: clipId,
+        addedAt: Date.now()
+      }
+    }),
+    updateTrack({
+      id: trackId,
+      updates: {
+        lastModified: Date.now()
+      }
+    })
+  ];
+  
+  actions.forEach(action => dispatch(action));
+};
+
+// Record piano sequence as one group
+export const recordPianoSequence = (trackId, notes, recordingClip) => (dispatch) => {
+  const actions = [
+    setPianoNotes(notes),
+    setPianoRecordingClip(recordingClip),
+    updateTrack({
+      id: trackId,
+      updates: {
+        lastModified: Date.now(),
+        hasPianoData: true
+      }
+    })
+  ];
+  
+  actions.forEach(action => dispatch(action));
+};
+
+// Record drum sequence as one group
+export const recordDrumSequence = (trackId, drumData, recordingClip) => (dispatch) => {
+  const actions = [
+    setDrumRecordedData(drumData),
+    setDrumRecordingClip(recordingClip),
+    updateTrack({
+      id: trackId,
+      updates: {
+        lastModified: Date.now(),
+        hasDrumData: true
+      }
+    })
+  ];
+  
+  actions.forEach(action => dispatch(action));
+};
+
+// Update track with history as one group
+export const updateTrackWithHistory = (trackId, updates) => (dispatch) => {
+  const actions = [
+    updateTrack({
+      id: trackId,
+      updates: {
+        ...updates,
+        lastModified: Date.now()
+      }
+    })
+  ];
+  
+  actions.forEach(action => dispatch(action));
+};
 
 
