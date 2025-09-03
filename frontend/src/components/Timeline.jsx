@@ -226,6 +226,7 @@ const Timeline = () => {
   });
 
   const tracks = useSelector((state) => selectStudioState(state)?.tracks || []);
+  console.log("++++++++++++++++++++++++++++++++++++++",tracks)
   const trackHeight = useSelector((state) => selectStudioState(state)?.trackHeight || 100);
   const recordedData = useSelector((state) => selectStudioState(state)?.recordedData || []);
   const isRecording = useSelector((state) => selectStudioState(state)?.isRecording || false);

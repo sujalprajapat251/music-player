@@ -1827,7 +1827,7 @@ const TimelineTrack = ({
           );
         }
         // Only show waveform for musicoff type
-        if (clip.type !== 'musicoff') {
+        if (clip.type === 'drum' || clip.type === 'keys') {
           return null;
         }
         return (
