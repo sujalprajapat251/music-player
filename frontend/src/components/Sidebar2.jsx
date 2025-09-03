@@ -118,11 +118,18 @@ const Sidebar2 = () => {
     <>
       <div style={{ pointerEvents: showNewProject ? 'none' : 'auto' }}>
       <TopHeader />
-      <div className="flex relative">
-        <div className="border-r border-[#1414141A] dark:border-[#b463631a] w-full bg-primary-light dark:bg-primary-dark">
+      <div className="flex h-[calc(100vh-82px)] sm:h-[calc(100vh-66px)] md:h-[calc(100vh-96px)] relative">
+      <div className="border-r border-[#1414141A] dark:border-[#b463631a] w-[20%] sm:w-[23%] md:w-[22%] lg:w-[20%] xl:w-[17%] 2xl:w-[15%] bg-primary-light dark:bg-primary-dark">
           <div className="h-[100px] border-b border-[#1414141A] dark:border-[#FFFFFF1A] flex items-end pb-2"></div>
 
-          <div onScroll={handleScroll}>
+          <div style={{
+            maxHeight: 'calc(100vh - 240px)',
+            marginTop: "40px",
+            scrollbarWidth: 'none', /* Firefox */
+            msOverflowStyle: 'none', /* Internet Explorer 10+ */
+          }}
+            onScroll={handleScroll}
+          >
             <style jsx>{`
               div::-webkit-scrollbar {
                 display: none; 
@@ -136,8 +143,14 @@ const Sidebar2 = () => {
               const isComponentOpen = (track.id === currentTrackId) && ((openTrackType === 'Drums & Machines' && isDrumTrack) || (openTrackType === 'Keys' && isPianoTrack));
 
               return (
-                <div key={track.id} className={`flex items-center justify-between px-3 border-l-4 border-b border-b-[#1414141A] dark:border-b-[#FFFFFF1A] bg-[#232323] cursor-pointer hover:bg-[#2A2A2A] transition-colors duration-200`}
-                  style={{ height: `${trackHeight + 1}px`,  minHeight: `${trackHeight + 1}px`, borderLeftColor: track.id === currentTrackId && borderColor ? borderColor : '#232323', }}
+                <div
+                  key={track.id}
+                  className={`flex items-center justify-between px-3 border-l-4 border-b border-b-[#1414141A] dark:border-b-[#FFFFFF1A] bg-[#232323] cursor-pointer hover:bg-[#2A2A2A] transition-colors duration-200`}
+                  style={{
+                    height: `${trackHeight + 1}px`, 
+                    minHeight: `${trackHeight + 1}px`,
+                    borderLeftColor: track.id === currentTrackId && borderColor ? borderColor : '#232323',
+                  }}
                   onClick={() => handleChangeTrack(track.id)}
                   draggable
                   onDragStart={() => setDragIndex(idx)}
@@ -167,7 +180,12 @@ const Sidebar2 = () => {
                   <div className="flex flex-col border-e-[0.5px] border-[#FFFFFF1A] pe-2 flex-1">
                     <div className="flex items-center gap-2">
                       {editingTrackId === track.id ? (
-                        <input type="text" className="font-bold text-white text-sm truncate bg-[#232323] border border-[#AD00FF] rounded px-1 py-0.5 outline-none" value={editingName} autoFocus onChange={e => setEditingName(e.target.value)}
+                        <input
+                        type="text"
+                        className="font-bold text-white text-sm truncate bg-[#232323] border border-[#AD00FF] rounded px-1 py-0.5 outline-none"
+                        value={editingName}
+                        autoFocus
+                        onChange={e => setEditingName(e.target.value)}
                           onBlur={() => {
                             if (editingName.trim() && editingName !== track.name) {
                               dispatch(renameTrack({ trackId: track.id, newName: editingName.trim() }));
@@ -187,7 +205,8 @@ const Sidebar2 = () => {
                           }}
                         />
                       ) : (
-                        <span className={`font-bold text-sm truncate flex-[0_0_auto] overflow-hidden whitespace-normal break-all w-[120px] [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical] ${track.frozen ? 'text-[#4CAF50]' : 'text-white'}`}>
+                        <span className={`font-bold text-sm truncate flex-[0_0_auto] overflow-hidden whitespace-normal break-all w-[120px] [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical] ${track.frozen ? 'text-[#4CAF50]' : 'text-white'
+                        }`}>
                           {track.name || `Track ${idx + 1}`}
                         </span>
                       )}

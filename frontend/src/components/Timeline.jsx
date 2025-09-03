@@ -2331,6 +2331,34 @@ const Timeline = () => {
   // }, [patternDrumPlayback, isPlaying, playPatternDrumSound]);
 
 
+  useEffect(() => {
+    // Build a set of existing trackId:clipId pairs from Redux state
+    const existing = new Set();
+    tracks.forEach(t => {
+      (t.audioClips || []).forEach(c => {
+        existing.add(`${t.id}:${c.id}`);
+      });
+    });
+
+    // Stop and remove any players that no longer have a corresponding clip
+    setPlayers(prev => {
+      prev.forEach(p => {
+        const key = `${p.trackId}:${p.clipId}`;
+        if (!existing.has(key) && p.player) {
+          try {
+            if (typeof p.player.stop === 'function') p.player.stop();
+          } catch {}
+          try {
+            if (typeof p.player.dispose === 'function') p.player.dispose();
+          } catch {}
+        }
+      });
+      return prev.filter(p => existing.has(`${p.trackId}:${p.clipId}`));
+    });
+
+    setWaveSurfers(prev => prev.filter(Boolean));
+  }, [tracks, setPlayers, setWaveSurfers]);
+
   return (
     <>
       <EditTrackNameModal isOpen={edirNameModel} onClose={() => setEdirNameModel(false)} onSave={handleSave} />
@@ -2339,7 +2367,7 @@ const Timeline = () => {
           <div
             ref={timelineContainerRef}
             className="timeline-container"
-            style={{ minWidth: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`, position: "relative", height:"100%", transition: "min-width 0.2s ease-in-out", }}
+            style={{ minWidth: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`, position: "relative", height: "100vh", transition: "min-width 0.2s ease-in-out", }}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -2527,7 +2555,9 @@ const Timeline = () => {
             </div>
 
             {/* Show action boxes when there are no tracks */}
-            <TimelineActionBoxes onAction={handleAction} />
+            {tracks.length === 0 && (
+              <TimelineActionBoxes onAction={handleAction} />
+            )}
 
             {/* Playhead - adjusted to account for loop bar */}
             <div style={{

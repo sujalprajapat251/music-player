@@ -12,7 +12,7 @@ const actions = [
   { label: "Play the synth", icon: timeIcon3 },
   { label: "Add new track", icon: timeIcon4 },
   { label: "Import file", icon: timeIcon5 },
-  { label: "Invite Friend", icon: timeIcon6}
+  // { label: "Invite Friend", icon: timeIcon6}
 ];
 
 const row1 = actions.slice(0, 3);

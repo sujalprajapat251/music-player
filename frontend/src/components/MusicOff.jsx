@@ -15,6 +15,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getAllSound } from '../Redux/Slice/sound.slice';
 import { IMAGE_URL } from '../Utils/baseUrl';
 import { addToWishList, removeFromWishList, getUserWishList } from '../Redux/Slice/user.slice';
+import { addTrack, addAudioClipToTrack, setCurrentTrackId } from '../Redux/Slice/studio.slice';
 
 const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
 
@@ -31,6 +32,8 @@ const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
     const sound = useSelector((state) => state.sound?.allsounds || [])
     const userWishList = useSelector((state) => state.user?.userWishList || null);
 
+    const tracks = useSelector((state) => state.studio?.tracks || []);
+    const selectedTrackId = useSelector((state) => state.studio?.selectedTrackId || null);
 
     useEffect(() => {
         dispatch(getAllCategory());
@@ -76,6 +79,12 @@ const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
     };
 
 
+    const handleEnded = (index) => {
+        if (playingIndex === index) {
+            setPlayingIndex(null);
+        }
+    };
+
     const toggleWishlist = (soundId) => {
         if (isInWishlist(soundId)) {
             dispatch(removeFromWishList(soundId));
@@ -99,11 +108,7 @@ const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
         }
     };
 
-    const handleEnded = (index) => {
-        if (playingIndex === index) {
-            setPlayingIndex(null);
-        }
-    };
+
 
     const handleDragStart = (e, soundItem) => {
         setIsDragging(true);
@@ -114,6 +119,67 @@ const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
         setIsDragging(false);
     };
 
+    const handleAddToTimeline = async (soundItem) => {
+        try {
+            const url = `${IMAGE_URL}uploads/soundfile/${soundItem.soundfile}`;
+            let audioDurationSec = 0;
+
+            try {
+                const response = await fetch(url);
+                const arrayBuffer = await response.arrayBuffer();
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                audioDurationSec = audioBuffer.duration;
+            } catch (_) {
+                audioDurationSec = 5; // fallback
+            }
+
+            if (selectedTrackId) {
+                const track = tracks.find(t => t.id == selectedTrackId);
+                const lastClip = (track?.audioClips || [])[track?.audioClips?.length - 1];
+                const newStartTime = lastClip ? (lastClip.startTime || 0) + (lastClip.duration || 0) : 0;
+
+                const newClip = {
+                    id: Date.now() + Math.random(),
+                    name: soundItem.soundname || 'New Clip',
+                    url,
+                    color: track?.color || '#FFB6C1',
+                    startTime: newStartTime,
+                    duration: audioDurationSec,
+                    trimStart: 0,
+                    trimEnd: audioDurationSec,
+                    soundData: soundItem
+                };
+
+                dispatch(addAudioClipToTrack({ trackId: selectedTrackId, audioClip: newClip }));
+            } else {
+                const newClip = {
+                    id: Date.now() + Math.random(),
+                    name: soundItem.soundname || 'New Clip',
+                    url,
+                    color: '#FFB6C1',
+                    startTime: 0,
+                    duration: audioDurationSec,
+                    trimStart: 0,
+                    trimEnd: audioDurationSec,
+                    soundData: soundItem
+                };
+
+                const newTrackId = Date.now() + Math.random();
+                const newTrack = {
+                    id: newTrackId,
+                    name: soundItem.soundname || 'New Track',
+                    volume: 80,
+                    audioClips: [newClip]
+                };
+
+                dispatch(addTrack(newTrack));
+                dispatch(setCurrentTrackId(newTrackId));
+            }
+        } catch (_) {
+            // noop
+        }
+    };
 
     return (
         <>
@@ -121,7 +187,7 @@ const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
                 <>
 
                     {/* Offcanvas */}
-                    <div className="absolute top-0 bg-primary-light dark:bg-primary-dark right-0 h-full z-50 shadow-lg transition-transform duration-300 transform translate-x-0 overflow-auto w-[70%] md600:w-[30%]  2xl:w-[25%] 3xl:w-[23%]">
+                    <div className="absolute top-0 bg-primary-light dark:bg-primary-dark right-0 h-[calc(100vh-82px)] sm:h-[calc(100vh-66px)] md:h-[calc(100vh-96px)]  z-50 shadow-lg transition-transform duration-300 transform translate-x-0 overflow-auto w-[70%] md600:w-[30%]  2xl:w-[25%] 3xl:w-[23%]">
 
                         {/* Place your offcanvas content here */}
                         <div className=" text-secondary-light dark:text-secondary-dark bg-primary-light dark:bg-primary-dark">
@@ -272,7 +338,7 @@ const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
                                                             ) : (
                                                                 <FaRegHeart onClick={() => toggleWishlist(soundItem._id)} className={`text-secondary-light dark:text-secondary-dark text-[12px] xl:text-[14px] 3xl:text-[16px] me-1 md600:me-2 3xl:me-3`} />
                                                             )}
-                                                            <FaPlus className='text-secondary-light dark:text-secondary-dark text-[12px] xl:text-[14px] 3xl:text-[16px]' />
+                                                            <FaPlus onClick={() => handleAddToTimeline(soundItem)} className='text-secondary-light dark:text-secondary-dark text-[12px] xl:text-[14px] 3xl:text-[16px]' />
                                                         </div>
                                                     </div>
                                                 )
