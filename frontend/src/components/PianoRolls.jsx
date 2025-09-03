@@ -245,6 +245,26 @@ const PianoRolls = () => {
                   dispatch(setStudioCurrentTime(labelTime));
                   try { Tone.Transport.seconds = labelTime; } catch {}
                   setLocalPlayheadTime(labelTime);
+                  
+                  // Force immediate playhead position update
+                  if (playheadRef.current) {
+                      const scrollLeft = timelineContainerRef.current?.scrollLeft || 0;
+                      playheadRef.current.style.transform = `translateX(${labelTime * timelineWidthPerSecond - scrollLeft}px)`;
+                  }
+                  
+                  // Auto-scroll to keep playhead visible if needed
+                  if (wrapperRef.current) {
+                      const playheadX = labelTime * timelineWidthPerSecond;
+                      const viewportLeft = wrapperRef.current.scrollLeft;
+                      const viewportRight = viewportLeft + wrapperRef.current.clientWidth;
+                      const edgePadding = 120;
+                      
+                      if (playheadX > viewportRight - edgePadding) {
+                          wrapperRef.current.scrollLeft = Math.max(0, playheadX - wrapperRef.current.clientWidth + edgePadding);
+                      } else if (playheadX < viewportLeft + edgePadding) {
+                          wrapperRef.current.scrollLeft = Math.max(0, playheadX - edgePadding);
+                      }
+                  }
                 });
                 
                 addedLabels.add(label);
@@ -391,8 +411,13 @@ const PianoRolls = () => {
         if (!timelineHeaderRef.current) return;
         const rect = timelineHeaderRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
+        
+        // Account for piano keys width offset - ruler starts after piano keys
+        const adjustedX = Math.max(0, x - PIANO_KEYS_WIDTH);
         const width = Math.max(audioDuration, 12) * timelineWidthPerSecond;
-        const rawTime = (x / width) * audioDuration;
+        
+        // Calculate time based on adjusted position
+        const rawTime = (adjustedX / width) * audioDuration;
         const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
         const snappedTime = Math.max(0, Math.min(audioDuration, Math.round(rawTime / gridSpacing) * gridSpacing));
         return snappedTime;
@@ -400,9 +425,42 @@ const PianoRolls = () => {
     const handleTimelineClick = (e) => {
         const snappedTime = computeSnappedTimeFromEvent(e);
         if (snappedTime === undefined) return;
+        
+        // Update Redux state
         dispatch(setStudioCurrentTime(snappedTime));
-        try { Tone.Transport.seconds = snappedTime; } catch {}
+        
+        // Update Tone.Transport
+        try { 
+            Tone.Transport.seconds = snappedTime; 
+        } catch {}
+        
+        // Update local playhead time immediately
         setLocalPlayheadTime(snappedTime);
+        
+        // Force immediate playhead position update
+        if (playheadRef.current) {
+            const scrollLeft = timelineContainerRef.current?.scrollLeft || 0;
+            playheadRef.current.style.transform = `translateX(${snappedTime * timelineWidthPerSecond - scrollLeft}px)`;
+        }
+        
+        // Auto-scroll to keep playhead visible if needed
+        if (wrapperRef.current) {
+            const playheadX = snappedTime * timelineWidthPerSecond;
+            const viewportLeft = wrapperRef.current.scrollLeft;
+            const viewportRight = viewportLeft + wrapperRef.current.clientWidth;
+            const edgePadding = 120;
+            
+            if (playheadX > viewportRight - edgePadding) {
+                wrapperRef.current.scrollLeft = Math.max(0, playheadX - wrapperRef.current.clientWidth + edgePadding);
+            } else if (playheadX < viewportLeft + edgePadding) {
+                wrapperRef.current.scrollLeft = Math.max(0, playheadX - edgePadding);
+            }
+        }
+        
+        // Also sync the timeline header scroll position
+        if (timelineContainerRef.current) {
+            timelineContainerRef.current.scrollLeft = wrapperRef.current?.scrollLeft || 0;
+        }
     };
 
     // Scrubbing support (click-and-drag on header)
@@ -420,6 +478,12 @@ const PianoRolls = () => {
         }
         try { Tone.Transport.seconds = snappedTime; } catch {}
         setLocalPlayheadTime(snappedTime);
+        
+        // Force immediate playhead position update during scrubbing
+        if (playheadRef.current) {
+            const scrollLeft = timelineContainerRef.current?.scrollLeft || 0;
+            playheadRef.current.style.transform = `translateX(${snappedTime * timelineWidthPerSecond - scrollLeft}px)`;
+        }
     };
 
     const onHeaderMouseDown = (e) => {
@@ -1172,8 +1236,8 @@ const PianoRolls = () => {
                 {/* Timeline Header Container with Horizontal Scroll */}
                 <div
                     ref={timelineContainerRef}
-                    className="fixed left-0 right-0 h-[80px] overflow-x-auto overflow-y-hidden z-[2]"
-                    style={{ background: "#1F1F1F" }}
+                    className="fixed left-0 right-0 h-[80px] overflow-x-auto overflow-y-hidden z-[2] hover:bg-[#2a2a2a] transition-colors duration-150"
+                    style={{ background: "#1F1F1F", cursor: 'pointer' }}
                     onClick={handleTimelineClick}
                     onMouseDown={onHeaderMouseDown}
                     onScroll={handleScroll}
@@ -1229,8 +1293,11 @@ const PianoRolls = () => {
                         // Calculate the time position based on click location
                         const rect = playheadRef.current.getBoundingClientRect();
                         const x = e.clientX - rect.left + (timelineContainerRef.current?.scrollLeft || 0);
+                        
+                        // Account for piano keys width offset
+                        const adjustedX = Math.max(0, x - PIANO_KEYS_WIDTH);
                         const width = Math.max(audioDuration, 12) * timelineWidthPerSecond;
-                        const rawTime = (x / width) * audioDuration;
+                        const rawTime = (adjustedX / width) * audioDuration;
                         const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
                         const snappedTime = Math.max(0, Math.min(audioDuration, Math.round(rawTime / gridSpacing) * gridSpacing));
                         
@@ -1238,6 +1305,12 @@ const PianoRolls = () => {
                         dispatch(setStudioCurrentTime(snappedTime));
                         try { Tone.Transport.seconds = snappedTime; } catch {}
                         setLocalPlayheadTime(snappedTime);
+                        
+                        // Force immediate playhead position update
+                        if (playheadRef.current) {
+                            const scrollLeft = timelineContainerRef.current?.scrollLeft || 0;
+                            playheadRef.current.style.transform = `translateX(${snappedTime * timelineWidthPerSecond - scrollLeft}px)`;
+                        }
                     }}
                 >
                     {/* Purple triangle at top */}
@@ -1299,6 +1372,12 @@ const PianoRolls = () => {
                              dispatch(setStudioCurrentTime(snappedTime));
                              try { Tone.Transport.seconds = snappedTime; } catch {}
                              setLocalPlayheadTime(snappedTime);
+                             
+                             // Force immediate playhead position update
+                             if (playheadRef.current) {
+                                 const scrollLeft = wrapperRef.current.scrollLeft || 0;
+                                 playheadRef.current.style.transform = `translateX(${snappedTime * timelineWidthPerSecond - scrollLeft}px)`;
+                             }
                          }
                      }}
                     onContextMenu={(e) => {
