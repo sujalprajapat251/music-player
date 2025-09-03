@@ -23,6 +23,7 @@ import PianoRolls from './PianoRolls';
 import * as Tone from "tone";
 import Effects2 from './Effects2';
 import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsTwo } from '../Redux/Slice/effects.slice';
+import { selectStudioState } from '../Redux/rootReducer';
 
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
@@ -326,11 +327,11 @@ const Pianodemo = ({ onClose }) => {
     const recordAnchorRef = useRef({ systemMs: 0, playheadSec: 0 });
     const selectedInstrument = INSTRUMENTS[currentInstrumentIndex].id;
 
-    const getIsRecording = useSelector((state) => state.studio.isRecording);
-    const currentTrackId = useSelector((state) => state.studio.currentTrackId);
-    const studioCurrentTime = useSelector((state) => state.studio.currentTime || 0);
-    const existingPianoNotes = useSelector((state) => state.studio.pianoNotes || []);
-    const tracks = useSelector((state) => state.studio?.tracks || []);
+    const getIsRecording = useSelector((state) => selectStudioState(state).isRecording);
+    const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
+    const studioCurrentTime = useSelector((state) => selectStudioState(state).currentTime || 0);
+    const existingPianoNotes = useSelector((state) => selectStudioState(state).pianoNotes || []);
+    const tracks = useSelector((state) => selectStudioState(state).tracks || []);
 
     const getActiveTabs = useSelector((state) => state.effects.activeTabs);
 

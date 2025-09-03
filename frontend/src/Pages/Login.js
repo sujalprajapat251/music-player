@@ -5,7 +5,7 @@ import { useDispatch } from "react-redux";
 import { forgotPassword, googleLogin, login, register, resetPassword, verifyOtp, facebookLogin } from "../Redux/Slice/auth.slice";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import Animation from "../components/Animation";
@@ -126,11 +126,19 @@ const OTPInput = ({ length = 4, onComplete, handleVerifyOTP, email }) => {
 };
 
 const Login = () => {
+  const location = useLocation();
   const [forgotPasswordStep, setForgotPasswordStep] = useState(0);
-  const [isSignIn, setIsSignIn] = useState(true);
+  const [isSignIn, setIsSignIn] = useState(location.state?.openSignUp ? false : true);
   const [email, setEmail] = useState("");
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  // Handle navigation state changes
+  useEffect(() => {
+    if (location.state?.openSignUp) {
+      setIsSignIn(false);
+    }
+  }, [location.state]);
 
   const signUpSchema = Yup.object().shape({
     firstName: Yup.string().required("First Name is required"),
