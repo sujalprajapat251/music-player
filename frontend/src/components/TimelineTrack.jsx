@@ -956,6 +956,7 @@ const TimelineTrack = ({
               pointerEvents: 'auto'
             }}
             title="Drag to move recorded piano notes. Use left/right handles to resize the recording region."
+            onContextMenu={(e) => onContextMenu && onContextMenu(e, trackId, 'piano-recording')}
             onMouseDown={(e) => {
               // If this track doesn't currently own an active clip,
               // promote the passive displayClip to an active, editable clip first
@@ -1237,6 +1238,7 @@ const TimelineTrack = ({
               pointerEvents: 'auto'
             }}
             title="Drag to move recorded drum notes. Use left/right handles to resize the recording region."
+            onContextMenu={(e) => onContextMenu && onContextMenu(e, trackId, 'drum-recording')}
             onMouseDown={(e) => {
               // If this track doesn't currently own an active clip,
               // promote the passive displayClip to an active, editable clip first
@@ -1823,25 +1825,29 @@ const TimelineTrack = ({
             </Rnd>
           );
         }
-        // return (
-        //   <AudioClip
-        //     key={clip.id}
-        //     clip={clip}
-        //     onReady={onReady}
-        //     height={height}
-        //     trackId={trackId}
-        //     onTrimChange={onTrimChange}
-        //     onPositionChange={onPositionChange}
-        //     onRemoveClip={onRemoveClip}
-        //     timelineWidthPerSecond={timelineWidthPerSecond}
-        //     frozen={frozen}
-        //     gridSpacing={gridSpacing}
-        //     onContextMenu={onContextMenu}
-        //     onSelect={onSelect}
-        //     isSelected={selectedClipId === clip.id}
-        //     color={color}
-        //   />
-        // );
+        // Only show waveform for musicoff type
+        if (clip.type !== 'musicoff') {
+          return null;
+        }
+        return (
+          <AudioClip
+            key={clip.id}
+            clip={clip}
+            onReady={onReady}
+            height={height}
+            trackId={trackId}
+            onTrimChange={onTrimChange}
+            onPositionChange={onPositionChange}
+            onRemoveClip={onRemoveClip}
+            timelineWidthPerSecond={timelineWidthPerSecond}
+            frozen={frozen}
+            gridSpacing={gridSpacing}
+            onContextMenu={onContextMenu}
+            onSelect={onSelect}
+            isSelected={selectedClipId === clip.id}
+            color={color}
+          />
+        );
       })}
       
     </div>

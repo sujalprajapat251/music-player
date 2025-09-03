@@ -341,7 +341,6 @@ const menu = [
                 drumData: notesForThisTrack
             };
             dispatch(setDrumRecordingClip(drumClip));
-            console.log("Drummmmmmmmmmmmmmmmmmmm",drumClip)
         }
     }
     
@@ -814,7 +813,7 @@ const menu = [
     compressor.threshold.setValueAtTime(-24, audioContext.currentTime);
     compressor.knee.setValueAtTime(30, audioContext.currentTime);
     compressor.ratio.setValueAtTime(12, audioContext.currentTime);
-    compressor.attack.setValueAtTime(0.003, audioContext.currentTime);
+    compressor.attack.setValueAtTime(0.003, audioContext.currentTime);  
     compressor.release.setValueAtTime(0.25, audioContext.currentTime);
 
     // Create waveshaper for saturation
@@ -861,7 +860,7 @@ const menu = [
       const panNode = audioContext.createStereoPanner();
       const dryGainNode = audioContext.createGain();
       const wetGainNode = audioContext.createGain();
-      const convolver = audioContext.createConvolver();
+      const convolver = audioContext.createConvolver();  
 
       // Set up reverb
       convolver.buffer = createReverbBuffer();
