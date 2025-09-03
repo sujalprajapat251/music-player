@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setDrumRecordedData, setDrumPlayback, setDrumPlaybackStartTime, addAudioClipToTrack, addTrack, setDrumRecordingClip } from '../Redux/Slice/studio.slice';
+import { setDrumRecordedData, setDrumPlayback, setDrumPlaybackStartTime, addAudioClipToTrack, addTrack, setDrumRecordingClip, setSelectedDrumInstrument } from '../Redux/Slice/studio.slice';
 import { selectStudioState } from '../Redux/rootReducer';
 import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
 import Pattern from '../components/Pattern';
@@ -207,6 +207,7 @@ const DrumPadMachine = ({ onClose }) => {
   const [audioUnlocked, setAudioUnlocked] = useState(false);
 
   const [currentType, setCurrentType] = useState(0);
+  const selectedDrumInstrument = useSelector((state) => selectStudioState(state)?.selectedDrumInstrument);
   const [activePads, setActivePads] = useState(new Set());
   const [showOffcanvas3, setShowOffcanvas3] = useState(true);
   const [displayDescription, setDisplayDescription] = useState('Press a key or click a pad!');
@@ -242,6 +243,15 @@ const DrumPadMachine = ({ onClose }) => {
   // console.log('currentTypeData', currentTypeData);
   // Get the currently selected drum machine
   const selectedDrumMachine = drumMachineTypes[currentType];
+
+  // Initialize drum kit selection from Redux
+  useEffect(() => {
+    if (!selectedDrumInstrument) return;
+    const idx = drumMachineTypes.findIndex(d => d.name === selectedDrumInstrument);
+    if (idx !== -1 && idx !== currentType) {
+      setCurrentType(idx);
+    }
+  }, [selectedDrumInstrument]);
 
   const handleMenuItemSelect = (qualityId, qualityLabel) => {
     setSelectedMenuitems(qualityLabel);
@@ -1193,6 +1203,25 @@ const DrumPadMachine = ({ onClose }) => {
     dispatch(toggleEffectsOffcanvas());
   };
 
+  const nextInstrument = () => {
+    // setCurrentType((prev) => (prev - 1 + drumMachineTypes.length) % drumMachineTypes.length)
+
+
+    const newIndex = currentType === drumMachineTypes.length - 1 ? 0 : currentType + 1;
+    setCurrentType(newIndex);
+    // Dispatch the selected instrument to Redux so PianoRolls can sync
+    const newInstrumentName = drumMachineTypes[newIndex].name;
+    dispatch(setSelectedDrumInstrument(newInstrumentName));
+  };
+
+  // Keep Redux in sync if local currentType changes elsewhere
+  useEffect(() => {
+    const name = drumMachineTypes[currentType]?.name;
+    if (name && name !== selectedDrumInstrument) {
+      dispatch(setSelectedDrumInstrument(name));
+    }
+  }, [currentType]);
+
   return (
     <>
       {showOffcanvas3 === true && (
@@ -1258,7 +1287,7 @@ const DrumPadMachine = ({ onClose }) => {
                       <div className="bg-[#353535] p-1 md600:p-2 lg:p-3 rounded-lg">
                         <div className="flex items-center justify-between">
                           <button
-                            onClick={() => setCurrentType((prev) => (prev - 1 + drumMachineTypes.length) % drumMachineTypes.length)}
+                            onClick={nextInstrument}
                             className="text-gray-400 hover:text-white transition-colors  md600:p-2"
                           >
                             <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px]' />

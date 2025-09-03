@@ -47,6 +47,9 @@ const initialState = {
   highlightedPianoKeys: [], // Array of MIDI note numbers to highlight
   selectedSound: 'Click',
   soundQuality: 'High', // Add this line
+  selectedInstrument: 'acoustic_grand_piano', // Default instrument for piano
+  // Store drum kit by name to match drumMachineTypes entries
+  selectedDrumInstrument: 'Classic 808'
 };
 
 const studioSlice = createSlice({
@@ -374,6 +377,12 @@ const studioSlice = createSlice({
     setPianoNotes: (state, action) => {
       state.pianoNotes = action.payload;
     },
+    setSelectedInstrument: (state, action) => {
+      state.selectedInstrument = action.payload;
+    },
+    setSelectedDrumInstrument: (state, action) => {
+      state.selectedDrumInstrument = action.payload;
+    },
     clearPianoNotes: (state) => {
       state.pianoNotes = [];
     },
@@ -572,6 +581,8 @@ export const {
   updateClipTrim,
   addPianoNote, // <-- Export new actions
   setPianoNotes,
+  setSelectedInstrument,
+  setSelectedDrumInstrument,
   clearPianoNotes,
   setPianoRecordingClip,
   setDrumRecordingClip,
