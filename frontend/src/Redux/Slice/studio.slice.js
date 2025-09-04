@@ -378,7 +378,20 @@ const studioSlice = createSlice({
       state.pianoNotes = [];
     },
     setPianoRecordingClip: (state, action) => {
-      state.pianoRecordingClip = action.payload; // {start, end, color}
+      // Persist the active piano clip globally (for editing) and also store
+      // a per-track copy so the clip bounds remain when switching tracks
+      // action.payload expected: { start, end, color, trackId }
+      state.pianoRecordingClip = action.payload;
+
+      const payload = action.payload || {};
+      const trackId = payload.trackId;
+      if (trackId !== undefined && trackId !== null) {
+        const idx = state.tracks.findIndex(t => t.id == trackId);
+        if (idx !== -1) {
+          const { start, end, color } = payload;
+          state.tracks[idx].pianoClip = { start, end, color, trackId };
+        }
+      }
     },
     setDrumRecordingClip: (state, action) => {
       state.drumRecordingClip = action.payload; // {start, end, color, trackId}

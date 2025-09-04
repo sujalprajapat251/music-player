@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Header = () => {
     const [menuOpen, setMenuOpen] = useState(false);
-    const [active, setActive] = useState('Music')
+    const [active, setActive] = useState('Music');
+    const navigate = useNavigate();
+    
     return (
         <header className="bg-[#141414] text-white">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -34,7 +36,10 @@ const Header = () => {
                             <Link to={'/login'} className="text-white transition-colors duration-200">
                                 Login
                             </Link>
-                            <button className="bg-white text-gray-900 px-4 py-2 rounded-[40px] font-medium hover:bg-gray-100 transition-colors duration-200">
+                            <button 
+                                onClick={() => navigate("/login", { state: { openSignUp: true } })}
+                                className="bg-white text-gray-900 px-4 py-2 rounded-[40px] font-medium hover:bg-gray-100 transition-colors duration-200"
+                            >
                                 Get Started
                             </button>
                         </div>
@@ -71,7 +76,10 @@ const Header = () => {
                     <Link to={'/login'} className={`${active === 'Login' ? 'text-white' : 'text-gray-400'} hover:text-white transition-colors duration-200 cursor-pointer block px-3 py-2 text-base font-medium`}>
                         Login
                     </Link>
-                    <button className="bg-white text-gray-900 px-4 py-2 rounded-[40px] font-medium hover:bg-gray-100 transition-colors duration-200 ml-3 mt-2">
+                    <button 
+                        onClick={() => navigate("/login", { state: { openSignUp: true } })}
+                        className="bg-white text-gray-900 px-4 py-2 rounded-[40px] font-medium hover:bg-gray-100 transition-colors duration-200 ml-3 mt-2"
+                    >
                         Get Started
                     </button>
                 </div>

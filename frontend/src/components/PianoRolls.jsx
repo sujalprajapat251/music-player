@@ -17,6 +17,7 @@ import { MdDelete } from "react-icons/md";
 import { IoCutOutline } from 'react-icons/io5';
 import audio from '../Images/piano-beats.mp3'
 const generatePianoKeys = () => {
+    // Preserve original labeling scheme used in the UI
     const keys = [];
     const notesInOctave = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
     let octave = 0;
@@ -89,14 +90,16 @@ const PianoRolls = () => {
 
     // Get track bounds for constraining notes
     const getTrackBounds = useCallback(() => {
-        const activeClip = (pianoRecordingClip && (pianoRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? pianoRecordingClip : null;
+        const trackObj = tracks?.find?.(t => t.id === currentTrackId);
+        const persistedClip = trackObj?.pianoClip || null;
+        const activeClip = (pianoRecordingClip && (pianoRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? pianoRecordingClip : persistedClip;
         if (activeClip && activeClip.start != null && activeClip.end != null) {
             return {
                 start: activeClip.start,
                 end: activeClip.end
             };
         }
-        // Fallback: derive from notes if no active clip
+        // Fallback: derive from notes if no clip
         if (notes.length > 0) {
             const minStart = Math.min(...notes.map(n => n.start));
             const maxEnd = Math.max(...notes.map(n => n.start + n.duration)) + 0.1;
@@ -110,7 +113,7 @@ const PianoRolls = () => {
             start: 0,
             end: 8 // Default 8 seconds
         };
-    }, [pianoRecordingClip, currentTrackId, notes]);
+    }, [pianoRecordingClip, currentTrackId, notes, tracks]);
 
     const renderRuler = useCallback(() => {
         if (!timelineHeaderRef.current) return;
@@ -550,6 +553,17 @@ const PianoRolls = () => {
         return (octave + 1) * 12 + idxBase;
     }, [noteNames]);
 
+    // Ensure playback uses a supported piano range (A0..C8) while labels stay the same
+    const clampNoteToPlayable = useCallback((note) => {
+        try {
+            const midi = noteNameToMidi(note);
+            const clamped = Math.max(21, Math.min(108, midi));
+            return Tone.Frequency(clamped, 'midi').toNote();
+        } catch {
+            return note;
+        }
+    }, [noteNameToMidi]);
+
     
     const handleGridClick = (e) => {
         if (menuVisible || selectedNoteIndex) return;
@@ -623,8 +637,9 @@ const PianoRolls = () => {
             return;
         }
 
-        // Melodic instrument: start and keep a reference for key up
-        const audioNode = pianoRef.current.play(note);
+        // Melodic instrument: start and keep a reference for key up (use clamped note)
+        const playable = clampNoteToPlayable(note);
+        const audioNode = pianoRef.current.play(playable);
         activeAudioNodes.current[note] = audioNode;
 
         const time = (typeof Tone.now === 'function') ? Tone.now() : ctx.currentTime;
@@ -818,10 +833,11 @@ const PianoRolls = () => {
                 const src = createSynthSound(pad, ctx);
                 if (gainNodeRef.current) src.connect(gainNodeRef.current); else src.connect(ctx.destination);
             } else if (pianoRef.current) {
-                try { pianoRef.current.play(note, undefined, { duration: Math.max(0.1, duration) }); } catch {}
+                const playable = clampNoteToPlayable(note);
+                try { pianoRef.current.play(playable, undefined, { duration: Math.max(0.1, duration) }); } catch {}
             }
         } catch {}
-    }, [isDrumTrack, noteNameToMidi, selectedDrumMachine]);
+    }, [isDrumTrack, noteNameToMidi, selectedDrumMachine, clampNoteToPlayable]);
 
     // Smooth local playhead driven by Tone when playing
     useEffect(() => {
@@ -1237,7 +1253,7 @@ const PianoRolls = () => {
                 {/* Timeline Header Container with Horizontal Scroll */}
                 <div
                     ref={timelineContainerRef}
-                    className="fixed left-0 right-0 h-[80px] overflow-x-auto overflow-y-hidden z-[2] hover:bg-[#2a2a2a] transition-colors duration-150"
+                    className="fixed left-0 right-0 h-[80px] overflow-x-auto overflow-y-hidden z-[5] hover:bg-[#2a2a2a] transition-colors duration-150"
                     style={{ background: "#1F1F1F", cursor: 'pointer' }}
                     onClick={handleTimelineClick}
                     onMouseDown={onHeaderMouseDown}
@@ -1404,7 +1420,9 @@ const PianoRolls = () => {
                     <div className="pianoroll-playhead-transform" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 24 }} />
                     {/* Red background region - mirrors TimelineTrack clip when available */}
                     {(() => {
-                        const activeClip = (pianoRecordingClip && (pianoRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? pianoRecordingClip : null;
+                        const trackObj = tracks?.find?.(t => t.id === currentTrackId);
+                        const persistedClip = trackObj?.pianoClip || null;
+                        const activeClip = (pianoRecordingClip && (pianoRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? pianoRecordingClip : persistedClip;
                         if (activeClip && activeClip.start != null && activeClip.end != null) {
                             const left = (activeClip.start || 0) * timelineWidthPerSecond;
                             const width = Math.max(0, (activeClip.end - activeClip.start)) * timelineWidthPerSecond;

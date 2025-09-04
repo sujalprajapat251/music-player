@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Volume2, ChevronDown, Plus, Mic } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
+import { setGlobalReverb, setGlobalPan, setGlobalVolume, setGlobalDrumTypeIndex } from '../Redux/Slice/audioSettings.slice';
 import { setDrumRecordedData, addAudioClipToTrack, setDrumRecordingClip, removeAudioClip } from '../Redux/Slice/studio.slice';
 import { selectStudioState } from '../Redux/rootReducer';
 import {
@@ -9,7 +10,172 @@ import {
   createDrumData,
   getAudioContext
 } from '../Utils/drumMachineUtils';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { GiPianoKeys } from 'react-icons/gi';
 // import { handleBeatToggleSync } from '../Utils/patternTimelineBridge';
+
+function polarToCartesian(cx, cy, r, angle) {
+  const a = (angle - 90) * Math.PI / 180.0;
+  return {
+    x: cx + r * Math.cos(a),
+    y: cy + r * Math.sin(a)
+  };
+}
+
+// Helper to describe arc path
+function describeArc(cx, cy, r, startAngle, endAngle) {
+  const start = polarToCartesian(cx, cy, r, endAngle);
+  const end = polarToCartesian(cx, cy, r, startAngle);
+  const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+  return [
+    "M", start.x, start.y,
+    "A", r, r, 0, largeArcFlag, 0, end.x, end.y
+  ].join(" ");
+}
+
+function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange }) {
+  const [angle, setAngle] = useState(defaultAngle ?? min);
+  const knobRef = useRef(null);
+  const dragging = useRef(false);
+  const lastY = useRef(0);
+
+  // Tailwind-consistent responsive sizes
+  const getResponsiveSize = () => {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth >= 1440) return 56; // 2xl
+      if (window.innerWidth >= 1280) return 52; // xl  
+      if (window.innerWidth >= 1024) return 48; // lg
+      if (window.innerWidth >= 768) return 44;  // md
+      if (window.innerWidth >= 640) return 40;  // sm
+      return 30; // xs (mobile)
+    }
+    return 56;
+  };
+
+  const [size, setSize] = useState(getResponsiveSize());
+
+  useEffect(() => {
+    const handleResize = () => setSize(getResponsiveSize());
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Tailwind-consistent responsive sizes
+  const getResponsiveStroke = () => {
+    if (typeof window !== 'undefined') {
+      if (window.innerWidth >= 768) return 3;  // md
+      // if (window.innerWidth >= 640) return 40;  // sm
+      return 2; // xs (mobile)
+    }
+    return 56;
+  };
+
+  const [stroke, setStroke] = useState(getResponsiveStroke());
+
+  useEffect(() => {
+    const handleResizeStroke = () => setStroke(getResponsiveStroke());
+    window.addEventListener('resize', handleResizeStroke);
+    return () => window.removeEventListener('resize', handleResizeStroke);
+  }, []);
+
+  // Update angle when defaultAngle prop changes
+  useEffect(() => {
+    if (defaultAngle !== undefined) {
+      setAngle(defaultAngle);
+    }
+  }, [defaultAngle]);
+
+  const radius = (size - stroke) / 2;
+  const center = size / 2;
+  const onMouseDown = (e) => {
+    dragging.current = true;
+    lastY.current = e.clientY;
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  };
+
+  const onMouseMove = (e) => {
+    if (!dragging.current) return;
+    const deltaY = lastY.current - e.clientY; // up is negative, down is positive
+    lastY.current = e.clientY;
+    setAngle((prev) => {
+      let next = prev + deltaY * 1.5; // adjust sensitivity as needed
+      next = Math.max(min, Math.min(max, next));
+
+      // Call onChange callback if provided
+      if (onChange) {
+        onChange(next);
+      }
+      return next;
+    });
+  };
+
+  const onMouseUp = () => {
+    dragging.current = false;
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+  };
+
+  const arcStart = min; // -135
+  const valueAngle = angle; // current angle
+  const fgArc = describeArc(center, center, radius, arcStart, valueAngle);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        // marginTop: 40,
+      }}
+    >
+      <div
+        ref={knobRef}
+        style={{
+          width: size,
+          height: size,
+          position: "relative",
+          cursor: "pointer",
+        }}
+        onMouseDown={onMouseDown}
+      >
+        <svg width={size} height={size}>
+          {/* Full background circle */}
+          <circle
+            cx={center}
+            cy={center}
+            r={radius}
+            stroke="#444"
+            strokeWidth={stroke}
+            fill="#1F1F1F"
+          />
+          {/* Colored arc (top half, up to value) */}
+          <path
+            d={fgArc}
+            stroke="#bbb"
+            strokeWidth={stroke}
+            fill="#1F1F1F"
+            strokeLinecap="round"
+          />
+        </svg>
+        {/* Indicator line */}
+        <div
+          className={`absolute top-1.5 left-1/2 w-0.5 h-2 md600:h-3 lg:h-4 bg-gray-400 rounded-sm -translate-x-1/2 origin-bottom`}
+          style={{
+            transform: `translateX(-50%) rotate(${angle}deg)`,
+          }}
+        />
+      </div>
+      <div className='text-[8px] md600:text-[10px] md:text-[12px] 2xl:text-[14px] mt-1 items-center text-[#aaa]'
+        style={{
+          fontFamily: "sans-serif"
+        }}
+      >
+        {label}
+      </div>
+    </div>
+  );
+}
 
 const Pattern = () => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -27,11 +193,28 @@ const Pattern = () => {
   const [nextTrackId, setNextTrackId] = useState(4);
   const [isRecordingPattern, setIsRecordingPattern] = useState(false);
   const [patternRecordedData, setPatternRecordedData] = useState([]);
+  const globalTypeIndex = useSelector((state) => state.audioSettings?.currentDrumTypeIndex ?? 0);
+  const [currentType, setCurrentType] = useState(globalTypeIndex);
+  // Use global knobs so Drum and Pattern stay in sync
+  const globalVolume = useSelector((state) => state.audioSettings?.volume ?? 0.7);
+  const globalPan = useSelector((state) => state.audioSettings?.pan ?? 0);
+  const globalReverb = useSelector((state) => state.audioSettings?.reverb ?? 0.2);
+  const [volume, setVolume] = useState(globalVolume);
+  const [pan, setPan] = useState(globalPan);
+  const [reverb, setReverb] = useState(globalReverb);
 
   const audioContextRef = useRef(null);
   const dropdownRef = useRef(null);
   const dispatch = useDispatch();
   const selectedTrackId = useSelector((state) => selectStudioState(state)?.currentTrackId);
+
+  const currentTypeData = drumMachineTypes[currentType];
+
+  // Keep local state synced when another page changes globals
+  useEffect(() => { setVolume(globalVolume); }, [globalVolume]);
+  useEffect(() => { setPan(globalPan); }, [globalPan]);
+  useEffect(() => { setReverb(globalReverb); }, [globalReverb]);
+  useEffect(() => { setCurrentType(globalTypeIndex); }, [globalTypeIndex]);
 
   // Get all tracks from Redux store
   const allTracks = useSelector((state) => selectStudioState(state)?.tracks || []);
@@ -283,25 +466,25 @@ const Pattern = () => {
   // Playback logic
   useEffect(() => {
     let intervalId = null;
-    
+
     if (isPlaying) {
       const beatDuration = (60 / bpm / 4) * 1000;
-      
+
       intervalId = setInterval(() => {
         setCurrentBeat(prev => {
           const nextBeat = (prev + 1) % patternLength;
-          
+
           tracks.forEach(track => {
             if (track.pattern[nextBeat]) {
               playDrumSound(track);
             }
           });
-          
+
           return nextBeat;
         });
       }, beatDuration);
     }
-  
+
     // Cleanup function - this will run when component unmounts or dependencies change
     return () => {
       if (intervalId) {
@@ -316,7 +499,7 @@ const Pattern = () => {
     }
     setIsPlaying(!isPlaying);
   };
-  
+
   // Update stopAndReset function
   const stopAndReset = () => {
     setIsPlaying(false);
@@ -363,17 +546,17 @@ const Pattern = () => {
             // Merge with existing drum recorded data
             const updatedData = [...drumRecordedData, drumHit];
             dispatch(setDrumRecordedData(updatedData));
-            
+
             // Update drum recording clip bounds
             const notesForThisTrack = updatedData.filter(n => n.trackId === selectedTrackId);
             if (notesForThisTrack.length > 0) {
               const minStart = Math.min(...notesForThisTrack.map(n => n.currentTime || 0));
               const maxEnd = Math.max(...notesForThisTrack.map(n => (n.currentTime || 0) + (n.decay || 0.2)));
               const trackColor = (allTracks.find(t => t.id === selectedTrackId)?.color) || '#FF8014';
-              const drumClip = { 
-                start: minStart, 
-                end: maxEnd, 
-                color: trackColor, 
+              const drumClip = {
+                start: minStart,
+                end: maxEnd,
+                color: trackColor,
                 trackId: selectedTrackId,
                 type: 'drum',
                 name: `Drum Recording (${notesForThisTrack.length} hits)`,
@@ -388,22 +571,22 @@ const Pattern = () => {
             }
           } else {
             // Remove this specific drum hit from the recorded data
-            const remaining = drumRecordedData.filter(hit => 
+            const remaining = drumRecordedData.filter(hit =>
               !(hit.padId === track.padId && Math.abs((hit.currentTime || 0) - exactTimePosition) < 0.001 && hit.trackId === selectedTrackId)
             );
-            
+
             dispatch(setDrumRecordedData(remaining));
-            
+
             // Update drum recording clip bounds
             const notesForThisTrack = remaining.filter(n => n.trackId === selectedTrackId);
             if (notesForThisTrack.length > 0) {
               const minStart = Math.min(...notesForThisTrack.map(n => n.currentTime || 0));
               const maxEnd = Math.max(...notesForThisTrack.map(n => (n.currentTime || 0) + (n.decay || 0.2)));
               const trackColor = (allTracks.find(t => t.id === selectedTrackId)?.color) || '#FF8014';
-              const drumClip = { 
-                start: minStart, 
-                end: maxEnd, 
-                color: trackColor, 
+              const drumClip = {
+                start: minStart,
+                end: maxEnd,
+                color: trackColor,
                 trackId: selectedTrackId,
                 type: 'drum',
                 name: `Drum Recording (${notesForThisTrack.length} hits)`,
@@ -518,6 +701,66 @@ const Pattern = () => {
 
   return (
     <>
+      <div className=" bg-[#1F1F1F] flex items-center justify-center pt-1 pb-1 md600:px-2 md600:pt-2 md600:pb-1 gap-2 sm:gap-2  md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
+        {/* Instrument Selector */}
+        <div className="bg-[#353535] p-1 md600:p-2 lg:p-3 rounded-lg">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => {
+                const next = (currentType - 1 + drumMachineTypes.length) % drumMachineTypes.length;
+                setCurrentType(next);
+                dispatch(setGlobalDrumTypeIndex(next));
+              }}
+              className="text-gray-400 hover:text-white transition-colors  md600:p-2"
+            >
+              <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px]' />
+            </button>
+
+            <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-center 2xl:px-4 2xl:w-[250px]">
+              <div className="text-white">
+                <GiPianoKeys className='text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
+              </div>
+              <div className="">
+                <div className="text-white fw-bolder text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[16px]">
+                  {currentTypeData.name}
+                </div>
+                <div className="text-gray-400 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px] max-w-20 sm:max-w-32 truncate">
+                  {currentTypeData.description}
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                const next = (currentType + 1) % drumMachineTypes.length;
+                setCurrentType(next);
+                dispatch(setGlobalDrumTypeIndex(next));
+              }}
+              className="text-gray-400 hover:text-white transition-colors lg:p-2"
+            >
+              <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] text-[#FFFFFF99]' />
+            </button>
+          </div>
+        </div>
+
+        {/* Audio Effect Knobs */}
+        <div className="flex space-x-1 md600:space-x-2 lg:space-x-4 2xl:space-x-6">
+          {/* Reverb Knob */}
+          <div className="flex flex-col items-center">
+            <Knob label="Reverb" min={-135} max={135} defaultAngle={reverb} onChange={(value) => { setReverb(value); dispatch(setGlobalReverb(value)); }} />
+          </div>
+
+          {/* Pan Knob */}
+          <div className="flex flex-col items-center">
+            <Knob label="Pan" min={-135} max={135} defaultAngle={pan} onChange={(value) => { setPan(value); dispatch(setGlobalPan(value)); }} />
+          </div>
+
+          {/* Volume Knob */}
+          <div className="flex flex-col items-center">
+            <Knob label="Volume" min={-135} max={135} defaultAngle={volume} onChange={(value) => { setVolume(value); dispatch(setGlobalVolume(value)); }} />
+          </div>
+        </div>
+      </div>
       <div className="bg-black min-h-screen p-6 text-white">
         <div className="m-5 mx-auto">
 

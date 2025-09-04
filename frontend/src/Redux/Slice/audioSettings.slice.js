@@ -4,6 +4,11 @@ const initialState = {
   soundQuality: "High", // 'High', 'Medium', 'Low', 'Extra Low'
   sampleRate: 44100,
   latencyHint: "interactive",
+  // Global knobs shared across pages (Drum, Pattern, etc.)
+  reverb: 0.2,
+  pan: 0,
+  volume: 0.7,
+  currentDrumTypeIndex: 0,
   audioContextSettings: {
     high: { sampleRate: 48000, latencyHint: "interactive" },
     medium: { sampleRate: 44100, latencyHint: "interactive" },
@@ -33,9 +38,21 @@ const audioSettingsSlice = createSlice({
     setLatencyHint: (state, action) => {
       state.latencyHint = action.payload;
     },
+    setGlobalReverb: (state, action) => {
+      state.reverb = action.payload;
+    },
+    setGlobalPan: (state, action) => {
+      state.pan = action.payload;
+    },
+    setGlobalVolume: (state, action) => {
+      state.volume = action.payload;
+    },
+    setGlobalDrumTypeIndex: (state, action) => {
+      state.currentDrumTypeIndex = action.payload;
+    },
   },
 });
 
-export const { setSoundQuality, setSampleRate, setLatencyHint } =
+export const { setSoundQuality, setSampleRate, setLatencyHint, setGlobalReverb, setGlobalPan, setGlobalVolume, setGlobalDrumTypeIndex } =
   audioSettingsSlice.actions;
 export default audioSettingsSlice.reducer;

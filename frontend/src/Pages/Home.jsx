@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import leftTop from "../Images/leftTop.png";
 import rightBottom from "../Images/rightBottom.png";
@@ -17,6 +18,7 @@ import mm3 from "../Images/mm3.png";
 import payStore from "../Images/play-store.png";
 import Footer from "../components/Footer";
 const Home = () => {
+  const navigate = useNavigate();
   const features = [
     {
       icon: f1,
@@ -79,7 +81,10 @@ const Home = () => {
               reprehenderit in voluptate velit esse cillum .
             </p>
             <div className="flex justify-center gap-4 mt-6 mb-3">
-              <button className="bg-white text-black border px-4 lg:px-6 py-2 rounded font-medium shadow hover:bg-transparent hover:border hover:border-white hover:text-white transition-colors duration-200 text-sm md:text-base">
+              <button
+                onClick={() => navigate("/login", { state: { openSignUp: true } })}
+                className="bg-white text-black border px-4 lg:px-6 py-2 rounded font-medium shadow hover:bg-transparent hover:border hover:border-white hover:text-white transition-colors duration-200 text-sm md:text-base"
+              >
                 Get Started
               </button>
               <button className="bg-transparent border border-white text-white px-4 lg:px-6 py-2 text-sm md:text-base rounded font-medium hover:bg-white hover:text-black transition-colors duration-200">

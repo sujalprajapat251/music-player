@@ -760,6 +760,7 @@ const TimelineTrack = ({
   // Get drum recording data from Redux
   const drumRecordedData = useSelector((state) => selectStudioState(state).drumRecordedData);
   const drumRecordingClip = useSelector((state) => selectStudioState(state).drumRecordingClip);
+  const tracks = useSelector((state) => selectStudioState(state).tracks || []);
 
   // console.log("==================data==================", drumRecordedData);
   // console.log("==================clip==================", drumRecordingClip);
@@ -771,7 +772,14 @@ const TimelineTrack = ({
   const isDrumTrack = typeName === 'drum' || displayName === 'drum' || displayName.includes('drum') || displayName.includes('percussion');
 
   // Get the actual clip objects for this track
-  const trackPianoClip = (pianoRecordingClip && (pianoRecordingClip.trackId ?? null) === trackId) ? pianoRecordingClip : null;
+  // Prefer active clip when this track is being edited; otherwise fall back to
+  // the clip persisted on the track so switching tracks does not reset length
+  const activeClipForThisTrack = (pianoRecordingClip && (pianoRecordingClip.trackId ?? null) === trackId) ? pianoRecordingClip : null;
+  const persistedTrackClip = useMemo(() => {
+    const track = tracks?.find?.(t => t.id === trackId);
+    return track?.pianoClip || null;
+  }, [tracks, trackId]);
+  const trackPianoClip = activeClipForThisTrack || persistedTrackClip;
   const trackDrumClip = (drumRecordingClip && (drumRecordingClip.trackId ?? null) === trackId) ? drumRecordingClip : null;
 
   // Derive per-track piano data with trimming applied

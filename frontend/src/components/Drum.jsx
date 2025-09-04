@@ -17,6 +17,7 @@ import { GiPianoKeys } from 'react-icons/gi';
 import { IoIosArrowDown } from 'react-icons/io';
 import { ReactComponent as Tick } from "../Images/Tick.svg";
 import { useTheme } from '../Utils/ThemeContext';
+import { setGlobalReverb, setGlobalPan, setGlobalVolume, setGlobalDrumTypeIndex } from '../Redux/Slice/audioSettings.slice';
 
 function polarToCartesian(cx, cy, r, angle) {
   const a = (angle - 90) * Math.PI / 180.0;
@@ -206,13 +207,18 @@ const DrumPadMachine = ({ onClose }) => {
   const [selectedEffectCategory, setSelectedEffectCategory] = useState(null);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
 
-  const [currentType, setCurrentType] = useState(0);
+  const globalTypeIndex = useSelector((state) => state.audioSettings?.currentDrumTypeIndex ?? 0);
+  const [currentType, setCurrentType] = useState(globalTypeIndex);
   const [activePads, setActivePads] = useState(new Set());
   const [showOffcanvas3, setShowOffcanvas3] = useState(true);
   const [displayDescription, setDisplayDescription] = useState('Press a key or click a pad!');
-  const [volume, setVolume] = useState(0.7);
-  const [pan, setPan] = useState(0);
-  const [reverb, setReverb] = useState(0.2);
+  // Global knobs via Redux
+  const globalVolume = useSelector((state) => state.audioSettings?.volume ?? 0.7);
+  const globalPan = useSelector((state) => state.audioSettings?.pan ?? 0);
+  const globalReverb = useSelector((state) => state.audioSettings?.reverb ?? 0.2);
+  const [volume, setVolume] = useState(globalVolume);
+  const [pan, setPan] = useState(globalPan);
+  const [reverb, setReverb] = useState(globalReverb);
   // const [isRecording, setIsRecording] = useState(false);
   const [sequence, setSequence] = useState([]);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -223,6 +229,12 @@ const DrumPadMachine = ({ onClose }) => {
   const reverbBufferRef = useRef(null);
   const lastPlayTime = useRef({});
   const dispatch = useDispatch();
+
+  // Keep local knob state synced with global Redux changes that may come from other pages
+  useEffect(() => { setVolume(globalVolume); }, [globalVolume]);
+  useEffect(() => { setPan(globalPan); }, [globalPan]);
+  useEffect(() => { setReverb(globalReverb); }, [globalReverb]);
+  useEffect(() => { setCurrentType(globalTypeIndex); }, [globalTypeIndex]);
   const isRecording = useSelector((state) => selectStudioState(state)?.isRecording || false);
   const drumRecordedData = useSelector((state) => selectStudioState(state)?.drumRecordedData || []);
   const currentTime = useSelector((state) => selectStudioState(state)?.currentTime || 0);
@@ -1258,7 +1270,7 @@ const DrumPadMachine = ({ onClose }) => {
                       <div className="bg-[#353535] p-1 md600:p-2 lg:p-3 rounded-lg">
                         <div className="flex items-center justify-between">
                           <button
-                            onClick={() => setCurrentType((prev) => (prev - 1 + drumMachineTypes.length) % drumMachineTypes.length)}
+                            onClick={() => { const next = (currentType - 1 + drumMachineTypes.length) % drumMachineTypes.length; setCurrentType(next); dispatch(setGlobalDrumTypeIndex(next)); }}
                             className="text-gray-400 hover:text-white transition-colors  md600:p-2"
                           >
                             <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px]' />
@@ -1279,7 +1291,7 @@ const DrumPadMachine = ({ onClose }) => {
                           </div>
 
                           <button
-                            onClick={() => setCurrentType((prev) => (prev + 1) % drumMachineTypes.length)}
+                            onClick={() => { const next = (currentType + 1) % drumMachineTypes.length; setCurrentType(next); dispatch(setGlobalDrumTypeIndex(next)); }}
                             className="text-gray-400 hover:text-white transition-colors lg:p-2"
                           >
                             <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] text-[#FFFFFF99]' />
@@ -1291,17 +1303,17 @@ const DrumPadMachine = ({ onClose }) => {
                       <div className="flex space-x-1 md600:space-x-2 lg:space-x-4 2xl:space-x-6">
                         {/* Reverb Knob */}
                         <div className="flex flex-col items-center">
-                          <Knob label="Reverb" min={-135} max={135} defaultAngle={reverb} onChange={(value) => setReverb(value)} />
+                          <Knob label="Reverb" min={-135} max={135} defaultAngle={reverb} onChange={(value) => { setReverb(value); dispatch(setGlobalReverb(value)); }} />
                         </div>
 
                         {/* Pan Knob */}
                         <div className="flex flex-col items-center">
-                          <Knob label="Pan" min={-135} max={135} defaultAngle={pan} onChange={(value) => setPan(value)} />
+                          <Knob label="Pan" min={-135} max={135} defaultAngle={pan} onChange={(value) => { setPan(value); dispatch(setGlobalPan(value)); }} />
                         </div>
 
                         {/* Volume Knob */}
                         <div className="flex flex-col items-center">
-                          <Knob label="Volume" min={-135} max={135} defaultAngle={volume} onChange={(value) => setVolume(value)} />
+                          <Knob label="Volume" min={-135} max={135} defaultAngle={volume} onChange={(value) => { setVolume(value); dispatch(setGlobalVolume(value)); }} />
                         </div>
                       </div>
 
