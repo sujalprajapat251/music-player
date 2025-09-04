@@ -2333,33 +2333,33 @@ const Timeline = () => {
   // }, [patternDrumPlayback, isPlaying, playPatternDrumSound]);
 
 
-  useEffect(() => {
-    // Build a set of existing trackId:clipId pairs from Redux state
-    const existing = new Set();
-    tracks.forEach(t => {
-      (t.audioClips || []).forEach(c => {
-        existing.add(`${t.id}:${c.id}`);
-      });
-    });
+  // useEffect(() => {
+  //   // Build a set of existing trackId:clipId pairs from Redux state
+  //   const existing = new Set();
+  //   tracks.forEach(t => {
+  //     (t.audioClips || []).forEach(c => {
+  //       existing.add(`${t.id}:${c.id}`);
+  //     });
+  //   });
 
-    // Stop and remove any players that no longer have a corresponding clip
-    setPlayers(prev => {
-      prev.forEach(p => {
-        const key = `${p.trackId}:${p.clipId}`;
-        if (!existing.has(key) && p.player) {
-          try {
-            if (typeof p.player.stop === 'function') p.player.stop();
-          } catch {}
-          try {
-            if (typeof p.player.dispose === 'function') p.player.dispose();
-          } catch {}
-        }
-      });
-      return prev.filter(p => existing.has(`${p.trackId}:${p.clipId}`));
-    });
+  //   // Stop and remove any players that no longer have a corresponding clip
+  //   setPlayers(prev => {
+  //     prev.forEach(p => {
+  //       const key = `${p.trackId}:${p.clipId}`;
+  //       if (!existing.has(key) && p.player) {
+  //         try {
+  //           if (typeof p.player.stop === 'function') p.player.stop();
+  //         } catch {}
+  //         try {
+  //           if (typeof p.player.dispose === 'function') p.player.dispose();
+  //         } catch {}
+  //       }
+  //     });
+  //     return prev.filter(p => existing.has(`${p.trackId}:${p.clipId}`));
+  //   });
 
-    setWaveSurfers(prev => prev.filter(Boolean));
-  }, [tracks, setPlayers, setWaveSurfers]);
+  //   setWaveSurfers(prev => prev.filter(Boolean));
+  // }, [tracks, setPlayers, setWaveSurfers]);
 
   return (
     <>
