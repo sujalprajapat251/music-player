@@ -500,7 +500,7 @@ const handleMoveBackwardSmall = () => {
 
     return (
         <>
-            <div className=" w-full flex justify-center md600:justify-between bg-primary-light dark:bg-primary-dark border-t border-[#1414141A] dark:border-[#FFFFFF1A] px-2 py-2 sm:px-3 sm:py-1 md:px-5 md:py-2 xl:px-7 absolute z-[99999999]">
+            <div className="fixed bottom-0 w-full flex justify-center md600:justify-between bg-primary-light dark:bg-primary-dark border-t border-[#1414141A] dark:border-[#FFFFFF1A] px-2 py-2 sm:px-3 sm:py-1 md:px-5 md:py-2 xl:px-7 absolute z-[99999999]">
                 <div className='flex gap-2 sm:gap-3 md:gap-3 lg:gap-5 2xl:gap-7 items-center'>
                     <div className="flex items-center gap-1">
                         <HiOutlineSpeakerWave className={`text-secondary-light dark:text-secondary-dark text-[16px] md:text-[20px] lg:text-[24px] transition-colors ${isVolumeChanging ? 'text-blue-500' : ''}`} />
