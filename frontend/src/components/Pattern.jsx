@@ -358,6 +358,14 @@ const Pattern = () => {
     }
   }, [selectedTrackId, allTracks, convertTrackDataToPattern]);
 
+  // Effect to automatically apply recorded data once when recording stops
+  useEffect(() => {
+    if (!isRecording && drumRecordedData.length > 0) {
+      // Auto-apply recorded data to pattern
+      convertRecordedDataToPattern(drumRecordedData);
+    }
+  }, [isRecording, drumRecordedData, convertRecordedDataToPattern]);
+
   // Effect to automatically apply recorded data once when recording stops (edge-detected)
   const prevIsRecordingRef = useRef(isRecording);
   useEffect(() => {
@@ -571,9 +579,11 @@ const Pattern = () => {
             }
           } else {
             // Remove this specific drum hit from the recorded data
-            const remaining = drumRecordedData.filter(hit =>
-              !(hit.padId === track.padId && Math.abs((hit.currentTime || 0) - exactTimePosition) < 0.001 && hit.trackId === selectedTrackId)
-            );
+            const remaining = drumRecordedData.filter(hit => {
+              if (!(hit.padId === track.padId && hit.trackId === selectedTrackId)) return true;
+              const hitIndex = Math.round(((hit.currentTime || 0) * 16));
+              return hitIndex !== beatIndex;
+            });
 
             dispatch(setDrumRecordedData(remaining));
 
