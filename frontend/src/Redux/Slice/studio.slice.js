@@ -3,6 +3,7 @@ import { getNextTrackColor, resetColorIndex } from '../../Utils/colorUtils';
 import { drumMachineTypes } from '../../Utils/drumMachineUtils';
 import WavEncoder from 'wav-encoder';
 import { selectStudioState } from '../rootReducer';
+import { setAlert } from './alert.slice';
 const initialState = {
   tracks: [],
   trackHeight: 70, // Standard height for each track
@@ -239,6 +240,7 @@ const studioSlice = createSlice({
       state.soloTrackId = action.payload;
     },
     exportTrack: (state, action) => {
+      // This action is handled by the thunk, just return state
       return state;
     },
     setSidebarScrollOffset: (state, action) => {
@@ -403,6 +405,7 @@ const studioSlice = createSlice({
       }
     },
     setDrumRecordingClip: (state, action) => {
+      console.log("reduxclip", action.payload)
       state.drumRecordingClip = action.payload; // {start, end, color, trackId}
     },
     setSelectedKey: (state, action) => {
@@ -1611,4 +1614,163 @@ export const updateTrackWithHistory = (trackId, updates) => (dispatch) => {
   actions.forEach(action => dispatch(action));
 };
 
+// Export track with audio data
+export const exportTrackAudio = (trackId, exportType = 'with_effects', clipId = null) => async (dispatch, getState) => {
+  
+  const state = getState();
+  const studioState = selectStudioState(state);
+  const track = studioState?.tracks?.find(t => t.id == trackId);
+  
+  if (!track) {
+    console.error('Track not found for export');
+    return { success: false, error: 'Track not found' };
+  }
 
+  try {
+    // Check if track has audio clips with blob URLs
+    const audioClips = track.audioClips || [];
+    
+    const clipsWithAudio = audioClips.filter(clip => clip.url && clip.url.startsWith('blob:'));
+    
+    if (clipsWithAudio.length === 0) {
+      console.error('No audio data to export for this track');
+      return { success: false, error: 'No audio data found' };
+    }
+
+    // If specific clip ID is provided, use that clip, otherwise use the first one
+    let audioClip;
+    if (clipId) {
+      audioClip = clipsWithAudio.find(clip => clip.id === clipId);
+      if (!audioClip) {
+        console.error('Specified audio clip not found');
+        return { success: false, error: 'Specified audio clip not found' };
+      }
+    } else {
+      audioClip = clipsWithAudio[0];
+    }
+    
+    
+    // Fetch the audio data from blob URL
+    const response = await fetch(audioClip.url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch audio data: ${response.statusText}`);
+    }
+    
+    const audioBlob = await response.blob();
+
+    // Decode, trim, and re-encode using trimStart/trimEnd from the clip
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const arrayBuffer = await audioBlob.arrayBuffer();
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+    const clipTrimStart = Math.max(0, Number(audioClip.trimStart ?? 0));
+    const clipTrimEnd = Math.min(
+      Number(audioClip.trimEnd ?? audioBuffer.duration),
+      audioBuffer.duration
+    );
+    const startSample = Math.floor(clipTrimStart * audioBuffer.sampleRate);
+    const endSample = Math.max(startSample + 1, Math.floor(clipTrimEnd * audioBuffer.sampleRate));
+    const length = Math.max(0, endSample - startSample);
+
+    const channelData = [];
+    for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
+      const src = audioBuffer.getChannelData(ch);
+      const out = new Float32Array(length);
+      for (let i = 0; i < length; i++) {
+        out[i] = src[startSample + i] || 0;
+      }
+      channelData.push(out);
+    }
+
+    const wavBuffer = await WavEncoder.encode({
+      sampleRate: audioBuffer.sampleRate,
+      channelData
+    });
+    const exportBlob = new Blob([wavBuffer], { type: 'audio/wav' });
+
+    // Create download link
+    const downloadUrl = URL.createObjectURL(exportBlob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+
+    // Set filename based on track name, clip name, and export type
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const trackName = track.name || 'track';
+    const clipName = audioClip.name ? `_${audioClip.name.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
+    const filename = exportType === 'with_effects'
+      ? `${trackName}${clipName}_${timestamp}_with_effects.wav`
+      : `${trackName}${clipName}_${timestamp}_no_effects.wav`;
+
+    link.download = filename;
+
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Clean up
+    URL.revokeObjectURL(downloadUrl);
+
+    // Dispatch export action for tracking
+    dispatch(exportTrack({ 
+      trackId, 
+      exportType,
+      filename,
+      timestamp: Date.now(),
+      audioClipId: audioClip.id,
+      trackName: track.name,
+      clipName: audioClip.name
+    }));
+
+
+    
+    return {
+      success: true,
+      filename,
+      trackName: track.name,
+      clipName: audioClip.name
+    };
+    
+  } catch (error) {
+    console.error('Error exporting track:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  } finally {
+    console.log('=== EXPORT THUNK DEBUG END ===');
+  }
+};
+
+// Export all audio clips from a track as separate files
+export const exportAllTrackClips = (trackId, exportType = 'with_effects') => async (dispatch, getState) => {
+  const state = getState();
+  const track = state.studio?.tracks?.find(t => t.id === trackId);
+  
+  if (!track) {
+    console.error('Track not found for export');
+    return;
+  }
+
+  const audioClips = track.audioClips || [];
+  const clipsWithAudio = audioClips.filter(clip => clip.url && clip.url.startsWith('blob:'));
+  
+  if (clipsWithAudio.length === 0) {
+    console.error('No audio data to export for this track');
+    return;
+  }
+
+  const results = [];
+  
+  for (const clip of clipsWithAudio) {
+    try {
+      const result = await dispatch(exportTrackAudio(trackId, exportType, clip.id));
+      results.push(result);
+    } catch (error) {
+      console.error(`Error exporting clip ${clip.id}:`, error);
+      results.push({ success: false, error: error.message, clipId: clip.id });
+    }
+  }
+  
+  return results;
+};

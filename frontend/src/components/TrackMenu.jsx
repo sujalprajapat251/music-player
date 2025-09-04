@@ -8,7 +8,7 @@ import TrashIcon from '../Images/trash.svg'
 import FreezeIcon from '../Images/freeze.svg'
 import waveIcon from '../Images/wave.svg'
 import { useDispatch, useSelector } from "react-redux";
-import { updateTrack, renameTrack, removeTrack, freezeTrack, duplicateTrack, updateTrackAudio, exportTrack } from "../Redux/Slice/studio.slice";
+import { updateTrack, renameTrack, removeTrack, freezeTrack, duplicateTrack, updateTrackAudio, exportTrack, exportTrackAudio } from "../Redux/Slice/studio.slice";
 import { selectStudioState } from "../hooks/useUndoRedo";
 const MENU_COLORS = [
   "#F05959", "#49B1A5", "#C579C8", "#5572F9",
@@ -145,51 +145,32 @@ const TrackMenu = ({ trackId, color, onRename }) => {
   };
 
   const handleExportTrack = async (includeEffects = true) => {
-    if (!track || !track.url) {
-      console.error('No audio data to export');
+    if (!track) {
+      console.error('No track to export');
       return;
     }
 
     try {
-      // Fetch the audio data
-      const response = await fetch(track.url);
-      const audioBlob = await response.blob();
+      const result = await dispatch(
+        exportTrackAudio(trackId, includeEffects ? 'with_effects' : 'no_effects')
+      );
 
-      // Create a new blob with the appropriate MIME type
-      const exportBlob = new Blob([audioBlob], { type: 'audio/wav' });
-
-      // Create download link
-      const downloadUrl = URL.createObjectURL(exportBlob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-
-      // Set filename based on track name and export type
-      const filename = includeEffects
-        ? `${track.name || 'track'}_with_effects.wav`
-        : `${track.name || 'track'}_no_effects.wav`;
-
-      link.download = filename;
-
-      // Trigger download
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // Clean up
-      URL.revokeObjectURL(downloadUrl);
-
-      // Dispatch export action for tracking
-      dispatch(exportTrack({ trackId, exportType: includeEffects ? 'with_effects' : 'no_effects' }));
-
-      setOpen(false);
-      setSubmenu(null);
-    } catch (error) {
-      console.error('Error exporting track:', error);
+      const payload = result?.payload || result; // supports thunk return
+      if (payload?.success) {
+        // alert('Export successfully');
+        setOpen(false);
+        setSubmenu(null);
+      } else {
+        const msg = payload?.error || 'Unknown error';
+        alert(`Failed to export track: ${msg}`);
+      }
+    } catch (error) { 
+      alert(`Failed to export track: ${error.message}`);
     }
   };
 
   return (
-    <div style={{ position: "relative", display: "inline-block" }}  >
+    <div style={{ position: "relative", display: "inline-block" }}>
       <img
         src={more}
         alt="Menu"
