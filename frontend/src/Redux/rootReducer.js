@@ -175,14 +175,20 @@ import undoRedoReducer from './Slice/undoRedo.slice';
 
 // Create a selector that handles the redux-undo state structure
 export const selectStudioState = (state) => {
+    // console.log('sdjhkfbjkzdhfjlkzbhjofgbhasdfjkfg', state);
   // If redux-undo has wrapped the state, access the present state
   if (state.studio && state.studio.present !== undefined) {
     return state.studio.present;
+
+    
+
   }
   // Otherwise, return the state directly
   return state.studio;
+  
 };
-
+// Convenience selector: tracks now include pianoNotes/pianoClip
+export const selectTracks = (state) => (selectStudioState(state)?.tracks || []);
 export const rootReducer = combineReducers({
     alert: alertSlice,
     auth: authSlice,

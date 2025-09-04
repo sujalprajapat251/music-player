@@ -69,9 +69,12 @@ const studioSlice = createSlice({
         muted: false,
         volume: action.payload.volume || 80, // Set individual track volume (default 80)
         color: action.payload.color || getNextTrackColor(), // Assign unique color
-        audioClips: action.payload.audioClips || [] // Array to hold multiple audio clips
+        audioClips: action.payload.audioClips || [], // Array to hold multiple audio clips
+        pianoNotes: Array.isArray(action.payload.pianoNotes) ? action.payload.pianoNotes : [],
+        pianoClip: action.payload.pianoClip || null
       };
       state.tracks.push(track);
+      console.log('tracktracktracktrack', track);
     },
     updateTrack: (state, action) => {
       const { id, updates } = action.payload;
@@ -131,6 +134,14 @@ const studioSlice = createSlice({
         // Clean up related data
         delete state.trackEffects[trackId];
         delete state.frozenTrackData[trackId];
+
+        state.pianoNotes = (state.pianoNotes || []).filter(n => n?.trackId != trackId);
+        if (state.pianoRecordingClip?.trackId == trackId) {
+          state.pianoRecordingClip = null;
+        }
+        if (state.drumRecordingClip?.trackId == trackId) {
+          state.drumRecordingClip = null;
+        }
       }
     },
     setTrackHeight: (state, action) => {
@@ -215,12 +226,14 @@ const studioSlice = createSlice({
     },
     setRecordingAudio: (state, action) => {
       state.pianoRecord = action.payload;
+
     },
     setRecording: (state, action) => {
       state.isRecording = action.payload;
     },
     setRecordedData: (state, action) => {
       state.recordedData = action.payload;
+      console.log('pianoRecordpianoRecordpianoRecord', action.payload);
     },
     setTrackType: (state, action) => {
       state.newtrackType = action.payload;
@@ -375,9 +388,24 @@ const studioSlice = createSlice({
     addPianoNote: (state, action) => {
       console.log("action.payload :: > ", action.payload)
       state.pianoNotes.push(action.payload);
+      const t = state.tracks.find(tr => tr.id == action.payload?.trackId);
+      if (t) {
+        if (!Array.isArray(t.pianoNotes)) t.pianoNotes = [];
+        t.pianoNotes.push(action.payload);
+      }
     },
     setPianoNotes: (state, action) => {
-      state.pianoNotes = action.payload;
+      // Global storage
+      state.pianoNotes = action.payload || [];
+      // Rebuild per-track mirrors
+      state.tracks.forEach(t => { t.pianoNotes = []; });
+      state.pianoNotes.forEach(note => {
+        const tr = state.tracks.find(t => t.id == note?.trackId);
+        if (tr) {
+          if (!Array.isArray(tr.pianoNotes)) tr.pianoNotes = [];
+          tr.pianoNotes.push(note);
+        }
+      });
     },
     setSelectedInstrument: (state, action) => {
       state.selectedInstrument = action.payload;
@@ -387,6 +415,8 @@ const studioSlice = createSlice({
     },
     clearPianoNotes: (state) => {
       state.pianoNotes = [];
+      // Also clear per-track mirrors
+      state.tracks.forEach(t => { t.pianoNotes = []; });
     },
     setPianoRecordingClip: (state, action) => {
       // Persist the active piano clip globally (for editing) and also store
@@ -661,7 +691,7 @@ export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColo
     blockDuration = 1.0;
     slotStart = blockStart + (beatInSection / 16) * 1.0;
   }
-  
+
   // Resolve pad meta (for playback)
   const resolvePadMeta = (id) => {
     try {
@@ -795,7 +825,7 @@ export const syncPatternBeat = ({ trackId, padId, beatIndex, bpm, isOn, clipColo
     // Remove this beat
     const newSeq = seq.filter(ev =>
       !(Math.abs(ev.currentTime - slotStart) < 0.001 && ev.padId === padId)
-    );    
+    );
 
     const src = container.onBeatsByPad || {};
     const byPad = Object.keys(src).reduce((acc, key) => {
@@ -842,7 +872,7 @@ export const syncRecordedDrumDataToTimeline = ({ trackId, drumRecordedData, bpm 
   const state = getState();
   const selectedRuler = state.grid?.selectedRuler || "Time";
   const track = state.studio?.tracks?.find(t => t.id == trackId);
-  
+
   if (!track) return;
 
   // Clear existing pattern clips for this track
@@ -862,14 +892,14 @@ export const syncRecordedDrumDataToTimeline = ({ trackId, drumRecordedData, bpm 
   Object.entries(dataByPad).forEach(([padId, hits]) => {
     // Sort hits by time
     hits.sort((a, b) => (a.currentTime || 0) - (b.currentTime || 0));
-    
+
     // Group hits into sections (16 beats per section)
     const sections = {};
     hits.forEach(hit => {
       const time = hit.currentTime || 0;
       const sectionIndex = Math.floor(time / 1.0); // 1 second per section
       const beatInSection = Math.floor((time % 1.0) * 16); // 16 beats per second
-      
+
       if (!sections[sectionIndex]) {
         sections[sectionIndex] = {
           startTime: sectionIndex * 1.0,
@@ -878,13 +908,13 @@ export const syncRecordedDrumDataToTimeline = ({ trackId, drumRecordedData, bpm 
           beatsByPad: {}
         };
       }
-      
+
       sections[sectionIndex].hits.push({
         ...hit,
         beatIndex: sectionIndex * 16 + beatInSection,
         beatInSection: beatInSection
       });
-      
+
       if (!sections[sectionIndex].beatsByPad[padId]) {
         sections[sectionIndex].beatsByPad[padId] = [];
       }
@@ -935,7 +965,7 @@ export const syncRecordedPianoDataToTimeline = ({ trackId, pianoNotes, bpm = 120
 
   const state = getState();
   const track = state.studio?.tracks?.find(t => t.id == trackId);
-  
+
   if (!track) return;
 
   // Clear existing piano clips for this track
@@ -950,7 +980,7 @@ export const syncRecordedPianoDataToTimeline = ({ trackId, pianoNotes, bpm = 120
     const startTime = note.startTime || 0;
     const endTime = startTime + (note.duration || 0.5);
     const sectionIndex = Math.floor(startTime / 2.0); // 2 seconds per section
-    
+
     if (!notesBySection[sectionIndex]) {
       notesBySection[sectionIndex] = {
         startTime: sectionIndex * 2.0,
@@ -958,7 +988,7 @@ export const syncRecordedPianoDataToTimeline = ({ trackId, pianoNotes, bpm = 120
         notes: []
       };
     }
-    
+
     notesBySection[sectionIndex].notes.push({
       ...note,
       relativeStartTime: startTime - (sectionIndex * 2.0)
@@ -1374,7 +1404,7 @@ export const triggerPatternDrumPlayback = ({ trackId, clipId, currentTime }) => 
 // Add these action creators at the end of the file, before the export
 // export const createTrackWithDefaults = (trackData) => (dispatch) => {
 //   const trackId = trackData.id || Date.now();
-  
+
 //   // Create a batch of actions that will be grouped together
 //   const actions = [
 //     addTrack({
@@ -1389,7 +1419,7 @@ export const triggerPatternDrumPlayback = ({ trackId, clipId, currentTime }) => 
 //     setCurrentTrackId(trackId),
 //     setTrackType(trackData.type || 'audio')
 //   ];
-  
+
 //   // Dispatch all actions in sequence
 //   actions.forEach(action => dispatch(action));
 // };
@@ -1398,14 +1428,14 @@ export const triggerPatternDrumPlayback = ({ trackId, clipId, currentTime }) => 
 //   const state = getState();
 //   const studioState = selectStudioState(state);
 //   const track = studioState.tracks.find(t => t.id === trackId);
-  
+
 //   if (!track) return;
-  
+
 //   // Create a batch of cleanup actions
 //   const actions = [
 //     removeTrack(trackId)
 //   ];
-  
+
 //   // If this was the current track, clear the current track ID
 //   if (studioState.currentTrackId === trackId) {
 //     const remainingTracks = studioState.tracks.filter(t => t.id !== trackId);
@@ -1415,14 +1445,14 @@ export const triggerPatternDrumPlayback = ({ trackId, clipId, currentTime }) => 
 //       actions.push(setCurrentTrackId(null));
 //     }
 //   }
-  
+
 //   // Dispatch all actions in sequence
 //   actions.forEach(action => dispatch(action));
 // };
 
 // export const addAudioClipWithMetadata = (trackId, audioClip) => (dispatch) => {
 //   const clipId = Date.now() + Math.random();
-  
+
 //   const actions = [
 //     addAudioClipToTrack({
 //       trackId,
@@ -1439,7 +1469,7 @@ export const triggerPatternDrumPlayback = ({ trackId, clipId, currentTime }) => 
 //       }
 //     })
 //   ];
-  
+
 //   actions.forEach(action => dispatch(action));
 // };
 
@@ -1455,7 +1485,7 @@ export const triggerPatternDrumPlayback = ({ trackId, clipId, currentTime }) => 
 //       }
 //     })
 //   ];
-  
+
 //   actions.forEach(action => dispatch(action));
 // };
 
@@ -1471,7 +1501,7 @@ export const triggerPatternDrumPlayback = ({ trackId, clipId, currentTime }) => 
 //       }
 //     })
 //   ];
-  
+
 //   actions.forEach(action => dispatch(action));
 // };
 
@@ -1485,7 +1515,7 @@ export const triggerPatternDrumPlayback = ({ trackId, clipId, currentTime }) => 
 //       }
 //     })
 //   ];
-  
+
 //   actions.forEach(action => dispatch(action));
 // };
 
@@ -1494,7 +1524,7 @@ export const triggerPatternDrumPlayback = ({ trackId, clipId, currentTime }) => 
 // Create track with all default properties as one group
 export const createTrackWithDefaults = (trackData) => (dispatch) => {
   const trackId = trackData.id || Date.now();
-  
+
   // Create a batch of actions that will be grouped together
   const actions = [
     addTrack({
@@ -1509,7 +1539,7 @@ export const createTrackWithDefaults = (trackData) => (dispatch) => {
     setCurrentTrackId(trackId),
     setTrackType(trackData.type || 'audio')
   ];
-  
+
   // Dispatch all actions in sequence
   actions.forEach(action => dispatch(action));
 };
@@ -1519,14 +1549,14 @@ export const deleteTrackWithCleanup = (trackId) => (dispatch, getState) => {
   const state = getState();
   const studioState = selectStudioState(state);
   const track = studioState.tracks.find(t => t.id === trackId);
-  
+
   if (!track) return;
-  
+
   // Create a batch of cleanup actions
   const actions = [
     removeTrack(trackId)
   ];
-  
+
   // If this was the current track, clear the current track ID
   if (studioState.currentTrackId === trackId) {
     const remainingTracks = studioState.tracks.filter(t => t.id !== trackId);
@@ -1536,7 +1566,7 @@ export const deleteTrackWithCleanup = (trackId) => (dispatch, getState) => {
       actions.push(setCurrentTrackId(null));
     }
   }
-  
+
   // Dispatch all actions in sequence
   actions.forEach(action => dispatch(action));
 };
@@ -1544,7 +1574,7 @@ export const deleteTrackWithCleanup = (trackId) => (dispatch, getState) => {
 // Add audio clip with metadata as one group
 export const addAudioClipWithMetadata = (trackId, audioClip) => (dispatch) => {
   const clipId = Date.now() + Math.random();
-  
+
   const actions = [
     addAudioClipToTrack({
       trackId,
@@ -1561,7 +1591,7 @@ export const addAudioClipWithMetadata = (trackId, audioClip) => (dispatch) => {
       }
     })
   ];
-  
+
   actions.forEach(action => dispatch(action));
 };
 
@@ -1578,7 +1608,7 @@ export const recordPianoSequence = (trackId, notes, recordingClip) => (dispatch)
       }
     })
   ];
-  
+
   actions.forEach(action => dispatch(action));
 };
 
@@ -1595,7 +1625,7 @@ export const recordDrumSequence = (trackId, drumData, recordingClip) => (dispatc
       }
     })
   ];
-  
+
   actions.forEach(action => dispatch(action));
 };
 
@@ -1610,17 +1640,17 @@ export const updateTrackWithHistory = (trackId, updates) => (dispatch) => {
       }
     })
   ];
-  
+
   actions.forEach(action => dispatch(action));
 };
 
 // Export track with audio data
 export const exportTrackAudio = (trackId, exportType = 'with_effects', clipId = null) => async (dispatch, getState) => {
-  
+
   const state = getState();
   const studioState = selectStudioState(state);
   const track = studioState?.tracks?.find(t => t.id == trackId);
-  
+
   if (!track) {
     console.error('Track not found for export');
     return { success: false, error: 'Track not found' };
@@ -1629,9 +1659,9 @@ export const exportTrackAudio = (trackId, exportType = 'with_effects', clipId = 
   try {
     // Check if track has audio clips with blob URLs
     const audioClips = track.audioClips || [];
-    
+
     const clipsWithAudio = audioClips.filter(clip => clip.url && clip.url.startsWith('blob:'));
-    
+
     if (clipsWithAudio.length === 0) {
       console.error('No audio data to export for this track');
       return { success: false, error: 'No audio data found' };
@@ -1648,14 +1678,14 @@ export const exportTrackAudio = (trackId, exportType = 'with_effects', clipId = 
     } else {
       audioClip = clipsWithAudio[0];
     }
-    
-    
+
+
     // Fetch the audio data from blob URL
     const response = await fetch(audioClip.url);
     if (!response.ok) {
       throw new Error(`Failed to fetch audio data: ${response.statusText}`);
     }
-    
+
     const audioBlob = await response.blob();
 
     // Decode, trim, and re-encode using trimStart/trimEnd from the clip
@@ -1712,8 +1742,8 @@ export const exportTrackAudio = (trackId, exportType = 'with_effects', clipId = 
     URL.revokeObjectURL(downloadUrl);
 
     // Dispatch export action for tracking
-    dispatch(exportTrack({ 
-      trackId, 
+    dispatch(exportTrack({
+      trackId,
       exportType,
       filename,
       timestamp: Date.now(),
@@ -1723,14 +1753,14 @@ export const exportTrackAudio = (trackId, exportType = 'with_effects', clipId = 
     }));
 
 
-    
+
     return {
       success: true,
       filename,
       trackName: track.name,
       clipName: audioClip.name
     };
-    
+
   } catch (error) {
     console.error('Error exporting track:', error);
     return {
@@ -1746,7 +1776,7 @@ export const exportTrackAudio = (trackId, exportType = 'with_effects', clipId = 
 export const exportAllTrackClips = (trackId, exportType = 'with_effects') => async (dispatch, getState) => {
   const state = getState();
   const track = state.studio?.tracks?.find(t => t.id === trackId);
-  
+
   if (!track) {
     console.error('Track not found for export');
     return;
@@ -1754,14 +1784,14 @@ export const exportAllTrackClips = (trackId, exportType = 'with_effects') => asy
 
   const audioClips = track.audioClips || [];
   const clipsWithAudio = audioClips.filter(clip => clip.url && clip.url.startsWith('blob:'));
-  
+
   if (clipsWithAudio.length === 0) {
     console.error('No audio data to export for this track');
     return;
   }
 
   const results = [];
-  
+
   for (const clip of clipsWithAudio) {
     try {
       const result = await dispatch(exportTrackAudio(trackId, exportType, clip.id));
@@ -1771,6 +1801,6 @@ export const exportAllTrackClips = (trackId, exportType = 'with_effects') => asy
       results.push({ success: false, error: error.message, clipId: clip.id });
     }
   }
-  
+
   return results;
 };

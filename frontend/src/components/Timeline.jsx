@@ -3,10 +3,14 @@ import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
 import Soundfont from 'soundfont-player';
+// eslint-disable-next-line no-unused-vars
 import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio, setCurrentTrackId, setTrackType, triggerPatternDrumPlayback } from "../Redux/Slice/studio.slice";
 import { selectStudioState } from "../Redux/rootReducer";
+// eslint-disable-next-line no-unused-vars
 import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM, zoomIn, zoomOut, resetZoom } from "../Redux/Slice/grid.slice";
+// eslint-disable-next-line no-unused-vars
 import { setAudioDuration as setLoopAudioDuration, toggleLoopEnabled, setLoopEnd, setLoopRange, selectIsLoopEnabled } from "../Redux/Slice/loop.slice";
+// eslint-disable-next-line no-unused-vars
 import { getGridSpacing, getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
 import { IMAGE_URL } from "../Utils/baseUrl";
 import { getAudioContext as getSharedAudioContext, ensureAudioUnlocked } from "../Utils/audioContext";
@@ -27,6 +31,7 @@ import AddNewTrackModel from "./AddNewTrackModel";
 import Piano from "./Piano";
 import WavEncoder from 'wav-encoder';
 import Drum from './Drum';
+// eslint-disable-next-line no-unused-vars
 import Pianodemo from "./Piano";
 import SectionContextMenu from "./SectionContextMenu";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
@@ -35,6 +40,7 @@ import LoopBar from "./LoopBar";
 import TimelineTrack from "./TimelineTrack";
 import ResizableSectionLabel from "./ResizableSectionLabel";
 import { useSectionLabels } from "../hooks/useSectionLabels";
+// eslint-disable-next-line no-unused-vars
 import { toggleEffectsOffcanvas } from "../Redux/Slice/effects.slice";
 import EditTrackNameModal from "./EditTrackNameModal";
 import { audioManager } from '../Utils/audioContext';
@@ -77,6 +83,7 @@ const Timeline = () => {
   const [edirNameModel, setEdirNameModel] = useState(false);
   const [isMagnetEnabled, setIsMagnetEnabled] = useState(false);
   const gridSettingRef = useRef(null);
+  // eslint-disable-next-line no-unused-vars
   const [hasRecordingStarted, setHasRecordingStarted] = useState(false);
 
   // Piano playback functionality
@@ -97,6 +104,7 @@ const Timeline = () => {
   const currentTime = useSelector((state) => selectStudioState(state)?.currentTime || 0);
   const audioDuration = useSelector((state) => selectStudioState(state)?.audioDuration || 150);
 
+  // eslint-disable-next-line no-unused-vars
   const audioSettings = useSelector((state) => state.audioSettings);
 
   // Timeline.jsx (add near other refs)
@@ -129,6 +137,7 @@ const Timeline = () => {
 
     window.addEventListener('timeline:anchor', onAnchor);
     return () => window.removeEventListener('timeline:anchor', onAnchor);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying, currentTime, zoomLevel, baseTimelineWidthPerSecond]);
 
   // After zoomLevel changes, restore scrollLeft so the same time stays in view
@@ -149,6 +158,7 @@ const Timeline = () => {
       container.scrollLeft = Math.max(0, Math.min(targetScrollLeft, maxScroll));
       pendingAnchorRef.current = null;
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoomLevel]);
 
   const getAudioContext = useCallback(() => {
@@ -226,7 +236,17 @@ const Timeline = () => {
   });
 
   const tracks = useSelector((state) => selectStudioState(state)?.tracks || []);
-  console.log("==========================================",tracks)
+  console.log("==========================================", tracks)
+
+  const allTracks = useMemo(() => {
+    // Now that piano data is embedded per track, just expose it from each track
+    return (tracks || []).map((t) => ({
+      ...t,
+      pianoNotes: Array.isArray(t.pianoNotes) ? t.pianoNotes : [],
+      pianoRecordingClip: t.pianoClip || null
+    }));
+  }, [tracks]);
+
   const trackHeight = useSelector((state) => selectStudioState(state)?.trackHeight || 100);
   const recordedData = useSelector((state) => selectStudioState(state)?.recordedData || []);
   const isRecording = useSelector((state) => selectStudioState(state)?.isRecording || false);
@@ -340,6 +360,7 @@ const Timeline = () => {
         // console.error("Failed to decode audio:", err);
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pianoRecording, currentTrackId]);
 
   const getAudioDuration = async (blob) => {
@@ -430,6 +451,7 @@ const Timeline = () => {
         return playerObj;
       });
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, isMagnetEnabled, selectedGrid, audioDuration]);
 
   // Updated trim change handler to support position changes from left trim
@@ -504,32 +526,33 @@ const Timeline = () => {
         return playerObj;
       });
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, tracks, isMagnetEnabled, selectedGrid, audioDuration]);
 
   // ... existing code ...
 
-//   // Add this function near other playback-related functions
-//   const playPatternDrumSound = useCallback((padData) => {
-//     const audioContext = getAudioContext();
-//     if (audioContext.state === 'suspended') {
-//       audioContext.resume();
-//     }
+  //   // Add this function near other playback-related functions
+  //   const playPatternDrumSound = useCallback((padData) => {
+  //     const audioContext = getAudioContext();
+  //     if (audioContext.state === 'suspended') {
+  //       audioContext.resume();
+  //     }
 
-//     const synthSource = createSynthSound(padData, audioContext);
-//     synthSource.connect(audioContext.destination);
-//   }, [getAudioContext]);
+  //     const synthSource = createSynthSound(padData, audioContext);
+  //     synthSource.connect(audioContext.destination);
+  //   }, [getAudioContext]);
 
-//   // Modify the useEffect that handles patternDrumPlayback
-//   useEffect(() => {
-//     if (patternDrumPlayback.padData && isPlaying) {
-//       playPatternDrumSound(patternDrumPlayback.padData);
-//     }
-//   }, [patternDrumPlayback, isPlaying, playPatternDrumSound]);
+  //   // Modify the useEffect that handles patternDrumPlayback
+  //   useEffect(() => {
+  //     if (patternDrumPlayback.padData && isPlaying) {
+  //       playPatternDrumSound(patternDrumPlayback.padData);
+  //     }
+  //   }, [patternDrumPlayback, isPlaying, playPatternDrumSound]);
 
-// // ... existing code ...
+  // // ... existing code ...
 
 
-// ... existing code ...
+  // ... existing code ...
 
   // Add this function near other playback-related functions
   const playPatternDrumSound = useCallback((padData) => {
@@ -549,11 +572,11 @@ const Timeline = () => {
     }
   }, [patternDrumPlayback, isPlaying, playPatternDrumSound]);
 
-// ... existing code ...
+  // ... existing code ...
 
   // Add effects processor reference
   const effectsProcessorRef = useRef(null);
-  
+
   // Get active effects from Redux
   const activeEffects = useSelector((state) => state.effects.activeEffects);
 
@@ -563,6 +586,7 @@ const Timeline = () => {
     if (audioContext && !effectsProcessorRef.current) {
       effectsProcessorRef.current = getEffectsProcessor(audioContext);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update the handleReady function to apply effects
@@ -616,14 +640,14 @@ const Timeline = () => {
               amount: effectsProcessorRef.current.angleToParameter(effect.parameters[1]?.value || 0),
               makeup: effectsProcessorRef.current.angleToParameter(effect.parameters[2]?.value || 90)
             };
-            
+
             // Create effect chain using Web Audio API nodes
             const effectChain = effectsProcessorRef.current.createClassicDistortion(parameters);
-            
+
             // Disconnect player from destination and connect through effects
             player.disconnect();
             player.connect(effectChain.input);
-            
+
             finalOutput = effectChain.output;
             appliedEffects.push({
               effectId: effect.instanceId,
@@ -771,20 +795,20 @@ const Timeline = () => {
     }
   };
 
-  
+
   // Filter piano notes based on trimmed boundaries for playback
   // This ensures that only notes within the trimmed region are played
   const filteredPianoNotes = useMemo(() => {
     if (!pianoRecordingClip || !pianoRecordingClip.start || !pianoRecordingClip.end) {
       return pianoNotes;
     }
-    
+
     return pianoNotes.filter(note => {
       if (note.trackId !== pianoRecordingClip.trackId) return true;
-      
+
       const noteStartTime = note.startTime || 0;
       const noteEndTime = noteStartTime + (note.duration || 0.05);
-      
+
       // Only include notes that overlap with the trimmed region
       return noteStartTime < pianoRecordingClip.end && noteEndTime > pianoRecordingClip.start;
     });
@@ -796,13 +820,13 @@ const Timeline = () => {
     if (!drumRecordingClip || !drumRecordingClip.start || !drumRecordingClip.end) {
       return drumRecordedData;
     }
-    
+
     return drumRecordedData.filter(hit => {
       if (hit.trackId !== drumRecordingClip.trackId) return true;
-      
+
       const hitStartTime = hit.currentTime || 0;
       const hitEndTime = hitStartTime + (hit.decay || 0.2);
-      
+
       // Only include hits that overlap with the trimmed region
       return hitStartTime < drumRecordingClip.end && hitEndTime > drumRecordingClip.start;
     });
@@ -966,8 +990,10 @@ const Timeline = () => {
       if (localAnimationId) {
         cancelAnimationFrame(localAnimationId);
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       playedDrumHitsRef.current.clear();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying, audioDuration, players, isLoopEnabled, loopStart, loopEnd, tempoRatio, filteredPianoNotes, playPianoNote]);
 
   // Smooth playhead animation loop for continuous movement
@@ -1045,6 +1071,7 @@ const Timeline = () => {
     if (!svgRef.current) return;
 
     const svg = d3.select(svgRef.current);
+    // eslint-disable-next-line no-unused-vars
     const svgNode = svgRef.current;
     // Use the zoomed timeline width instead of container width
     const timelineWidth = Math.max(audioDuration, 12) * timelineWidthPerSecond;
@@ -1281,9 +1308,11 @@ const Timeline = () => {
         }
       });
       if (animationFrameId.current) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         cancelAnimationFrame(animationFrameId.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleMouseDown = (e) => {
@@ -1298,6 +1327,7 @@ const Timeline = () => {
   const handleMouseMove = useCallback((e) => {
     if (!isDragging.current) return;
     movePlayhead(e);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleMouseUp = useCallback(() => {
@@ -1394,6 +1424,7 @@ const Timeline = () => {
 
         if (trackId) {
           // Add clip to existing track
+          // eslint-disable-next-line eqeqeq
           const track = tracks.find(t => t.id == trackId);
           const newClip = {
             id: Date.now() + Math.random(),
@@ -1441,6 +1472,7 @@ const Timeline = () => {
     } catch (error) {
       // console.error('Error processing dropped item:', error);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioDuration, dispatch, trackHeight, selectedGrid, selectedTime, isMagnetEnabled]);
 
   // Context menu handlers
@@ -1639,6 +1671,7 @@ const Timeline = () => {
       default:
       // Unknown action
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextMenu, tracks, clipboard, dispatch, currentTime]);
 
   // Section label context menu action handler
@@ -1850,6 +1883,7 @@ const Timeline = () => {
     }
 
     return gridLines;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     // Include all dependencies to prevent stale closures
     audioDuration,
@@ -1872,6 +1906,7 @@ const Timeline = () => {
     }
 
     return time * timelineWidthPerSecond;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localCurrentTime, timelineWidthPerSecond, isMagnetEnabled, selectedGrid, audioDuration]);
 
   // Handler for TimelineActionBoxes
@@ -1910,6 +1945,7 @@ const Timeline = () => {
     // Add more actions as needed
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleDrumRecordingComplete = async (blob) => {
     console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", blob)
     const newTrack = {
@@ -1964,6 +2000,7 @@ const Timeline = () => {
     }
 
     return buffer;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const applyTypeEffects = useCallback((audioNode, typeEffects) => {
@@ -2007,6 +2044,7 @@ const Timeline = () => {
     compressor.connect(waveshaper);
 
     return waveshaper;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Enhanced drum sound playback that works with timeline
@@ -2077,6 +2115,7 @@ const Timeline = () => {
     } catch (error) {
       console.error('Error playing drum sound on timeline:', error);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createReverbBuffer, applyTypeEffects]);
 
   const playedDrumHitsRef = useRef(new Set());
@@ -2238,6 +2277,7 @@ const Timeline = () => {
     return () => {
       audioQualityManager.removeListener(handleQualityChange);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [players]);
 
   // Function to recreate all audio clips with new quality
@@ -2320,11 +2360,11 @@ const Timeline = () => {
   //   if (audioContext.state === 'suspended') {
   //     audioContext.resume();
   //   }
- 
+
   //   const synthSource = createSynthSound(padData, audioContext);
   //   synthSource.connect(audioContext.destination);
   // }, [getAudioContext]);
- 
+
   // // Modify the useEffect that handles patternDrumPlayback
   // useEffect(() => {
   //   if (patternDrumPlayback.padData && isPlaying) {
