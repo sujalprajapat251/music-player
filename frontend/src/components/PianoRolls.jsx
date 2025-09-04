@@ -57,6 +57,7 @@ const PianoRolls = () => {
     const studioIsPlaying = useSelector((state) => selectStudioState(state)?.isPlaying || false);
     const studioCurrentTime = useSelector((state) => selectStudioState(state)?.currentTime || 0);
     const studioBpm = useSelector((state) => selectStudioState(state)?.bpm ?? 120);
+    const selectedInstrument = useSelector((state) => selectStudioState(state)?.selectedInstrument || 'acoustic_grand_piano');
     const [scrollLeft, setScrollLeft] = useState(0); // Horizontal scroll position
     const [isManualScrolling, setIsManualScrolling] = useState(false); // Track manual scrolling
 
@@ -774,20 +775,6 @@ const PianoRolls = () => {
         return selectedTrack.type === 'drum' || name.includes('drum');
     }, [selectedTrack]);
 
-    const targetInstrumentId = useMemo(() => {
-        if (!selectedTrack) return 'acoustic_grand_piano';
-        const name = (selectedTrack.name || '').toLowerCase();
-        if (selectedTrack.type === 'drum' || name.includes('drum')) return null; // handled via drum synth
-        if (name.includes('key')) return 'acoustic_grand_piano';
-        if (name.includes('bass')) return 'synth_bass_1';
-        if (name.includes('guitar/bass amp')) return 'overdriven_guitar';
-        if (name.includes('guitar')) return 'electric_guitar_jazz';
-        if (name.includes('synth')) return 'lead_1_square';
-        if (name.includes('orchestral')) return 'string_ensemble_1';
-        if (name.includes('voice') || name.includes('mic')) return 'voice_oohs';
-        return 'acoustic_grand_piano';
-    }, [selectedTrack]);
-
     // Build simple audio chain and load base context
     useEffect(() => {
         try {
@@ -812,14 +799,26 @@ const PianoRolls = () => {
             pianoRef.current = null; // ensure we don't accidentally use melodic instrument
             return;
         }
-        if (!targetInstrumentId) return;
-        Soundfont.instrument(audioContextRef.current, targetInstrumentId, { destination: gainNodeRef.current })
-            .then((p) => { pianoRef.current = p; })
-            .catch(() => { pianoRef.current = null; });
-    }, [isDrumTrack, targetInstrumentId]);
+        if (!selectedInstrument) return;
+
+        Soundfont.instrument(audioContextRef.current, selectedInstrument, { destination: gainNodeRef.current })
+            .then((p) => { 
+                pianoRef.current = p;
+            })
+            .catch((error) => { 
+                pianoRef.current = null;
+            });
+    }, [isDrumTrack, selectedInstrument]);
 
     // Drum instrument selection (default kit)
-    const selectedDrumMachine = useMemo(() => drumMachineTypes[0], []);
+    const selectedDrumInstrument = useSelector((state) => selectStudioState(state)?.selectedDrumInstrument);
+    const selectedDrumMachine = useMemo(() => {
+        if (selectedDrumInstrument) {
+            const found = drumMachineTypes.find(d => d.name === selectedDrumInstrument);
+            if (found) return found;
+        }
+        return drumMachineTypes[0];
+    }, [selectedDrumInstrument]);
 
     // Unified play helper
     const playNoteForTrack = useCallback((note, duration = 0.2) => {

@@ -18,7 +18,7 @@ import Am7 from "../Images/am7.svg";
 import { FaPlus, FaStop } from "react-icons/fa6";
 import music from "../Images/playingsounds.svg";
 import BottomToolbar from './Layout/BottomToolbar';
-import { addPianoNote, setRecordingAudio, setPianoNotes, setPianoRecordingClip } from '../Redux/Slice/studio.slice';
+import { addPianoNote, setRecordingAudio, setPianoNotes, setPianoRecordingClip, setSelectedInstrument } from '../Redux/Slice/studio.slice';
 import PianoRolls from './PianoRolls';
 import * as Tone from "tone";
 import Effects2 from './Effects2';
@@ -288,6 +288,16 @@ const Pianodemo = ({ onClose }) => {
     const [isDragOver, setIsDragOver] = useState(false);
     const pianoSectionsRef = useRef(null);
 
+    // Get the selected instrument from Redux
+    const selectedInstrumentFromRedux = useSelector((state) => selectStudioState(state)?.selectedInstrument || 'acoustic_grand_piano');
+
+    useEffect(() => {
+        const index = INSTRUMENTS.findIndex(inst => inst.id === selectedInstrumentFromRedux);
+        if (index !== -1) {
+            setCurrentInstrumentIndex(index);
+        }
+    }, [selectedInstrumentFromRedux]);
+
     useEffect(() => {
         const containerEl = pianoSectionsRef.current;
         if (!containerEl) return;
@@ -326,12 +336,20 @@ const Pianodemo = ({ onClose }) => {
     const activeAudioNodes = useRef({});
     const recordAnchorRef = useRef({ systemMs: 0, playheadSec: 0 });
     const selectedInstrument = INSTRUMENTS[currentInstrumentIndex].id;
+    
+    // Update Redux when local instrument changes
+    useEffect(() => {
+        if (selectedInstrument !== selectedInstrumentFromRedux) {
+            dispatch(setSelectedInstrument(selectedInstrument));
+        }
+    }, [selectedInstrument, selectedInstrumentFromRedux, dispatch]);
 
     const getIsRecording = useSelector((state) => selectStudioState(state).isRecording);
     const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
     const studioCurrentTime = useSelector((state) => selectStudioState(state).currentTime || 0);
     const existingPianoNotes = useSelector((state) => selectStudioState(state).pianoNotes || []);
     const tracks = useSelector((state) => selectStudioState(state).tracks || []);
+
 
     const getActiveTabs = useSelector((state) => state.effects.activeTabs);
 
@@ -632,15 +650,19 @@ const Pianodemo = ({ onClose }) => {
     };
 
     const nextInstrument = () => {
-        setCurrentInstrumentIndex((prev) =>
-            prev === INSTRUMENTS.length - 1 ? 0 : prev + 1
-        );
+        const newIndex = currentInstrumentIndex === INSTRUMENTS.length - 1 ? 0 : currentInstrumentIndex + 1;
+        setCurrentInstrumentIndex(newIndex);
+        // Dispatch the selected instrument to Redux so PianoRolls can sync
+        const newInstrument = INSTRUMENTS[newIndex].id;
+        dispatch(setSelectedInstrument(newInstrument));
     };
 
     const prevInstrument = () => {
-        setCurrentInstrumentIndex((prev) =>
-            prev === 0 ? INSTRUMENTS.length - 1 : prev - 1
-        );
+        const newIndex = currentInstrumentIndex === 0 ? INSTRUMENTS.length - 1 : currentInstrumentIndex - 1;
+        setCurrentInstrumentIndex(newIndex);
+        // Dispatch the selected instrument to Redux so PianoRolls can sync
+        const newInstrument = INSTRUMENTS[newIndex].id;
+        dispatch(setSelectedInstrument(newInstrument));
     };
 
 

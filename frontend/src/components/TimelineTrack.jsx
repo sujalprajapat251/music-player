@@ -762,9 +762,6 @@ const TimelineTrack = ({
   const drumRecordingClip = useSelector((state) => selectStudioState(state).drumRecordingClip);
   const tracks = useSelector((state) => selectStudioState(state).tracks || []);
 
-  // console.log("==================data==================", drumRecordedData);
-  // console.log("==================clip==================", drumRecordingClip);
-
   const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
   const typeName = (track?.type || '').toString().toLowerCase();
   const displayName = (track?.name || '').toString().toLowerCase();
@@ -836,94 +833,6 @@ const TimelineTrack = ({
 
   // Add state for dragging trim handles
   const [isDraggingTrim, setIsDraggingTrim] = useState(null);
-
-  // Implement handleTrimResize for piano recording clip
-  const handlePianoTrimResize = useCallback((type, newPosition) => {
-    if (frozen) return;
-    if (!trackPianoClip) return;
-
-    const currentStart = trackPianoClip.start;
-    const currentEnd = trackPianoClip.end;
-    const duration = currentEnd - currentStart;
-
-    const snapToGrid = (time) => {
-      if (!gridSpacing || gridSpacing <= 0) return time;
-      const gridPosition = Math.round(time / gridSpacing) * gridSpacing;
-      return Math.max(0, gridPosition);
-    };
-
-    if (type === 'start') {
-      // newPosition is relative to the clip, convert to absolute time
-      const absoluteNewStart = currentEnd - newPosition;
-      const snappedPosition = snapToGrid(absoluteNewStart);
-      const newStart = Math.max(0, Math.min(snappedPosition, currentEnd - gridSpacing));
-
-      // Update the piano recording clip
-      const newClip = {
-        ...trackPianoClip,
-        start: newStart,
-        end: currentEnd,
-        trackId: trackId
-      };
-      dispatch(setPianoRecordingClip(newClip));
-
-      // Optionally filter out notes that are now outside the clip boundaries
-      const currentNotes = Array.isArray(pianoNotes) ? pianoNotes : [];
-      const filteredNotes = currentNotes.map(note => {
-        if ((note?.trackId ?? null) !== trackId) return note;
-        const noteStartTime = note.startTime || 0;
-        const noteEndTime = noteStartTime + (note.duration || 0.05);
-
-        // Keep notes that are still within bounds, or adjust their timing
-        if (noteStartTime < newStart) {
-          // Note starts before new clip start - could trim or remove
-          return note; // Keep as is for now
-        }
-        return note;
-      });
-      dispatch(setPianoNotes(filteredNotes));
-
-    } else if (type === 'end') {
-      // newPosition is relative to the clip, convert to absolute time
-      const absoluteNewEnd = currentStart + newPosition;
-      const snappedPosition = snapToGrid(absoluteNewEnd);
-      const newEnd = Math.max(currentStart + gridSpacing, Math.min(snappedPosition, duration)); // Fixed: use duration instead of clip.duration
-
-      // Update the piano recording clip
-      const newClip = {
-        ...trackPianoClip,
-        start: currentStart,
-        end: newEnd,
-        trackId: trackId
-      };
-      dispatch(setPianoRecordingClip(newClip));
-
-      // Optionally filter out notes that are now outside the clip boundaries
-      const currentNotes = Array.isArray(pianoNotes) ? pianoNotes : [];
-      const filteredNotes = currentNotes.map(note => {
-        if ((note?.trackId ?? null) !== trackId) return note;
-        const noteStartTime = note.startTime || 0;
-        const noteEndTime = noteStartTime + (note.duration || 0.05);
-
-        // Keep notes that are still within bounds
-        if (noteEndTime > newEnd) {
-          // Note extends past new clip end - could trim or remove
-          return note; // Keep as is for now
-        }
-        return note;
-      });
-      dispatch(setPianoNotes(filteredNotes));
-    }
-  }, [trackPianoClip, pianoNotes, dispatch, trackId, gridSpacing, frozen]);
-
-  const handlePianoDragStart = useCallback((type) => {
-    if (frozen) return;
-    setIsDraggingTrim(type);
-  }, [frozen]);
-
-  const handlePianoDragEnd = useCallback(() => {
-    setIsDraggingTrim(null);
-  }, []);
 
   return (
     <div
