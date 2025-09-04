@@ -529,7 +529,8 @@ const PianoRolls = () => {
 
     const handleMouseUp = (e) => {
         if (e.button !== 0) return; // only handle left-click
-
+        // swallow clicks immediately after drag/resize (within 200ms)
+        if (Date.now() - (lastInteractionTimeRef.current || 0) < 200) return;
         // 🛡️ Prevent adding new notes if context menu is open
        
         if (menuVisible || pasteMenu || selectedNoteIndex) return;
@@ -567,31 +568,149 @@ const PianoRolls = () => {
 
     
     const handleGridClick = (e) => {
+        // Block note creation while dragging or resizing
+        if (isDraggingRef.current || isResizingRef.current) return;
         if (menuVisible || selectedNoteIndex) return;
         if (pasteMenu) return;
         // Only respond to clicks on the grid background, not on notes
         if (e.target.closest && e.target.closest('.note-box')) return;
-        if (e.target.tagName !== 'svg' && !e.target.classList.contains('note-bg-div')) return;
-        const rect = svgRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left;
+        
+        // Allow note creation anywhere in the piano roll area, not just on SVG or red background
+        // This enables clicking outside the red background region to create new notes
+        const rect = wrapperRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left + wrapperRef.current.scrollLeft;
         const y = e.clientY - rect.top;
         
         // Use the exact same time calculation as Timeline.jsx
         const start = x / timelineWidthPerSecond;
         const noteIndex = Math.floor(y / 30);
         
+        console.log('Note creation attempt:', { start, noteIndex, currentTrackId, tracks: tracks.length });
+        // Choose a sensible default duration for new notes:
+        // If this track already has notes (e.g., from recording), match their typical size.
+        const getTrackReferenceDuration = () => {
+            try {
+                const trackId = currentTrackId;
+                const trackNotes = Array.isArray(pianoNotes)
+                    ? pianoNotes.filter(n => (n?.trackId ?? null) === (trackId ?? null))
+                    : [];
+                if (trackNotes.length === 0) return 0.15; // fallback default
+
+                // Compute median duration for stability (less sensitive to outliers)
+                const durations = trackNotes
+                    .map(n => Math.max(0.01, Number(n.duration) || 0.05))
+                    .sort((a,b) => a - b);
+                const mid = Math.floor(durations.length / 2);
+                const median = durations.length % 2 ? durations[mid] : (durations[mid - 1] + durations[mid]) / 2;
+
+                // Snap to grid subdivision to align visually with timeline grid
+                const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
+                const snapped = Math.max(0.05, Math.round(median / gridSpacing) * gridSpacing);
+                return snapped;
+            } catch {
+                return 0.15;
+            }
+        };
+
+        const defaultDuration = getTrackReferenceDuration();
+        
         // Remove restriction: allow adding anywhere in the piano roll
         if (noteIndex >= 0 && noteIndex < NOTES.length) {
             const note = NOTES[noteIndex];
             
+            // Check if the click is within the current track bounds
+            const trackBounds = getTrackBounds();
+            const isWithinTrackBounds = start >= trackBounds.start && start <= trackBounds.end;
+            
+            // If outside track bounds, expand the track bounds to include the new note
+            if (!isWithinTrackBounds && currentTrackId) {
+                const currentNotes = Array.isArray(pianoNotes) ? pianoNotes : [];
+                const trackNotes = currentNotes.filter(n => (n?.trackId ?? null) === currentTrackId);
+                
+                let newStart = trackBounds.start;
+                let newEnd = trackBounds.end;
+                
+                if (start < trackBounds.start) {
+                    newStart = start;
+                } else if (start > trackBounds.end) {
+                    newEnd = start + defaultDuration + 0.1; // Add some padding for the new note
+                }
+                
+                // Update the track bounds by updating the piano recording clip
+                if (newStart !== trackBounds.start || newEnd !== trackBounds.end) {
+                    const trackObj = tracks?.find?.(t => t.id === currentTrackId);
+                    const currentClip = trackObj?.pianoClip || null;
+                    
+                    if (currentClip) {
+                        dispatch(setPianoRecordingClip({
+                            start: newStart,
+                            end: newEnd,
+                            color: currentClip.color,
+                            trackId: currentTrackId
+                        }));
+                    }
+                }
+            }
+            
+            // If no current track is selected, create a default track clip for the new note
+            if (!currentTrackId && tracks.length > 0) {
+                // Use the first available track as default
+                const defaultTrack = tracks[0];
+                const defaultClip = {
+                    start: Math.max(0, start - 0.1), // Add some padding before the note
+                    end: start + defaultDuration + 0.1, // Add some padding after the note
+                    color: '#E44F65', // Default color
+                    trackId: defaultTrack.id
+                };
+                
+                dispatch(setPianoRecordingClip(defaultClip));
+                
+                // Update the note's trackId to use the default track
+                const noteWithTrackId = {
+                    note,
+                    start,
+                    duration: defaultDuration,
+                    velocity: 0.8,
+                    id: `note_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+                    trackId: defaultTrack.id,
+                    timestamp: Date.now()
+                };
+                
+                // Add note to local state
+                setNotes(prev => {
+                    const updated = [...prev, noteWithTrackId];
+                    syncNotesToRedux(updated);
+                    return updated;
+                });
+                
+                // Dispatch to Redux
+                const mappedNote = {
+                    note: noteWithTrackId.note,
+                    startTime: noteWithTrackId.start,
+                    duration: noteWithTrackId.duration,
+                    midiNumber: noteNameToMidi(noteWithTrackId.note),
+                    trackId: noteWithTrackId.trackId,
+                    id: noteWithTrackId.id,
+                    velocity: noteWithTrackId.velocity
+                };
+                
+                const currentReduxNotes = Array.isArray(pianoNotes) ? pianoNotes : [];
+                const updatedNotes = [...currentReduxNotes, mappedNote];
+                dispatch(setPianoNotes(updatedNotes));
+                
+                console.log('Note created with default track:', { note: noteWithTrackId.note, start, trackId: noteWithTrackId.trackId, totalNotes: updatedNotes.length });
+                
+                return; // Exit early since we've handled the note creation
+            }
+            
             // Play sound immediately for real-time feedback
-            playNoteForTrack(note, 0.2);
+            playNoteForTrack(note, defaultDuration);
 
             // Create note with real-time properties
             const newNote = {
                 note,
                 start,
-                duration: 0.2, // Default duration
+                duration: defaultDuration,
                 velocity: 0.8, // Default velocity
                 id: `note_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`, // Unique ID for real-time updates
                 trackId: currentTrackId || null,
@@ -620,6 +739,8 @@ const PianoRolls = () => {
             const currentReduxNotes = Array.isArray(pianoNotes) ? pianoNotes : [];
             const updatedNotes = [...currentReduxNotes, mappedNote];
             dispatch(setPianoNotes(updatedNotes));
+            
+            console.log('Note created successfully:', { note: newNote.note, start, trackId: newNote.trackId, totalNotes: updatedNotes.length });
             
             // Clip sizing stays controlled by TimelineTrack
         }
@@ -683,6 +804,9 @@ const PianoRolls = () => {
     // Real-time note drag handler (fast, follows cursor, avoids Redux during drag)
     const lastDragNoteRef = useRef({});
     const dragCacheRef = useRef({});
+    const isDraggingRef = useRef(false);
+    const isResizingRef = useRef(false);
+    const lastInteractionTimeRef = useRef(0); // drag/resize end timestamp
     const handleNoteDrag = (index, newStart, newNote) => {
         // Update every frame so the note stays under the cursor
         dragCacheRef.current[index] = { start: newStart, note: newNote };
@@ -740,6 +864,7 @@ const PianoRolls = () => {
     useEffect(() => {
         if (!Array.isArray(pianoNotes)) return;
         const trackNotes = pianoNotes.filter(note => (note.trackId ?? null) === (currentTrackId ?? null));
+        
         const localNotes = trackNotes.map(note => ({
             note: note.note,
             start: note.startTime,
@@ -750,7 +875,7 @@ const PianoRolls = () => {
             timestamp: Date.now()
         }));
         setNotes(localNotes);
-    }, [pianoNotes, currentTrackId]);
+    }, [pianoNotes, currentTrackId, dispatch]);
     
     // piano key handling over
 
@@ -1374,7 +1499,7 @@ const PianoRolls = () => {
                         handleMouseUp(e);
                     }}
                                          onClick={(e) => {
-                         // Handle clicks on the grid background to move playhead
+                        // Handle clicks on the grid background to move playhead and create notes
                          if (e.target === wrapperRef.current || e.target.tagName === 'svg' || e.target.classList.contains('note-bg-div')) {
                              const rect = wrapperRef.current.getBoundingClientRect();
                              const x = e.clientX - rect.left + wrapperRef.current.scrollLeft;
@@ -1395,6 +1520,20 @@ const PianoRolls = () => {
                                  playheadRef.current.style.transform = `translateX(${snappedTime * timelineWidthPerSecond - scrollLeft}px)`;
                              }
                          }
+                        
+                        // Also handle note creation when clicking anywhere in the piano roll area
+                        // This ensures notes can be created outside the red background region
+                        if (!e.target.closest('.note-box') && !e.target.classList.contains('note-bg-div')) {
+                            console.log('Wrapper clicked, creating note...');
+                            // Create a synthetic event for note creation
+                            const syntheticEvent = {
+                                ...e,
+                                clientX: e.clientX,
+                                clientY: e.clientY,
+                                target: e.target
+                            };
+                            handleGridClick(syntheticEvent);
+                        }
                      }}
                     onContextMenu={(e) => {
                         e.stopPropagation();
@@ -1417,6 +1556,34 @@ const PianoRolls = () => {
                     {/* Transform the playhead for smooth movement without reflow */}
                     <style>{`.pianoroll-playhead-transform{transform: translateX(${(typeof localPlayheadTime === 'number' ? localPlayheadTime : 0) * timelineWidthPerSecond}px);}`}</style>
                     <div className="pianoroll-playhead-transform" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 24 }} />
+                    
+                    {/* Invisible clickable overlay for note creation - covers the entire piano roll area */}
+                    <div
+                        style={{
+                            position: 'absolute',
+                            left: 0,
+                            top: 0,
+                            width: '100%',
+                            height: '100%',
+                            zIndex: 1,
+                            pointerEvents: 'auto'
+                        }}
+                        onClick={(e) => {
+                            // Only handle clicks that aren't on notes or the red background
+                            if (!e.target.closest('.note-box') && !e.target.classList.contains('note-bg-div')) {
+                                console.log('Invisible overlay clicked, creating note...');
+                                // Create a synthetic event for note creation
+                                const syntheticEvent = {
+                                    ...e,
+                                    clientX: e.clientX,
+                                    clientY: e.clientY,
+                                    target: e.target
+                                };
+                                handleGridClick(syntheticEvent);
+                            }
+                        }}
+                    />
+                    
                     {/* Red background region - mirrors TimelineTrack clip when available */}
                     {(() => {
                         const trackObj = tracks?.find?.(t => t.id === currentTrackId);
@@ -1435,7 +1602,7 @@ const PianoRolls = () => {
                                         width: `${width}px`,
                                         height: '100%',
                                         background: 'rgba(255, 0, 0, 0.1)',
-                                        zIndex: 0,
+                                        zIndex: 2,
                                         opacity: 1,
                                         borderRadius: '5px',
                                         transition: "left 0.2s ease-in-out, width 0.2s ease-in-out"
@@ -1461,7 +1628,7 @@ const PianoRolls = () => {
                                         width: `${width}px`,
                                         height: '100%',
                                         background: 'rgba(255, 0, 0, 0.1)',
-                                        zIndex: 0,
+                                        zIndex: 2,
                                         opacity: 1,
                                         borderRadius: '5px',
                                         transition: "left 0.2s ease-in-out, width 0.2s ease-in-out" // Smooth transition for zoom
@@ -1486,12 +1653,14 @@ const PianoRolls = () => {
                             <Rnd
                                 key={i}
                                 size={{ width: n.duration * timelineWidthPerSecond > 15 ? n.duration * timelineWidthPerSecond : 15, height: 24 }}
+                                // Note: duration is calculated dynamically for consistent beat widths
                                 position={{ x: n.start * timelineWidthPerSecond, y: getYFromNote(n.note) }}
                                 bounds="parent"
                                 enableResizing={{ right: true }}
                                 dragAxis="both"
                                 dragGrid={[1, 30]}
-                                style={{ willChange: 'transform' }}
+                                style={{ willChange: 'transform', zIndex: 3 }}
+                                onDragStart={() => { isDraggingRef.current = true; }}
                                 onDrag={(e, d) => {
                                     // Real-time drag feedback
                                     const snappedY = Math.round(d.y / 30) * 30;
@@ -1505,6 +1674,9 @@ const PianoRolls = () => {
                                     handleNoteDrag(i, newStartTime, newNote);
                                 }}
                                 onDragStop={(e, d) => {
+                                    // mark interaction finished and keep a short cooldown to swallow wrapper mouseup/click
+                                    isDraggingRef.current = false;
+                                    lastInteractionTimeRef.current = Date.now();
                                     const snappedY = Math.round(d.y / 30) * 30;
                                     const noteIndex = Math.round(d.y / 30);
                                     const newNote = NOTES[noteIndex];
@@ -1523,6 +1695,7 @@ const PianoRolls = () => {
                                         delete dragCacheRef.current[i];
                                     }
                                 }}
+                                onResizeStart={() => { isResizingRef.current = true; }}
                                 onResize={(e, direction, ref, delta, position) => {
                                     // Real-time resize feedback
                                     const newWidth = parseFloat(ref.style.width);
@@ -1532,6 +1705,9 @@ const PianoRolls = () => {
                                     handleNoteResize(i, newDuration);
                                 }}
                                 onResizeStop={(e, direction, ref, delta, position) => {
+                                    // mark interaction finished and keep a short cooldown to swallow wrapper mouseup/click
+                                    isResizingRef.current = false;
+                                    lastInteractionTimeRef.current = Date.now();
                                     const newWidth = parseFloat(ref.style.width);
                                     
                                     // Use the same time calculation as Timeline.jsx
