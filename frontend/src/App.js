@@ -47,6 +47,7 @@ import SDemo from './components/SDemo';
 import VoiceTransformer from './components/VoiceTransfrom';
 import React, { useEffect } from "react";
 import * as soundtouch from 'soundtouchjs';
+import Guitar from './components/Guitar';
 window.soundtouch = soundtouch;
 
 function App() {
@@ -135,6 +136,7 @@ function App() {
             <Route path="effects" element={<Effects />} />
             <Route path="savani" element={<SDemo />} />
             <Route path="piano" element={<Piano />} />
+            <Route path="guitar" element={<Guitar />} />
             <Route path="voice" element={<VoiceTransformer />} />
           </Route>
           

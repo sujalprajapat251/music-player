@@ -77,6 +77,7 @@ const Sidebar2 = () => {
 
     const isDrumTrack = track.name === 'Drums & Machines' || track.type === 'drum';
     const isPianoTrack = track.name === 'Keys' || track.type === 'piano';
+    const isGuitarTrack = track.name === 'Guitar' || track.type === 'Guitar';
 
     // Ensure track selection
     if (currentTrackId !== track.id) {
@@ -92,6 +93,12 @@ const Sidebar2 = () => {
     if (isPianoTrack) {
       const isOpen = openTrackType === 'Keys' && currentTrackId === track.id;
       dispatch(setTrackType(isOpen ? null : 'Keys'));
+      return;
+    }
+
+    if (isGuitarTrack) {
+      const isOpen = openTrackType === 'Guitar' && currentTrackId === track.id;
+      dispatch(setTrackType(isOpen ? null : 'Guitar'));
       return;
     }
 
@@ -141,7 +148,8 @@ const Sidebar2 = () => {
               const borderColor = track.id === currentTrackId ? track.color : '';
               const isDrumTrack = track.name === 'Drums & Machines' || track.type === 'drum';
               const isPianoTrack = track.name === 'Keys' || track.type === 'piano';
-              const isComponentOpen = (track.id === currentTrackId) && ((openTrackType === 'Drums & Machines' && isDrumTrack) || (openTrackType === 'Keys' && isPianoTrack));
+              const isGuitarTrack = track.name === 'Guitar' || track.type === 'Guitar';
+              const isComponentOpen = (track.id === currentTrackId) && ((openTrackType === 'Drums & Machines' && isDrumTrack) || (openTrackType === 'Keys' && isPianoTrack) || (openTrackType === 'Guitar' && isGuitarTrack));
 
               return (
                 <div
