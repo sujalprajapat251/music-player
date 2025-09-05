@@ -40,6 +40,7 @@ import EditTrackNameModal from "./EditTrackNameModal";
 import { audioManager } from '../Utils/audioContext';
 import audioQualityManager from '../Utils/audioQualityManager';
 import { getEffectsProcessor } from '../Utils/audioEffectsProcessor';
+import Guitar from "./Guitar";
 
 const Timeline = () => {
 
@@ -67,6 +68,7 @@ const Timeline = () => {
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
   const [showPiano, setShowPiano] = useState(false);
   const [showDrum, setShowDrum] = useState(false);
+  const [showGuitar, setShowGuitar] = useState(false);
   const [renameSectionId, setRenameSectionId] = useState(null);
   const [renameValue, setRenameValue] = useState("");
   const [renameModal, setRenameModal] = useState(false);
@@ -2743,12 +2745,8 @@ const Timeline = () => {
         <Drum onClose={() => { setShowDrum(false); dispatch(setTrackType(null)); }} />
       )}
 
-      {(showDrum || getTrackType === "Bass & 808") && (
-        <Piano onClose={() => { setShowPiano(false); dispatch(setTrackType(null)); }} />
-      )}
-
-      {(showDrum || getTrackType === "Guitar") && (
-        <Piano onClose={() => { setShowPiano(false); dispatch(setTrackType(null)); }} />
+      {(showGuitar || getTrackType === "Guitar") && (
+        <Guitar onClose={() => { setShowGuitar(false); dispatch(setTrackType(null)); }} />
       )}
 
       {/* Rename Section Modal */}

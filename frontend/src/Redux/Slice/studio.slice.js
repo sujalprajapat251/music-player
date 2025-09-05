@@ -50,7 +50,9 @@ const initialState = {
   soundQuality: 'High', // Add this line
   selectedInstrument: 'acoustic_grand_piano', // Default instrument for piano
   // Store drum kit by name to match drumMachineTypes entries
-  selectedDrumInstrument: 'Classic 808'
+  selectedDrumInstrument: 'Classic 808',
+  guitarNotes: [],
+  guitarRecordingClip: null,
 };
 
 const studioSlice = createSlice({
@@ -62,6 +64,7 @@ const studioSlice = createSlice({
       console.log('all trackid', action.payload);
     },
     addTrack: (state, action) => {
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>>",action.payload)
       // Ensure new tracks have frozen property, audioClips array, and a unique color
       const track = {
         ...action.payload,
@@ -377,6 +380,7 @@ const studioSlice = createSlice({
       state.pianoNotes.push(action.payload);
     },
     setPianoNotes: (state, action) => {
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>>Piano", action.payload);
       state.pianoNotes = action.payload;
     },
     setSelectedInstrument: (state, action) => {
@@ -389,6 +393,7 @@ const studioSlice = createSlice({
       state.pianoNotes = [];
     },
     setPianoRecordingClip: (state, action) => {
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>>PianoRecordingClip", action.payload);
       // Persist the active piano clip globally (for editing) and also store
       // a per-track copy so the clip bounds remain when switching tracks
       // action.payload expected: { start, end, color, trackId }
@@ -545,6 +550,19 @@ const studioSlice = createSlice({
     },
 
     // ... existing code ...
+
+    // ****************** Guitar *****************
+    setGuitarNotes: (state, action) => {
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>>Guitar", action.payload);
+      state.guitarNotes = action.payload;
+    },
+    setGuitarRecordingClip: (state, action) => {
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>>GuitarRecordingClip", action.payload);
+      state.guitarRecordingClip = action.payload;
+    },
+    clearGuitarNotes: (state) => {
+      state.guitarNotes = [];
+    },
   },
 });
 
@@ -612,7 +630,10 @@ export const {
   setPatternDrumEvents,
   moveTrackUp,
   moveTrackDown,
-  reorderTracks
+  reorderTracks,
+  setGuitarNotes,
+  setGuitarRecordingClip,
+  clearGuitarNotes,
 } = studioSlice.actions;
 
 export default studioSlice.reducer;
