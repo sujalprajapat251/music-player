@@ -8,7 +8,7 @@ import TrashIcon from '../Images/trash.svg'
 import FreezeIcon from '../Images/freeze.svg'
 import waveIcon from '../Images/wave.svg'
 import { useDispatch, useSelector } from "react-redux";
-import { updateTrack, renameTrack, removeTrack, freezeTrack, duplicateTrack, updateTrackAudio, exportTrack, exportTrackAudio } from "../Redux/Slice/studio.slice";
+import { updateTrack, renameTrack, removeTrack, freezeTrack, duplicateTrack, updateTrackAudio, exportTrack, exportTrackAudio, deleteTrackWithCleanup } from "../Redux/Slice/studio.slice";
 import { selectStudioState } from "../hooks/useUndoRedo";
 const MENU_COLORS = [
   "#F05959", "#49B1A5", "#C579C8", "#5572F9",
@@ -64,7 +64,7 @@ const TrackMenu = ({ trackId, color, onRename }) => {
         e.preventDefault(); // Prevent default browser behavior
         // Ensure track exists before removing
         if (track) {
-          dispatch(removeTrack(trackId));
+          dispatch(deleteTrackWithCleanup(trackId));
           setOpen(false);
         }
       }
@@ -215,10 +215,10 @@ const TrackMenu = ({ trackId, color, onRename }) => {
               if (track) {
                 if (isShiftPressed) {
                   // If Shift is pressed, delete without confirmation
-                  dispatch(removeTrack(trackId));
+                  dispatch(deleteTrackWithCleanup(trackId));
                   setOpen(false);
                 } else {
-                  dispatch(removeTrack(trackId));
+                  dispatch(deleteTrackWithCleanup(trackId));
                   setOpen(false);
                 }
               }

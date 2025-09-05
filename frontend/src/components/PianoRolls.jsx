@@ -652,68 +652,23 @@ const PianoRolls = () => {
                 }
             }
             
-            // If no current track is selected, create a default track clip for the new note
-            if (!currentTrackId && tracks.length > 0) {
-                // Use the first available track as default
-                const defaultTrack = tracks[0];
-                const defaultClip = {
-                    start: Math.max(0, start - 0.1), // Add some padding before the note
-                    end: start + defaultDuration + 0.1, // Add some padding after the note
-                    color: '#E44F65', // Default color
-                    trackId: defaultTrack.id
-                };
-                
-                dispatch(setPianoRecordingClip(defaultClip));
-                
-                // Update the note's trackId to use the default track
-                const noteWithTrackId = {
-                    note,
-                    start,
-                    duration: defaultDuration,
-                    velocity: 0.8,
-                    id: `note_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
-                    trackId: defaultTrack.id,
-                    timestamp: Date.now()
-                };
-                
-                // Add note to local state
-                setNotes(prev => {
-                    const updated = [...prev, noteWithTrackId];
-                    syncNotesToRedux(updated);
-                    return updated;
-                });
-                
-                // Dispatch to Redux
-                const mappedNote = {
-                    note: noteWithTrackId.note,
-                    startTime: noteWithTrackId.start,
-                    duration: noteWithTrackId.duration,
-                    midiNumber: noteNameToMidi(noteWithTrackId.note),
-                    trackId: noteWithTrackId.trackId,
-                    id: noteWithTrackId.id,
-                    velocity: noteWithTrackId.velocity
-                };
-                
-                const currentReduxNotes = Array.isArray(pianoNotes) ? pianoNotes : [];
-                const updatedNotes = [...currentReduxNotes, mappedNote];
-                dispatch(setPianoNotes(updatedNotes));
-                
-                console.log('Note created with default track:', { note: noteWithTrackId.note, start, trackId: noteWithTrackId.trackId, totalNotes: updatedNotes.length });
-                
-                return; // Exit early since we've handled the note creation
+            // If no current track is selected, don't create notes
+            if (!currentTrackId) {
+                console.log('No current track selected, cannot create note');
+                return;
             }
             
             // Play sound immediately for real-time feedback
             playNoteForTrack(note, defaultDuration);
 
-            // Create note with real-time properties
+            // Create note with real-time properties - ensure trackId is properly set
             const newNote = {
                 note,
                 start,
                 duration: defaultDuration,
                 velocity: 0.8, // Default velocity
                 id: `note_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`, // Unique ID for real-time updates
-                trackId: currentTrackId || null,
+                trackId: currentTrackId, // Ensure trackId is set to current track
                 timestamp: Date.now()
             };
             
@@ -724,23 +679,7 @@ const PianoRolls = () => {
                 return updated;
             });
             
-            // Dispatch to Redux for real-time timeline updates
-            const mappedNote = {
-                note: newNote.note,
-                startTime: newNote.start,
-                duration: newNote.duration,
-                midiNumber: noteNameToMidi(newNote.note),
-                trackId: newNote.trackId,
-                id: newNote.id,
-                velocity: newNote.velocity
-            };
-            
-            // Get current notes from Redux and add the new note
-            const currentReduxNotes = Array.isArray(pianoNotes) ? pianoNotes : [];
-            const updatedNotes = [...currentReduxNotes, mappedNote];
-            dispatch(setPianoNotes(updatedNotes));
-            
-            console.log('Note created successfully:', { note: newNote.note, start, trackId: newNote.trackId, totalNotes: updatedNotes.length });
+            console.log('Note created successfully:', { note: newNote.note, start, trackId: newNote.trackId });
             
             // Clip sizing stays controlled by TimelineTrack
         }
@@ -839,30 +778,40 @@ const PianoRolls = () => {
     // Sync notes to Redux so Timeline shows red region + white mini boxes
     const syncNotesToRedux = useCallback((list) => {
         try {
-            const mapped = list.map(n => ({
+            // Only sync notes that belong to the current track
+            const currentTrackNotes = list.filter(n => (n.trackId ?? null) === (currentTrackId ?? null));
+            const mapped = currentTrackNotes.map(n => ({
                 note: n.note,
                 startTime: n.start,
                 duration: n.duration,
                 midiNumber: noteNameToMidi(n.note),
-                trackId: n.trackId || currentTrackId,
+                trackId: n.trackId,
                 id: n.id,
                 velocity: n.velocity || 0.8
             }));
-            dispatch(setPianoNotes(mapped));
+            
+            // Get all existing notes from Redux
+            const currentReduxNotes = Array.isArray(pianoNotes) ? pianoNotes : [];
+            
+            // Remove notes from current track and add new ones
+            const otherTrackNotes = currentReduxNotes.filter(n => (n.trackId ?? null) !== (currentTrackId ?? null));
+            const updatedNotes = [...otherTrackNotes, ...mapped];
+            
+            dispatch(setPianoNotes(updatedNotes));
         } catch {}
         // do nothing for clip sizing here
-    }, [dispatch, noteNameToMidi, currentTrackId]);
+    }, [dispatch, noteNameToMidi, currentTrackId, pianoNotes]);
     
-    // Sync notes when track changes
+    // Clear local notes when track changes to prevent cross-contamination
     useEffect(() => {
-        if (notes.length > 0) {
-            syncNotesToRedux(notes);
-        }
-    }, [currentTrackId, syncNotesToRedux]);
+        setNotes([]);
+    }, [currentTrackId]);
     
     // Load/refresh local notes whenever Redux notes for this track change
     useEffect(() => {
-        if (!Array.isArray(pianoNotes)) return;
+        if (!Array.isArray(pianoNotes) || !currentTrackId) return;
+        
+        // Only load notes that belong to the current track
         const trackNotes = pianoNotes.filter(note => (note.trackId ?? null) === (currentTrackId ?? null));
         
         const localNotes = trackNotes.map(note => ({
@@ -874,8 +823,24 @@ const PianoRolls = () => {
             trackId: note.trackId,
             timestamp: Date.now()
         }));
-        setNotes(localNotes);
-    }, [pianoNotes, currentTrackId, dispatch]);
+        
+        // Only update if the notes are actually different to avoid unnecessary re-renders
+        setNotes(prevNotes => {
+            if (prevNotes.length !== localNotes.length) return localNotes;
+            
+            // Check if any note has changed
+            const hasChanged = prevNotes.some((prevNote, index) => {
+                const localNote = localNotes[index];
+                return !localNote || 
+                       prevNote.id !== localNote.id || 
+                       prevNote.start !== localNote.start || 
+                       prevNote.duration !== localNote.duration ||
+                       prevNote.note !== localNote.note;
+            });
+            
+            return hasChanged ? localNotes : prevNotes;
+        });
+    }, [pianoNotes, currentTrackId]);
     
     // piano key handling over
 
