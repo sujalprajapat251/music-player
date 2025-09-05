@@ -626,8 +626,8 @@ const Timeline = () => {
 
       player.volume.value = combinedVolumeDb;
 
-      // Set playback rate based on tempo
-      player.playbackRate = tempoRatio;
+      // Set playback rate based on tempo and any clip pitch adjustment
+      player.playbackRate = tempoRatio * (clip.playbackRate || 1);
 
       // Apply effects if any are active
       let finalOutput = player;
@@ -1530,8 +1530,84 @@ const Timeline = () => {
     // Always find the clip if clipId is provided
     const clip = clipId ? track.audioClips?.find(c => c.id === clipId) : undefined;
 
+    // Helper to split a clip at currentTime
+    const splitSelectedClip = () => {
+      if (!clip || !clip.duration) return;
+      const clipStart = clip.startTime || 0;
+      const trimStart = clip.trimStart || 0;
+      const trimEnd = clip.trimEnd ?? clip.duration;
+      const clipVisibleDuration = Math.max(0, trimEnd - trimStart);
+      const splitPoint = currentTime;
+      const relativeInClip = splitPoint - clipStart;
+      if (relativeInClip <= 0 || relativeInClip >= clipVisibleDuration) return;
+
+      // New trims around split point
+      const leftTrimEnd = Math.min(trimStart + relativeInClip, trimEnd);
+      const rightTrimStart = leftTrimEnd;
+
+      // Update left part
+      dispatch(updateAudioClip({
+        trackId,
+        clipId,
+        updates: { trimEnd: leftTrimEnd }
+      }));
+
+      // Create right part
+      const rightClip = {
+        ...clip,
+        id: Date.now() + Math.random(),
+        startTime: splitPoint,
+        trimStart: rightTrimStart,
+        trimEnd: trimEnd
+      };
+      dispatch(addAudioClipToTrack({ trackId, audioClip: rightClip }));
+    };
+
+    // Numeric pitch change via semitones from structured payload
+    const applyPitchChange = (semitones) => {
+      if (!clip) return;
+      const rate = Math.pow(2, (semitones || 0) / 12);
+      // Store non-destructive metadata; playbackRate will be consumed in handleReady when rebuilding players
+      dispatch(updateAudioClip({
+        trackId,
+        clipId: clip.id,
+        updates: { playbackRate: rate, pitchSemitones: semitones }
+      }));
+
+      // Update player if present
+      setPlayers(prev => prev.map(p => {
+        if (p.trackId === trackId && p.clipId === clip.id && p.player) {
+          try { p.player.playbackRate = (p.playbackRate || 1) * rate; } catch {}
+          return { ...p, playbackRate: (p.playbackRate || 1) * rate };
+        }
+        return p;
+      }));
+    };
+
+    const applyVoiceTransformPreset = (preset) => {
+      // Placeholder: mark preset for later audio processing graph
+      if (!clip) return;
+      dispatch(updateAudioClip({
+        trackId,
+        clipId: clip.id,
+        updates: { voiceTransformPreset: String(preset || '') }
+      }));
+    };
+
     // Clip-level actions (cut/copy/delete always operate on the selected clip)
     if (clipId && clip) {
+      // Structured actions from WaveMenu
+      if (typeof action === 'object' && action !== null) {
+        if (action.type === 'changePitch') {
+          applyPitchChange(action.semitones);
+          return;
+        }
+        if (action.type === 'voiceTransform') {
+          applyVoiceTransformPreset(action.preset);
+          return;
+        }
+      }
+
       switch (action) {
         case 'cut':
           setClipboard({ type: 'clip', clip: { ...clip }, trackId });
@@ -1555,7 +1631,36 @@ const Timeline = () => {
           break;
         case 'editName':
           setEdirNameModel(true);
-          // Implement edit name functionality
+          break;
+        case 'splitRegion':
+          splitSelectedClip();
+          break;
+        case 'muteRegion':
+          dispatch(toggleMuteTrack(trackId));
+          break;
+        case 'reverse':
+          (async () => {
+            if (!clip || !clip.url) return;
+            const response = await fetch(clip.url);
+            const arrayBuffer = await response.arrayBuffer();
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
+              const channelData = audioBuffer.getChannelData(i);
+              channelData.reverse();
+            }
+            const wavData = await WavEncoder.encode({
+              sampleRate: audioBuffer.sampleRate,
+              channelData: Array.from({ length: audioBuffer.numberOfChannels }, (_, i) => audioBuffer.getChannelData(i))
+            });
+            const blob = new Blob([wavData], { type: 'audio/wav' });
+            const reversedUrl = URL.createObjectURL(blob);
+            dispatch(updateAudioClip({ trackId, clipId: clip.id, updates: { url: reversedUrl, reversed: true } }));
+          })();
+          break;
+        case 'effects':
+          setShowOffcanvasEffects(prev => !prev);
+          setShowOffcanvas(false);
           break;
         default:
           break;
@@ -1564,16 +1669,33 @@ const Timeline = () => {
     }
 
     // Track-level actions (paste works even if no clip is selected)
+    if (typeof action === 'object' && action !== null) {
+      if (action.type === 'changePitch' && track.audioClips?.length) {
+        // Apply same pitch to last clip on track as a convenience
+        const last = track.audioClips[track.audioClips.length - 1];
+        if (last) {
+          const rate = Math.pow(2, (action.semitones || 0) / 12);
+          dispatch(updateAudioClip({ trackId, clipId: last.id, updates: { playbackRate: rate, pitchSemitones: action.semitones } }));
+        }
+        return;
+      }
+      if (action.type === 'voiceTransform' && track.audioClips?.length) {
+        const last = track.audioClips[track.audioClips.length - 1];
+        if (last) {
+          dispatch(updateAudioClip({ trackId, clipId: last.id, updates: { voiceTransformPreset: String(action.preset || '') } }));
+        }
+        return;
+      }
+    }
+
     switch (action) {
       case 'paste':
         if (clipboard && clipboard.type === 'clip' && clipboard.clip) {
           let newStartTime = 0;
           if (track.audioClips && track.audioClips.length > 0) {
-            // Paste after the last clip in the track
             const lastClip = track.audioClips[track.audioClips.length - 1];
             newStartTime = (lastClip.startTime || 0) + (lastClip.duration || 1);
           }
-          // If the track is empty, newStartTime remains 0
           const newClip = {
             ...clipboard.clip,
             id: Date.now() + Math.random(),
@@ -1586,26 +1708,40 @@ const Timeline = () => {
         dispatch(removeAudioClip({ trackId, clipId }));
         break;
       case 'editName':
-        // Implement edit name functionality
         break;
       case 'splitRegion':
-        // Implement split region functionality
+        // If no clip specified, try to split last clip on the track
+        if (track.audioClips && track.audioClips.length) {
+          const last = track.audioClips[track.audioClips.length - 1];
+          if (last) {
+            contextMenu.clipId = last.id; // temporary for split helper
+            const tmpClip = track.audioClips.find(c => c.id === last.id);
+            if (tmpClip) {
+              const lfClip = tmpClip; // use local var
+              const clipStart = lfClip.startTime || 0;
+              const trimStart = lfClip.trimStart || 0;
+              const trimEnd = lfClip.trimEnd ?? lfClip.duration;
+              const visible = Math.max(0, trimEnd - trimStart);
+              const rel = currentTime - clipStart;
+              if (rel > 0 && rel < visible) {
+                dispatch(updateAudioClip({ trackId, clipId: lfClip.id, updates: { trimEnd: trimStart + rel } }));
+                const right = { ...lfClip, id: Date.now() + Math.random(), startTime: currentTime, trimStart: trimStart + rel };
+                dispatch(addAudioClipToTrack({ trackId, audioClip: right }));
+              }
+            }
+          }
+        }
         break;
       case 'muteRegion':
-        // Implement mute region functionality
         dispatch(toggleMuteTrack(trackId));
         break;
       case 'changePitch':
-        // Implement change pitch functionality
         break;
       case 'vocalCleanup':
-        // Implement vocal cleanup functionality
         break;
       case 'vocalTuner':
-        // Implement vocal tuner functionality
         break;
       case 'voiceTransform':
-        // Implement voice transform functionality
         break;
       case 'volumeUp':
         const currentVolumeUp = track.volume || 80;
@@ -1629,52 +1765,40 @@ const Timeline = () => {
       case 'reverse':
         (async () => {
           if (!track.audioClips || track.audioClips.length === 0) return;
-
-          // Reverse the first clip in the track
-          const clip = track.audioClips[0];
-          if (!clip || !clip.url) return;
-
-          const response = await fetch(clip.url);
+          const firstClip = track.audioClips[0];
+          if (!firstClip || !firstClip.url) return;
+          const response = await fetch(firstClip.url);
           const arrayBuffer = await response.arrayBuffer();
           const audioContext = new (window.AudioContext || window.webkitAudioContext)();
           const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-
           for (let i = 0; i < audioBuffer.numberOfChannels; i++) {
             const channelData = audioBuffer.getChannelData(i);
             channelData.reverse();
           }
-
           const wavData = await WavEncoder.encode({
             sampleRate: audioBuffer.sampleRate,
             channelData: Array.from({ length: audioBuffer.numberOfChannels }, (_, i) => audioBuffer.getChannelData(i))
           });
           const blob = new Blob([wavData], { type: 'audio/wav' });
           const reversedUrl = URL.createObjectURL(blob);
-
-          dispatch(updateAudioClip({
-            trackId: trackId,
-            clipId: clip.id,
-            updates: { url: reversedUrl, reversed: true }
-          }));
+          dispatch(updateAudioClip({ trackId, clipId: firstClip.id, updates: { url: reversedUrl, reversed: true } }));
         })();
         break;
       case 'effects':
-        // Implement effects functionality
+        setShowOffcanvasEffects(prev => !prev);
+        setShowOffcanvas(false);
         break;
       case 'matchProjectKey':
-        // Implement match project key functionality
         break;
       case 'addToLoopLibrary':
-        // Implement add to loop library functionality
         break;
       case 'openInSampler':
-        // Implement open in sampler functionality
         break;
       default:
       // Unknown action
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contextMenu, tracks, clipboard, dispatch, currentTime]);
+  }, [contextMenu, tracks, clipboard, dispatch, currentTime, setPlayers, setShowOffcanvasEffects, setShowOffcanvas]);
 
   // Section label context menu action handler
   const handleSectionContextMenuAction = useCallback((action) => {
