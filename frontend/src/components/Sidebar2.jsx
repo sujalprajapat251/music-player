@@ -34,6 +34,7 @@ const Sidebar2 = () => {
   const [editingName, setEditingName] = useState("");
   // Use Redux for open instrument; avoid local UI duplication
   const tracks = useSelector((state) => selectStudioState(state).tracks);
+ 
   const trackHeight = useSelector((state) => selectStudioState(state).trackHeight);
   const dispatch = useDispatch();
 
@@ -42,6 +43,7 @@ const Sidebar2 = () => {
   const isRecording = useSelector(state => selectStudioState(state).isRecording);
   const openTrackType = useSelector((state) => selectStudioState(state).newtrackType);
 
+  const selectedInstrument = useSelector((state) => selectStudioState(state)?.selectedInstrument || 'acoustic_grand_piano');
   const [dragIndex, setDragIndex] = useState(null);  
   const handleScroll = (e) => {
     const scrollTop = e.target.scrollTop;
@@ -122,6 +124,30 @@ const Sidebar2 = () => {
     dispatch(setTrackVolume({ trackId, volume }));
   };
 
+  const getInstrumentDisplayName = (instrumentId) => {
+    const instruments = [
+      { id: 'acoustic_grand_piano', name: 'Piano', category: 'Jazz Chord Memos' },
+      { id: 'whistle', name: 'Whistle', category: 'Effects' },
+      { id: 'fx_1_rain', name: 'Rain', category: 'Atmospheric' },
+      { id: 'fx_3_crystal', name: 'Crystal', category: 'Ambient' },
+      { id: 'fx_4_atmosphere', name: 'Atmosphere', category: 'Ambient' },
+      { id: 'fx_5_brightness', name: 'Brightness', category: 'Effects' },
+      { id: 'fx_6_goblins', name: 'Goblins', category: 'Fantasy' },
+      { id: 'fx_7_echoes', name: 'Echoes', category: 'Reverb' },
+      { id: 'fx_8_scifi', name: 'Sci-Fi', category: 'Futuristic' },
+      { id: 'glockenspiel', name: 'Glockenspiel', category: 'Percussion' },
+      { id: 'guitar_fret_noise', name: 'Guitar Fret', category: 'String' },
+      { id: 'guitar_harmonics', name: 'Guitar Harmonics', category: 'String' },
+      { id: 'gunshot', name: 'Gunshot', category: 'Effects' },
+      { id: 'harmonica', name: 'Harmonica', category: 'Wind' },
+      { id: 'harpsichord', name: 'Harpsichord', category: 'Baroque' },
+      { id: 'honkytonk_piano', name: 'Honky Tonk', category: 'Piano' },
+      { id: 'kalimba', name: 'Kalimba', category: 'African' },
+      { id: 'koto', name: 'Koto', category: 'Japanese' }
+    ];
+    const instrument = instruments.find(inst => inst.id === instrumentId);
+    return instrument ? instrument.name : 'Piano';
+  };
   return (
     <>
       <div style={{ pointerEvents: showNewProject ? 'none' : 'auto' }}>
@@ -214,9 +240,8 @@ const Sidebar2 = () => {
                           }}
                         />
                       ) : (
-                        <span className={`font-bold text-sm truncate flex-[0_0_auto] overflow-hidden whitespace-normal break-all w-[120px] [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical] ${track.frozen ? 'text-[#4CAF50]' : 'text-white'
-                        }`}>
-                          {track.name || `Track ${idx + 1}`}
+                        <span className={`font-bold text-sm truncate flex-[0_0_auto] overflow-hidden whitespace-normal break-all w-[120px] [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical] ${track.frozen ? 'text-[#4CAF50]' : 'text-white'}`}>
+                          {isPianoTrack ? getInstrumentDisplayName(selectedInstrument) : (track.name || `Track ${idx + 1}`)}
                         </span>
                       )}
                       {track.frozen && (
