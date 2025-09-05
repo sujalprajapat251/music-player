@@ -755,11 +755,10 @@ const TimelineTrack = ({
   // Get piano notes from Redux
   const pianoNotes = useSelector((state) => selectStudioState(state).pianoNotes);
   const pianoRecordingClip = useSelector((state) => selectStudioState(state).pianoRecordingClip);
-  const guitarNotes = useSelector((state) => selectStudioState(state).guitarNotes); //Guitar
-  const guitarRecordingClip = useSelector((state) => selectStudioState(state).guitarRecordingClip); //Guitar
   const bpm = useSelector((state) => selectStudioState(state).bpm || 120);
 
   console.log("..........................nots",pianoNotes)
+  console.log("..........................clip",pianoRecordingClip)
 
   // Get drum recording data from Redux
   const drumRecordedData = useSelector((state) => selectStudioState(state).drumRecordedData);
@@ -769,20 +768,26 @@ const TimelineTrack = ({
   const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
   const typeName = (track?.type || '').toString().toLowerCase();
   const displayName = (track?.name || '').toString().toLowerCase();
-  const isPianoTrack = typeName === 'keys' || displayName === 'keys' || displayName.includes('piano') || displayName.includes('key');
+  // Treat guitar like a keys/piano track for timeline visualization
+  const isPianoTrack = (
+    typeName === 'keys' ||
+    typeName === 'guitar' ||
+    displayName === 'keys' ||
+    displayName === 'guitar' ||
+    displayName.includes('piano') ||
+    displayName.includes('key') ||
+    displayName.includes('guitar')
+  );
   const isDrumTrack = typeName === 'drum' || displayName === 'drum' || displayName.includes('drum') || displayName.includes('percussion');
-  const isGuitarTrack = typeName === 'guitar' || displayName === 'guitar' || displayName.includes('guitar'); //Guitar
 
   // the clip persisted on the track so switching tracks does not reset length
   const activeClipForThisTrack = (pianoRecordingClip && (pianoRecordingClip.trackId ?? null) === trackId) ? pianoRecordingClip : null;
-  const activeGuitarClipForThisTrack = (guitarRecordingClip && (guitarRecordingClip.trackId ?? null) === trackId) ? guitarRecordingClip : null; //Guitar
 
   const persistedTrackClip = useMemo(() => {
     const track = tracks?.find?.(t => t.id === trackId);
     return track?.pianoClip || null;
   }, [tracks, trackId]);
   const trackPianoClip = activeClipForThisTrack || persistedTrackClip;
-  const trackGuitarClip = activeGuitarClipForThisTrack || persistedTrackClip;  //Guitar
   const trackDrumClip = (drumRecordingClip && (drumRecordingClip.trackId ?? null) === trackId) ? drumRecordingClip : null;
 
 
@@ -797,16 +802,7 @@ const TimelineTrack = ({
     return notes;
   }, [pianoNotes, trackId, trackPianoClip]);
 
-  
-  const trackGuitarNotes = useMemo(() => {
-    const notes = Array.isArray(guitarNotes) ? guitarNotes.filter(n => (n?.trackId ?? null) === trackId) : [];
-    
-    if (trackGuitarClip && trackGuitarClip.start != null && trackGuitarClip.end != null) {
-      return filterByTrimBoundaries(notes, trackGuitarClip.start, trackGuitarClip.end, 'startTime', 'duration');
-    }
-    
-    return notes;
-  }, [guitarNotes, trackId, trackGuitarClip]); //Guitar
+  console.log("trackPianoNotes z::: > ", trackPianoNotes)
 
   // Derive per-track drum data with trimming applied
   const trackDrumNotes = useMemo(() => {
@@ -831,17 +827,6 @@ const TimelineTrack = ({
     })()
     : null;
 
-  const passiveGuitarClip = (!trackGuitarClip && trackGuitarNotes.length > 0)   //Guitar
-    ? (() => {
-      const start = Math.min(...trackGuitarNotes.map(n => n.startTime || 0));
-      const end = Math.max(...trackGuitarNotes.map(n => (n.startTime || 0) + (n.duration || 0.05)));
-      if (Number.isFinite(start) && Number.isFinite(end) && end > start) {
-        return { start, end, color: trackGuitarClip?.color, trackId };
-      }
-      return null;
-    })()
-    : null;
-
   const passiveDrumClip = (!trackDrumClip && trackDrumNotes.length > 0)
     ? (() => {
       const start = Math.min(...trackDrumNotes.map(n => n.currentTime || 0));
@@ -853,13 +838,8 @@ const TimelineTrack = ({
     })()
     : null;
 
-
-
-
   const displayClip = trackPianoClip || passiveClip;
-  const displayGuitarClip = trackGuitarClip || passiveGuitarClip;  //Guitar
   const displayDrumClip = trackDrumClip || passiveDrumClip;
-
 
   // Add state for dragging trim handles
   const [isDraggingTrim, setIsDraggingTrim] = useState(null);
@@ -1155,290 +1135,7 @@ const TimelineTrack = ({
           )}
         </div>
       )}
-
-      {/* Guitar  */}
-      {isGuitarTrack && displayGuitarClip && displayGuitarClip.start != null && displayGuitarClip.end != null && (
-        <div
-          style={{
-            position: 'absolute',
-            left: displayGuitarClip.start * timelineWidthPerSecond,
-            top: 0,
-            width: Math.max(0, (displayGuitarClip.end - displayGuitarClip.start)) * timelineWidthPerSecond,
-            height: height,
-            zIndex: 6,
-            background: 'transparent',
-            border: `1px solid ${((color || guitarRecordingClip?.color || displayGuitarClip.color))}`,
-            borderRadius: 6,
-            pointerEvents: 'none'
-          }}
-        >
-          {/* Main recording region */}
-          <div
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              width: '100%',
-              height: '100%',
-              background: (color || displayGuitarClip.color),
-              border: `1px solid ${((color || displayGuitarClip.color))}`,
-              borderRadius: 6,
-              cursor: 'grab',
-              pointerEvents: 'auto'
-            }}
-            title="Drag to move recorded piano notes. Use left/right handles to resize the recording region."
-            onContextMenu={(e) => onContextMenu && onContextMenu(e, trackId, 'piano-recording')}
-            onMouseDown={(e) => {
-              // If this track doesn't currently own an active clip,
-              // promote the passive displayClip to an active, editable clip first
-              if (!trackGuitarClip && displayGuitarClip) {
-                dispatch(setGuitarRecordingClip({
-                  start: displayGuitarClip.start,
-                  end: displayGuitarClip.end,
-                  color: displayGuitarClip.color,
-                  trackId: trackId
-                }));
-                return; // next interaction will allow dragging
-              }
-
-              if (!trackGuitarClip) return;
-
-              e.preventDefault();
-              e.stopPropagation();
-
-              // Handle dragging the entire clip
-              const startX = e.clientX;
-              const initialStart = trackGuitarClip.start;
-
-              const handleMouseMove = (moveEvent) => {
-                const deltaX = moveEvent.clientX - startX;
-                const deltaTime = deltaX / timelineWidthPerSecond;
-                const newStart = Math.max(0, initialStart + deltaTime);
-                const duration = trackGuitarClip.end - trackGuitarClip.start;
-                const newEnd = newStart + duration;
-
-                // Shift only this track's notes by the same delta
-                const delta = newStart - trackGuitarClip.start;
-                const currentNotes = Array.isArray(guitarNotes) ? guitarNotes : [];
-                const shifted = currentNotes.map(n => {
-                  if ((n?.trackId ?? null) !== trackId) return n;
-                  return { ...n, startTime: Math.max(0, (n.startTime || 0) + delta) };
-                });
-                dispatch(setGuitarNotes(shifted));
-
-                const newClip = {
-                  ...trackGuitarClip,
-                  start: newStart,
-                  end: newEnd,
-                  trackId: trackId
-                };
-                dispatch(setGuitarRecordingClip(newClip));
-              };
-
-              const handleMouseUp = () => {
-                document.removeEventListener('mousemove', handleMouseMove);
-                document.removeEventListener('mouseup', handleMouseUp);
-              };
-
-              document.addEventListener('mousemove', handleMouseMove);
-              document.addEventListener('mouseup', handleMouseUp);
-            }}
-          />
-
-          {/* Left resize handle (active clip only) */}
-          {trackGuitarClip && (
-            <div
-              style={{
-                position: "absolute",
-                left: "12px",
-                top: "19px",
-                width: "24px",
-                height: "100%",
-                cursor: "ew-resize",
-                zIndex: 15,
-                transform: "translateX(-12px)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                pointerEvents: 'auto'
-              }}
-              onMouseDown={(e) => {
-                if (frozen) return;
-
-                e.preventDefault();
-                e.stopPropagation();
-
-                setIsDraggingTrim('start');
-
-                const startX = e.clientX;
-                const initialStart = trackGuitarClip.start;
-                const clipEnd = trackGuitarClip.end;
-
-                const handleMouseMove = (moveEvent) => {
-                  const deltaX = moveEvent.clientX - startX;
-                  const deltaTime = deltaX / timelineWidthPerSecond;
-                  let newStart = initialStart + deltaTime;
-
-                  // Snap to grid
-                  if (gridSpacing && gridSpacing > 0) {
-                    newStart = Math.round(newStart / gridSpacing) * gridSpacing;
-                  }
-
-                  // Ensure start doesn't go past end
-                  newStart = Math.max(0, Math.min(newStart, clipEnd - (gridSpacing || 0.25)));
-
-                  const newClip = {
-                    ...trackGuitarClip,
-                    start: newStart,
-                    end: clipEnd,
-                    trackId: trackId
-                  };
-                  dispatch(setGuitarRecordingClip(newClip));
-                };
-
-                const handleMouseUp = () => {
-                  setIsDraggingTrim(null);
-                  document.removeEventListener('mousemove', handleMouseMove);
-                  document.removeEventListener('mouseup', handleMouseUp);
-                };
-
-                document.addEventListener('mousemove', handleMouseMove);
-                document.addEventListener('mouseup', handleMouseUp);
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#FFFFFF",
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  fontFamily: "monospace",
-                }}
-              >
-                [&gt;
-              </div>
-            </div>
-          )}
-
-          {/* Visual indicator for trim handles */}
-          <div
-            style={{
-              position: 'absolute',
-              left: '0px',
-              top: '0px',
-              width: '100%',
-              height: '100%',
-              pointerEvents: 'none',
-              zIndex: 7,
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                left: '0px',
-                top: '0px',
-                width: '24px',
-                height: '100%',
-                background: 'rgba(255, 255, 255, 0.1)',
-                borderLeft: '2px solid rgba(255, 255, 255, 0.3)',
-                pointerEvents: 'none',
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                right: '0px',
-                top: '0px',
-                width: '24px',
-                height: '100%',
-                background: 'rgba(255, 255, 255, 0.1)',
-                borderRight: '2px solid rgba(255, 255, 255, 0.3)',
-                pointerEvents: 'none',
-              }}
-            />
-          </div>
-
-          {/* Right resize handle (active clip only) */}
-            {trackGuitarClip && (
-            <div
-              style={{
-                position: "absolute",
-                right: "12px",
-                top: '19px',
-                width: "24px",
-                height: "100%",
-                cursor: "ew-resize",
-                zIndex: 15,
-                transform: "translateX(12px)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                pointerEvents: 'auto'
-              }}
-              onMouseDown={(e) => {
-                if (frozen) return;
-
-                e.preventDefault();
-                e.stopPropagation();
-
-                setIsDraggingTrim('end');
-
-                const startX = e.clientX;
-                const clipStart = trackGuitarClip.start;
-                const initialEnd = trackGuitarClip.end;
-
-                const handleMouseMove = (moveEvent) => {
-                  const deltaX = moveEvent.clientX - startX;
-                  const deltaTime = deltaX / timelineWidthPerSecond;
-                  let newEnd = initialEnd + deltaTime;
-
-                  // Snap to grid
-                  if (gridSpacing && gridSpacing > 0) {
-                    newEnd = Math.round(newEnd / gridSpacing) * gridSpacing;
-                  }
-
-                  // Ensure end doesn't go before start
-                  newEnd = Math.max(clipStart + (gridSpacing || 0.25), newEnd);
-
-                  const newClip = {
-                    ...trackGuitarClip,
-                    start: clipStart,
-                    end: newEnd,
-                    trackId: trackId
-                  };
-                  dispatch(setGuitarRecordingClip(newClip));
-                };
-
-                const handleMouseUp = () => {
-                  setIsDraggingTrim(null);
-                  document.removeEventListener('mousemove', handleMouseMove);
-                  document.removeEventListener('mouseup', handleMouseUp);
-                };
-
-                document.addEventListener('mousemove', handleMouseMove);
-                document.addEventListener('mouseup', handleMouseUp);
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#FFFFFF",
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  fontFamily: "monospace",
-                }}
-              >
-                &lt;]
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
+      
       {isDrumTrack && displayDrumClip && displayDrumClip.start != null && displayDrumClip.end != null && (
         <div
           style={{
@@ -1734,51 +1431,6 @@ const TimelineTrack = ({
             if (trackPianoClip && trackPianoClip.start != null && trackPianoClip.end != null) {
               // Check if note is within the recording clip
               if (noteStartTime < trackPianoClip.start || noteEndTime > trackPianoClip.end) {
-                return null; // Don't render notes outside the clip
-              }
-            }
-            const minPixelWidth = 6; // ensure visibility
-            const heightPx = 2; // thin bar
-            const durationPx = Math.max(minPixelWidth, (note.duration || 0.05) * timelineWidthPerSecond);
-            const topY = (midiToY(note.midiNumber) % height) + Math.max(0, (NOTE_HEIGHT - heightPx) / 2);
-            const leftX = (note.startTime || 0) * timelineWidthPerSecond;
-            return (
-              <div
-                key={idx}
-                style={{
-                  position: 'absolute',
-                  left: `${leftX}px`,
-                  top: `${topY}px`,
-                  width: `${durationPx}px`,
-                  height: `${heightPx}px`,
-                  background: '#FFFFFF',
-                  borderRadius: '2px',
-                  opacity: 0.95,
-                  zIndex: 20,
-                  pointerEvents: 'none',
-                  boxShadow: '0 0 2px rgba(255,255,255,0.9)',
-                  transform: 'translateZ(0)'
-                }}
-                title={`Note: ${note.note || ''} (MIDI ${note.midiNumber})`}
-              />
-            );
-          })}
-        </div>
-      )}
-
-      {/* Guitar */}
-      {isGuitarTrack && trackGuitarNotes && trackGuitarNotes.length > 0 && (
-        <div style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', zIndex: 9, pointerEvents: 'none' }}>
-          {trackGuitarNotes.map((note, idx) => {
-            if (note.midiNumber < MIDI_MIN || note.midiNumber > MIDI_MAX) return null;
-
-            // Always show notes, even if they fall outside an active clip
-            const noteStartTime = note.startTime || 0;
-            const noteEndTime = noteStartTime + (note.duration || 0.05);
-
-            if (trackGuitarClip && trackGuitarClip.start != null && trackGuitarClip.end != null) {
-              // Check if note is within the recording clip
-              if (noteStartTime < trackGuitarClip.start || noteEndTime > trackGuitarClip.end) {
                 return null; // Don't render notes outside the clip
               }
             }

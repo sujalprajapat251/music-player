@@ -531,31 +531,6 @@ const Timeline = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, tracks, isMagnetEnabled, selectedGrid, audioDuration]);
 
-  // ... existing code ...
-
-  //   // Add this function near other playback-related functions
-  //   const playPatternDrumSound = useCallback((padData) => {
-  //     const audioContext = getAudioContext();
-  //     if (audioContext.state === 'suspended') {
-  //       audioContext.resume();
-  //     }
-
-  //     const synthSource = createSynthSound(padData, audioContext);
-  //     synthSource.connect(audioContext.destination);
-  //   }, [getAudioContext]);
-
-  //   // Modify the useEffect that handles patternDrumPlayback
-  //   useEffect(() => {
-  //     if (patternDrumPlayback.padData && isPlaying) {
-  //       playPatternDrumSound(patternDrumPlayback.padData);
-  //     }
-  //   }, [patternDrumPlayback, isPlaying, playPatternDrumSound]);
-
-  // // ... existing code ...
-
-
-  // ... existing code ...
-
   // Add this function near other playback-related functions
   const playPatternDrumSound = useCallback((padData) => {
     const audioContext = getAudioContext();
@@ -574,7 +549,7 @@ const Timeline = () => {
     }
   }, [patternDrumPlayback, isPlaying, playPatternDrumSound]);
 
-  // ... existing code ...
+
 
   // Add effects processor reference
   const effectsProcessorRef = useRef(null);

@@ -18,8 +18,8 @@ import Am7 from "../Images/am7.svg";
 import { FaPlus, FaStop } from "react-icons/fa6";
 import music from "../Images/playingsounds.svg";
 import BottomToolbar from './Layout/BottomToolbar';
-import { setRecordingAudio, setSelectedInstrument, setGuitarNotes, setGuitarRecordingClip } from '../Redux/Slice/studio.slice';
-import PianoRolls from './PianoRolls';  
+import { addPianoNote, setRecordingAudio, setPianoNotes, setPianoRecordingClip, setSelectedInstrument } from '../Redux/Slice/studio.slice';
+import PianoRolls from './PianoRolls';
 import * as Tone from "tone";
 import Effects2 from './Effects2';
 import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsTwo } from '../Redux/Slice/effects.slice';
@@ -218,7 +218,6 @@ const INSTRUMENTS = [
     { id: 'sitar', name: 'Sitar', category: 'Plucked Strings' },
 ];
 
-
 const BasicData = [
     { name: "Am", image: Am },
     { name: "Bdmi", image: Bdmi },
@@ -271,16 +270,16 @@ const Guitar = ({ onClose }) => {
     const [selectedButtons, setSelectedButtons] = useState({ basic: null, stabs: null, arpeggiated: null, other: null });
     const [currentInstrumentIndex, setCurrentInstrumentIndex] = useState(0);
     const [activeTab, setActiveTab] = useState('Instruments');
-    const [activeGuitarSection, setActiveGuitarSection] = useState(0);
+    const [activePianoSection, setActivePianoSection] = useState(0);
     const [strumValue, setStrumValue] = useState(0);
     const [volume, setVolume] = useState(90);
     const [reverb, setReverb] = useState(-90);
     const [pan, setPan] = useState(0);
     const [isDragOver, setIsDragOver] = useState(false);
-    const guitarSectionsRef = useRef(null);
+    const pianoSectionsRef = useRef(null);
 
     // Get the selected instrument from Redux
-    const selectedInstrumentFromRedux = useSelector((state) => selectStudioState(state)?.selectedInstrument || 'acoustic_guitar_nylon');
+    const selectedInstrumentFromRedux = useSelector((state) => selectStudioState(state)?.selectedInstrument || 'acoustic_grand_piano');
 
     useEffect(() => {
         const index = INSTRUMENTS.findIndex(inst => inst.id === selectedInstrumentFromRedux);
@@ -290,7 +289,7 @@ const Guitar = ({ onClose }) => {
     }, [selectedInstrumentFromRedux]);
 
     useEffect(() => {
-        const containerEl = guitarSectionsRef.current;
+        const containerEl = pianoSectionsRef.current;
         if (!containerEl) return;
 
         const handleWheelForOctaves = (event) => {
@@ -298,7 +297,7 @@ const Guitar = ({ onClose }) => {
             if (event.shiftKey) {
                 event.preventDefault();
                 const delta = isHorizontal ? event.deltaX : event.deltaY;
-                setActiveGuitarSection((prev) => {
+                setActivePianoSection((prev) => {
                     if (delta > 0) return Math.min(prev + 1, 2);
                     if (delta < 0) return Math.max(prev - 1, 0);
                     return prev;
@@ -320,7 +319,7 @@ const Guitar = ({ onClose }) => {
 
     // const audioContextRef = useRef(null);
     const panNodeRef = useRef(null);
-    const guitarRef = useRef(null);
+    const pianoRef = useRef(null);
     const reverbGainNodeRef = useRef(null);
     const dryGainNodeRef = useRef(null);
     const convolverNodeRef = useRef(null);
@@ -338,7 +337,7 @@ const Guitar = ({ onClose }) => {
     const getIsRecording = useSelector((state) => selectStudioState(state).isRecording);
     const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
     const studioCurrentTime = useSelector((state) => selectStudioState(state).currentTime || 0);
-    const existingGuitarNotes = useSelector((state) => selectStudioState(state).pianoNotes || []);
+    const existingPianoNotes = useSelector((state) => selectStudioState(state).pianoNotes || []);
     const tracks = useSelector((state) => selectStudioState(state).tracks || []);
 
 
@@ -350,8 +349,8 @@ const Guitar = ({ onClose }) => {
         }
     }, [getActiveTabs]);
 
-    const guitarNotesRef = useRef([]);
-    useEffect(() => { guitarNotesRef.current = existingGuitarNotes || []; }, [existingGuitarNotes]);
+    const pianoNotesRef = useRef([]);
+    useEffect(() => { pianoNotesRef.current = existingPianoNotes || []; }, [existingPianoNotes]);
 
     const createImpulseResponse = (audioContext, duration, decay, reverse = false) => {
         const length = audioContext.sampleRate * duration;
@@ -406,8 +405,8 @@ const Guitar = ({ onClose }) => {
 
     // useEffect(() => {
     //     audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    //     Soundfont.instrument(audioContextRef.current, selectedInstrument).then((guitar) => {
-    //         guitarRef.current = guitar;
+    //     Soundfont.instrument(audioContextRef.current, selectedInstrument).then((piano) => {
+    //         pianoRef.current = piano;
     //     });
     //     return () => {
     //         audioContextRef.current && audioContextRef.current.close();
@@ -449,7 +448,7 @@ const Guitar = ({ onClose }) => {
     // });
 
     const getKeyboardShortcutsForSection = (sectionIndex) => {
-        const section = guitarSections[sectionIndex];
+        const section = pianoSections[sectionIndex];
         return KeyboardShortcuts.create({
             firstNote: section.first,
             lastNote: section.last,
@@ -479,7 +478,7 @@ const Guitar = ({ onClose }) => {
         });
     };
 
-    const guitarSections = [
+    const pianoSections = [
         { first: MidiNumbers.fromNote('C0'), last: MidiNumbers.fromNote('B2') },
         { first: MidiNumbers.fromNote('C3'), last: MidiNumbers.fromNote('B5') },
         { first: MidiNumbers.fromNote('C5'), last: MidiNumbers.fromNote('C8') }
@@ -525,11 +524,11 @@ const Guitar = ({ onClose }) => {
 
         Soundfont.instrument(audioContext, selectedInstrument, {
             destination: gainNode,
-        }).then((guitar) => {
-            guitarRef.current = guitar;
-            console.log("guitar instrument loaded successfully");
+        }).then((piano) => {
+            pianoRef.current = piano;
+            console.log("Guitar instrument loaded successfully");
         }).catch((error) => {
-            console.error("Error loading guitar instrument:", error);
+            console.error("Error loading piano instrument:", error);
         });
 
         return () => {
@@ -592,8 +591,8 @@ const Guitar = ({ onClose }) => {
                 trackId: currentTrackId || null,
                 id: `${midiNumber}-${Date.now()}-${Math.random()}`
             };
-            const updated = [...(guitarNotesRef.current || []), newEvent];
-            dispatch(setGuitarNotes(updated));
+            const updated = [...(pianoNotesRef.current || []), newEvent];
+            dispatch(setPianoNotes(updated));
 
 
             const notesForThisTrack = (updated || []).filter(n => n.trackId === (currentTrackId || null));
@@ -601,7 +600,7 @@ const Guitar = ({ onClose }) => {
                 const minStart = Math.min(...notesForThisTrack.map(n => n.startTime));
                 const maxEnd = Math.max(...notesForThisTrack.map(n => n.startTime + (n.duration || 0.05)));
                 const trackColor = (tracks.find(t => t.id === currentTrackId)?.color);
-                dispatch(setGuitarRecordingClip({
+                dispatch(setPianoRecordingClip({
                     start: minStart,
                     end: maxEnd,
                     color: trackColor,
@@ -613,18 +612,18 @@ const Guitar = ({ onClose }) => {
                     trimStart: 0,
                     trimEnd: maxEnd - minStart,
                     id: `guitar_recording_${Date.now()}`,
-                    guitarData: notesForThisTrack
+                    pianoData: notesForThisTrack
                 }));
             }
-            guitarNotesRef.current = updated;
+            pianoNotesRef.current = updated;
         }
 
         setRecordedNotes((prevNotes) => [
             ...prevNotes,
             { midiNumber, time: Date.now(), type: 'play' },
         ]);
-        if (guitarRef.current) {
-            const audioNode = guitarRef.current.play(effectiveMidi);
+        if (pianoRef.current) {
+            const audioNode = pianoRef.current.play(effectiveMidi);
             activeAudioNodes.current[midiNumber] = audioNode;
         }
     };
@@ -713,7 +712,7 @@ const Guitar = ({ onClose }) => {
 
     // ****************** Chords *****************
 
-    const highlightedGuitarKeys = useSelector((state) => state.studio?.highlightedPianoKeys || []);
+    const highlightedPianoKeys = useSelector((state) => selectStudioState(state).highlightedPianoKeys || []);
 
     const debugPlayNote = (midiNumber) => {
         playNote(midiNumber);
@@ -723,17 +722,20 @@ const Guitar = ({ onClose }) => {
         stopNote(midiNumber);
     };
 
-    const SimpleGuitar = ({ noteRange, playNote, stopNote, keyboardShortcuts, sectionIndex }) => {
-        const guitarRef = useRef(null);
+    const SimplePiano = ({ noteRange, playNote, stopNote, keyboardShortcuts, sectionIndex }) => {
+        const pianoRef = useRef(null);
+        const isMouseDown = useRef(false);
+        const lastPlayedNote = useRef(null);
+        const mouseMoveHandler = useRef(null);
 
         const highlightKeys = () => {
-            if (!guitarRef.current || highlightedGuitarKeys.length === 0) return;
+            if (!pianoRef.current || highlightedPianoKeys.length === 0) return;
 
-            const allKeys = guitarRef.current.querySelectorAll('.ReactPiano__Key--natural, .ReactPiano__Key--accidental');
+            const allKeys = pianoRef.current.querySelectorAll('.ReactPiano__Key--natural, .ReactPiano__Key--accidental');
             allKeys.forEach(key => key.classList.remove('highlighted'));
 
             let highlightedCount = 0;
-            highlightedGuitarKeys.forEach(midiNumber => {
+            highlightedPianoKeys.forEach(midiNumber => {
                 if (midiNumber >= noteRange.first && midiNumber <= noteRange.last) {
                     const keyIndex = midiNumber - noteRange.first;
                     const keyElement = allKeys[keyIndex];
@@ -745,10 +747,156 @@ const Guitar = ({ onClose }) => {
             });
         };
 
+        // Function to get MIDI number from mouse position
+        const getMidiNumberFromPosition = (clientX) => {
+            if (!pianoRef.current) return null;
+
+            const rect = pianoRef.current.getBoundingClientRect();
+            const relativeX = clientX - rect.left;
+            const pianoWidth = rect.width;
+
+            // Calculate which key the mouse is over based on position
+            const keyWidth = pianoWidth / (noteRange.last - noteRange.first + 1);
+            const keyIndex = Math.floor(relativeX / keyWidth);
+            const midiNumber = noteRange.first + keyIndex;
+
+            // Ensure the MIDI number is within the valid range
+            if (midiNumber >= noteRange.first && midiNumber <= noteRange.last) {
+                return midiNumber;
+            }
+            return null;
+        };
+
+        // Function to handle mouse movement for continuous play
+        const handleMouseMove = (e) => {
+            if (!isMouseDown.current) return;
+
+            const midiNumber = getMidiNumberFromPosition(e.clientX);
+            if (midiNumber && midiNumber !== lastPlayedNote.current) {
+                // Stop the previous note if it's different
+                if (lastPlayedNote.current !== null) {
+                    stopNote(lastPlayedNote.current);
+                }
+
+                // Play the new note
+                playNote(midiNumber);
+                lastPlayedNote.current = midiNumber;
+            }
+        };
+
+        // Debounced mouse move handler to prevent too many rapid note changes
+        const debouncedMouseMove = useRef(null);
+        const handleMouseMoveDebounced = (e) => {
+            if (debouncedMouseMove.current) {
+                clearTimeout(debouncedMouseMove.current);
+            }
+            debouncedMouseMove.current = setTimeout(() => {
+                handleMouseMove(e);
+            }, 10); // 10ms delay for smooth transitions
+        };
+
+        // Function to handle mouse down with smooth detection
+        const handleMouseDown = (e) => {
+            e.preventDefault(); // Prevent text selection
+            isMouseDown.current = true;
+            const midiNumber = getMidiNumberFromPosition(e.clientX);
+            if (midiNumber) {
+                playNote(midiNumber);
+                lastPlayedNote.current = midiNumber;
+            }
+
+            // Add mouse move listener for continuous play
+            if (!mouseMoveHandler.current) {
+                mouseMoveHandler.current = handleMouseMoveDebounced;
+                document.addEventListener('mousemove', mouseMoveHandler.current);
+            }
+        };
+
+        // Function to handle mouse up
+        const handleMouseUp = () => {
+            isMouseDown.current = false;
+            if (lastPlayedNote.current !== null) {
+                stopNote(lastPlayedNote.current);
+                lastPlayedNote.current = null;
+            }
+
+            // Remove mouse move listener
+            if (mouseMoveHandler.current) {
+                document.removeEventListener('mousemove', mouseMoveHandler.current);
+                mouseMoveHandler.current = null;
+            }
+        };
+
+        // Function to handle mouse leave
+        const handleMouseLeave = () => {
+            if (isMouseDown.current) {
+                handleMouseUp();
+            }
+        };
+
+        // Touch event handlers for mobile support
+        const handleTouchStart = (e) => {
+            e.preventDefault();
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                isMouseDown.current = true;
+                const midiNumber = getMidiNumberFromPosition(touch.clientX);
+                if (midiNumber) {
+                    playNote(midiNumber);
+                    lastPlayedNote.current = midiNumber;
+                }
+            }
+        };
+
+        const handleTouchMove = (e) => {
+            e.preventDefault();
+            if (isMouseDown.current && e.touches.length > 0) {
+                const touch = e.touches[0];
+                const midiNumber = getMidiNumberFromPosition(touch.clientX);
+                if (midiNumber && midiNumber !== lastPlayedNote.current) {
+                    if (lastPlayedNote.current !== null) {
+                        stopNote(lastPlayedNote.current);
+                    }
+                    playNote(midiNumber);
+                    lastPlayedNote.current = midiNumber;
+                }
+            }
+        };
+
+        const handleTouchEnd = () => {
+            handleMouseUp();
+        };
+
+        // Global mouse up handler to catch mouse release outside piano
+        useEffect(() => {
+            const handleGlobalMouseUp = () => {
+                if (isMouseDown.current) {
+                    handleMouseUp();
+                }
+            };
+
+            document.addEventListener('mouseup', handleGlobalMouseUp);
+            return () => {
+                document.removeEventListener('mouseup', handleGlobalMouseUp);
+            };
+        }, []);
+
         useEffect(() => {
             const timer = setTimeout(highlightKeys, 100);
             return () => clearTimeout(timer);
-        }, [highlightedGuitarKeys, noteRange]);
+        }, [highlightedPianoKeys, noteRange]);
+
+        // Cleanup mouse event listeners on unmount
+        useEffect(() => {
+            return () => {
+                if (mouseMoveHandler.current) {
+                    document.removeEventListener('mousemove', mouseMoveHandler.current);
+                }
+                if (debouncedMouseMove.current) {
+                    clearTimeout(debouncedMouseMove.current);
+                }
+            };
+        }, []);
 
         const handleLocalWheel = (e) => {
             e.preventDefault();
@@ -756,7 +904,7 @@ const Guitar = ({ onClose }) => {
         };
 
         useEffect(() => {
-            const el = guitarRef.current;
+            const el = pianoRef.current;
             if (!el) return;
             const blockWheel = (e) => {
                 e.preventDefault();
@@ -769,7 +917,18 @@ const Guitar = ({ onClose }) => {
         }, []);
 
         return (
-            <div className="relative h-[93%] overscroll-none" ref={guitarRef} onWheel={handleLocalWheel}>
+            <div
+                className="relative h-[93%] overscroll-none"
+                ref={pianoRef}
+                onWheel={handleLocalWheel}
+                onMouseDown={handleMouseDown}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseLeave}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                style={{ userSelect: 'none', touchAction: 'none' }}
+            >
                 <Piano noteRange={noteRange} playNote={playNote} stopNote={stopNote} keyboardShortcuts={keyboardShortcuts} />
                 <style jsx>{`
                     .ReactPiano__Keyboard{
@@ -792,6 +951,13 @@ const Guitar = ({ onClose }) => {
                     .ReactPiano__Key--accidental.highlighted {
                         border-bottom: 7px solid #8b5cf6 !important;
                     }
+                    
+                    /* Visual feedback for active playing */
+                    .ReactPiano__Key--natural:active,
+                    .ReactPiano__Key--accidental:active {
+                        transform: scale(0.98);
+                        transition: transform 0.1s ease;
+                    }
                 `}</style>
             </div>
         );
@@ -811,7 +977,6 @@ const Guitar = ({ onClose }) => {
     const [isProcessingDrop, setIsProcessingDrop] = useState(false);
     const [effectsSearchTerm, setEffectsSearchTerm] = useState('');
     const [selectedEffectCategory, setSelectedEffectCategory] = useState(null);
-
 
     const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas, showEffectsTwo } = useSelector((state) => state.effects);
 
@@ -1896,8 +2061,8 @@ const Guitar = ({ onClose }) => {
                                                         <p className="text-[#FFFFFF99] text-[8px] md600:text-[10px] lg:text-[12px] px-1 sm:px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Sustain</p>
                                                     </div>
                                                     <div className="flex items-center justify-between ">
-                                                        <button onClick={() => setActiveGuitarSection(prev => Math.max(prev - 1, 0))} disabled={activeGuitarSection === 0}
-                                                            className={`transition-colors p-1 lg:p-2 ${activeGuitarSection === 0 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white'}`}
+                                                        <button onClick={() => setActivePianoSection(prev => Math.max(prev - 1, 0))} disabled={activePianoSection === 0}
+                                                            className={`transition-colors p-1 lg:p-2 ${activePianoSection === 0 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white'}`}
                                                         >
                                                             <FaChevronLeft className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                                                         </button>
@@ -1906,8 +2071,8 @@ const Guitar = ({ onClose }) => {
                                                             <div className="text-white text-center fw-bolder text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Octaves</div>
                                                         </div>
 
-                                                        <button onClick={() => setActiveGuitarSection(prev => Math.min(prev + 1, 2))} disabled={activeGuitarSection === 2}
-                                                            className={`transition-colors p-1 lg:p-2 ${activeGuitarSection === 2 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white'}`}
+                                                        <button onClick={() => setActivePianoSection(prev => Math.min(prev + 1, 2))} disabled={activePianoSection === 2}
+                                                            className={`transition-colors p-1 lg:p-2 ${activePianoSection === 2 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white'}`}
                                                         >
                                                             <FaChevronRight className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                                                         </button>
@@ -1942,12 +2107,12 @@ const Guitar = ({ onClose }) => {
                                                         </div>
                                                     </div>
                                                 }
-                                                <div ref={guitarSectionsRef} className="w-full h-[105px] sm:h-[150px] md600:h-[140px] md:h-[290px] lg:h-[250px] overflow-x-hidden pt-1 md600:pt-2 lg:pt-3 overscroll-none ">
+                                                <div ref={pianoSectionsRef} className="w-full h-[105px] sm:h-[150px] md600:h-[140px] md:h-[290px] lg:h-[250px] overflow-x-hidden pt-1 md600:pt-2 lg:pt-3 overscroll-none ">
                                                     <div className="w-full h-full">
-                                                        <div className="flex transition-transform duration-300 ease-in-out h-full" style={{ transform: `translateX(-${activeGuitarSection * 100}%)` }}>
-                                                            {guitarSections.map((section, index) => (
+                                                        <div className="flex transition-transform duration-300 ease-in-out h-full" style={{ transform: `translateX(-${activePianoSection * 100}%)` }}>
+                                                            {pianoSections.map((section, index) => (
                                                                 <div key={index} className="w-full flex-shrink-0">
-                                                                    <SimpleGuitar noteRange={{ first: section.first, last: section.last }} playNote={debugPlayNote} stopNote={debugStopNote} keyboardShortcuts={index === activeGuitarSection ? getKeyboardShortcutsForSection(index) : []} sectionIndex={index} />
+                                                                    <SimplePiano noteRange={{ first: section.first, last: section.last }} playNote={debugPlayNote} stopNote={debugStopNote} keyboardShortcuts={index === activePianoSection ? getKeyboardShortcutsForSection(index) : []} sectionIndex={index} />
                                                                 </div>
                                                             ))}
                                                         </div>

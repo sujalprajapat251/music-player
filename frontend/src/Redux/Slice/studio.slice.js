@@ -51,8 +51,6 @@ const initialState = {
   selectedInstrument: 'acoustic_grand_piano', // Default instrument for piano
   // Store drum kit by name to match drumMachineTypes entries
   selectedDrumInstrument: 'Classic 808',
-  guitarNotes: [],
-  guitarRecordingClip: null,
 };
 
 const studioSlice = createSlice({
@@ -581,17 +579,7 @@ const studioSlice = createSlice({
     // ... existing code ...
 
     // ****************** Guitar *****************
-    setGuitarNotes: (state, action) => {
-      console.log(">>>>>>>>>>>>>>>>>>>>>>>>Guitar", action.payload);
-      state.guitarNotes = action.payload;
-    },
-    setGuitarRecordingClip: (state, action) => {
-      console.log(">>>>>>>>>>>>>>>>>>>>>>>>GuitarRecordingClip", action.payload);
-      state.guitarRecordingClip = action.payload;
-    },
-    clearGuitarNotes: (state) => {
-      state.guitarNotes = [];
-    },
+   
   },
 });
 
@@ -660,9 +648,6 @@ export const {
   moveTrackUp,
   moveTrackDown,
   reorderTracks,
-  setGuitarNotes,
-  setGuitarRecordingClip,
-  clearGuitarNotes,
 } = studioSlice.actions;
 
 export default studioSlice.reducer;
