@@ -4,7 +4,7 @@ import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
 import Soundfont from 'soundfont-player';
 // eslint-disable-next-line no-unused-vars
-import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio, setCurrentTrackId, setTrackType, triggerPatternDrumPlayback } from "../Redux/Slice/studio.slice";
+import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio, setCurrentTrackId, setTrackType, triggerPatternDrumPlayback, clearTrackDeleted } from "../Redux/Slice/studio.slice";
 import { selectStudioState } from "../Redux/rootReducer";
 import { createSynthSound, getAudioContext as getDrumAudioContext } from '../Utils/drumMachineUtils';
 // eslint-disable-next-line no-unused-vars
@@ -226,6 +226,127 @@ const Timeline = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoomLevel]);
 
+  const trackDeleted = useSelector((state) => selectStudioState(state).trackDeleted);
+
+  // Stop all piano notes
+  const stopAllPianoNotes = useCallback(() => {
+    activePianoNotesRef.current.forEach(audioNode => {
+      try {
+        audioNode.stop();
+      } catch (error) {
+        console.error("Error stopping piano note:", error);
+      }
+    });
+    activePianoNotesRef.current.clear();
+  }, []);
+  
+  // Handle track deletion - stop audio for deleted track
+  useEffect(() => {
+    if (trackDeleted && trackDeleted.trackId) {
+      console.log('Track deleted, stopping audio for track:', trackDeleted.trackId);
+      
+      // Stop all players for this track
+      const playersToStop = players.filter(playerObj => 
+        playerObj.trackId === trackDeleted.trackId
+      );
+      
+      playersToStop.forEach((playerObj) => {
+        if (playerObj?.player && typeof playerObj.player.stop === 'function') {
+          try {
+            playerObj.player.stop();
+          } catch (error) {
+            console.warn('Error stopping player for deleted track:', error);
+          }
+        }
+      });
+      
+      // Remove players for this track from state
+      setPlayers(prevPlayers => 
+        prevPlayers.filter(playerObj => playerObj.trackId !== trackDeleted.trackId)
+      );
+      
+      // Stop piano notes for this track
+      stopAllPianoNotes();
+      
+      // Clear the trackDeleted flag
+      dispatch(clearTrackDeleted());
+    }
+  }, [trackDeleted, players, dispatch, stopAllPianoNotes]);
+  
+  const tracks = useSelector((state) => selectStudioState(state)?.tracks || []);
+
+  // Handle individual clip deletion - clean up audio players for deleted clips
+  useEffect(() => {
+    // Build a set of existing trackId:clipId pairs from Redux state
+    const existingClips = new Set();
+    tracks.forEach(track => {
+      if (track.audioClips) {
+        track.audioClips.forEach(clip => {
+          existingClips.add(`${track.id}:${clip.id}`);
+        });
+      }
+    });
+
+    // Find and clean up players for clips that no longer exist
+    const playersToRemove = [];
+    players.forEach((playerObj) => {
+      const clipKey = `${playerObj.trackId}:${playerObj.clipId}`;
+      if (!existingClips.has(clipKey)) {
+        playersToRemove.push(playerObj);
+      }
+    });
+
+    // Stop and remove players for deleted clips
+    if (playersToRemove.length > 0) {
+      console.log('Cleaning up audio players for deleted clips:', playersToRemove.length);
+      
+      playersToRemove.forEach((playerObj) => {
+        if (playerObj?.player && typeof playerObj.player.stop === 'function') {
+          try {
+            playerObj.player.stop();
+          } catch (error) {
+            console.warn('Error stopping player for deleted clip:', error);
+          }
+        }
+      });
+
+      // Remove players for deleted clips from state
+      setPlayers(prevPlayers => 
+        prevPlayers.filter(playerObj => {
+          const clipKey = `${playerObj.trackId}:${playerObj.clipId}`;
+          return existingClips.has(clipKey);
+        })
+      );
+
+      // Also clean up WaveSurfer instances for deleted clips
+      setWaveSurfers(prevWaveSurfers => 
+        prevWaveSurfers.filter(waveSurfer => {
+          const clipKey = `${waveSurfer.trackId}:${waveSurfer.clipId}`;
+          return existingClips.has(clipKey);
+        })
+      );
+    }
+  }, [tracks, players]);
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      // Stop all players when component unmounts
+      players.forEach((playerObj) => {
+        if (playerObj?.player && typeof playerObj.player.stop === 'function') {
+          try {
+            playerObj.player.stop();
+          } catch (error) {
+            console.warn('Error stopping player on unmount:', error);
+          }
+        }
+      });
+      
+      // Stop all piano notes
+      stopAllPianoNotes();
+    };
+  }, [players, stopAllPianoNotes]);
+
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
       try {
@@ -273,17 +394,7 @@ const Timeline = () => {
     }
   }, []);
 
-  // Stop all piano notes
-  const stopAllPianoNotes = useCallback(() => {
-    activePianoNotesRef.current.forEach(audioNode => {
-      try {
-        audioNode.stop();
-      } catch (error) {
-        console.error("Error stopping piano note:", error);
-      }
-    });
-    activePianoNotesRef.current.clear();
-  }, []);
+  
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState({
@@ -300,7 +411,6 @@ const Timeline = () => {
     sectionId: null
   });
 
-  const tracks = useSelector((state) => selectStudioState(state)?.tracks || []);
   console.log("==========================================", tracks)
 
   const allTracks = useMemo(() => {
@@ -381,7 +491,8 @@ const Timeline = () => {
   }, [bpm]);
 
   const pianoRecording = useSelector((state) => selectStudioState(state).pianoRecord);
-
+  const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
+  
   const lastProcessedRef = useRef(null);
 
   function generateRandomHexColor() {

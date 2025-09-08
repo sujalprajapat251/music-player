@@ -137,12 +137,21 @@ const studioSlice = createSlice({
         delete state.frozenTrackData[trackId];
 
         state.pianoNotes = (state.pianoNotes || []).filter(n => n?.trackId != trackId);
+        state.guitarNotes = (state.guitarNotes || []).filter(n => n?.trackId != trackId);
+        state.drumRecordedData = (state.drumRecordedData || []).filter(n => n?.trackId != trackId);
+        
         if (state.pianoRecordingClip?.trackId == trackId) {
           state.pianoRecordingClip = null;
+        }
+        if (state.guitarRecordingClip?.trackId == trackId) {
+          state.guitarRecordingClip = null;
         }
         if (state.drumRecordingClip?.trackId == trackId) {
           state.drumRecordingClip = null;
         }
+        
+        // Set flag to indicate track was deleted for audio cleanup
+        state.trackDeleted = { trackId, timestamp: Date.now() };
       }
     },
     setTrackHeight: (state, action) => {
