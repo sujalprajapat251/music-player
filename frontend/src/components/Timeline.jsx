@@ -48,6 +48,7 @@ import { audioManager } from '../Utils/audioContext';
 import audioQualityManager from '../Utils/audioQualityManager';
 import { getEffectsProcessor } from '../Utils/audioEffectsProcessor';
 import Guitar from "./Guitar";
+import Orchestral from "./Orchestral";
 
 const Timeline = () => {
 
@@ -76,6 +77,7 @@ const Timeline = () => {
   const [showPiano, setShowPiano] = useState(false);
   const [showDrum, setShowDrum] = useState(false);
   const [showGuitar, setShowGuitar] = useState(false);
+  const [showOrchestral, setShowOrchestral] = useState(false);
   const [renameSectionId, setRenameSectionId] = useState(null);
   const [renameValue, setRenameValue] = useState("");
   const [renameModal, setRenameModal] = useState(false);
@@ -239,17 +241,17 @@ const Timeline = () => {
     });
     activePianoNotesRef.current.clear();
   }, []);
-  
+
   // Handle track deletion - stop audio for deleted track
   useEffect(() => {
     if (trackDeleted && trackDeleted.trackId) {
       console.log('Track deleted, stopping audio for track:', trackDeleted.trackId);
-      
+
       // Stop all players for this track
-      const playersToStop = players.filter(playerObj => 
+      const playersToStop = players.filter(playerObj =>
         playerObj.trackId === trackDeleted.trackId
       );
-      
+
       playersToStop.forEach((playerObj) => {
         if (playerObj?.player && typeof playerObj.player.stop === 'function') {
           try {
@@ -259,20 +261,20 @@ const Timeline = () => {
           }
         }
       });
-      
+
       // Remove players for this track from state
-      setPlayers(prevPlayers => 
+      setPlayers(prevPlayers =>
         prevPlayers.filter(playerObj => playerObj.trackId !== trackDeleted.trackId)
       );
-      
+
       // Stop piano notes for this track
       stopAllPianoNotes();
-      
+
       // Clear the trackDeleted flag
       dispatch(clearTrackDeleted());
     }
   }, [trackDeleted, players, dispatch, stopAllPianoNotes]);
-  
+
   const tracks = useSelector((state) => selectStudioState(state)?.tracks || []);
 
   // Handle individual clip deletion - clean up audio players for deleted clips
@@ -299,7 +301,7 @@ const Timeline = () => {
     // Stop and remove players for deleted clips
     if (playersToRemove.length > 0) {
       console.log('Cleaning up audio players for deleted clips:', playersToRemove.length);
-      
+
       playersToRemove.forEach((playerObj) => {
         if (playerObj?.player && typeof playerObj.player.stop === 'function') {
           try {
@@ -311,7 +313,7 @@ const Timeline = () => {
       });
 
       // Remove players for deleted clips from state
-      setPlayers(prevPlayers => 
+      setPlayers(prevPlayers =>
         prevPlayers.filter(playerObj => {
           const clipKey = `${playerObj.trackId}:${playerObj.clipId}`;
           return existingClips.has(clipKey);
@@ -319,7 +321,7 @@ const Timeline = () => {
       );
 
       // Also clean up WaveSurfer instances for deleted clips
-      setWaveSurfers(prevWaveSurfers => 
+      setWaveSurfers(prevWaveSurfers =>
         prevWaveSurfers.filter(waveSurfer => {
           const clipKey = `${waveSurfer.trackId}:${waveSurfer.clipId}`;
           return existingClips.has(clipKey);
@@ -341,7 +343,7 @@ const Timeline = () => {
           }
         }
       });
-      
+
       // Stop all piano notes
       stopAllPianoNotes();
     };
@@ -394,7 +396,7 @@ const Timeline = () => {
     }
   }, []);
 
-  
+
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState({
@@ -492,7 +494,7 @@ const Timeline = () => {
 
   const pianoRecording = useSelector((state) => selectStudioState(state).pianoRecord);
   // const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
-  
+
   const lastProcessedRef = useRef(null);
 
   function generateRandomHexColor() {
@@ -1724,7 +1726,7 @@ const Timeline = () => {
       // Update player if present
       setPlayers(prev => prev.map(p => {
         if (p.trackId === trackId && p.clipId === clip.id && p.player) {
-          try { p.player.playbackRate = (p.playbackRate || 1) * rate; } catch {}
+          try { p.player.playbackRate = (p.playbackRate || 1) * rate; } catch { }
           return { ...p, playbackRate: (p.playbackRate || 1) * rate };
         }
         return p;
@@ -2988,6 +2990,10 @@ const Timeline = () => {
 
       {(showGuitar || getTrackType === "Guitar") && (
         <Guitar onClose={() => { setShowGuitar(false); dispatch(setTrackType(null)); }} />
+      )}
+
+      {(showOrchestral || getTrackType === "Orchestral") && (
+        <Orchestral onClose={() => { setShowOrchestral(false); dispatch(setTrackType(null)); }} />
       )}
 
       {/* Rename Section Modal */}

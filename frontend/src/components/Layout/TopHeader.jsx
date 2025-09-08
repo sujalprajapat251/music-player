@@ -44,6 +44,9 @@ import { setSoundQuality } from '../../Redux/Slice/audioSettings.slice';
 import audioQualityManager from '../../Utils/audioQualityManager';
 import ExportPopup from '../ExportProjectModel';
 import { useUndoRedo } from '../../hooks/useUndoRedo';
+import { createMusic } from '../../Redux/Slice/music.slice';
+import { selectStudioState } from '../../Redux/rootReducer';
+import WavEncoder from 'wav-encoder';
 
 const TopHeader = () => {
     const dispatch = useDispatch();
@@ -80,6 +83,10 @@ const TopHeader = () => {
     const [exportProjectModal, setExportProjectModal] = useState(false);
     const [showUndoRedoToast, setShowUndoRedoToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
+
+    // Add state for song name editing
+    const [songName, setSongName] = useState('Untitled_song');
+    const [isEditingSongName, setIsEditingSongName] = useState(false);
 
     // Add state for selected sound quality
     const [selectedSoundQuality, setSelectedSoundQuality] = useState('High');
@@ -286,6 +293,202 @@ const TopHeader = () => {
         setExportProjectModal(true);
     }
 
+    const tracks = useSelector((state) => selectStudioState(state)?.tracks || []);
+    const bpm = useSelector((state) => selectStudioState(state)?.bpm || 120);
+
+    // Handle song name editing
+    const handleSongNameClick = () => {
+        setIsEditingSongName(true);
+    };
+
+    const handleSongNameChange = (e) => {
+        setSongName(e.target.value);
+    };
+
+    const handleSongNameSave = () => {
+        setIsEditingSongName(false);
+    };
+
+    const handleSongNameKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            handleSongNameSave();
+        } else if (e.key === 'Escape') {
+            setIsEditingSongName(false);
+            setSongName('Untitled_song');
+        }
+    };
+
+    // Utility: MIDI -> frequency
+    const midiToFrequency = (midiNumber) => {
+        const m = Number(midiNumber);
+        if (!Number.isFinite(m)) return 440;
+        return 440 * Math.pow(2, (m - 69) / 12);
+    };
+
+    // Render simple sine-based WAV for given piano notes, return blob URL and duration
+    const renderPianoNotesToWav = async (notes = []) => {
+        try {
+            if (!Array.isArray(notes) || notes.length === 0) return null;
+            const endTimes = notes.map(n => (n.startTime || 0) + (n.duration || 0.5));
+            const renderDuration = Math.max(1, Math.max(...endTimes) + 0.25);
+            const sampleRate = 44100;
+            const channels = 1;
+            const frameCount = Math.ceil(renderDuration * sampleRate);
+            const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+            const offline = new OfflineCtx(channels, frameCount, sampleRate);
+
+            const master = offline.createGain();
+            master.gain.setValueAtTime(0.8, 0);
+            master.connect(offline.destination);
+
+            const env = (gainNode, start, duration) => {
+                const attack = Math.min(0.01, duration * 0.1);
+                const release = Math.min(0.05, duration * 0.2);
+                const sustainStart = start + attack;
+                const end = start + duration;
+                gainNode.gain.setValueAtTime(0.0, start);
+                gainNode.gain.linearRampToValueAtTime(0.9, sustainStart);
+                gainNode.gain.setValueAtTime(0.9, Math.max(sustainStart, start));
+                gainNode.gain.linearRampToValueAtTime(0.0, Math.max(end, end + release));
+            };
+
+            notes.forEach(n => {
+                const start = Math.max(0, Number(n.startTime) || 0);
+                const dur = Math.max(0.05, Number(n.duration) || 0.5);
+                const freq = midiToFrequency(n.midiNumber);
+                const osc = offline.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, start);
+                const g = offline.createGain();
+                env(g, start, dur);
+                osc.connect(g);
+                g.connect(master);
+                osc.start(start);
+                osc.stop(start + dur + 0.1);
+            });
+
+            const buffer = await offline.startRendering();
+            const channelData = Array.from({ length: buffer.numberOfChannels }, (_, i) => buffer.getChannelData(i));
+            const wavData = await WavEncoder.encode({ sampleRate: buffer.sampleRate, channelData });
+            const blob = new Blob([wavData], { type: 'audio/wav' });
+            const url = URL.createObjectURL(blob);
+            return { url, duration: buffer.duration };
+        } catch (e) {
+            console.error('Render piano notes failed:', e);
+            return null;
+        }
+    };
+
+    const handleSaved = async () => {
+        const user = sessionStorage.getItem("userId");
+
+        // Build new tracks with a blob URL clip rendered from each track's pianoNotes (if present)
+        const serializedTracks = await Promise.all((tracks || []).map(async (t) => {
+            const track = { ...t };
+            const notes = Array.isArray(t.pianoNotes) ? t.pianoNotes : [];
+            if (notes.length > 0) {
+                const render = await renderPianoNotesToWav(notes);
+                if (render && render.url) {
+                    const existing = Array.isArray(track.audioClips) ? track.audioClips : [];
+                    const clip = {
+                        id: Date.now() + Math.random(),
+                        name: 'Piano Render',
+                        url: render.url,
+                        duration: render.duration,
+                        trimStart: 0,
+                        trimEnd: render.duration,
+                        startTime: 0,
+                        color: track.color || '#FFFFFF'
+                    };
+                    track.audioClips = [...existing, clip];
+                }
+            }
+            return track;
+        }));
+
+        // Render one mixdown WAV from all clips across all tracks
+        const renderProjectMixdown = async (allTracks) => {
+            try {
+                const clips = [];
+                allTracks.forEach(t => {
+                    (t.audioClips || []).forEach(c => {
+                        if (c && c.url) {
+                            const trimStart = Number(c.trimStart || 0);
+                            const trimEnd = Number((c.trimEnd != null ? c.trimEnd : c.duration) || c.duration || 0);
+                            const visible = Math.max(0, trimEnd - trimStart);
+                            clips.push({
+                                url: c.url,
+                                startTime: Number(c.startTime || 0),
+                                offset: trimStart,
+                                duration: visible,
+                                playbackRate: Number(c.playbackRate || 1)
+                            });
+                        }
+                    });
+                });
+                if (clips.length === 0) return null;
+
+                const sampleRate = 44100;
+                const channels = 2;
+                const totalDuration = Math.max(
+                    1,
+                    ...clips.map(cl => (cl.startTime || 0) + (cl.duration || 0))
+                ) + 0.1;
+                const frameCount = Math.ceil(totalDuration * sampleRate);
+                const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+                const offline = new OfflineCtx(channels, frameCount, sampleRate);
+
+                const master = offline.createGain();
+                master.gain.setValueAtTime(1.0, 0);
+                master.connect(offline.destination);
+
+                const decodedBuffers = await Promise.all(clips.map(async (cl) => {
+                    try {
+                        const res = await fetch(cl.url);
+                        const buf = await res.arrayBuffer();
+                        const audioBuf = await offline.decodeAudioData(buf);
+                        return { ...cl, audioBuf };
+                    } catch (_) {
+                        return null;
+                    }
+                }));
+
+                decodedBuffers.filter(Boolean).forEach(({ audioBuf, startTime, offset, duration, playbackRate }) => {
+                    const src = offline.createBufferSource();
+                    src.buffer = audioBuf;
+                    if (Number.isFinite(playbackRate) && playbackRate > 0) {
+                        try { src.playbackRate.setValueAtTime(playbackRate, 0); } catch (_) {}
+                    }
+                    src.connect(master);
+                    const safeOffset = Math.max(0, Math.min(offset || 0, audioBuf.duration));
+                    const safeDur = Math.max(0, Math.min(duration || (audioBuf.duration - safeOffset), audioBuf.duration - safeOffset));
+                    const when = Math.max(0, startTime || 0);
+                    try { src.start(when, safeOffset, safeDur); } catch (_) {}
+                });
+
+                const mixed = await offline.startRendering();
+                const channelData = Array.from({ length: mixed.numberOfChannels }, (_, i) => mixed.getChannelData(i));
+                const wavData = await WavEncoder.encode({ sampleRate: mixed.sampleRate, channelData });
+                const blob = new Blob([wavData], { type: 'audio/wav' });
+                const url = URL.createObjectURL(blob);
+                return { url, duration: mixed.duration };
+            } catch (e) {
+                console.error('Mixdown render failed:', e);
+                return null;
+            }
+        };
+
+        const mixdown = await renderProjectMixdown(serializedTracks);
+
+       
+        dispatch(createMusic({
+            name: songName,
+            musicdata: serializedTracks,
+            userId: user,
+            url: null,
+        }));
+    }
+
     return (
         <>
             <ExportPopup open={exportProjectModal} onClose={() => setExportProjectModal(false)} />
@@ -293,7 +496,7 @@ const TopHeader = () => {
                 <div className="flex gap-1 sm:gap-2 md:gap-3 lg:gap-5 xl:gap-7 items-center">
                     <p className="text-secondary-light dark:text-secondary-dark text-[12px] md:text-[14px] lg:text-[16px] xl:text-[18px]">LOGO</p>
                     <Menu as="div" className="relative inline-block text-left">
-                        <div >
+                        <div>
                             <MenuButton className="outline-none" >
                                 <p className='text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] lg:text-[14px]'> File </p>
                             </MenuButton>
@@ -698,12 +901,29 @@ const TopHeader = () => {
                     </button>
                 </div >
 
-                <div className="flex gap-2 md:gap-3 lg:gap-5 xl:gap-7 items-center">
-                    <div className="flex gap-2 items-center">
+                <div className="flex gap-2 md:gap-3 lg:gap-5 xl:gap-7 items-center" >
+                    <div className="flex gap-2 items-center" onClick={handleSaved}>
                         <img src={savedicon} alt="" className='h-[16px] md:h-full' />
                         <p className="text-[#357935] text-[12px] hidden md600:block">Saved!</p>
                     </div>
-                    <p className='text-secondary-light dark:text-secondary-dark text-[12px] md:text-[14px]'>Untitled_song</p>
+                    {isEditingSongName ? (
+                        <input
+                            type="text"
+                            value={songName}
+                            onChange={handleSongNameChange}
+                            onBlur={handleSongNameSave}
+                            onKeyDown={handleSongNameKeyPress}
+                            className='text-secondary-light dark:text-secondary-dark text-[12px] md:text-[14px] bg-transparent border border-[#357935] rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-[#357935]'
+                            autoFocus
+                        />
+                    ) : (
+                        <p 
+                            className='text-secondary-light dark:text-secondary-dark text-[12px] md:text-[14px] cursor-pointer hover:text-[#357935] transition-colors'
+                            onClick={handleSongNameClick}
+                        >
+                            {songName}
+                        </p>
+                    )}
                 </div>
 
                 <div className="flex gap-2 md:gap-3 lg:gap-5 xl:gap-7">

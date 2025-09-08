@@ -55,7 +55,7 @@ const ResizableTrimHandle = ({
 
     const handleMouseUp = () => {
       onDragEnd();
-      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mousemove', handleMouseMove); 
       document.removeEventListener('mouseup', handleMouseUp);
     };
 
@@ -524,11 +524,13 @@ const TimelineTrack = ({
   const isPianoTrack = (
     typeName === 'keys' ||
     typeName === 'guitar' ||
+    typeName === 'orchestral' ||
     displayName === 'keys' ||
     displayName === 'guitar' ||
     displayName.includes('piano') ||
     displayName.includes('key') ||
-    displayName.includes('guitar')
+    displayName.includes('guitar') ||
+    displayName.includes('orchestral')
   );
   const isDrumTrack = typeName === 'drum' || displayName === 'drum' || displayName.includes('drum') || displayName.includes('percussion');
 

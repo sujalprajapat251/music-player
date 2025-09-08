@@ -48,6 +48,7 @@ import VoiceTransformer from './components/VoiceTransfrom';
 import React, { useEffect } from "react";
 import * as soundtouch from 'soundtouchjs';
 import Guitar from './components/Guitar';
+import File from './components/File';
 window.soundtouch = soundtouch;
 
 function App() {
@@ -106,6 +107,7 @@ function App() {
           <Route path='ani' element={<Animation />} />
           <Route path='piano' element={<Piano />} />
           <Route path='effcts2' element={<Effects2 />} />
+          <Route path='file' element={<File />} />
           {/* <Route path='fuzz' element={<Fuzz />} />
           <Route path='Overdrive' element={<Overdrive />} />
           <Route path='autopan' element={<AutoPan />} />
@@ -131,6 +133,7 @@ function App() {
 
           <Route path='/sidebar' element={<ThemeProvider><Sidebar2 /></ThemeProvider>} >
             <Route path='timeline' element={<Timeline />} />
+            <Route path='timeline/:id' element={<Timeline />} />
             {/* <Route path='knob' element={<Knob />} />
             <Route path='loop' element={<Loops />} /> */}
             <Route path="effects" element={<Effects />} />

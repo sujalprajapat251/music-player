@@ -11,6 +11,7 @@ const { getAllFaqs, createFaq } = require('../controller/faqsController');
 const { addTerms, getTerms } = require('../controller/termsController');
 const { createCategory, getAllCategory, getCategoryById, deleteCategory, updateCategory } = require('../controller/categoryController');
 const { createSubscribe, getAllSubscribe } = require('../controller/subscribeController');
+const { createMusic, getAllMusic } = require('../controller/musicController');
 
 // auth Routes
 
@@ -31,6 +32,11 @@ indexRoutes.get('/getUserById/:id', getUserById);
 indexRoutes.put('/userUpdate/:id', upload.single("photo"), updateUser);
 indexRoutes.delete('/deleteUser/:id', removeUser);
 indexRoutes.put('/resetPassword', resetPassword);
+
+// music Routes
+
+indexRoutes.post('/createMusic',auth, createMusic);
+indexRoutes.get('/allMusic',auth, getAllMusic);
 
 // Wishlist Routes
 indexRoutes.put('/wishlist', auth, addToWishlist);
