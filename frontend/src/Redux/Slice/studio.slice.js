@@ -51,6 +51,7 @@ const initialState = {
   selectedInstrument: 'acoustic_grand_piano', // Default instrument for piano
   // Store drum kit by name to match drumMachineTypes entries
   selectedDrumInstrument: 'Classic 808',
+  trackDeleted: null,
 };
 
 const studioSlice = createSlice({
@@ -584,6 +585,9 @@ const studioSlice = createSlice({
       const [moved] = state.tracks.splice(fromIndex, 1);
       state.tracks.splice(toIndex, 0, moved);
     },
+    clearTrackDeleted: (state) => {
+      state.trackDeleted = null;
+    },
 
     // ... existing code ...
 
@@ -657,6 +661,7 @@ export const {
   moveTrackUp,
   moveTrackDown,
   reorderTracks,
+   clearTrackDeleted,
 } = studioSlice.actions;
 
 export default studioSlice.reducer;
