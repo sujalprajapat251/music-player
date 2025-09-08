@@ -120,7 +120,7 @@ const LoopBar = () => {
         width: "100%",
         height: "30px",
         background: "transparent",
-        zIndex: 25,
+        zIndex: 10,
         pointerEvents: "auto"
       }}
     >

@@ -15,10 +15,12 @@ import Prokey from '../Images/prokey.svg';
 import Music from '../Images/music.svg';
 import Sampler from '../Images/sampler.svg';
 import { MdOutlineKeyboardArrowRight } from 'react-icons/md';
+// MusicOff is controlled by parent (Timeline); no local import here
 
-const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
+const WaveMenu = ({ isOpen, position, onClose, onAction, onOpenMusicOff }) => {
   const [pitchDropdownOpen, setPitchDropdownOpen] = useState(false);
   const [voiceTransformDropdownOpen, setVoiceTransformDropdownOpen] = useState(false);
+  // MusicOff state is lifted to parent; keep only menu visibility here
 
   if (!isOpen) return null;
 
@@ -38,20 +40,22 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed top-0 left-0 right-0 bottom-0 z-[999]"
-        onClick={handleClose}
-      />
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed top-0 left-0 right-0 bottom-0 z-[999]"
+            onClick={handleClose}
+          />
 
-      {/* Menu Container */}
-      <div
-        className="absolute bg-[#1F1F1F] rounded-[4px] py-2 min-w-[220px] shadow-lg z-[1000] text-sm text-white max-h-[400px] overflow-y-auto"
-        style={{
-          top: position?.y || 0,
-          left: position?.x || 0,
-        }}
-      >
+          {/* Menu Container */}
+          <div
+            className="absolute bg-[#1F1F1F] rounded-[4px] py-2 min-w-[220px] shadow-lg z-[1000] text-sm text-white max-h-[400px] overflow-y-auto"
+            style={{
+              top: position?.y || 0,
+              left: position?.x || 0,
+            }}
+          >
         {/* Section 1: Basic Editing Operations */}
         <div
           className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
@@ -400,7 +404,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
         {/* Section 4: Library and Sampler Integration */}
         <div
           className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
-          onClick={() => handleItemClick('addToLoopLibrary')}
+          onClick={() => handleItemClick('openInSampler')}
         >
           <img src={Music} className="w-4 h-4 flex items-center justify-center text-white"></img>
           <span className="flex-1">Add to loop Library..</span>
@@ -413,7 +417,11 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
           <img src={Sampler} className="w-4 h-4 flex items-center justify-center text-white"></img>
           <span className="flex-1">Open in sampler</span>
         </div>
-      </div>
+          </div>
+        </>
+      )}
+
+      {/* MusicOff modal is rendered by parent (Timeline) */}
     </>
   )
 }

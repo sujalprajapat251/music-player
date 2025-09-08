@@ -48,6 +48,7 @@ import { audioManager } from '../Utils/audioContext';
 import audioQualityManager from '../Utils/audioQualityManager';
 import { getEffectsProcessor } from '../Utils/audioEffectsProcessor';
 import Guitar from "./Guitar";
+import PricingModel from './PricingModel';
 
 const Timeline = () => {
 
@@ -1666,6 +1667,8 @@ const Timeline = () => {
     });
   }, []);
 
+  const [pricingModalOpen, setPricingModalOpen] = useState(false);
+
   const handleContextMenuAction = useCallback((action, overrideTrackId, overrideClipId) => {
     const trackId = overrideTrackId ?? contextMenu.trackId;
     const clipId = overrideClipId ?? contextMenu.clipId;
@@ -1938,8 +1941,10 @@ const Timeline = () => {
       case 'matchProjectKey':
         break;
       case 'addToLoopLibrary':
+        setPricingModalOpen(true);
         break;
       case 'openInSampler':
+        setPricingModalOpen(true);
         break;
       default:
       // Unknown action
@@ -2643,7 +2648,7 @@ const Timeline = () => {
           >
 
             <div
-              style={{ height: "100px", borderBottom: "1px solid #1414141A", position: "relative", top: 0, zIndex: 20, background: "#141414" }}
+              style={{ height: "100px", borderBottom: "1px solid #1414141A", position: "relative", top: 0, zIndex: 10, background: "#141414" }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
@@ -2812,7 +2817,7 @@ const Timeline = () => {
               height: "100%",
               width: "2px",
               pointerEvents: "none",
-              zIndex: 26,
+              zIndex:10,
               transform: `translateX(${playheadPosition}px)`,
               willChange: "transform",
               transition: (isMagnetEnabled && isDragging.current) ? "none" : "transform 0.05s linear" // Only disable during mouse drag with magnet
@@ -2917,7 +2922,10 @@ const Timeline = () => {
 
       {/* Add Track Modal */}
       {showAddTrackModal && (
-        <AddNewTrackModel onClose={() => setShowAddTrackModal(false)} />
+        <AddNewTrackModel
+          onClose={() => setShowAddTrackModal(false)}
+          onOpenLoopLibrary={() => { setShowOffcanvas(true); setShowOffcanvasEffects(false); }}
+        />
       )}
       {/* Hidden file input for import */}
       <input type="file" ref={fileInputRef} style={{ display: "none" }}
@@ -2966,6 +2974,7 @@ const Timeline = () => {
         position={contextMenu.position}
         onClose={handleContextMenuClose}
         onAction={handleContextMenuAction}
+        onOpenMusicOff={() => setShowOffcanvas(true)}
       />
 
       {/* Section Context Menu */}
@@ -3019,6 +3028,9 @@ const Timeline = () => {
           </div>
         </div>
       </Dialog>
+
+      {/* Pricing Modal */}
+      <PricingModel pricingModalOpen={pricingModalOpen} setPricingModalOpen={setPricingModalOpen} />
 
       {/* Resize Section Modal */}
       <Dialog open={resizeModal} onClose={() => setResizeModal(false)} className="relative z-10">
