@@ -12,7 +12,7 @@ const NewProject = ({ open, setOpen }) => {
       <DialogBackdrop className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4 text-center">
-          <DialogPanel className="relative bg-[#232323] rounded-lg shadow-xl w-full max-w-2xl mx-auto p-0">
+          <DialogPanel className="relative bg-[#232323] rounded-lg shadow-xl w-full max-w-lg mx-auto p-0">
             <div className="w-full px-8 pt-8 pb-6">
               <Tabs
                 tabs={[
