@@ -24,6 +24,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
 
   const handleItemClick = (action) => {
     if (onAction) {
+      console.log(onAction);
       onAction(action);
     }
     onClose();
@@ -171,7 +172,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
                     className="px-4 py-2 cursor-pointer hover:bg-gray-700"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleItemClick(value);
+                      handleItemClick({ type: 'changePitch', semitones: value });
                       setPitchDropdownOpen(false);
                     }}
                   >
@@ -217,7 +218,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
                 className="px-4 py-2 cursor-pointer hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleItemClick('+Fifth');
+                  handleItemClick({ type: 'voiceTransform', preset: '+Fifth' });
                   setVoiceTransformDropdownOpen(false);
                 }}
               >
@@ -227,7 +228,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
                 className="px-4 py-2 cursor-pointer hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleItemClick('+1 Octave');
+                  handleItemClick({ type: 'voiceTransform', preset: '+1 Octave' });
                   setVoiceTransformDropdownOpen(false);
                 }}
               >
@@ -237,7 +238,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
                 className="px-4 py-2 cursor-pointer hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleItemClick('+2 Octave');
+                  handleItemClick({ type: 'voiceTransform', preset: '+2 Octave' });
                   setVoiceTransformDropdownOpen(false);
                 }}
               >
@@ -247,7 +248,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
                 className="px-4 py-2 cursor-pointer hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleItemClick('-Fourth');
+                  handleItemClick({ type: 'voiceTransform', preset: '-Fourth' });
                   setVoiceTransformDropdownOpen(false);
                 }}
               >
@@ -257,7 +258,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
                 className="px-4 py-2 cursor-pointer hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleItemClick('-1 Octave');
+                  handleItemClick({ type: 'voiceTransform', preset: '-1 Octave' });
                   setVoiceTransformDropdownOpen(false);
                 }}
               >
@@ -267,7 +268,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
                 className="px-4 py-2 cursor-pointer hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleItemClick('-2 Octave');
+                  handleItemClick({ type: 'voiceTransform', preset: '-2 Octave' });
                   setVoiceTransformDropdownOpen(false);
                 }}
               >
@@ -279,7 +280,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
                 className="px-4 py-2 cursor-pointer hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleItemClick('A little darker');
+                  handleItemClick({ type: 'voiceTransform', preset: 'A little darker' });
                   setVoiceTransformDropdownOpen(false);
                 }}
               >
@@ -289,7 +290,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
                 className="px-4 py-2 cursor-pointer hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleItemClick('Darker');
+                  handleItemClick({ type: 'voiceTransform', preset: 'Darker' });
                   setVoiceTransformDropdownOpen(false);
                 }}
               >
@@ -299,7 +300,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
                 className="px-4 py-2 cursor-pointer hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleItemClick('Very dark');
+                  handleItemClick({ type: 'voiceTransform', preset: 'Very dark' });
                   setVoiceTransformDropdownOpen(false);
                 }}
               >
@@ -309,7 +310,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
                 className="px-4 py-2 cursor-pointer hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleItemClick('A little brighter');
+                  handleItemClick({ type: 'voiceTransform', preset: 'A little brighter' });
                   setVoiceTransformDropdownOpen(false);
                 }}
               >
@@ -319,7 +320,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
                 className="px-4 py-2 cursor-pointer hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleItemClick('Brighter');
+                  handleItemClick({ type: 'voiceTransform', preset: 'Brighter' });
                   setVoiceTransformDropdownOpen(false);
                 }}
               >
@@ -329,7 +330,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
                 className="px-4 py-2 cursor-pointer hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleItemClick('Very bright');
+                  handleItemClick({ type: 'voiceTransform', preset: 'Very bright' });
                   setVoiceTransformDropdownOpen(false);
                 }}
               >
@@ -339,7 +340,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
                 className="px-4 py-2 cursor-pointer hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleItemClick('Baby');
+                  handleItemClick({ type: 'voiceTransform', preset: 'Baby' });
                   setVoiceTransformDropdownOpen(false);
                 }}
               >
@@ -349,7 +350,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
                 className="px-4 py-2 cursor-pointer hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleItemClick('Robot');
+                  handleItemClick({ type: 'voiceTransform', preset: 'Robot' });
                   setVoiceTransformDropdownOpen(false);
                 }}
               >
@@ -359,7 +360,7 @@ const WaveMenu = ({ isOpen, position, onClose, onAction }) => {
                 className="px-4 py-2 cursor-pointer hover:bg-gray-700"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleItemClick('Alien');
+                  handleItemClick({ type: 'voiceTransform', preset: 'Alien' });
                   setVoiceTransformDropdownOpen(false);
                 }}
               >
