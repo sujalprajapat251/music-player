@@ -109,7 +109,7 @@ const Timeline = () => {
 
   // eslint-disable-next-line no-unused-vars
   const audioSettings = useSelector((state) => state.audioSettings);
-  // const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
+  const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
   // Timeline.jsx (add near other refs)
   const pendingAnchorRef = useRef(null);
   const getScale = () => baseTimelineWidthPerSecond * zoomLevel;
@@ -491,7 +491,7 @@ const Timeline = () => {
   }, [bpm]);
 
   const pianoRecording = useSelector((state) => selectStudioState(state).pianoRecord);
-  const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
+  // const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
   
   const lastProcessedRef = useRef(null);
 
