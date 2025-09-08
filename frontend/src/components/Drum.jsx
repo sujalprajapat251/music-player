@@ -480,12 +480,6 @@ const DrumPadMachine = ({ onClose }) => {
               trackId: currentTrackId,
               audioClip: drumClip
             }));
-
-            // Only clear drum data after successful track creation
-            // setTimeout(() => {
-            //   dispatch(setDrumRecordedData([]));
-            //   dispatch(setDrumRecordingClip(null));
-            // }, 500); // Give Timeline time to display
           }
         }).catch((error) => {
           // console.error('Error creating continuous drum audio blob:', error);
@@ -698,10 +692,11 @@ const DrumPadMachine = ({ onClose }) => {
           noise.buffer = noiseBuffer;
 
           filter.type = 'bandpass';
-          filter.frequency.setValueAtTime(freq, currentTime);
-          filter.Q.setValueAtTime(5, currentTime);
+          const ff = Math.max(800, Math.min(6000, (typeof freq === 'number' ? freq : 1000)));
+          filter.frequency.setValueAtTime(ff, currentTime);
+          filter.Q.setValueAtTime(3, currentTime); 
 
-          clapGain.gain.setValueAtTime(0.2, currentTime + time);
+          clapGain.gain.setValueAtTime(0.35, currentTime + time);
           clapGain.gain.exponentialRampToValueAtTime(0.001, currentTime + time + 0.05);
 
           noise.connect(filter);
@@ -842,7 +837,7 @@ const DrumPadMachine = ({ onClose }) => {
     compressor.threshold.setValueAtTime(-24, audioContext.currentTime);
     compressor.knee.setValueAtTime(30, audioContext.currentTime);
     compressor.ratio.setValueAtTime(12, audioContext.currentTime);
-    compressor.attack.setValueAtTime(0.003, audioContext.currentTime);  
+    compressor.attack.setValueAtTime(0.003, audioContext.currentTime);
     compressor.release.setValueAtTime(0.25, audioContext.currentTime);
 
     // Create waveshaper for saturation
@@ -881,6 +876,22 @@ const DrumPadMachine = ({ onClose }) => {
       const effectiveReverb = padEffect.reverb !== undefined ? padEffect.reverb : reverb;
       const currentTypeEffects = drumMachineTypes[currentType].effects;
 
+      // Normalize knobs if they are angles (-135..135); pass-through if already normalized
+      const normalize01 = (val) => {
+        if (typeof val !== 'number') return 0.7;
+        if (val >= -1 && val <= 1) return Math.max(0, Math.min(1, val));
+        return Math.max(0, Math.min(1, (val + 135) / 270));
+      };
+      const normalizePan = (val) => {
+        if (typeof val !== 'number') return 0;
+        if (val >= -1 && val <= 1) return val;
+        return Math.max(-1, Math.min(1, (val + 135) / 135 - 1));
+      };
+
+      const normalizedVolume = normalize01(effectiveVolume);
+      const normalizedPan = normalizePan(effectivePan);
+      const normalizedReverb = normalize01(effectiveReverb);
+
       // Create synthetic sound using shared function
       const synthSource = createSynthSound(pad, audioContext);
 
@@ -889,20 +900,15 @@ const DrumPadMachine = ({ onClose }) => {
       const panNode = audioContext.createStereoPanner();
       const dryGainNode = audioContext.createGain();
       const wetGainNode = audioContext.createGain();
-      const convolver = audioContext.createConvolver();  
+      const convolver = audioContext.createConvolver();
 
       // Set up reverb
       convolver.buffer = createReverbBuffer();
 
-      // Set up gain (volume)
-      gainNode.gain.setValueAtTime(effectiveVolume, audioContext.currentTime);
-
-      // Set up pan
-      panNode.pan.setValueAtTime(effectivePan, audioContext.currentTime);
-
-      // Set up reverb mix
-      dryGainNode.gain.setValueAtTime(1 - effectiveReverb, audioContext.currentTime);
-      wetGainNode.gain.setValueAtTime(effectiveReverb, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(normalizedVolume, audioContext.currentTime);
+      panNode.pan.setValueAtTime(normalizedPan, audioContext.currentTime);
+      dryGainNode.gain.setValueAtTime(1 - normalizedReverb, audioContext.currentTime);
+      wetGainNode.gain.setValueAtTime(normalizedReverb, audioContext.currentTime);
 
       // Apply drum machine type effects
       const effectsOutput = applyTypeEffects(synthSource, currentTypeEffects);

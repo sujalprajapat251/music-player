@@ -13,15 +13,15 @@ export const drumMachineTypes = [
       saturation: 0.3
     },
     pads: [
-      { id: 'Q', sound: 'kick', freq: 50, decay: 0.7, type: 'kick' },
+      { id: 'Q', sound: 'kick', freq: 1500, decay: 0.7, type: 'kick' },
       { id: 'W', sound: 'snare', freq: 200, decay: 0.3, type: 'snare' },
       { id: 'E', sound: 'hihat', freq: 8000, decay: 0.05, type: 'hihat' },
       { id: 'R', sound: 'openhat', freq: 8000, decay: 0.3, type: 'openhat' },
-      { id: 'A', sound: 'clap', freq: 1000, decay: 0.2, type: 'clap' },
+      { id: 'A', sound: 'clap', freq: 1000, decay: 0.3, type: 'clap' },
       { id: 'S', sound: 'cowbell', freq: 600, decay: 0.5, type: 'cowbell' },
-      { id: 'D', sound: 'bass', freq: 40, decay: 1.0, type: 'bass' },
+      { id: 'D', sound: 'bass', freq: 400, decay: 1.0, type: 'bass' },
       { id: 'F', sound: 'perc1', freq: 1000, decay: 0.2, type: 'perc1' },
-      { id: 'Z', sound: 'tom', freq: 150, decay: 0.5, type: 'tom' },
+      { id: 'Z', sound: 'tom', freq: 1500, decay: 0.5, type: 'tom' },
       { id: 'X', sound: 'ride', freq: 3000, decay: 0.7, type: 'ride' },
       { id: 'C', sound: 'crash', freq: 5000, decay: 1.5, type: 'crash' }
     ]
@@ -37,14 +37,14 @@ export const drumMachineTypes = [
       saturation: 0.2
     },
     pads: [
-      { id: 'Q', sound: 'kick', freq: 60, decay: 0.5, type: 'kick' },
-      { id: 'W', sound: 'snare', freq: 250, decay: 0.2, type: 'snare' },
+      { id: 'Q', sound: 'kick', freq: 600, decay: 0.5, type: 'kick' },
+      { id: 'W', sound: 'snare', freq: 2050, decay: 0.2, type: 'snare' },
       { id: 'E', sound: 'hihat', freq: 10000, decay: 0.03, type: 'hihat' },
       { id: 'R', sound: 'openhat', freq: 10000, decay: 0.3, type: 'openhat' },
       { id: 'A', sound: 'clap', freq: 1200, decay: 0.1, type: 'clap' },
       { id: 'S', sound: 'rimshot', freq: 3000, decay: 0.05, type: 'rimshot' },
       { id: 'D', sound: 'perc2', freq: 1500, decay: 0.1, type: 'perc2' },
-      { id: 'F', sound: 'tom', freq: 180, decay: 0.3, type: 'tom' },
+      { id: 'F', sound: 'tom', freq: 1800, decay: 0.3, type: 'tom' },
       { id: 'Z', sound: 'crash', freq: 6000, decay: 2.0, type: 'crash' },
       { id: 'X', sound: 'ride', freq: 4000, decay: 1.2, type: 'ride' },
       { id: 'C', sound: 'fx1', freq: 2000, decay: 0.6, type: 'fx1' }
@@ -61,15 +61,15 @@ export const drumMachineTypes = [
       saturation: 0.5
     },
     pads: [
-      { id: 'Q', sound: 'kick', freq: 45, decay: 0.8, type: 'kick' },
+      { id: 'Q', sound: 'kick', freq: 405, decay: 0.8, type: 'kick' },
       { id: 'W', sound: 'snare', freq: 180, decay: 0.3, type: 'snare' },
       { id: 'E', sound: 'hihat', freq: 12000, decay: 0.02, type: 'hihat' },
       { id: 'R', sound: 'openhat', freq: 11000, decay: 0.15, type: 'openhat' },
       { id: 'A', sound: 'clap', freq: 800, decay: 0.25, type: 'clap' },
       { id: 'S', sound: 'snap', freq: 700, decay: 0.2, type: 'snap' },
-      { id: 'D', sound: 'bass', freq: 35, decay: 1.2, type: 'bass' },
+      { id: 'D', sound: 'bass', freq: 350, decay: 1.2, type: 'bass' },
       { id: 'F', sound: 'vocal', freq: 440, decay: 0.4, type: 'vocal' },
-      { id: 'Z', sound: 'tom', freq: 140, decay: 0.3, type: 'tom' },
+      { id: 'Z', sound: 'tom', freq: 1400, decay: 0.3, type: 'tom' },
       { id: 'X', sound: 'fx1', freq: 2000, decay: 1.0, type: 'fx1' },
       { id: 'C', sound: 'fx2', freq: 1000, decay: 1.5, type: 'fx2' }
     ]
@@ -85,7 +85,7 @@ export const drumMachineTypes = [
       saturation: 0.1
     },
     pads: [
-      { id: 'Q', sound: 'kick', freq: 65, decay: 0.7, type: 'kick' },
+      { id: 'Q', sound: 'kick', freq: 650, decay: 0.7, type: 'kick' },
       { id: 'W', sound: 'snare', freq: 220, decay: 0.2, type: 'snare' },
       { id: 'E', sound: 'hihat', freq: 9000, decay: 0.04, type: 'hihat' },
       { id: 'R', sound: 'openhat', freq: 8500, decay: 0.35, type: 'openhat' },
@@ -109,7 +109,7 @@ export const drumMachineTypes = [
       saturation: 0.6
     },
     pads: [
-      { id: 'Q', sound: 'kick', freq: 50, decay: 0.5, type: 'kick' },
+      { id: 'Q', sound: 'kick', freq: 5000, decay: 0.5, type: 'kick' },
       { id: 'W', sound: 'snare', freq: 250, decay: 0.15, type: 'snare' },
       { id: 'E', sound: 'hihat', freq: 14000, decay: 0.02, type: 'hihat' },
       { id: 'R', sound: 'openhat', freq: 13000, decay: 0.25, type: 'openhat' },
@@ -133,7 +133,7 @@ export const drumMachineTypes = [
       saturation: 0.4
     },
     pads: [
-      { id: 'Q', sound: 'kick', freq: 55, decay: 0.6, type: 'kick' },
+      { id: 'Q', sound: 'kick', freq: 5005, decay: 0.6, type: 'kick' },
       { id: 'W', sound: 'snare', freq: 190, decay: 0.25, type: 'snare' },
       { id: 'E', sound: 'hihat', freq: 6000, decay: 0.05, type: 'hihat' },
       { id: 'R', sound: 'openhat', freq: 5500, decay: 0.4, type: 'openhat' },
@@ -141,7 +141,7 @@ export const drumMachineTypes = [
       { id: 'S', sound: 'vinyl', freq: 2000, decay: 0.6, type: 'vinyl' },
       { id: 'D', sound: 'glitch', freq: 1800, decay: 0.3, type: 'glitch' },
       { id: 'F', sound: 'fx2', freq: 1000, decay: 1.5, type: 'fx2' },
-      { id: 'Z', sound: 'tom', freq: 130, decay: 0.5, type: 'tom' },
+      { id: 'Z', sound: 'tom', freq: 1300, decay: 0.5, type: 'tom' },
       { id: 'X', sound: 'shaker', freq: 5000, decay: 0.1, type: 'shaker' },
       { id: 'C', sound: 'drop', freq: 800, decay: 2.0, type: 'drop' }
     ]

@@ -6,6 +6,7 @@ import Soundfont from 'soundfont-player';
 // eslint-disable-next-line no-unused-vars
 import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio, setCurrentTrackId, setTrackType, triggerPatternDrumPlayback } from "../Redux/Slice/studio.slice";
 import { selectStudioState } from "../Redux/rootReducer";
+import { createSynthSound, getAudioContext as getDrumAudioContext } from '../Utils/drumMachineUtils';
 // eslint-disable-next-line no-unused-vars
 import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM, zoomIn, zoomOut, resetZoom } from "../Redux/Slice/grid.slice";
 // eslint-disable-next-line no-unused-vars
@@ -15,7 +16,7 @@ import { getGridSpacing, getGridSpacingWithTimeSignature, parseTimeSignature } f
 import { IMAGE_URL } from "../Utils/baseUrl";
 import { getAudioContext as getSharedAudioContext, ensureAudioUnlocked } from "../Utils/audioContext";
 import { getNextTrackColor } from "../Utils/colorUtils";
-import { createSynthSound, drumMachineTypes } from "../Utils/drumMachineUtils";
+import { drumMachineTypes } from "../Utils/drumMachineUtils";
 import settingIcon from "../Images/setting.svg";
 import reverceIcon from "../Images/reverce.svg";
 import fxIcon from "../Images/fx.svg";
@@ -108,13 +109,75 @@ const Timeline = () => {
 
   // eslint-disable-next-line no-unused-vars
   const audioSettings = useSelector((state) => state.audioSettings);
-
+  const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
   // Timeline.jsx (add near other refs)
   const pendingAnchorRef = useRef(null);
   const getScale = () => baseTimelineWidthPerSecond * zoomLevel;
 
   const baseTimelineWidthPerSecond = 100; // Base width per second
   const timelineWidthPerSecond = baseTimelineWidthPerSecond * zoomLevel; // Apply zoom level
+
+
+  const timelineDrumAudioCtxRef = useRef(null);
+
+  // Active drum clip for the current track (used for trim boundaries)
+  const trackDrumClip =
+    (drumRecordingClip && ((drumRecordingClip.trackId ?? null) === (currentTrackId ?? null)))
+      ? drumRecordingClip
+      : null;
+
+  const playRecordedDrumHit = useCallback((drumHit) => {
+    try {
+      if (!drumHit || !Number.isFinite(drumHit.freq) || !Number.isFinite(drumHit.decay) || !drumHit.type) return;
+      const audioContext = getDrumAudioContext(timelineDrumAudioCtxRef);
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().catch(() => { });
+      }
+      const padData = { type: drumHit.type, freq: drumHit.freq, decay: drumHit.decay };
+      const sourceNode = createSynthSound(padData, audioContext);
+      if (!sourceNode) return;
+      sourceNode.connect(audioContext.destination);
+    } catch (_) { }
+  }, []);
+
+  const scheduledKeysRef = useRef(new Set());
+
+  useEffect(() => {
+    if (!isPlaying) {
+      scheduledKeysRef.current.clear();
+      return;
+    }
+    const LOOK_AHEAD = 0.20;
+    const nowSec = Number.isFinite(currentTime) ? currentTime : 0;
+    const windowStart = nowSec;
+    const windowEnd = nowSec + LOOK_AHEAD;
+
+    const hitsForTrack = Array.isArray(drumRecordedData)
+      ? drumRecordedData.filter(h => (h?.trackId ?? null) === (currentTrackId ?? null))
+      : [];
+
+    const trimmedHits = (trackDrumClip && trackDrumClip.start != null && trackDrumClip.end != null)
+      ? hitsForTrack.filter(h => {
+        const start = h.currentTime || 0;
+        const end = start + (h.decay || 0.2);
+        return end > trackDrumClip.start && start < trackDrumClip.end;
+      })
+      : hitsForTrack;
+
+    trimmedHits.forEach((hit, idx) => {
+      const hitTime = hit.currentTime || 0;
+      if (hitTime >= windowStart && hitTime < windowEnd) {
+        const key = `${currentTrackId}:${hitTime.toFixed(4)}:${idx}`;
+        if (scheduledKeysRef.current.has(key)) return;
+        scheduledKeysRef.current.add(key);
+        const delayMs = Math.max(0, Math.round((hitTime - nowSec) * 1000));
+        setTimeout(() => { playRecordedDrumHit(hit); }, delayMs);
+      }
+    });
+
+    const tick = setInterval(() => { }, 50);
+    return () => clearInterval(tick);
+  }, [isPlaying, currentTime, drumRecordedData, currentTrackId, trackDrumClip, playRecordedDrumHit]);
 
   // Listen for anchor requests from the toolbar before zoom happens
   useEffect(() => {
@@ -318,7 +381,7 @@ const Timeline = () => {
   }, [bpm]);
 
   const pianoRecording = useSelector((state) => selectStudioState(state).pianoRecord);
-  const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
+
   const lastProcessedRef = useRef(null);
 
   function generateRandomHexColor() {
@@ -772,8 +835,6 @@ const Timeline = () => {
     }
   };
 
-
-  // Filter piano notes based on trimmed boundaries for playback
   // This ensures that only notes within the trimmed region are played
   const filteredPianoNotes = useMemo(() => {
     if (!pianoRecordingClip || !pianoRecordingClip.start || !pianoRecordingClip.end) {
@@ -2331,53 +2392,6 @@ const Timeline = () => {
     }
   };
 
-  // // Add this function near other playback-related functions
-  // const playPatternDrumSound = useCallback((padData) => {
-  //   const audioContext = getAudioContext();
-  //   if (audioContext.state === 'suspended') {
-  //     audioContext.resume();
-  //   }
-
-  //   const synthSource = createSynthSound(padData, audioContext);
-  //   synthSource.connect(audioContext.destination);
-  // }, [getAudioContext]);
-
-  // // Modify the useEffect that handles patternDrumPlayback
-  // useEffect(() => {
-  //   if (patternDrumPlayback.padData && isPlaying) {
-  //     playPatternDrumSound(patternDrumPlayback.padData);
-  //   }
-  // }, [patternDrumPlayback, isPlaying, playPatternDrumSound]);
-
-
-  // useEffect(() => {
-  //   // Build a set of existing trackId:clipId pairs from Redux state
-  //   const existing = new Set();
-  //   tracks.forEach(t => {
-  //     (t.audioClips || []).forEach(c => {
-  //       existing.add(`${t.id}:${c.id}`);
-  //     });
-  //   });
-
-  //   // Stop and remove any players that no longer have a corresponding clip
-  //   setPlayers(prev => {
-  //     prev.forEach(p => {
-  //       const key = `${p.trackId}:${p.clipId}`;
-  //       if (!existing.has(key) && p.player) {
-  //         try {
-  //           if (typeof p.player.stop === 'function') p.player.stop();
-  //         } catch {}
-  //         try {
-  //           if (typeof p.player.dispose === 'function') p.player.dispose();
-  //         } catch {}
-  //       }
-  //     });
-  //     return prev.filter(p => existing.has(`${p.trackId}:${p.clipId}`));
-  //   });
-
-  //   setWaveSurfers(prev => prev.filter(Boolean));
-  // }, [tracks, setPlayers, setWaveSurfers]);
-
   return (
     <>
       <EditTrackNameModal isOpen={edirNameModel} onClose={() => setEdirNameModel(false)} onSave={handleSave} />
@@ -2545,29 +2559,6 @@ const Timeline = () => {
                       beatsPerBar={4}        // Time signature (4/4, etc.)
                       showBeatRectangles={true} // Toggle beat visualization
                     />
-                    {/* )} */}
-                    {/* <TimelineTrack
-                      key={track.id}
-                      track={track}
-                      trackId={track.id}
-                      height={trackHeight}
-                      onReady={handleReady}
-                      onTrimChange={(clipId, trimData) => handleTrimChange(track.id, clipId, trimData)}
-                      onPositionChange={(clipId, newStartTime) => handleTrackPositionChange(track.id, clipId, newStartTime)}
-                      onRemoveClip={(clipId) => dispatch(removeAudioClip({
-                        trackId: track.id,
-                        clipId: clipId
-                      }))}
-                      timelineWidthPerSecond={timelineWidthPerSecond}
-                      frozen={track.frozen}
-                      onContextMenu={handleContextMenu}
-                      onSelect={(clip) => setSelectedClipId(clip.id)}
-                      selectedClipId={selectedClipId}
-                      color={track.color}
-                      bpm={120}
-                      beatsPerBar={4}
-                      showBeatRectangles={true}
-                    /> */}
                   </div>
                 );
               })}
