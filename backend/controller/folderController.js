@@ -27,7 +27,7 @@ const createNewFolder = async (req, res) => {
       const newAddFolder = await newfolder.create(newFolderData);
       res.status(201).json({
         success: true,
-        message: "New Folder created successfully",
+        message: "New Folder created successfully..!",
         newfolder: newAddFolder,
       });
     } catch (error) {
@@ -55,7 +55,7 @@ const createNewFolder = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Folders retrieved successfully",
+      message: "Folders retrieved successfully..!",
       newAddFolder,
     });
   } catch (error) {
@@ -106,7 +106,7 @@ const createNewFolder = async (req, res) => {
   
       res.status(200).json({
         success: true,
-        message: "Folder updated successfully",
+        message: "Folder updated successfully..!",
         folder,
       });
     } catch (error) {
@@ -134,19 +134,19 @@ const createNewFolder = async (req, res) => {
       }
   
       // Check if user has permission to delete this folder
-      if (folder.userId.toString() !== req.user._id.toString()) {
-        return res.status(403).json({
-          success: false,
-          message: "Not authorized to delete this folder"
-        });
-      }
+      // if (folder.userId.toString() !== req.user._id.toString()) {
+      //   return res.status(403).json({
+      //     success: false,
+      //     message: "Not authorized to delete this folder"
+      //   });
+      // }
   
       // Delete the folder
       await newfolder.findByIdAndDelete(folderId);
   
       res.status(200).json({
         success: true,
-        message: "Folder deleted successfully",
+        message: "Folder deleted successfully..!",
       });
     } catch (error) {
       console.error("Error deleting folder:", error);

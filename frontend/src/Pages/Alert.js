@@ -19,7 +19,8 @@ function Alert(props) {
                     vertical: 'bottom',
                     horizontal: 'right'
                 },
-                autoHideDuration: 1500
+                autoHideDuration: 1500,
+                style: { marginBottom: '30px' } 
             });
 
             const timer = setTimeout(() => {

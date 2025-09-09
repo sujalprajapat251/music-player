@@ -4,7 +4,7 @@ import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
 import Soundfont from 'soundfont-player';
 // eslint-disable-next-line no-unused-vars
-import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio, setCurrentTrackId, setTrackType, triggerPatternDrumPlayback, clearTrackDeleted, setPianoNotes, setDrumRecordedData, setPianoRecordingClip, setDrumRecordingClip } from "../Redux/Slice/studio.slice";
+import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio, setCurrentTrackId, setTrackType, triggerPatternDrumPlayback, clearTrackDeleted, setPianoNotes, setDrumRecordedData, setPianoRecordingClip, setDrumRecordingClip, setTracks } from "../Redux/Slice/studio.slice";
 import { selectStudioState } from "../Redux/rootReducer";
 import { createSynthSound, getAudioContext as getDrumAudioContext } from '../Utils/drumMachineUtils';
 // eslint-disable-next-line no-unused-vars
@@ -50,6 +50,7 @@ import { getEffectsProcessor } from '../Utils/audioEffectsProcessor';
 import Guitar from "./Guitar";
 import Orchestral from "./Orchestral";
 import PricingModel from './PricingModel';
+import { useParams } from 'react-router-dom';
 
 const Timeline = () => {
 
@@ -756,13 +757,31 @@ const Timeline = () => {
         return; // Don't create duplicate players
       }
 
-      const response = await fetch(clip.url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch audio: ${response.statusText}`);
+      let audioBuffer = null;
+      try {
+        const response = await fetch(clip.url);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch audio: ${response.statusText}`);
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      } catch (fetchErr) {
+        // Fallback: create a silent buffer so UI and playback logic keep working
+        const durationSec = Math.max(0.1, Number(clip.duration || 0));
+        const sampleRate = audioContext.sampleRate || 44100;
+        const frameCount = Math.ceil(durationSec * sampleRate);
+        try {
+          audioBuffer = audioContext.createBuffer(1, frameCount, sampleRate);
+          // leave it silent
+          // eslint-disable-next-line no-console
+          console.warn('Audio fetch failed; using silent buffer fallback for clip:', clip.id, fetchErr);
+        } catch (bufErr) {
+          // If even buffer creation fails, abort gracefully for this clip
+          // eslint-disable-next-line no-console
+          console.error('Failed to create fallback buffer for clip:', clip.id, bufErr);
+          return;
+        }
       }
-
-      const arrayBuffer = await response.arrayBuffer();
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
       const player = new Player(audioBuffer);
       audioManager.registerPlayer(player);
@@ -2976,6 +2995,105 @@ const Timeline = () => {
       console.error("Error reloading audio clip:", error);
     }
   };
+
+  // ************************************************** Get the project data API **************************************************
+
+  const { id: projectId } = useParams();
+  const allMusic = useSelector((state) => state.music?.allmusic || []);
+
+  useEffect(() => {
+    // When navigating from File.jsx with a project ID, populate timeline from that project's data
+    try {
+      if (!projectId) return;
+      const project = (allMusic || []).find(m => String(m?._id) === String(projectId));
+      if (!project) return;
+
+      const incomingTracks = Array.isArray(project.musicdata) ? project.musicdata : [];
+
+      // Build studio tracks and aggregate note/drum data
+      const studioTracks = [];
+      const aggregatedPianoNotes = [];
+      const aggregatedDrumData = [];
+      let maxEnd = 0;
+
+      incomingTracks.forEach((t, idx) => {
+        const trackId = t.id ?? (t._id ?? (Date.now() + Math.random() + idx));
+       const audioClips = Array.isArray(t.audioClips) ? t.audioClips.map((c) => { 
+          const duration = Number(c.duration || 0);
+          const trimStart = Number(c.trimStart || 0);
+          const trimEnd = Number((c.trimEnd != null ? c.trimEnd : duration) || duration);
+          const startTime = Number(c.startTime || 0);
+          const visible = Math.max(0, trimEnd - trimStart);
+          maxEnd = Math.max(maxEnd, startTime + (visible || duration));
+          return {
+            id: c.id ?? (Date.now() + Math.random()),
+            name: c.name || 'Clip',
+            url: c.url || null,
+            color: c.color || t.color,
+            startTime,
+            duration: duration || visible || 0,
+            trimStart,
+            trimEnd,
+            type: c.type,
+            playbackRate: c.playbackRate || 1,
+            drumSequence: Array.isArray(c.drumSequence) ? c.drumSequence : undefined,
+            fromPattern: c.fromPattern || undefined,
+          };
+        }) : [];
+
+        // Piano notes: ensure trackId
+        if (Array.isArray(t.pianoNotes)) {
+          t.pianoNotes.forEach(n => {
+            const note = { ...n };
+            if (note.trackId == null) note.trackId = trackId;
+            aggregatedPianoNotes.push(note);
+            const end = (note.startTime || 0) + (note.duration || 0.05);
+            maxEnd = Math.max(maxEnd, end);
+          });
+        }
+
+        // Drum recorded data: ensure trackId and currentTime/decay
+        if (Array.isArray(t.drumRecordedData)) {
+          t.drumRecordedData.forEach(d => {
+            const hit = { ...d };
+            if (hit.trackId == null) hit.trackId = trackId;
+            aggregatedDrumData.push(hit);
+            const end = (hit.currentTime || 0) + (hit.decay || 0.2);
+            maxEnd = Math.max(maxEnd, end);
+          });
+        }
+
+        // Consider piano clip bounds for duration
+        if (t.pianoClip && t.pianoClip.start != null && t.pianoClip.end != null) {
+          maxEnd = Math.max(maxEnd, Number(t.pianoClip.end) || 0);
+        }
+
+        studioTracks.push({
+          id: trackId,
+          name: t.name || `Track ${idx + 1}`,
+          type: t.type || t.trackType || 'audio',
+          color: t.color,
+          volume: Number(t.volume || 80),
+          muted: Boolean(t.muted || false),
+          frozen: Boolean(t.frozen || false),
+          audioClips,
+          pianoNotes: Array.isArray(t.pianoNotes) ? t.pianoNotes.map(n => ({ ...n, trackId })) : [],
+          pianoClip: t.pianoClip || null,
+        });
+      });
+
+      // Dispatch to studio
+      dispatch(setTracks(studioTracks));
+      if (aggregatedPianoNotes.length > 0) dispatch(setPianoNotes(aggregatedPianoNotes));
+      if (aggregatedDrumData.length > 0) dispatch(setDrumRecordedData(aggregatedDrumData));
+
+      // Set project duration with a small tail
+      if (maxEnd > 0) dispatch(setAudioDuration(Math.ceil(maxEnd + 1)));
+
+      // Focus first track
+      if (studioTracks.length > 0) dispatch(setCurrentTrackId(studioTracks[0].id));
+    } catch (_) { }
+  }, [projectId, allMusic, dispatch]);
 
   return (
     <>

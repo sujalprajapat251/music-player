@@ -325,47 +325,50 @@ const TopHeader = () => {
         return 440 * Math.pow(2, (m - 69) / 12);
     };
 
-    // Render simple sine-based WAV for given piano notes, return blob URL and duration
+    // Render piano notes using the same soundfont as live playback, return blob URL and duration
     const renderPianoNotesToWav = async (notes = []) => {
         try {
             if (!Array.isArray(notes) || notes.length === 0) return null;
             const endTimes = notes.map(n => (n.startTime || 0) + (n.duration || 0.5));
             const renderDuration = Math.max(1, Math.max(...endTimes) + 0.25);
             const sampleRate = 44100;
-            const channels = 1;
+            const channels = 2; // Stereo like live playback
             const frameCount = Math.ceil(renderDuration * sampleRate);
             const OfflineCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
             const offline = new OfflineCtx(channels, frameCount, sampleRate);
+
+            // Load the same soundfont as live playback
+            const Soundfont = await import('soundfont-player');
+            const piano = await Soundfont.default.instrument(offline, 'acoustic_grand_piano');
 
             const master = offline.createGain();
             master.gain.setValueAtTime(0.8, 0);
             master.connect(offline.destination);
 
-            const env = (gainNode, start, duration) => {
-                const attack = Math.min(0.01, duration * 0.1);
-                const release = Math.min(0.05, duration * 0.2);
-                const sustainStart = start + attack;
-                const end = start + duration;
-                gainNode.gain.setValueAtTime(0.0, start);
-                gainNode.gain.linearRampToValueAtTime(0.9, sustainStart);
-                gainNode.gain.setValueAtTime(0.9, Math.max(sustainStart, start));
-                gainNode.gain.linearRampToValueAtTime(0.0, Math.max(end, end + release));
-            };
-
-            notes.forEach(n => {
+            // Play each note using the soundfont
+            const playPromises = notes.map(async (n) => {
                 const start = Math.max(0, Number(n.startTime) || 0);
                 const dur = Math.max(0.05, Number(n.duration) || 0.5);
-                const freq = midiToFrequency(n.midiNumber);
-                const osc = offline.createOscillator();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, start);
-                const g = offline.createGain();
-                env(g, start, dur);
-                osc.connect(g);
-                g.connect(master);
-                osc.start(start);
-                osc.stop(start + dur + 0.1);
+                const midiNumber = Number(n.midiNumber);
+                
+                if (!Number.isFinite(midiNumber)) return;
+                
+                try {
+                    // Use the same play method as live playback
+                    const audioNode = piano.play(midiNumber, offline.currentTime + start, { 
+                        duration: dur,
+                        gain: 0.8
+                    });
+                    
+                    if (audioNode && audioNode.connect) {
+                        audioNode.connect(master);
+                    }
+                } catch (error) {
+                    console.warn('Failed to play note in render:', error);
+                }
             });
+
+            await Promise.all(playPromises);
 
             const buffer = await offline.startRendering();
             const channelData = Array.from({ length: buffer.numberOfChannels }, (_, i) => buffer.getChannelData(i));
@@ -485,7 +488,7 @@ const TopHeader = () => {
             name: songName,
             musicdata: serializedTracks,
             userId: user,
-            url: null,
+            url: mixdown ? mixdown.url : null,
         }));
     }
 

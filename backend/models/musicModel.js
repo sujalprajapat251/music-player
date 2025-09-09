@@ -5,12 +5,12 @@ const musicSchema = mongoose.Schema({
         type: String,
         require: true
     },
-    musicdata:{
+    musicdata: {
         type: mongoose.Schema.Types.Mixed,
         require: true
     },
-    url:{
-        type:mongoose.Schema.Types.Mixed
+    url: {
+        type: mongoose.Schema.Types.Mixed
     },
     userId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -19,6 +19,14 @@ const musicSchema = mongoose.Schema({
     folderId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'folder',
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
+    deletedAt: {
+        type: Date,
+        default: null
     },
 }, {
     timestamps: true,

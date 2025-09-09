@@ -527,6 +527,7 @@ const TimelineTrack = ({
     typeName === 'orchestral' ||
     displayName === 'keys' ||
     displayName === 'guitar' ||
+    displayName === 'orchestral' ||
     displayName.includes('piano') ||
     displayName.includes('key') ||
     displayName.includes('guitar') ||

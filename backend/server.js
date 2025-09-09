@@ -17,6 +17,8 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }));
+
+require('./helper/cronJob');
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use('/api', indexRoutes);
 

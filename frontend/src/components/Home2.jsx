@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getAllSound } from '../Redux/Slice/sound.slice';
 import { IMAGE_URL } from '../Utils/baseUrl';
 import play from '../Images/playwhite.svg';
-import DeleteIcon from "../Images/deleteIcon.svg";
+import {ReactComponent as DeleteIcon} from "../Images/deleteIcon.svg";
 import pause from '../Images/pausewhite.svg';
 import folder from "../Images/folderIcon.svg";
 import rename from "../Images/renameIcon.svg";
@@ -347,8 +347,8 @@ const Home2 = () => {
                                             <MenuItem >
                                                 <p className="block  px-3 sm:px-4 md600:px-5  lg:px-6 py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" >
                                                     <div className="flex items-center" >
-                                                        <img src={DeleteIcon} alt="" className='w-3 h-3 sm:w-3 sm:h-3 lg:w-4 lg:h-4 2xl:w-6 2xl:h-6 text-white' />
-                                                        <p className="text-white ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] sm:text-[14px] 2xl:text-[16px] ">Recently Deleted</p>
+                                                        <DeleteIcon className='w-3 h-3 sm:w-3 sm:h-3 lg:w-4 lg:h-4 2xl:w-6 2xl:h-6 text-white' />
+                                                        <p className="text-white ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] sm:text-[14px] 2xl:text-[16px]">Recently Deleted</p>
                                                     </div>
                                                 </p>
                                             </MenuItem>
