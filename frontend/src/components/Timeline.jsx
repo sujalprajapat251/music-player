@@ -4,7 +4,7 @@ import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
 import Soundfont from 'soundfont-player';
 // eslint-disable-next-line no-unused-vars
-import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio, setCurrentTrackId, setTrackType, triggerPatternDrumPlayback, clearTrackDeleted } from "../Redux/Slice/studio.slice";
+import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio, setCurrentTrackId, setTrackType, triggerPatternDrumPlayback, clearTrackDeleted, setPianoNotes, setDrumRecordedData, setPianoRecordingClip, setDrumRecordingClip } from "../Redux/Slice/studio.slice";
 import { selectStudioState } from "../Redux/rootReducer";
 import { createSynthSound, getAudioContext as getDrumAudioContext } from '../Utils/drumMachineUtils';
 // eslint-disable-next-line no-unused-vars
@@ -1682,7 +1682,14 @@ const Timeline = () => {
     // Always find the clip if clipId is provided
     const clip = clipId ? track.audioClips?.find(c => c.id === clipId) : undefined;
 
-    // Helper to split a clip at currentTime
+    // Check if this is a recording clip (piano or drum)
+    const isPianoRecording = clipId === 'guitar-recording' || clipId === 'piano-recording';
+    const isDrumRecording = clipId === 'drum-recording';
+    const isRecordingClip = isPianoRecording || isDrumRecording;
+
+    console.log(isRecordingClip); 
+
+    // Helper to split a regular clip at currentTime
     const splitSelectedClip = () => {
       if (!clip || !clip.duration) return;
       const clipStart = clip.startTime || 0;
@@ -1713,6 +1720,256 @@ const Timeline = () => {
         trimEnd: trimEnd
       };
       dispatch(addAudioClipToTrack({ trackId, audioClip: rightClip }));
+    };
+
+    const splitRecordingClip = () => {
+      if (isPianoRecording && pianoRecordingClip && pianoRecordingClip.trackId === trackId) {
+        const clipStart = pianoRecordingClip.start;
+        const clipEnd = pianoRecordingClip.end;
+        const splitPoint = currentTime;
+        
+        if (splitPoint <= clipStart || splitPoint >= clipEnd) return;
+
+        const leftClip = {
+          ...pianoRecordingClip,
+          end: splitPoint
+        };
+        const rightClip = {
+          ...pianoRecordingClip,
+          start: splitPoint,
+          id: Date.now() + Math.random()
+        };
+
+        dispatch(setPianoRecordingClip(leftClip));
+
+        const rightAudioClip = {
+          id: rightClip.id,
+          name: `Piano Recording (Split)`,
+          url: null,
+          color: rightClip.color,
+          startTime: splitPoint,
+          duration: clipEnd - splitPoint,
+          trimStart: 0,
+          trimEnd: clipEnd - splitPoint,
+          type: 'piano',
+          fromRecording: true,
+          pianoNotes: pianoNotes.filter(note => 
+            note.trackId === trackId && 
+            note.startTime >= splitPoint && 
+            note.startTime < clipEnd
+          )
+        };
+
+        dispatch(addAudioClipToTrack({ trackId, audioClip: rightAudioClip }));
+      } else if (isDrumRecording && drumRecordingClip && drumRecordingClip.trackId === trackId) {
+        const clipStart = drumRecordingClip.start;
+        const clipEnd = drumRecordingClip.end;
+        const splitPoint = currentTime;
+        
+        if (splitPoint <= clipStart || splitPoint >= clipEnd) return;
+
+        const leftClip = {
+          ...drumRecordingClip,
+          end: splitPoint
+        };
+        const rightClip = {
+          ...drumRecordingClip,
+          start: splitPoint,
+          id: Date.now() + Math.random()
+        };
+
+        dispatch(setDrumRecordingClip(leftClip));
+
+        const rightAudioClip = {
+          id: rightClip.id,
+          name: `Drum Recording (Split)`,
+          url: null,
+          color: rightClip.color,
+          startTime: splitPoint,
+          duration: clipEnd - splitPoint,
+          trimStart: 0,
+          trimEnd: clipEnd - splitPoint,
+          type: 'drum',
+          fromRecording: true,
+          drumSequence: drumRecordedData.filter(hit => 
+            hit.trackId === trackId && 
+            hit.currentTime >= splitPoint && 
+            hit.currentTime < clipEnd
+          )
+        };
+
+        dispatch(addAudioClipToTrack({ trackId, audioClip: rightAudioClip }));
+      }
+    };
+
+    const applyPitchChangeToRecording = (semitones) => {
+      if (isPianoRecording) {
+        const rate = Math.pow(2, (semitones || 0) / 12);
+        const updatedNotes = pianoNotes.map(note => {
+          if (note.trackId === trackId) {
+            return {
+              ...note,
+              playbackRate: rate,
+              pitchSemitones: semitones
+            };
+          }
+          return note;
+        });
+        dispatch(setPianoNotes(updatedNotes));
+      } else if (isDrumRecording) {
+        const rate = Math.pow(2, (semitones || 0) / 12);
+        const updatedDrumData = drumRecordedData.map(hit => {
+          if (hit.trackId === trackId) {
+            return {
+              ...hit,
+              playbackRate: rate,
+              pitchSemitones: semitones
+            };
+          }
+          return hit;
+        });
+        dispatch(setDrumRecordedData(updatedDrumData));
+      }
+    };
+
+    // Helper to apply voice transform to recording clips
+    const applyVoiceTransformToRecording = (preset) => {
+      if (isPianoRecording) {
+        const updatedNotes = pianoNotes.map(note => {
+          if (note.trackId === trackId) {
+            return {
+              ...note,
+              voiceTransformPreset: String(preset || '')
+            };
+          }
+          return note;
+        });
+        dispatch(setPianoNotes(updatedNotes));
+      } else if (isDrumRecording) {
+        const updatedDrumData = drumRecordedData.map(hit => {
+          if (hit.trackId === trackId) {
+            return {
+              ...hit,
+              voiceTransformPreset: String(preset || '')
+            };
+          }
+          return hit;
+        });
+        dispatch(setDrumRecordedData(updatedDrumData));
+      }
+    };
+
+    const reverseRecordingClip = async () => {
+      if (isPianoRecording) {
+        const reversedNotes = pianoNotes.map(note => {
+          if (note.trackId === trackId) {
+            const clipStart = pianoRecordingClip?.start || 0;
+            const clipEnd = pianoRecordingClip?.end || 0;
+            const clipDuration = clipEnd - clipStart;
+            const reversedStartTime = clipEnd - (note.startTime - clipStart);
+            return {
+              ...note,
+              startTime: reversedStartTime,
+              reversed: true
+            };
+          }
+          return note;
+        });
+        dispatch(setPianoNotes(reversedNotes));
+      } else if (isDrumRecording) {
+        const reversedDrumData = drumRecordedData.map(hit => {
+          if (hit.trackId === trackId) {
+            const clipStart = drumRecordingClip?.start || 0;
+            const clipEnd = drumRecordingClip?.end || 0;
+            const clipDuration = clipEnd - clipStart;
+            const reversedCurrentTime = clipEnd - (hit.currentTime - clipStart);
+            return {
+              ...hit,
+              currentTime: reversedCurrentTime,
+              reversed: true
+            };
+          }
+          return hit;
+        });
+        dispatch(setDrumRecordedData(reversedDrumData));
+      }
+    };
+
+    const copyRecordingClip = () => {
+      if (isPianoRecording && pianoRecordingClip) {
+        setClipboard({ 
+          type: 'piano-recording', 
+          clip: { ...pianoRecordingClip }, 
+          trackId,
+          notes: pianoNotes.filter(note => note.trackId === trackId)
+        });
+      } else if (isDrumRecording && drumRecordingClip) {
+        setClipboard({ 
+          type: 'drum-recording', 
+          clip: { ...drumRecordingClip }, 
+          trackId,
+          hits: drumRecordedData.filter(hit => hit.trackId === trackId)
+        });
+      }
+    };
+
+    const cutRecordingClip = () => {
+      copyRecordingClip();
+      deleteRecordingClip();
+    };
+    
+    const deleteRecordingClip = () => {
+      if (isPianoRecording) {
+        dispatch(setPianoRecordingClip(null));
+        const updatedNotes = pianoNotes.filter(note => note.trackId !== trackId);
+        dispatch(setPianoNotes(updatedNotes));
+      } else if (isDrumRecording) {
+        dispatch(setDrumRecordingClip(null));
+        const updatedDrumData = drumRecordedData.filter(hit => hit.trackId !== trackId);
+        dispatch(setDrumRecordedData(updatedDrumData));
+      }
+    };
+
+    const pasteRecordingClip = () => {
+      if (!clipboard) return;
+
+      if (clipboard.type === 'piano-recording' && clipboard.clip && clipboard.notes) {
+        const newStartTime = currentTime;
+        const duration = clipboard.clip.end - clipboard.clip.start;
+        const newClip = {
+          ...clipboard.clip,
+          start: newStartTime,
+          end: newStartTime + duration,
+          trackId: trackId
+        };
+
+        const adjustedNotes = clipboard.notes.map(note => ({
+          ...note,
+          trackId: trackId,
+          startTime: note.startTime - clipboard.clip.start + newStartTime
+        }));
+
+        dispatch(setPianoRecordingClip(newClip));
+        dispatch(setPianoNotes([...pianoNotes, ...adjustedNotes]));
+      } else if (clipboard.type === 'drum-recording' && clipboard.clip && clipboard.hits) {
+        const newStartTime = currentTime;
+        const duration = clipboard.clip.end - clipboard.clip.start;
+        const newClip = {
+          ...clipboard.clip,
+          start: newStartTime,
+          end: newStartTime + duration,
+          trackId: trackId
+        };
+
+        const adjustedHits = clipboard.hits.map(hit => ({
+          ...hit,
+          trackId: trackId,
+          currentTime: hit.currentTime - clipboard.clip.start + newStartTime
+        }));
+
+        dispatch(setDrumRecordingClip(newClip));
+        dispatch(setDrumRecordedData([...drumRecordedData, ...adjustedHits]));
+      }
     };
 
     // Numeric pitch change via semitones from structured payload
@@ -1746,7 +2003,87 @@ const Timeline = () => {
       }));
     };
 
-    // Clip-level actions (cut/copy/delete always operate on the selected clip)
+    // Handle recording clip actions
+    if (isRecordingClip) {
+      // Structured actions from WaveMenu
+      if (typeof action === 'object' && action !== null) {
+        if (action.type === 'changePitch') {
+          applyPitchChangeToRecording(action.semitones);
+          return;
+        }
+        if (action.type === 'voiceTransform') {
+          applyVoiceTransformToRecording(action.preset);
+          return;
+        }
+      }
+
+      switch (action) {
+        case 'cut':
+          cutRecordingClip();
+          break;
+        case 'copy':
+          copyRecordingClip();
+          break;
+        case 'paste':
+          pasteRecordingClip();
+          break;
+        case 'delete':
+          deleteRecordingClip();
+          break;
+        case 'editName':
+          // TODO: Implement name editing for recording clips
+          break;
+        case 'splitRegion':
+          splitRecordingClip();
+          break;
+        case 'muteRegion':
+          dispatch(toggleMuteTrack(trackId));
+          break;
+        case 'reverse':
+          reverseRecordingClip();
+          break;
+        case 'effects':
+          setShowOffcanvasEffects(prev => !prev);
+          setShowOffcanvas(false);
+          break;
+        case 'vocalCleanup':
+          break;
+        case 'vocalTuner':
+          break;
+        case 'voiceTransform':
+          break;
+        case 'volumeUp':
+          const currentVolumeUp = track.volume || 80;
+          const newVolumeUp = Math.min(100, currentVolumeUp + 10);
+          dispatch(setTrackVolume({ trackId, volume: newVolumeUp }));
+          setVolumeIndicator({ show: true, volume: newVolumeUp, trackName: track.name || 'Track' });
+          setTimeout(() => setVolumeIndicator({ show: false, volume: 0, trackName: '' }), 2000);
+          break;
+        case 'volumeDown':
+          const currentVolumeDown = track.volume || 80;
+          const newVolumeDown = Math.max(0, currentVolumeDown - 10);
+          dispatch(setTrackVolume({ trackId, volume: newVolumeDown }));
+          setVolumeIndicator({ show: true, volume: newVolumeDown, trackName: track.name || 'Track' });
+          setTimeout(() => setVolumeIndicator({ show: false, volume: 0, trackName: '' }), 2000);
+          break;
+        case 'volumeReset':
+          dispatch(setTrackVolume({ trackId, volume: 80 }));
+          setVolumeIndicator({ show: true, volume: 80, trackName: track.name || 'Track' });
+          setTimeout(() => setVolumeIndicator({ show: false, volume: 0, trackName: '' }), 2000);
+          break;
+        case 'matchProjectKey':
+          break;
+        case 'addToLoopLibrary':
+          break;
+        case 'openInSampler':
+          break;
+        default:
+          break;
+      }
+      return;
+    }
+
+    // Regular audio clip actions (existing code)
     if (clipId && clip) {
       // Structured actions from WaveMenu
       if (typeof action === 'object' && action !== null) {
@@ -1770,10 +2107,11 @@ const Timeline = () => {
           break;
         case 'paste':
           if (clipboard && clipboard.type === 'clip' && clipboard.clip) {
+
             const newClip = {
               ...clipboard.clip,
               id: Date.now() + Math.random(),
-              startTime: (clip.startTime || 0) + 1 // Offset to avoid overlap
+              startTime: (clip.startTime || 0) + 1
             };
             dispatch(addAudioClipToTrack({ trackId, audioClip: newClip }));
           }
@@ -1790,6 +2128,7 @@ const Timeline = () => {
         case 'muteRegion':
           dispatch(toggleMuteTrack(trackId));
           break;
+
         case 'reverse':
           (async () => {
             if (!clip || !clip.url) return;
@@ -1814,6 +2153,7 @@ const Timeline = () => {
           setShowOffcanvasEffects(prev => !prev);
           setShowOffcanvas(false);
           break;
+
         default:
           break;
       }
@@ -1952,7 +2292,10 @@ const Timeline = () => {
       // Unknown action
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contextMenu, tracks, clipboard, dispatch, currentTime, setPlayers, setShowOffcanvasEffects, setShowOffcanvas]);
+  // }, [contextMenu, tracks, clipboard, dispatch, currentTime, setPlayers, setShowOffcanvasEffects, setShowOffcanvas]);
+    // Track-level actions (existing code continues...)
+    // ... rest of the existing track-level actions
+  }, [contextMenu, tracks, clipboard, dispatch, currentTime, setPlayers, setShowOffcanvasEffects, setShowOffcanvas, pianoRecordingClip, drumRecordingClip, pianoNotes, drumRecordedData]);
 
   // Section label context menu action handler
   const handleSectionContextMenuAction = useCallback((action) => {
@@ -2958,7 +3301,7 @@ const Timeline = () => {
               volume: 80,
               audioClips: [newClip],
             };
-
+            
             dispatch(addTrack(newTrack));
           } catch (err) {
             // Failed to import audio file

@@ -638,7 +638,7 @@ const TimelineTrack = ({
               pointerEvents: 'auto'
             }}
             title="Drag to move recorded guitar notes. Use left/right handles to resize the recording region."
-            onContextMenu={(e) => onContextMenu && onContextMenu(e, trackId, 'guitar-recording')}
+            onContextMenu={(e) => onContextMenu && onContextMenu(e, trackId, 'piano-recording')}
             onMouseDown={(e) => {
               // If this track doesn't currently own an active clip,
               // promote the passive displayClip to an active, editable clip first
