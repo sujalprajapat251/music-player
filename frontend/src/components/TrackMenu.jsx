@@ -42,7 +42,11 @@ const TrackMenu = ({ trackId, color, onRename }) => {
   // Close menu on outside click
   useEffect(() => {
     const handleClick = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
+      // Check if click is outside both menu and the 3-dot button
+      const isOutsideMenu = menuRef.current && !menuRef.current.contains(e.target);
+      const isOutsideButton = !e.target.closest('[data-track-menu-button]');
+      
+      if (isOutsideMenu && isOutsideButton) {
         setOpen(false);
         setSubmenu(null);
       }
@@ -87,6 +91,7 @@ const TrackMenu = ({ trackId, color, onRename }) => {
   const handleMenuClick = (e) => {
     e.stopPropagation(); // Prevent event bubbling
     setOpen((v) => !v);
+    setSubmenu(null); // Close any open submenu when toggling main menu
   };
   const handleFreezeTrack = () => {
     dispatch(freezeTrack(trackId));
@@ -176,6 +181,7 @@ const TrackMenu = ({ trackId, color, onRename }) => {
         alt="Menu"
         className="w-5 h-5 cursor-pointer hover:opacity-80 transition-opacity"
         onClick={handleMenuClick}
+        data-track-menu-button
       />
       {open && (
         <div
