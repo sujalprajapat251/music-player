@@ -1,9 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useOffcanvas } from '../components/Layout/Layout'; // Adjust path as needed
 import { HiMenu } from "react-icons/hi";
 import { useDispatch, useSelector } from 'react-redux';
 import { getAllSound } from '../Redux/Slice/sound.slice';
 import { IMAGE_URL } from '../Utils/baseUrl';
+import { Play, Pause, MoreHorizontal } from 'lucide-react';
 import play from '../Images/playwhite.svg';
 import DeleteIcon from "../Images/deleteIcon.svg";
 import pause from '../Images/pausewhite.svg';
@@ -185,6 +186,215 @@ const Home2 = () => {
     
     // Replace the existing filteredFolders line with:
     const sortedAndFilteredFolders = getSortedAndFilteredFolders();
+
+
+
+
+
+
+
+
+
+
+
+  const audioRef = useRef(null);
+  const canvasRef = useRef(null);
+  const animationRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const dataArrayRef = useRef(null);
+  
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [duration, setDuration] = useState('0:00');
+  const [currentTime, setCurrentTime] = useState('0:00');
+  const [progress, setProgress] = useState(0);
+  const [audioLoaded, setAudioLoaded] = useState(false);
+
+  // Sample audio URL - you can replace this with your own audio file
+  const audioUrl = 'aaa.mp3';
+
+  const formatTime = (time) => {
+    if (isNaN(time)) return '0:00';
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const initializeAudioContext = useCallback(async () => {
+    if (!audioContextRef.current && audioRef.current) {
+      try {
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioContextRef.current.createMediaElementSource(audioRef.current);
+        analyserRef.current = audioContextRef.current.createAnalyser();
+        
+        analyserRef.current.fftSize = 256;
+        const bufferLength = analyserRef.current.frequencyBinCount;
+        dataArrayRef.current = new Uint8Array(bufferLength);
+        
+        source.connect(analyserRef.current);
+        analyserRef.current.connect(audioContextRef.current.destination);
+      } catch (error) {
+        console.warn('Web Audio API not supported, using fallback visualization');
+      }
+    }
+  }, []);
+
+  const drawWaveform = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+
+    ctx.clearRect(0, 0, width, height);
+
+    const barCount = 150;
+    const barWidth = 2;
+    const barSpacing = (width - barCount * barWidth) / (barCount - 1);
+    // const totalBarsWidth = barCount * (barWidth + barSpacing);
+    const startX = 0;
+
+    if (analyserRef.current && dataArrayRef.current && isPlaying) {
+      analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+      
+      for (let i = 0; i < barCount; i++) {
+        const dataIndex = Math.floor((i / barCount) * dataArrayRef.current.length);
+        const barHeight = Math.max(3, (dataArrayRef.current[dataIndex] / 255) * height * 0.8);
+        
+        const x = startX + i * (barWidth + barSpacing);
+        const y = (height - barHeight) / 2;
+        
+        const progressPoint = progress * barCount;
+        const color = i < progressPoint ? '#3B82F6' : '#D1D5DB';
+        
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, barWidth, barHeight);
+      }
+    } else {
+      for (let i = 0; i < barCount; i++) {
+        const seed = i * 0.1;
+        const barHeight = Math.max(3, (Math.sin(seed) * 0.5 + 0.5 + Math.sin(seed * 3) * 0.3) * height * 0.7);
+        
+        const x = startX + i * (barWidth + barSpacing);
+        const y = (height - barHeight) / 2;
+        
+        const progressPoint = progress * barCount;
+        const color = i < progressPoint ? '#3B82F6' : '#D1D5DB';
+        
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, barWidth, barHeight);
+      }
+    }
+
+    if (isPlaying) {
+      animationRef.current = requestAnimationFrame(drawWaveform);
+    }
+  }, [isPlaying, progress]);
+
+
+  const handlePlayPauseTwo = async () => {
+    if (!audioRef.current) return;
+
+    if (audioContextRef.current?.state === 'suspended') {
+      await audioContextRef.current.resume();
+    }
+
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      try {
+        await initializeAudioContext();
+        await audioRef.current.play();
+      } catch (error) {
+        console.error('Error playing audio:', error);
+        try {
+          await audioRef.current.play();
+        } catch (fallbackError) {
+          console.error('Fallback audio play failed:', fallbackError);
+        }
+      }
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      const current = audioRef.current.currentTime;
+      const total = audioRef.current.duration;
+      
+      setCurrentTime(formatTime(current));
+      setProgress(total > 0 ? current / total : 0);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(formatTime(audioRef.current.duration));
+      setAudioLoaded(true);
+    }
+  };
+
+  const handleCanvasClick = (e) => {
+    if (!audioRef.current || !audioLoaded) return;
+
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickProgress = clickX / canvas.width;
+    
+    const newTime = clickProgress * audioRef.current.duration;
+    audioRef.current.currentTime = newTime;
+    setProgress(clickProgress);
+  };
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.addEventListener('play', () => setIsPlaying(true));
+      audio.addEventListener('pause', () => setIsPlaying(false));
+      audio.addEventListener('ended', () => {
+        setIsPlaying(false);
+        setProgress(0);
+        setCurrentTime('0:00');
+      });
+      audio.addEventListener('timeupdate', handleTimeUpdate);
+      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+
+      return () => {
+        audio.removeEventListener('play', () => setIsPlaying(true));
+        audio.removeEventListener('pause', () => setIsPlaying(false));
+        audio.removeEventListener('ended', () => setIsPlaying(false));
+        audio.removeEventListener('timeupdate', handleTimeUpdate);
+        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      };
+    }
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const resizeCanvas = () => {
+        const container = canvas.parentElement;
+        canvas.width = container.offsetWidth;
+        canvas.height = 48;
+        drawWaveform();
+      };
+
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+      
+      return () => {
+        window.removeEventListener('resize', resizeCanvas);
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current);
+        }
+      };
+    }
+  }, [drawWaveform]);
+
+  useEffect(() => {
+    drawWaveform();
+  }, [drawWaveform, progress]);
 
     return (
         <>
@@ -401,6 +611,38 @@ const Home2 = () => {
                             </div>
                         </div>
                     ))}
+
+                    <div className="w-full mx-auto">
+                        <div className="flex items-center gap-4 p-4 rounded-xl shadow-sm">
+                            <audio ref={audioRef} src={require(`../Images/${audioUrl}`)} preload="metadata" crossOrigin="anonymous"/>
+                            <div className="relative flex-shrink-0">
+                                <div className="w-12 h-12 rounded-lg flex items-center justify-center cursor-pointer transition-colors shadow-md">
+                                    <button onClick={handlePlayPauseTwo} className="text-white" disabled={!audioLoaded}>
+                                    {isPlaying ? (
+                                        <Pause size={20} fill="white" />
+                                    ) : (
+                                        <Play size={20} fill="white" className="ml-0.5" />
+                                    )}
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-medium truncate">Untitled song</h3>
+                                </div>
+                                <div className="relative">
+                                    <canvas ref={canvasRef} className="w-full h-12 cursor-pointer" onClick={handleCanvasClick} style={{ display: 'block' }}/>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 text-xs">
+                                {/* <span className="text-gray-500 font-mono">{currentTime}</span> */}
+                                <div className="flex items-center gap-2">
+                                    <div className=" text-xs font-mono">{duration}</div>
+                                </div>
+                                <MoreHorizontal size={16} className=" cursor-pointer transition-colors" />
+                            </div>
+                        </div>
+                    </div>
 
                 </div>
             </div>
