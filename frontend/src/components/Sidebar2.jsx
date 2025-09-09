@@ -313,7 +313,7 @@ const Sidebar2 = () => {
       </div>
       <NewProject open={showNewProject} setOpen={setShowNewProject} />
       {showAddTrackModal && (
-        <AddNewTrackModel onClose={() => setShowAddTrackModal(false)} />
+        <AddNewTrackModel onClose={() => setShowAddTrackModal(false)} onOpenLoopLibrary={() => setShowAddTrackModal(false)} />
       )}
 
     </>

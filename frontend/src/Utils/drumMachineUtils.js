@@ -275,11 +275,11 @@ export const createSynthSound = (pad, audioContext) => {
 
     case 'clap': {
       const gain = audioContext.createGain();
-      gain.gain.setValueAtTime(0, currentTime);
+      gain.gain.setValueAtTime(1.5, currentTime); // Increased from 1 to 1.5 for louder sound
 
-      const clapTimes = [0, 0.01, 0.02, 0.03];
+      const clapTimes = [0, 0.008, 0.016, 0.024, 0.032, 0.04, 0.048, 0.056]; // More clap bursts, closer together
       clapTimes.forEach((time, index) => {
-        const noiseBuffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.05, audioContext.sampleRate);
+        const noiseBuffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.1, audioContext.sampleRate); // Longer buffer
         const data = noiseBuffer.getChannelData(0);
         for (let i = 0; i < data.length; i++) {
           data[i] = Math.random() * 2 - 1;
@@ -292,18 +292,21 @@ export const createSynthSound = (pad, audioContext) => {
         noise.buffer = noiseBuffer;
 
         filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(freq, currentTime);
-        filter.Q.setValueAtTime(5, currentTime);
+        const ff = Math.max(800, Math.min(6000, (typeof freq === 'number' ? freq : 1000)));
+        filter.frequency.setValueAtTime(ff, currentTime);
+        filter.Q.setValueAtTime(2, currentTime);
 
-        clapGain.gain.setValueAtTime(0.2, currentTime + time);
-        clapGain.gain.exponentialRampToValueAtTime(0.001, currentTime + time + 0.05);
+        // Vary the gain for each clap burst to create more realistic clapping
+        const burstGain = 0.8 + (Math.random() * 0.4); // Increased from 0.5-0.8 to 0.8-1.2
+        clapGain.gain.setValueAtTime(burstGain, currentTime + time);
+        clapGain.gain.exponentialRampToValueAtTime(0.001, currentTime + time + 0.1);
 
         noise.connect(filter);
         filter.connect(clapGain);
         clapGain.connect(gain);
 
         noise.start(currentTime + time);
-        noise.stop(currentTime + time + 0.05);
+        noise.stop(currentTime + time + 0.1);
       });
 
       return gain;

@@ -13,6 +13,7 @@ import { useDispatch } from "react-redux";
 import { addTrack, setCurrentTrackId, setTrackType, createTrackWithDefaults } from "../Redux/Slice/studio.slice";
 import { getNextTrackColor } from "../Utils/colorUtils";
 import { selectStudioState } from "../Redux/rootReducer";
+import PricingModel from './PricingModel'
 
 const instrumentOptions = [
   {
@@ -57,9 +58,10 @@ const instrumentOptions = [
   },
 ];
 
-const AddNewTrackModel = ({ onClose }) => {
+const AddNewTrackModel = ({ onClose, onOpenLoopLibrary }) => {
   const dispatch = useDispatch();
-  const [showMusicoff, setShowMusicoff] = useState(false);
+  const [pricingModalOpen, setPricingModalOpen] = useState(false);
+  const [hideSelf, setHideSelf] = useState(false);
   const trackHeight = 80; // or get from redux
 
   // For file input
@@ -138,6 +140,7 @@ const AddNewTrackModel = ({ onClose }) => {
   return (
     <>
 
+      {!hideSelf && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
         <div className="bg-primary-light dark:bg-[#262529] rounded-sm shadow-lg w-full max-w-xl mx-4 p-6 relative">
           {/* Header */}
@@ -169,16 +172,21 @@ const AddNewTrackModel = ({ onClose }) => {
               <ImpIcon className="rotate-90" />
               Import File
             </button>
-            <button className="flex-1 bg-primary-light dark:bg-primary-dark hover:bg-[#E5E5E5] dark:hover:bg-[#262529] text-secondary-light dark:text-secondary-dark py-2 rounded-lg border border-gray-700 flex items-center justify-center gap-2 transition-colors">
+            <button onClick={() => { if (onOpenLoopLibrary) { onOpenLoopLibrary(); onClose && onClose(); } }} className="flex-1 bg-primary-light dark:bg-primary-dark hover:bg-[#E5E5E5] dark:hover:bg-[#262529] text-secondary-light dark:text-secondary-dark py-2 rounded-lg border border-gray-700 flex items-center justify-center gap-2 transition-colors">
               <Loop />
               Loop Library
             </button>
-            <button className="flex-1 bg-primary-light dark:bg-primary-dark hover:bg-[#E5E5E5] dark:hover:bg-[#262529] text-secondary-light dark:text-secondary-dark py-2 rounded-lg border border-gray-700 flex items-center justify-center gap-2 transition-colors">
+            <button onClick={() => { setPricingModalOpen(true); setHideSelf(true); }} className="flex-1 bg-primary-light dark:bg-primary-dark hover:bg-[#E5E5E5] dark:hover:bg-[#262529] text-secondary-light dark:text-secondary-dark py-2 rounded-lg border border-gray-700 flex items-center justify-center gap-2 transition-colors">
               Sampler
             </button>
           </div>
         </div>
       </div>
+      )}
+
+      {/* MusicOff removed */}
+
+      <PricingModel pricingModalOpen={pricingModalOpen} setPricingModalOpen={(val) => { setPricingModalOpen(val); if (!val) { onClose && onClose(); } }} />
 
     </>
   )
