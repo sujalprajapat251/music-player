@@ -48,6 +48,29 @@ export const getAllMusic = createAsyncThunk(
                     }
                 }
             );
+            console.log("HIHIHIHII", response);
+            return response.data.music;
+        } catch (error) {
+            return handleErrors(error, dispatch, rejectWithValue);
+        }
+    }
+);
+
+
+export const deleteMusic = createAsyncThunk(
+    "music/deleteMusic",
+    async (deleteId, { dispatch, rejectWithValue }) => {
+        try {
+            const token = await sessionStorage.getItem("token");
+            const response = await axios.delete(`${BASE_URL}/deleteMusic/${deleteId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+            
+            console.log("HIHIHIHII", response);
             return response.data.music;
         } catch (error) {
             return handleErrors(error, dispatch, rejectWithValue);

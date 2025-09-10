@@ -16,12 +16,48 @@ import { FiSearch } from "react-icons/fi";
 import { BsThreeDotsVertical } from 'react-icons/bs';
 import { IoClose } from 'react-icons/io5';
 import { Dialog, DialogBackdrop, DialogPanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
+import { useFloating, offset, flip, shift, autoUpdate } from "@floating-ui/react";
 import { getFolderByUserId, updateFolderName, deleteFolderById, createFolder } from '../Redux/Slice/folder.slice';
 import close from '../Images/close.svg';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Link, useNavigate } from 'react-router-dom';
 import NewProjectModel from './NewProjectModel';
+import { deleteMusic, getAllMusic } from '../Redux/Slice/music.slice';
+
+const AdaptiveMenu = ({ button, children, placement = 'bottom-end', widthClass = 'w-40 2xl:w-44' }) => {
+    const {
+        refs,
+        floatingStyles,
+        update,
+    } = useFloating({
+        placement,
+        middleware: [offset(4), flip(), shift()],
+    });
+
+    useEffect(() => {
+        if (refs.reference.current && refs.floating.current) {
+            return autoUpdate(refs.reference.current, refs.floating.current, update);
+        }
+    }, [refs.reference, refs.floating, update]);
+
+    return (
+        <Menu as="div" className="relative inline-block text-left">
+            <div>
+                <MenuButton ref={refs.setReference} className="outline-none">
+                    {button}
+                </MenuButton>
+            </div>
+            <MenuItems
+                ref={refs.setFloating}
+                style={floatingStyles}
+                className={`z-30 ${widthClass} origin-top-right bg-[#1f1f1f] shadow-lg outline-none rounded-md`}
+            >
+                {children}
+            </MenuItems>
+        </Menu>
+    );
+};
 
 const Home2 = () => {
 
@@ -46,6 +82,18 @@ const Home2 = () => {
 
     const [activeSearch, setActiveSearch] = useState(false);
     const userId = sessionStorage.getItem("userId");
+
+    const [selectedProjectName, setSelectedProjectName] = useState('');
+    const [deletepromodal, setDeleteProModal] = useState(false);
+    
+    const [deleteId, setDeleteId] = useState(null);
+
+    const allMusic = useSelector((state) => state.music.allmusic);
+    console.log(allMusic);
+    
+    useEffect(() => {
+        dispatch(getAllMusic());
+    }, [])
 
     // Add these to your sortOptions array if needed
     const sortOptions = [
@@ -396,6 +444,36 @@ const Home2 = () => {
     drawWaveform();
   }, [drawWaveform, progress]);
 
+  const buttonRef = useRef(null);
+  const {
+    refs,
+    floatingStyles,
+    update,
+  } = useFloating({
+    placement: "bottom-end",
+    middleware: [offset(4), flip(), shift()],
+  });
+
+  useEffect(() => {
+    if (refs.reference.current && refs.floating.current) {
+      return autoUpdate(refs.reference.current, refs.floating.current, update);
+    }
+  }, [refs.reference, refs.floating, update]);
+
+
+
+
+  const handleDeleteMusic = async () => {
+    if (!deleteId) return;
+    try {
+      await dispatch(deleteMusic(deleteId));
+      await dispatch(getAllMusic());
+    } finally {
+      setDeleteProModal(false);
+      setDeleteId(null);
+    }
+  };
+
     return (
         <>
             <div className="p-3 lg:p-5 xl:p-6 2xl:p-8 3xl:p-10 bg-[#141414]">
@@ -543,28 +621,21 @@ const Home2 = () => {
                                 </>
                             }
                             <div className='my-auto px-2 md600:px-3 md:px-2 2xl:px-3' >
-                                <Menu as="div" className="relative inline-block text-left ">
-                                    <div>
-                                        <MenuButton className="outline-none" >
-                                            <BsThreeDotsVertical className='text-white text-[12px] sm:text-[14px]  xl:text-[18px] 3xl:text-[20px]' />
-                                        </MenuButton>
+                                <AdaptiveMenu
+                                    button={<BsThreeDotsVertical className='text-white text-[12px] sm:text-[14px]  xl:text-[18px] 3xl:text-[20px]' />}
+                                    widthClass="w-36 sm:w-48 xl:w-52 2xl:w-64"
+                                >
+                                    <div className="">
+                                        <MenuItem >
+                                            <p className="block  px-3 sm:px-4 md600:px-5  lg:px-6 py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" >
+                                                <div className="flex items-center" >
+                                                    <DeleteIcon className='w-3 h-3 sm:w-3 sm:h-3 lg:w-4 lg:h-4 2xl:w-6 2xl:h-6 text-white' />
+                                                    <p className="text-white ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] sm:text-[14px] 2xl:text-[16px]">Recently Deleted</p>
+                                                </div>
+                                            </p>
+                                        </MenuItem>
                                     </div>
-                                    <MenuItems
-                                        transition
-                                        className="absolute right-0 mt-2 md600:mt-3 2xl:mt-3  z-30 w-36 sm:w-48 xl:w-52 2xl:w-64 origin-top-right  bg-[#1f1f1f] shadow-lg outline-none rounded-md"
-                                    >
-                                        <div className="">
-                                            <MenuItem >
-                                                <p className="block  px-3 sm:px-4 md600:px-5  lg:px-6 py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" >
-                                                    <div className="flex items-center" >
-                                                        <DeleteIcon className='w-3 h-3 sm:w-3 sm:h-3 lg:w-4 lg:h-4 2xl:w-6 2xl:h-6 text-white' />
-                                                        <p className="text-white ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] sm:text-[14px] 2xl:text-[16px]">Recently Deleted</p>
-                                                    </div>
-                                                </p>
-                                            </MenuItem>
-                                        </div>
-                                    </MenuItems>
-                                </Menu>
+                                </AdaptiveMenu>
                             </div>
                         </div>
                     </div>
@@ -574,47 +645,45 @@ const Home2 = () => {
                             <img src={folder} alt="" className='w-[16px] h-[16px] sm:w-[24px] sm:h-[24px] lg:w-[30px] lg:h-[30px] my-auto' />
                             <p className="text-white ps-2 md600:ps-3 lg:ps-4  my-auto text-[12px] sm:text-[14px] md:text-[16px] ">{ele?.folderName}</p>
                             <div className='ms-auto'>
-                                <Menu as="div" className="relative inline-block text-left ">
-                                    <div>
-                                        <MenuButton className="outline-none" >
-                                            <BsThreeDotsVertical className='text-white text-[12px] sm:text-[14px] md600:text-[16px] lg:text-[18px] 3xl:text-[20px]' />
-                                        </MenuButton>
+                                <AdaptiveMenu
+                                    button={<BsThreeDotsVertical className='text-white text-[12px] sm:text-[14px] md600:text-[16px] lg:text-[18px] 3xl:text-[20px]' />}
+                                    widthClass="w-40 2xl:w-44"
+                                >
+                                    <div className="">
+                                        <MenuItem >
+                                            <p
+                                                className="block px-4 py-1 md600:px-5 lg:px-6 md600:py-1  2xl:px-7 lg:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer"
+                                                onClick={() => handleRenameClick(ele._id, ele.folderName)}
+                                            >
+                                                <div className="flex items-center" >
+                                                    <img src={rename} alt="" className=' w-3 h-3 md600:w-4 md600:h-4 2xl:w-6 2xl:h-6' />
+                                                    <p className="text-white ps-2  md600:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] md600:text-[14px] 2xl:text-[16px]">Rename</p>
+                                                </div>
+                                            </p>
+                                        </MenuItem>
+                                        <MenuItem >
+                                            <p
+                                                className="block px-4 py-1 md600:px-5 lg:px-6 md600:py-1  2xl:px-7 lg:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer"
+                                                onClick={() => handleDeleteClick(ele._id)}
+                                            >
+                                                <div className="flex items-center">
+                                                    <img src={RedDelete} alt="" className='w-3 h-3 md600:w-4 md600:h-4 2xl:w-6 2xl:h-6' />
+                                                    <p className="text-[#FF0000] ps-2 md600:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] md600:text-[14px] 2xl:text-[16px]">Delete</p>
+                                                </div>
+                                            </p>
+                                        </MenuItem>
                                     </div>
-                                    <MenuItems
-                                        transition
-                                        className="absolute right-0 mt-2 md600:mt-3 2xl:mt-3  z-30 w-40 2xl:w-44 origin-top-right  bg-[#1f1f1f] shadow-lg outline-none rounded-md"
-                                    >
-                                        <div className="">
-                                            <MenuItem >
-                                                <p className="block px-4 py-1 md600:px-5 lg:px-6 md600:py-1  2xl:px-7 lg:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer"
-                                                    onClick={() => handleRenameClick(ele._id, ele.folderName)}
-                                                >
-                                                    <div className="flex items-center" >
-                                                        <img src={rename} alt="" className=' w-3 h-3 md600:w-4 md600:h-4 2xl:w-6 2xl:h-6' />
-                                                        <p className="text-white ps-2  md600:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] md600:text-[14px] 2xl:text-[16px]">Rename</p>
-                                                    </div>
-                                                </p>
-                                            </MenuItem>
-                                            <MenuItem >
-                                                <p className="block px-4 py-1 md600:px-5 lg:px-6 md600:py-1  2xl:px-7 lg:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer"
-                                                    onClick={() => handleDeleteClick(ele._id)}
-                                                >
-                                                    <div className="flex items-center">
-                                                        <img src={RedDelete} alt="" className='w-3 h-3 md600:w-4 md600:h-4 2xl:w-6 2xl:h-6' />
-                                                        <p className="text-[#FF0000] ps-2 md600:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] md600:text-[14px] 2xl:text-[16px]">Delete</p>
-                                                    </div>
-                                                </p>
-                                            </MenuItem>
-                                        </div>
-                                    </MenuItems>
-                                </Menu>
+                                </AdaptiveMenu>
                             </div>
                         </div>
                     ))}
 
+                    {allMusic.map((ele) => {
+                        return(
                     <div className="w-full mx-auto">
                         <div className="flex items-center gap-4 p-4 rounded-xl shadow-sm">
-                            <audio ref={audioRef} src={require(`../Images/${audioUrl}`)} preload="metadata" crossOrigin="anonymous"/>
+                            <audio ref={audioRef} src={ele.url} preload="metadata" crossOrigin="anonymous"/>
+                            <div className='w-12 h-12 bg-white'></div>
                             <div className="relative flex-shrink-0">
                                 <div className="w-12 h-12 rounded-lg flex items-center justify-center cursor-pointer transition-colors shadow-md">
                                     <button onClick={handlePlayPauseTwo} className="text-white" disabled={!audioLoaded}>
@@ -628,24 +697,117 @@ const Home2 = () => {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-sm font-medium truncate">Untitled song</h3>
+                                    <h3 className="text-sm font-medium truncate">{ele?.name}</h3>
                                 </div>
                                 <div className="relative">
                                     <canvas ref={canvasRef} className="w-full h-12 cursor-pointer" onClick={handleCanvasClick} style={{ display: 'block' }}/>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3 text-xs">
-                                {/* <span className="text-gray-500 font-mono">{currentTime}</span> */}
-                                <div className="flex items-center gap-2">
-                                    <div className=" text-xs font-mono">{duration}</div>
-                                </div>
-                                <MoreHorizontal size={16} className=" cursor-pointer transition-colors" />
+                                    {/* <span className="text-gray-500 font-mono">{currentTime}</span> */}
+                                    <div className="flex items-center gap-2">
+                                        <div className="text-lg font-mono">{duration}</div>
+                                    </div>
+
+                                    <Menu as="div" className="relative inline-block text-left">
+                                        <div>
+                                            <MenuButton
+                                            ref={refs.setReference}
+                                            className="outline-none"
+                                            >
+                                            <MoreHorizontal size={25} className="cursor-pointer transition-colors" />
+                                            </MenuButton>
+                                        </div>
+
+                                        <MenuItems ref={refs.setFloating} style={floatingStyles} className="w-56 rounded-md bg-[#1f1f1f] shadow-lg ring-1 ring-black ring-opacity-5 outline-none z-30">
+                                            <div className="py-1">
+                                            <MenuItem>
+                                                {({ active }) => (
+                                                <a href="#" className={`flex items-center gap-2 px-4 py-2 text-sm ${ active ? "bg-gray-600 text-white" : "text-white" }`}>
+                                                    <span className="font-medium">A</span>
+                                                    Rename
+                                                </a>
+                                                )}
+                                            </MenuItem>
+
+                                            <MenuItem>
+                                                {({ active }) => (
+                                                <a href="#" className={`flex items-center gap-2 px-4 py-2 text-sm ${ active ? "bg-gray-600 text-white" : "text-white" }`}>
+                                                    🖼️ Change cover
+                                                </a>
+                                                )}
+                                            </MenuItem>
+
+                                            <MenuItem>
+                                                {({ active }) => (
+                                                <a href="#" className={`flex items-center justify-between px-4 py-2 text-sm ${ active ? "bg-gray-600 text-white" : "text-white" }`}>
+                                                    <span className="flex items-center gap-2">📁 Move to folder</span>
+                                                    <span>›</span>
+                                                </a>
+                                                )}
+                                            </MenuItem>
+
+                                            <hr className="my-1 border-gray-200" />
+
+                                            <MenuItem>
+                                                {({ active }) => (
+                                                <a href="#" className={`flex items-center justify-between px-4 py-2 text-sm ${ active ? "bg-gray-600 text-white" : "text-white" }`}>
+                                                    <span className="flex items-center gap-2">⬇ Export</span>
+                                                    <span>›</span>
+                                                </a>
+                                                )}
+                                            </MenuItem>
+
+                                            <hr className="my-1 border-gray-200" />
+
+                                            <MenuItem>
+                                                {({ active }) => (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { setSelectedProjectName(ele?.name || ''); setDeleteId(ele?._id || ele?.id); setDeleteProModal(true); }}
+                                                    className={`flex items-center gap-2 px-4 py-2 text-sm ${ active ? "bg-red-100 text-red-600" : "text-red-600" }`}
+                                                >
+                                                    🗑️ Delete
+                                                </button>
+                                                )}
+                                            </MenuItem>
+                                            </div>
+                                        </MenuItems>
+                                    </Menu>
                             </div>
                         </div>
                     </div>
+                        )
+                    })}
 
                 </div>
             </div>
+
+            {/* Delete Project Modal */}
+            <Dialog open={deletepromodal} onClose={setDeleteProModal} className="relative z-10">
+                <DialogBackdrop transition className="fixed backdrop-blur-sm inset-0 bg-black/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in" />
+                <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+                    <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
+                        <DialogPanel transition className="relative transform overflow-hidden rounded-[4px] bg-[#1F1F1F] text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 w-full xs:max-w-[340px] sm:max-w-[400px] md:max-w-lg xl:max-w-xl  data-closed:sm:translate-y-0 data-closed:sm:scale-95">
+                            <div className="md:py-[20px] py-[10px] md:px-[20px] px-[10px] bg-[#1F1F1F]">
+                                <div className="flex justify-end items-center">
+                                    <img src={close} alt="" onClick={() => setDeleteProModal(false)} className="cursor-pointer" />
+                                </div>
+                            </div>
+                            <div className="md:pt-[20px] md:pb-[30px] py-[20px] md:w-[400px] m-auto">
+                                                                <div className='text-center'>
+                                    <div className='text-base text-[#FFFFFF] font-[600] mb-[20px]'>Delete "{selectedProjectName || 'Untitled Song'}"</div>
+                                    <p className='text-[#FFFFFF99] text-sm font-[400] w-[260px] m-auto'>The project can be restored from "Recently deleted" for 30 days.</p>
+                                </div>
+                                <div className="text-center md:pt-[40px] pt-[20px]">
+                                    <button className="d_btn d_cancelbtn sm:me-7 me-5" onClick={() => setDeleteProModal(false)}>Cancel </button>
+                                    <button className="d_btn d_deletebtn" onClick={handleDeleteMusic}>Delete Project</button>
+                                </div>
+                            </div>
+                        </DialogPanel>
+                    </div>
+                </div>
+            </Dialog>
 
             {/* New Folder Modal */}
             <Dialog open={addfoldermodal} onClose={setAddFolderModal} className="relative z-10">
