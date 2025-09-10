@@ -556,6 +556,7 @@ const Pianodemo = ({ onClose }) => {
         duration: 0.05,
         midiNumber: effectiveMidi,
         trackId: currentTrackId || null,
+        instrumentId: selectedInstrument,
         id: `${midiNumber}-${Date.now()}-${Math.random()}`
       };
       const updated = [...(pianoNotesRef.current || []), newEvent];

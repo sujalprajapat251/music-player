@@ -10,7 +10,7 @@ const musicSchema = mongoose.Schema({
         require: true
     },
     url: {
-        type: mongoose.Schema.Types.Mixed
+        type: String
     },
     userId: {
         type: mongoose.Schema.Types.ObjectId,

@@ -52,6 +52,7 @@ import Orchestral from "./Orchestral";
 import PricingModel from './PricingModel';
 import { useParams } from 'react-router-dom';
 import { setShowLoopLibrary } from "../Redux/Slice/ui.slice";
+import { getAllMusic } from "../Redux/Slice/music.slice";
 
 const Timeline = () => {
 
@@ -3011,48 +3012,67 @@ const Timeline = () => {
 
   const { id: projectId } = useParams();
   const allMusic = useSelector((state) => state.music?.allmusic || []);
+  const musicLoading = useSelector((state) => state.music?.loading || false);
 
   useEffect(() => {
-    // When navigating from File.jsx with a project ID, populate timeline from that project's data
+    if (!projectId) return;
+    
     try {
-      if (!projectId) return;
       const project = (allMusic || []).find(m => String(m?._id) === String(projectId));
       if (!project) return;
-
+  
       const incomingTracks = Array.isArray(project.musicdata) ? project.musicdata : [];
-
-      // Build studio tracks and aggregate note/drum data
       const studioTracks = [];
       const aggregatedPianoNotes = [];
       const aggregatedDrumData = [];
       let maxEnd = 0;
-
+  
       incomingTracks.forEach((t, idx) => {
         const trackId = t.id ?? (t._id ?? (Date.now() + Math.random() + idx));
-       const audioClips = Array.isArray(t.audioClips) ? t.audioClips.map((c) => { 
-          const duration = Number(c.duration || 0);
-          const trimStart = Number(c.trimStart || 0);
-          const trimEnd = Number((c.trimEnd != null ? c.trimEnd : duration) || duration);
-          const startTime = Number(c.startTime || 0);
-          const visible = Math.max(0, trimEnd - trimStart);
-          maxEnd = Math.max(maxEnd, startTime + (visible || duration));
-          return {
-            id: c.id ?? (Date.now() + Math.random()),
-            name: c.name || 'Clip',
-            url: c.url || null,
-            color: c.color || t.color,
-            startTime,
-            duration: duration || visible || 0,
-            trimStart,
-            trimEnd,
-            type: c.type,
-            playbackRate: c.playbackRate || 1,
-            drumSequence: Array.isArray(c.drumSequence) ? c.drumSequence : undefined,
-            fromPattern: c.fromPattern || undefined,
-          };
-        }) : [];
-
-        // Piano notes: ensure trackId
+        
+        // Filter and validate audio clips
+        const audioClips = Array.isArray(t.audioClips) 
+          ? t.audioClips
+              .filter(c => {
+                // Only include clips with valid data
+                return c && (
+                  c.url ||                    // Has audio URL
+                  c.type === 'piano' ||       // Piano clip
+                  c.type === 'drum' ||        // Drum clip
+                  c.fromRecording ||          // From recording
+                  c.fromPattern ||            // From pattern
+                  (c.duration && Number(c.duration) > 0) // Has valid duration
+                );
+              })
+              .map((c) => {
+                const duration = Number(c.duration || 0);
+                const trimStart = Number(c.trimStart || 0);
+                const trimEnd = Number((c.trimEnd != null ? c.trimEnd : duration) || duration);
+                const startTime = Number(c.startTime || 0);
+                const visible = Math.max(0, trimEnd - trimStart);
+                
+                // Update max end time
+                maxEnd = Math.max(maxEnd, startTime + (visible || duration));
+                
+                return {
+                  id: c.id ?? (Date.now() + Math.random()),
+                  name: c.name || 'Clip',
+                  url: c.url || null,
+                  color: c.color || t.color || '#FFB6C1',
+                  startTime,
+                  duration: duration || visible || 0,
+                  trimStart,
+                  trimEnd,
+                  type: c.type,
+                  playbackRate: c.playbackRate || 1,
+                  drumSequence: Array.isArray(c.drumSequence) ? c.drumSequence : undefined,
+                  fromPattern: c.fromPattern || undefined,
+                  fromRecording: c.fromRecording || undefined,
+                };
+              })
+          : [];
+  
+        // Handle piano notes
         if (Array.isArray(t.pianoNotes)) {
           t.pianoNotes.forEach(n => {
             const note = { ...n };
@@ -3062,8 +3082,8 @@ const Timeline = () => {
             maxEnd = Math.max(maxEnd, end);
           });
         }
-
-        // Drum recorded data: ensure trackId and currentTime/decay
+  
+        // Handle drum recorded data
         if (Array.isArray(t.drumRecordedData)) {
           t.drumRecordedData.forEach(d => {
             const hit = { ...d };
@@ -3073,38 +3093,55 @@ const Timeline = () => {
             maxEnd = Math.max(maxEnd, end);
           });
         }
-
-        // Consider piano clip bounds for duration
+  
+        // Consider piano clip bounds
         if (t.pianoClip && t.pianoClip.start != null && t.pianoClip.end != null) {
           maxEnd = Math.max(maxEnd, Number(t.pianoClip.end) || 0);
         }
-
-        studioTracks.push({
-          id: trackId,
-          name: t.name || `Track ${idx + 1}`,
-          type: t.type || t.trackType || 'audio',
-          color: t.color,
-          volume: Number(t.volume || 80),
-          muted: Boolean(t.muted || false),
-          frozen: Boolean(t.frozen || false),
-          audioClips,
-          pianoNotes: Array.isArray(t.pianoNotes) ? t.pianoNotes.map(n => ({ ...n, trackId })) : [],
-          pianoClip: t.pianoClip || null,
-        });
+  
+        // Only add tracks that have valid content
+        if (audioClips.length > 0 || 
+            (Array.isArray(t.pianoNotes) && t.pianoNotes.length > 0) ||
+            (Array.isArray(t.drumRecordedData) && t.drumRecordedData.length > 0) ||
+            t.pianoClip) {
+          
+          studioTracks.push({
+            id: trackId,
+            name: t.name || `Track ${idx + 1}`,
+            type: t.type || t.trackType || 'audio',
+            color: t.color || '#FFB6C1',
+            volume: Number(t.volume || 80),
+            muted: Boolean(t.muted || false),
+            frozen: Boolean(t.frozen || false),
+            audioClips,
+            pianoNotes: Array.isArray(t.pianoNotes) ? t.pianoNotes.map(n => ({ ...n, trackId })) : [],
+            pianoClip: t.pianoClip || null,
+          });
+        }
       });
-
-      // Dispatch to studio
+  
+      // Update Redux state
       dispatch(setTracks(studioTracks));
       if (aggregatedPianoNotes.length > 0) dispatch(setPianoNotes(aggregatedPianoNotes));
       if (aggregatedDrumData.length > 0) dispatch(setDrumRecordedData(aggregatedDrumData));
-
-      // Set project duration with a small tail
+  
+      // Set project duration
       if (maxEnd > 0) dispatch(setAudioDuration(Math.ceil(maxEnd + 1)));
-
+  
       // Focus first track
       if (studioTracks.length > 0) dispatch(setCurrentTrackId(studioTracks[0].id));
-    } catch (_) { }
+      
+    } catch (error) {
+      console.error('Error loading project data:', error);
+    }
   }, [projectId, allMusic, dispatch]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    if (!musicLoading && (!allMusic || allMusic.length === 0)) {
+      dispatch(getAllMusic());
+    }
+  }, [projectId, allMusic, musicLoading, dispatch]);
 
   return (
     <>

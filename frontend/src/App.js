@@ -97,18 +97,19 @@ function App() {
         autoHideDuration={3000}
       >
         <Alert />
-        <Routes>
-          <Route path='/' element={<Home />} />
-          <Route path='contact' element={<ContactUs />} />
-          <Route path='faqs' element={<Faqs />} />
-          <Route path='pricing' element={<Pricing />} />
-          <Route path='tearms' element={<TearmsOfUse />} />
-          <Route path='privacy' element={<PrivacyPolicy />} />
-          <Route path='ani' element={<Animation />} />
-          <Route path='piano' element={<Piano />} />
-          <Route path='effcts2' element={<Effects2 />} />
-          <Route path='file' element={<File />} />
-          {/* <Route path='fuzz' element={<Fuzz />} />
+        <ThemeProvider>
+          <Routes>
+            <Route path='/' element={<Home />} />
+            <Route path='contact' element={<ContactUs />} />
+            <Route path='faqs' element={<Faqs />} />
+            <Route path='pricing' element={<Pricing />} />
+            <Route path='tearms' element={<TearmsOfUse />} />
+            <Route path='privacy' element={<PrivacyPolicy />} />
+            <Route path='ani' element={<Animation />} />
+            <Route path='piano' element={<Piano />} />
+            <Route path='effcts2' element={<Effects2 />} />
+            <Route path='file' element={<File />} />
+            {/* <Route path='fuzz' element={<Fuzz />} />
           <Route path='Overdrive' element={<Overdrive />} />
           <Route path='autopan' element={<AutoPan />} />
           <Route path='autowah' element={<AutoWah />} />
@@ -123,29 +124,30 @@ function App() {
           <Route path='TapeWobble' element={<TapeWobble />} /> */}
 
 
-          <Route path='/login' element={<Login />} />
+            <Route path='/login' element={<Login />} />
 
-          <Route path="/" element={<Layout />} >
-            <Route path='project' element={<Home2 />} />
-            <Route path='demo-project' element={<Demoproject />} />
-            <Route path='profile' element={<Profile />} />
-          </Route>
+            <Route path="/" element={<Layout />} >
+              <Route path='project' element={<Home2 />} />
+              <Route path='demo-project' element={<Demoproject />} />
+              <Route path='profile' element={<Profile />} />
+            </Route>
 
-          <Route path='/sidebar' element={<ThemeProvider><Sidebar2 /></ThemeProvider>} >
-            <Route path='timeline' element={<Timeline />} />
-            <Route path='timeline/:id' element={<Timeline />} />
-            {/* <Route path='knob' element={<Knob />} />
+            <Route path='/sidebar' element={<Sidebar2 />} >
+              <Route path='timeline' element={<Timeline />} />
+              <Route path='timeline/:id' element={<Timeline />} />
+              {/* <Route path='knob' element={<Knob />} />
             <Route path='loop' element={<Loops />} /> */}
-            <Route path="effects" element={<Effects />} />
-            <Route path="savani" element={<SDemo />} />
-            <Route path="piano" element={<Piano />} />
-            <Route path="guitar" element={<Guitar />} />
-            <Route path="voice" element={<VoiceTransformer />} />
-          </Route>
-          
-        </Routes>
+              <Route path="effects" element={<Effects />} />
+              <Route path="savani" element={<SDemo />} />
+              <Route path="piano" element={<Piano />} />
+              <Route path="guitar" element={<Guitar />} />
+              <Route path="voice" element={<VoiceTransformer />} />
+            </Route>
+
+          </Routes>
+        </ThemeProvider>
       </SnackbarProvider>
-    </Provider>
+    </Provider >
   );
 }
 

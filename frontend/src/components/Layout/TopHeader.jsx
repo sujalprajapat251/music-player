@@ -45,6 +45,7 @@ import audioQualityManager from '../../Utils/audioQualityManager';
 import ExportPopup from '../ExportProjectModel';
 import { useUndoRedo } from '../../hooks/useUndoRedo';
 import { createMusic } from '../../Redux/Slice/music.slice';
+import axiosInstance from '../../Utils/axiosInstance';
 import { selectStudioState } from '../../Redux/rootReducer';
 import WavEncoder from 'wav-encoder';
 
@@ -318,14 +319,7 @@ const TopHeader = () => {
         }
     };
 
-    // Utility: MIDI -> frequency
-    const midiToFrequency = (midiNumber) => {
-        const m = Number(midiNumber);
-        if (!Number.isFinite(m)) return 440;
-        return 440 * Math.pow(2, (m - 69) / 12);
-    };
-
-    // Render piano notes using the same soundfont as live playback, return blob URL and duration
+    // Render piano notes, then upload to backend and return persistent URL and duration
     const renderPianoNotesToWav = async (notes = []) => {
         try {
             if (!Array.isArray(notes) || notes.length === 0) return null;
@@ -374,7 +368,14 @@ const TopHeader = () => {
             const channelData = Array.from({ length: buffer.numberOfChannels }, (_, i) => buffer.getChannelData(i));
             const wavData = await WavEncoder.encode({ sampleRate: buffer.sampleRate, channelData });
             const blob = new Blob([wavData], { type: 'audio/wav' });
-            const url = URL.createObjectURL(blob);
+
+            // Upload rendered blob to backend to get a persistent URL
+            const form = new FormData();
+            form.append('audio', blob, `piano-render-${Date.now()}.wav`);
+            const uploadRes = await axiosInstance.post('/upload-audio', form, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            const url = uploadRes?.data?.url;
             return { url, duration: buffer.duration };
         } catch (e) {
             console.error('Render piano notes failed:', e);
@@ -409,7 +410,7 @@ const TopHeader = () => {
             return track;
         }));
 
-        // Render one mixdown WAV from all clips across all tracks
+        // Render one mixdown WAV from all clips across all tracks, upload and return URL
         const renderProjectMixdown = async (allTracks) => {
             try {
                 const clips = [];
@@ -473,7 +474,14 @@ const TopHeader = () => {
                 const channelData = Array.from({ length: mixed.numberOfChannels }, (_, i) => mixed.getChannelData(i));
                 const wavData = await WavEncoder.encode({ sampleRate: mixed.sampleRate, channelData });
                 const blob = new Blob([wavData], { type: 'audio/wav' });
-                const url = URL.createObjectURL(blob);
+
+                // Upload mixdown to backend
+                const form = new FormData();
+                form.append('audio', blob, `mixdown-${Date.now()}.wav`);
+                const uploadRes = await axiosInstance.post('/upload-audio', form, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                const url = uploadRes?.data?.url;
                 return { url, duration: mixed.duration };
             } catch (e) {
                 console.error('Mixdown render failed:', e);
@@ -488,7 +496,7 @@ const TopHeader = () => {
             name: songName,
             musicdata: serializedTracks,
             userId: user,
-            url: mixdown ? mixdown.url : null,
+            url: mixdown.url,
         }));
     }
 

@@ -32,7 +32,6 @@ const initialState = {
   audioDuration: 500,
   masterVolume: 80, // Master volume control
   recordedData: [], // New state for recorded data
-  masterVolume: 80,// Master volume control
   bpm: 120,
   drumDataProcessed: false,
   drumRecordedData: [], // Store drum pad recordings

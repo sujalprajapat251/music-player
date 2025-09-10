@@ -494,7 +494,7 @@ const Pianodemo = ({ onClose }) => {
       destination: gainNode,
     }).then((piano) => {
       pianoRef.current = piano;
-      console.log("Piano instrument loaded successfully");
+      // console.log("Piano instrument loaded successfully");
     }).catch((error) => {
       console.error("Error loading piano instrument:", error);
     });
@@ -557,6 +557,7 @@ const Pianodemo = ({ onClose }) => {
         duration: 0.05,
         midiNumber: effectiveMidi,
         trackId: currentTrackId || null,
+        instrumentId: selectedInstrument,
         id: `${midiNumber}-${Date.now()}-${Math.random()}`
       };
       const updated = [...(pianoNotesRef.current || []), newEvent];
@@ -670,7 +671,7 @@ const Pianodemo = ({ onClose }) => {
   const hendleStopRecord = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
-      console.log("Recording stopped");
+      // console.log("Recording stopped");
     } else {
       // console.log("No active recording to stop");
     }
