@@ -96,6 +96,7 @@ const Timeline = () => {
 
   // Piano playback functionality
   const pianoRef = useRef(null);
+  const instrumentCacheRef = useRef({});
   const pianoAudioContextRef = useRef(null);
   const activePianoNotesRef = useRef(new Set());
 
@@ -232,6 +233,8 @@ const Timeline = () => {
   }, [zoomLevel]);
 
   const trackDeleted = useSelector((state) => selectStudioState(state).trackDeleted);
+  // Selected instrument for piano playback (sync with Piano.jsx)
+  const selectedInstrument = useSelector((state) => selectStudioState(state)?.selectedInstrument || 'acoustic_grand_piano');
 
   // Stop all piano notes
   const stopAllPianoNotes = useCallback(() => {
@@ -363,30 +366,58 @@ const Timeline = () => {
     return audioContextRef.current;
   }, []);
 
-  // Initialize piano for playback
+  // Initialize or reinitialize piano for playback when instrument changes
   const initializePiano = useCallback(async () => {
+    try {
+      if (!pianoAudioContextRef.current) {
+        pianoAudioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      // Stop any active notes before switching instruments
+      stopAllPianoNotes();
+      // Always (re)load the currently selected instrument
+      pianoRef.current = await Soundfont.instrument(
+        pianoAudioContextRef.current,
+        selectedInstrument
+      );
+      console.log("Piano instrument loaded for playback:", selectedInstrument);
+    } catch (error) {
+      console.error("Error loading piano instrument for playback:", selectedInstrument, error);
+    }
+  }, [selectedInstrument, stopAllPianoNotes]);
+
+  // Ensure instrument is ready on mount and whenever selection changes
+  useEffect(() => {
+    initializePiano();
+  }, [initializePiano]);
+
+  // Play piano note
+  const getInstrument = useCallback(async (instrumentId) => {
     if (!pianoAudioContextRef.current) {
       pianoAudioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
     }
-
-    if (!pianoRef.current) {
-      try {
-        pianoRef.current = await Soundfont.instrument(pianoAudioContextRef.current, 'acoustic_grand_piano');
-        console.log("Piano instrument loaded for playback");
-      } catch (error) {
-        console.error("Error loading piano instrument for playback:", error);
-      }
+    const cache = instrumentCacheRef.current || {};
+    const key = instrumentId || selectedInstrument || 'acoustic_grand_piano';
+    if (cache[key]) return cache[key];
+    try {
+      const inst = await Soundfont.instrument(pianoAudioContextRef.current, key);
+      cache[key] = inst;
+      instrumentCacheRef.current = cache;
+      return inst;
+    } catch (e) {
+      console.warn('Failed to load', key, e);
+      return pianoRef.current; // fallback to current
     }
-  }, []);
+  }, [selectedInstrument]);
 
-  // Play piano note
-  const playPianoNote = useCallback((midiNumber, duration = 0.5) => {
-    if (pianoRef.current && pianoAudioContextRef.current) {
+  const playPianoNote = useCallback(async (midiNumber, duration = 0.5, instrumentId) => {
+    if (pianoAudioContextRef.current) {
       try {
         if (pianoAudioContextRef.current.state === 'suspended') {
           pianoAudioContextRef.current.resume();
         }
-        const audioNode = pianoRef.current.play(midiNumber, undefined, { duration });
+        const instrument = await getInstrument(instrumentId);
+        if (!instrument) return;
+        const audioNode = instrument.play(midiNumber, undefined, { duration });
         activePianoNotesRef.current.add(audioNode);
 
         // Clean up after note duration
@@ -397,7 +428,7 @@ const Timeline = () => {
         console.error("Error playing piano note:", error);
       }
     }
-  }, []);
+  }, [getInstrument]);
 
 
 
@@ -416,7 +447,7 @@ const Timeline = () => {
     sectionId: null
   });
 
-  console.log("==========================================", tracks)
+  // console.log("==========================================", tracks)
 
   const allTracks = useMemo(() => {
     // Now that piano data is embedded per track, just expose it from each track
@@ -1089,7 +1120,8 @@ const Timeline = () => {
               // Check if we haven't already played this note in this time range
               const noteKey = `${note.id}-${Math.floor(noteStartTime * 10)}`;
               if (!activePianoNotesRef.current.has(noteKey)) {
-                playPianoNote(note.midiNumber, note.duration || 0.5);
+                // Always use the currently selected instrument to re-voice the entire recording uniformly
+                playPianoNote(note.midiNumber, note.duration || 0.5, selectedInstrument);
                 activePianoNotesRef.current.add(noteKey);
 
                 // Remove the note key after the note duration
@@ -1717,7 +1749,7 @@ const Timeline = () => {
     const isDrumRecording = clipId === 'drum-recording';
     const isRecordingClip = isPianoRecording || isDrumRecording;
 
-    console.log(isRecordingClip); 
+    // console.log(isRecordingClip); 
 
     // Helper to split a regular clip at currentTime
     const splitSelectedClip = () => {

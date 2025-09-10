@@ -32,6 +32,7 @@ import {
 } from '../../Redux/Slice/studio.slice';
 import { zoomIn, zoomOut, selectGridSettings, resetZoom } from '../../Redux/Slice/grid.slice';
 import { selectStudioState } from '../../Redux/rootReducer';
+import { setAlert } from '../../Redux/Slice/alert.slice';
 
 const BottomToolbar = () => {
     const [volume1, setVolume1] = useState(50);
@@ -415,7 +416,7 @@ const BottomToolbar = () => {
     const handleStartRecord = () => {
 
         if (selectedCountIn === "Off") {
-            console.log("botoooooooooooooooooooooooooooo9")
+            // console.log("botoooooooooooooooooooooooooooo9")
             dispatch(setRecording(true));
             dispatch(setRecordedData([])); // Clear timeline 
 
@@ -545,7 +546,8 @@ const handleMoveBackwardSmall = () => {
                         ) : (
                             <button onClick={() => {
                                 if (!tracks || tracks.length === 0) {
-                                    alert("Please Add New Track !"); // You can place an alert here
+                                    // alert("Please Add New Track !"); // You can place an alert here
+                                    dispatch(setAlert({ text: 'Please Add New Track !', color: 'warning' }));
                                 } else {
                                     handleStartRecord();
                                 }
