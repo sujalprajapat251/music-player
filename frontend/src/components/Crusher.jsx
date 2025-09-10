@@ -407,37 +407,20 @@ const Crusher = () => {
                 />
             </div>
             <div className={`items-center p-5 sm:p-6 md600:p-7 md:p-6 xl:p-8 2xl:p-10 w-[150px] h-[140px] sm:w-[190px] sm:h-[180px] md600:w-[220px] md600:h-[210px] md:w-[230px] md:h-[265px] lg:w-[240px] lg:h-[282px] xl:w-[240px] xl:h-[285px] 2xl:w-[256px] 2xl:h-[300px] bg-[#302f2f] ${!isPoweredOn ? 'opacity-50 pointer-events-none' : ''}`}>
-                <div className="grid grid-cols-2 gap-5 sm:gap-6 md600:gap-5 md:gap-6 lg:gap-8 2xl:gap-10 items-center justify-center self-center">
+               <div className="grid grid-cols-2 gap-5 sm:gap-6 md600:gap-5 md:gap-6  lg:gap-8 2xl:gap-10 items-center justify-center self-center">
                     <div className="">
-                        <Knob1 
-                            label="Amount" 
-                            min={-135} 
-                            max={135} 
-                            defaultAngle={getCurrentParameterValue(0)}
-                            onValueChange={handleKnobChange}
-                            parameterIndex={0}
-                        />
+                        <Knob1 label="Low cut" min={-135} max={135} defaultAngle={0} />
                     </div>
 
                     <div className="">
-                        <Knob1 
-                            label="Sample Rate" 
-                            min={-135} 
-                            max={135} 
-                            defaultAngle={getCurrentParameterValue(1)}
-                            onValueChange={handleKnobChange}
-                            parameterIndex={1}
-                        />
+                        <Knob1 label="High cut" min={-135} max={135} defaultAngle={90} />
                     </div>
                     <div className="">
-                        <Knob1 
-                            label="Mix" 
-                            min={-135} 
-                            max={135} 
-                            defaultAngle={getCurrentParameterValue(2)}
-                            onValueChange={handleKnobChange}
-                            parameterIndex={2}
-                        />
+                        <Knob1 label="Gain" min={-135} max={135} defaultAngle={0} />
+                    </div>
+
+                    <div className="">
+                        <Knob1 label="Mix" min={-135} max={135} defaultAngle={90} />
                     </div>
                 </div>
             </div>

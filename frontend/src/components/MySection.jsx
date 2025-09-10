@@ -102,14 +102,6 @@ const MySection = ({ timelineContainerRef, audioDuration, selectedGrid }) => {
     const startTime = (cursorPosition / 100) * audioDuration;
     const snappedStartTime = snapToGrid(startTime);
     
-    // console.log('=== MySection Dropdown Opened ===');
-    // console.log('Cursor Position:', cursorPosition + '%');
-    // console.log('Start Time:', formatTime(snappedStartTime) + ' (' + snappedStartTime + ' seconds)');
-    // console.log('Audio Duration:', formatTime(audioDuration) + ' (' + audioDuration + ' seconds)');
-    // console.log('Timeline Width:', timelineWidth + 'px');
-    // console.log('Cursor X Position:', cursorX + 'px');
-    // console.log('================================');
-    
     setDropdownPosition({ x: absoluteX, y: absoluteY });
     setDropdownOpen((open) => !open);
   }, [cursorPosition, timelineContainerRef, audioDuration, selectedGrid]);
@@ -125,16 +117,6 @@ const MySection = ({ timelineContainerRef, audioDuration, selectedGrid }) => {
     const gridSpacing = getGridSpacing(selectedGrid);
     const sectionDuration = getSectionDuration(sectionName, gridSpacing);
     const endTime = Math.min(audioDuration, snappedStartTime + sectionDuration);
-    
-    // console.log('=== Section Selected ===');
-    // console.log('Selected Section:', sectionName);
-    // console.log('Start Time:', formatTime(snappedStartTime) + ' (' + snappedStartTime + ' seconds)');
-    // console.log('End Time:', formatTime(endTime) + ' (' + endTime + ' seconds)');
-    // console.log('Section Duration:', formatTime(endTime - snappedStartTime) + ' (' + (endTime - snappedStartTime) + ' seconds)');
-    // console.log('Calculated Duration:', formatTime(sectionDuration) + ' (' + sectionDuration + ' seconds)');
-    // console.log('Cursor Position:', cursorPosition + '%');
-    // console.log('Grid Spacing:', formatTime(gridSpacing) + ' (' + gridSpacing + ' seconds)');
-    // console.log('========================');
     
     if (sectionName === "Custom Name") {
       // Open the custom name modal and close dropdown immediately

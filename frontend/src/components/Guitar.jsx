@@ -402,50 +402,8 @@ const Guitar = ({ onClose }) => {
         }
     }, [pan]);
 
-
-    // useEffect(() => {
-    //     audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    //     Soundfont.instrument(audioContextRef.current, selectedInstrument).then((piano) => {
-    //         pianoRef.current = piano;
-    //     });
-    //     return () => {
-    //         audioContextRef.current && audioContextRef.current.close();
-    //     };
-    // }, [selectedInstrument]);
-
     const firstNote = MidiNumbers.fromNote('C0');
     const lastNote = MidiNumbers.fromNote('C5');
-    // const keyboardShortcuts = KeyboardShortcuts.create({
-    //     firstNote: firstNote,
-    //     lastNote: lastNote,
-    //     keyboardConfig: [
-    //         // First Octave (Lower Keys)
-    //         { natural: 'z', flat: 's', sharp: 's' },
-    //         { natural: 'x', flat: 'd', sharp: 'd' },
-    //         { natural: 'c', flat: 'f', sharp: 'f' },
-    //         { natural: 'v', flat: 'g', sharp: 'g' },
-    //         { natural: 'b', flat: 'h', sharp: 'h' },
-    //         { natural: 'n', flat: 'j', sharp: 'j' },
-    //         { natural: 'm', flat: 'k', sharp: 'k' },
-
-    //         { natural: ',', flat: 'l', sharp: 'l' },
-    //         { natural: '.', flat: ';', sharp: ';' },
-
-    //         // Second Octave (Middle Keys)
-    //         { natural: 'q', flat: '1', sharp: '1' },
-    //         { natural: 'w', flat: '2', sharp: '2' },
-    //         { natural: 'e', flat: '3', sharp: '3' },
-    //         { natural: 'r', flat: '4', sharp: '4' },
-    //         { natural: 't', flat: '5', sharp: '5' },
-    //         { natural: 'y', flat: '6', sharp: '6' },
-    //         { natural: 'u', flat: '7', sharp: '7' },
-
-    //         // Third Octave (Higher Keys)
-    //         { natural: 'i', flat: '8', sharp: '8' },
-    //         { natural: 'o', flat: '9', sharp: '9' },
-    //         { natural: 'p', flat: '0', sharp: '0' },
-    //     ],
-    // });
 
     const getKeyboardShortcutsForSection = (sectionIndex) => {
         const section = pianoSections[sectionIndex];
@@ -2026,19 +1984,6 @@ const Guitar = ({ onClose }) => {
                                                 </div>
                                             </div>
 
-                                            {/* {isRecording ? (<button onClick={hendleStopRecord} className="cursor-pointer">
-                        <FaStop />
-                    </button>
-                    ) :
-                        (<button onClick={hendleRecord} className="cursor-pointer">
-                            <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
-                                <p className="rounded-full p-[3px] sm:p-[3px] lg:p-2 bg-[#FF6767]"></p>
-                                <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px]">Rec</p>
-                            </div>
-                        </button>)
-                    } */}
-
-
                                             <div className="flex space-x-1 md600:space-x-2 lg:space-x-4 2xl:space-x-6">
                                                 <div className="flex flex-col items-center">
                                                     <Knob label="Reverb" min={-135} max={135} defaultAngle={reverb} onChange={(value) => setReverb(value)} />
@@ -2365,24 +2310,6 @@ const Guitar = ({ onClose }) => {
                     </div>
                 </>
             )}
-            {/* <div>
-            <label>Instrument: </label>
-            <select
-                value={selectedInstrument}
-                onChange={e => setSelectedInstrument(e.target.value)}
-            >
-                {INSTRUMENTS.map(inst => (
-                    <option key={inst} value={inst}>{inst}</option>
-                ))}
-            </select>
-        </div>
-        <Piano
-            noteRange={{ first: firstNote, last: lastNote }}
-            playNote={playNote}
-            stopNote={stopNote}
-            width={1000}
-            keyboardShortcuts={keyboardShortcuts}
-        /> */}
         </>
     )
 }

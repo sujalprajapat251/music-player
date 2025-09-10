@@ -387,17 +387,17 @@ const Overdrive = () => {
                 }`}>
                 {/* Dist Knob - Top Left */}
                 <div className="absolute  top-[20px] left-[30px] sm:top-[30px] sm:left-[40px] md600:top-[25px] md600:left-[40px]  md:top-[25px] md:left-[40px]">
-                    <Knob label="Mix" min={-135} max={135} defaultAngle={-90} />
+                    <Knob label="Dist" min={-135} max={135} defaultAngle={-90} />
                 </div>
 
                 {/* Tone Knob - Top Right */}
                 <div className="absolute top-[50px] right-[30px] sm:top-[60px] sm:right-[50px] md600:top-[65px] md600:right-[45px] md:top-[80px] md:right-[35px]">
-                    <Knob label="Amount" min={-135} max={135} defaultAngle={0} />
+                    <Knob label="Tone" min={-135} max={135} defaultAngle={0} />
                 </div>
 
                 {/* Low cut Knob - Bottom Center */}
                 <div className="absolute bottom-[15px] left-[30px] sm:bottom-[25px] sm:left-[40px] md600:left-[40px] md600:bottom-[45px] md:left-[40px] md:bottom-[45px] ">
-                    <Knob1 label="Makeup" min={-135} max={135} defaultAngle={90} />
+                    <Knob1 label="Low Cut" min={-135} max={135} defaultAngle={90} />
                 </div>
             </div>
         </div>

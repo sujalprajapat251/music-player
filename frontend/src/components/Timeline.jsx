@@ -52,6 +52,7 @@ import Orchestral from "./Orchestral";
 import PricingModel from './PricingModel';
 import { useParams } from 'react-router-dom';
 import { setShowLoopLibrary } from "../Redux/Slice/ui.slice";
+import { setSelectedTrackId } from '../Redux/Slice/effects.slice';
 
 const Timeline = () => {
 
@@ -111,7 +112,7 @@ const Timeline = () => {
   const isPlaying = useSelector((state) => selectStudioState(state)?.isPlaying || false);
   const currentTime = useSelector((state) => selectStudioState(state)?.currentTime || 0);
   const audioDuration = useSelector((state) => selectStudioState(state)?.audioDuration || 150);
-
+  const trackEffectsState = useSelector(state => state.effects?.trackEffects || {});
   // eslint-disable-next-line no-unused-vars
   const audioSettings = useSelector((state) => state.audioSettings);
   const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
@@ -553,9 +554,7 @@ const Timeline = () => {
 
   const getTrackType = useSelector((state) => selectStudioState(state).newtrackType);
 
-
   // Mute functionality
-
   useEffect(() => {
     players.forEach(playerObj => {
       const track = tracks.find(t => t.id === playerObj.trackId);
@@ -728,8 +727,6 @@ const Timeline = () => {
     }
   }, [patternDrumPlayback, isPlaying, playPatternDrumSound]);
 
-
-
   // Add effects processor reference
   const effectsProcessorRef = useRef(null);
 
@@ -810,9 +807,9 @@ const Timeline = () => {
         activeEffects.forEach((effect) => {
           if (effect.name === "Classic Dist" && effect.parameters) {
             const parameters = {
-              mix: effectsProcessorRef.current.angleToParameter(effect.parameters[0]?.value || -90),
-              amount: effectsProcessorRef.current.angleToParameter(effect.parameters[1]?.value || 0),
-              makeup: effectsProcessorRef.current.angleToParameter(effect.parameters[2]?.value || 90)
+              mix: (effect.parameters[0]?.value + 135) / 270,
+              amount: (effect.parameters[1]?.value + 135) / 270,
+              makeup: (effect.parameters[2]?.value + 135) / 270
             };
 
             // Create effect chain using Web Audio API nodes
@@ -865,30 +862,38 @@ const Timeline = () => {
     }
   }, [masterVolume, tracks, players, tempoRatio, activeEffects]);
 
-  // Listen for effect parameter changes and update audio
+  // Listen for track-specific effect parameter changes and update audio
   useEffect(() => {
     if (!effectsProcessorRef.current) return;
 
-    activeEffects.forEach((effect) => {
-      if (effect.name === "Classic Dist" && effect.parameters) {
-        const parameters = {
-          mix: effectsProcessorRef.current.angleToParameter(effect.parameters[0]?.value || -90),
-          amount: effectsProcessorRef.current.angleToParameter(effect.parameters[1]?.value || 0),
-          makeup: effectsProcessorRef.current.angleToParameter(effect.parameters[2]?.value || 90)
-        };
+    // Update effects for each track separately
 
-        // Update all active players with this effect
-        players.forEach((playerObj) => {
-          if (playerObj.appliedEffects) {
-            const appliedEffect = playerObj.appliedEffects.find(ae => ae.effectId === effect.instanceId);
-            if (appliedEffect && appliedEffect.chain.updateParameters) {
-              appliedEffect.chain.updateParameters(parameters);
+    Object.keys(trackEffectsState).forEach(trackId => {
+      const trackEffects = trackEffectsState[trackId] || [];
+
+      trackEffects.forEach((effect) => {
+        if (effect.name === "Classic Dist" && effect.parameters) {
+          const parameters = {
+            mix: effectsProcessorRef.current.angleToParameter(effect.parameters[0]?.value || -90),
+            amount: effectsProcessorRef.current.angleToParameter(effect.parameters[1]?.value || 0),
+            makeup: effectsProcessorRef.current.angleToParameter(effect.parameters[2]?.value || 90)
+          };
+
+          // Update only players for this specific track
+          players.forEach((playerObj) => {
+            if (playerObj.trackId === trackId && playerObj.appliedEffects) {
+              const appliedEffect = playerObj.appliedEffects.find(
+                ae => ae.effectId === effect.instanceId && ae.trackId === trackId
+              );
+              if (appliedEffect && appliedEffect.chain.updateParameters) {
+                appliedEffect.chain.updateParameters(parameters);
+              }
             }
-          }
-        });
-      }
+          });
+        }
+      });
     });
-  }, [activeEffects, players]);
+  }, [trackEffectsState, players]);
 
   // Fixed seek logic to respect trim boundaries
   const movePlayhead = (e) => {
@@ -1369,7 +1374,6 @@ const Timeline = () => {
       .attr("stroke-width", 1);
   }, [audioDuration, selectedGrid, selectedTime, selectedRuler, timelineWidthPerSecond]);
 
-
   // Keep a stable reference to the render function to avoid linter no-undef complaints
   const renderRulerRef = useRef(() => { });
   useEffect(() => {
@@ -1717,7 +1721,7 @@ const Timeline = () => {
     const isDrumRecording = clipId === 'drum-recording';
     const isRecordingClip = isPianoRecording || isDrumRecording;
 
-    console.log(isRecordingClip); 
+    console.log(isRecordingClip);
 
     // Helper to split a regular clip at currentTime
     const splitSelectedClip = () => {
@@ -1757,7 +1761,7 @@ const Timeline = () => {
         const clipStart = pianoRecordingClip.start;
         const clipEnd = pianoRecordingClip.end;
         const splitPoint = currentTime;
-        
+
         if (splitPoint <= clipStart || splitPoint >= clipEnd) return;
 
         const leftClip = {
@@ -1783,9 +1787,9 @@ const Timeline = () => {
           trimEnd: clipEnd - splitPoint,
           type: 'piano',
           fromRecording: true,
-          pianoNotes: pianoNotes.filter(note => 
-            note.trackId === trackId && 
-            note.startTime >= splitPoint && 
+          pianoNotes: pianoNotes.filter(note =>
+            note.trackId === trackId &&
+            note.startTime >= splitPoint &&
             note.startTime < clipEnd
           )
         };
@@ -1795,7 +1799,7 @@ const Timeline = () => {
         const clipStart = drumRecordingClip.start;
         const clipEnd = drumRecordingClip.end;
         const splitPoint = currentTime;
-        
+
         if (splitPoint <= clipStart || splitPoint >= clipEnd) return;
 
         const leftClip = {
@@ -1821,9 +1825,9 @@ const Timeline = () => {
           trimEnd: clipEnd - splitPoint,
           type: 'drum',
           fromRecording: true,
-          drumSequence: drumRecordedData.filter(hit => 
-            hit.trackId === trackId && 
-            hit.currentTime >= splitPoint && 
+          drumSequence: drumRecordedData.filter(hit =>
+            hit.trackId === trackId &&
+            hit.currentTime >= splitPoint &&
             hit.currentTime < clipEnd
           )
         };
@@ -1927,16 +1931,16 @@ const Timeline = () => {
 
     const copyRecordingClip = () => {
       if (isPianoRecording && pianoRecordingClip) {
-        setClipboard({ 
-          type: 'piano-recording', 
-          clip: { ...pianoRecordingClip }, 
+        setClipboard({
+          type: 'piano-recording',
+          clip: { ...pianoRecordingClip },
           trackId,
           notes: pianoNotes.filter(note => note.trackId === trackId)
         });
       } else if (isDrumRecording && drumRecordingClip) {
-        setClipboard({ 
-          type: 'drum-recording', 
-          clip: { ...drumRecordingClip }, 
+        setClipboard({
+          type: 'drum-recording',
+          clip: { ...drumRecordingClip },
           trackId,
           hits: drumRecordedData.filter(hit => hit.trackId === trackId)
         });
@@ -1947,7 +1951,7 @@ const Timeline = () => {
       copyRecordingClip();
       deleteRecordingClip();
     };
-    
+
     const deleteRecordingClip = () => {
       if (isPianoRecording) {
         dispatch(setPianoRecordingClip(null));
@@ -2319,11 +2323,7 @@ const Timeline = () => {
         setPricingModalOpen(true);
         break;
       default:
-      // Unknown action
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [contextMenu, tracks, clipboard, dispatch, currentTime, setPlayers, setShowOffcanvasEffects, setShowOffcanvas]);
-    // Track-level actions (existing code continues...)
     // ... rest of the existing track-level actions
   }, [contextMenu, tracks, clipboard, dispatch, currentTime, setPlayers, setShowOffcanvasEffects, setShowOffcanvas, pianoRecordingClip, drumRecordingClip, pianoNotes, drumRecordedData]);
 
@@ -3029,7 +3029,7 @@ const Timeline = () => {
 
       incomingTracks.forEach((t, idx) => {
         const trackId = t.id ?? (t._id ?? (Date.now() + Math.random() + idx));
-       const audioClips = Array.isArray(t.audioClips) ? t.audioClips.map((c) => { 
+        const audioClips = Array.isArray(t.audioClips) ? t.audioClips.map((c) => {
           const duration = Number(c.duration || 0);
           const trimStart = Number(c.trimStart || 0);
           const trimEnd = Number((c.trimEnd != null ? c.trimEnd : duration) || duration);
@@ -3291,7 +3291,7 @@ const Timeline = () => {
               height: "100%",
               width: "2px",
               pointerEvents: "none",
-              zIndex:10,
+              zIndex: 10,
               transform: `translateX(${playheadPosition}px)`,
               willChange: "transform",
               transition: (isMagnetEnabled && isDragging.current) ? "none" : "transform 0.05s linear" // Only disable during mouse drag with magnet
@@ -3342,7 +3342,6 @@ const Timeline = () => {
             >
               <img src={magnetIcon} alt="Magnet" />
             </div>
-
           </div>
 
           <div ref={gridSettingRef} className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full relative" onClick={() => setShowGridSetting((prev) => !prev)}>
@@ -3430,7 +3429,7 @@ const Timeline = () => {
               volume: 80,
               audioClips: [newClip],
             };
-            
+
             dispatch(addTrack(newTrack));
           } catch (err) {
             // Failed to import audio file

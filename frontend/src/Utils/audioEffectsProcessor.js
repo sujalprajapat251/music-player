@@ -7,63 +7,70 @@ export class AudioEffectsProcessor {
 
   // Create Classic Distortion effect chain
   createClassicDistortion(parameters = {}) {
-    const { mix = 0.5, amount = 0.5, makeup = 0.5 } = parameters;
+    const { dist = 0.5, tone = 0.5, lowCut = 0.5 } = parameters;
 
     // Create audio nodes
     const inputGain = this.audioContext.createGain();
     const distortionGain = this.audioContext.createGain();
-    const makeupGain = this.audioContext.createGain();
     const outputGain = this.audioContext.createGain();
 
-    // Create waveshaper for distortion
+    // Create waveshaper for extreme distortion
     const waveshaper = this.audioContext.createWaveShaper();
-    const curve = this.createDistortionCurve(amount);
+    const curve = this.createDistortionCurve(dist * 1600); // 4x more aggressive
     waveshaper.curve = curve;
     waveshaper.oversample = "4x";
 
-    // Create filter for tone control (frequency control)
+    // Create high-shelf filter for extreme tone control
     const toneFilter = this.audioContext.createBiquadFilter();
-    toneFilter.type = "lowpass";
-    // Map amount parameter to frequency range (200Hz to 10kHz)
-    const frequency = 200 + (amount * 9800);
-    toneFilter.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
-    toneFilter.Q.setValueAtTime(1, this.audioContext.currentTime);
+    toneFilter.type = "highshelf";
+    toneFilter.frequency.setValueAtTime(1500, this.audioContext.currentTime); // Lower frequency for more dramatic effect
+    toneFilter.gain.setValueAtTime((tone - 0.5) * 100, this.audioContext.currentTime); // -50dB to +50dB range
 
-    // Create makeup gain
-    makeupGain.gain.setValueAtTime(1 + (makeup * 2), this.audioContext.currentTime);
+    // Create high-pass filter for extreme low cut
+    const lowCutFilter = this.audioContext.createBiquadFilter();
+    lowCutFilter.type = "highpass";
+    const lowCutFreq = 20 + (lowCut * 3980); // 20Hz to 4000Hz range
+    lowCutFilter.frequency.setValueAtTime(lowCutFreq, this.audioContext.currentTime);
+    lowCutFilter.Q.setValueAtTime(2.8, this.audioContext.currentTime); // Much sharper resonance
 
-    // Set mix levels
-    inputGain.gain.setValueAtTime(1 - mix, this.audioContext.currentTime); // Dry signal
-    distortionGain.gain.setValueAtTime(mix, this.audioContext.currentTime); // Wet signal
+    // Set extreme gain levels
+    distortionGain.gain.setValueAtTime(3.0, this.audioContext.currentTime); // 3x boost
+    outputGain.gain.setValueAtTime(0.9, this.audioContext.currentTime); // Higher output
 
     // Connect the chain
-    inputGain.connect(outputGain); // Dry path
-    inputGain.connect(toneFilter); // Wet path
-    toneFilter.connect(waveshaper);
-    waveshaper.connect(distortionGain);
-    distortionGain.connect(makeupGain);
-    makeupGain.connect(outputGain);
+    inputGain.connect(lowCutFilter);
+    lowCutFilter.connect(waveshaper);
+    waveshaper.connect(toneFilter);
+    toneFilter.connect(distortionGain);
+    distortionGain.connect(outputGain);
 
     return {
       input: inputGain,
       output: outputGain,
       updateParameters: (newParams) => {
-        const { mix: newMix, amount: newAmount, makeup: newMakeup } = newParams;
-
-        // Update waveshaper curve
-        const newCurve = this.createDistortionCurve(newAmount);
+        const { dist: newDist, tone: newTone, lowCut: newLowCut } = newParams;
+        
+        // Update with extreme settings
+        const newCurve = this.createDistortionCurve(newDist * 1600);
         waveshaper.curve = newCurve;
-
-        // Update tone filter frequency (this is the key change!)
-        const newFrequency = 200 + (newAmount * 9800);
-        toneFilter.frequency.setValueAtTime(newFrequency, this.audioContext.currentTime);
-
-        // Update gains
-        inputGain.gain.setValueAtTime(1 - newMix, this.audioContext.currentTime);
-        distortionGain.gain.setValueAtTime(newMix, this.audioContext.currentTime);
-        makeupGain.gain.setValueAtTime(1 + (newMakeup * 2), this.audioContext.currentTime);
+        toneFilter.gain.setValueAtTime((newTone - 0.5) * 100, this.audioContext.currentTime);
+        const newLowCutFreq = 20 + (newLowCut * 3980);
+        lowCutFilter.frequency.setValueAtTime(newLowCutFreq, this.audioContext.currentTime);
       }
     };
+  }
+
+  // Create extreme distortion curve
+  createDistortionCurve(amount) {
+    const samples = 44100;
+    const curve = new Float32Array(samples);
+
+    for (let i = 0; i < samples; i++) {
+      const x = (i * 2) / samples - 1;
+      const distortion = Math.max(1, amount * 200); // 2x more aggressive
+      curve[i] = Math.tanh(x * distortion) * 3.0; // 3x output gain
+    }
+    return curve;
   }
 
   // Create Clipper effect chain
@@ -289,7 +296,6 @@ export class AudioEffectsProcessor {
         curve[i] = x;
       }
     }
-
     return curve;
   }
 
@@ -301,14 +307,14 @@ export class AudioEffectsProcessor {
     const bitDepth = Math.max(1, Math.floor((1 - amount) * 16));
 
     const scriptProcessor = this.audioContext.createScriptProcessor(4096, 1, 1);
-    
+
     scriptProcessor.onaudioprocess = (event) => {
       const input = event.inputBuffer.getChannelData(0);
       const output = event.outputBuffer.getChannelData(0);
 
       for (let i = 0; i < input.length; i++) {
         sampleCounter++;
-        
+
         if (sampleCounter >= sampleRateReduction) {
           lastSample = input[i];
           sampleCounter = 0;
@@ -326,7 +332,7 @@ export class AudioEffectsProcessor {
       updateParameters: (newAmount, newSampleRate) => {
         const newSampleRateReduction = Math.max(1, Math.floor((1 - newSampleRate) * 100));
         const newBitDepth = Math.max(1, Math.floor((1 - newAmount) * 16));
-        
+
         sampleRateReduction = newSampleRateReduction;
         bitDepth = newBitDepth;
       }
@@ -374,17 +380,554 @@ export class AudioEffectsProcessor {
         ((3 + distortion) * x * 20 * deg) /
         (Math.PI + distortion * Math.abs(x));
     }
+    return curve;
+  }
+
+  // Create Chorus effect chain
+  createChorus(parameters = {}) {
+    const { rate = 0.5, depth = 0.5, mix = 0.8 } = parameters;
+  
+    const inputGain = this.audioContext.createGain();
+    const outputGain = this.audioContext.createGain();
+    const wetGain = this.audioContext.createGain();
+    const dryGain = this.audioContext.createGain();
+  
+    // Create delay lines for chorus effect
+    const delayTime = 0.02; // 20ms base delay
+    const delayNode = this.audioContext.createDelay(0.1);
+    delayNode.delayTime.setValueAtTime(delayTime, this.audioContext.currentTime);
+  
+    // Create LFO for modulation
+    const lfo = this.audioContext.createOscillator();
+    const lfoGain = this.audioContext.createGain();
+    lfo.type = 'sine';
+    lfo.frequency.setValueAtTime(rate * 2, this.audioContext.currentTime);
+    lfoGain.gain.setValueAtTime(depth * 0.005, this.audioContext.currentTime);
+  
+    // Connect LFO to delay modulation
+    lfo.connect(lfoGain);
+    lfoGain.connect(delayNode.delayTime);
+    lfo.start();
+  
+    // Set mix levels
+    dryGain.gain.setValueAtTime(1 - mix, this.audioContext.currentTime);
+    wetGain.gain.setValueAtTime(mix, this.audioContext.currentTime);
+  
+    // Connect the chain
+    inputGain.connect(dryGain);
+    inputGain.connect(delayNode);
+    delayNode.connect(wetGain);
+    dryGain.connect(outputGain);
+    wetGain.connect(outputGain);
+  
+    return {
+      input: inputGain,
+      output: outputGain,
+      updateParameters: (newParams) => {
+        const { rate: newRate, depth: newDepth, mix: newMix } = newParams;
+        lfo.frequency.setValueAtTime(newRate * 2, this.audioContext.currentTime);
+        lfoGain.gain.setValueAtTime(newDepth * 0.005, this.audioContext.currentTime);
+        dryGain.gain.setValueAtTime(1 - newMix, this.audioContext.currentTime);
+        wetGain.gain.setValueAtTime(newMix, this.audioContext.currentTime);
+      }
+    };
+  }
+  
+  // Create Flanger effect chain
+  createFlanger(parameters = {}) {
+    const { rate = 0.5, depth = 0.5, mix = 0.8 } = parameters;
+  
+    const inputGain = this.audioContext.createGain();
+    const outputGain = this.audioContext.createGain();
+    const wetGain = this.audioContext.createGain();
+    const dryGain = this.audioContext.createGain();
+    const feedbackGain = this.audioContext.createGain();
+  
+    // Create delay for flanger effect (shorter than chorus)
+    const delayNode = this.audioContext.createDelay(0.02);
+    delayNode.delayTime.setValueAtTime(0.005, this.audioContext.currentTime);
+  
+    // Create LFO for modulation
+    const lfo = this.audioContext.createOscillator();
+    const lfoGain = this.audioContext.createGain();
+    lfo.type = 'sine';
+    lfo.frequency.setValueAtTime(rate, this.audioContext.currentTime);
+    lfoGain.gain.setValueAtTime(depth * 0.003, this.audioContext.currentTime);
+  
+    // Feedback for characteristic flanger sound
+    feedbackGain.gain.setValueAtTime(0.7, this.audioContext.currentTime);
+  
+    // Connect LFO and feedback
+    lfo.connect(lfoGain);
+    lfoGain.connect(delayNode.delayTime);
+    delayNode.connect(feedbackGain);
+    feedbackGain.connect(delayNode);
+    lfo.start();
+  
+    // Set mix levels
+    dryGain.gain.setValueAtTime(1 - mix, this.audioContext.currentTime);
+    wetGain.gain.setValueAtTime(mix, this.audioContext.currentTime);
+  
+    // Connect the chain
+    inputGain.connect(dryGain);
+    inputGain.connect(delayNode);
+    delayNode.connect(wetGain);
+    dryGain.connect(outputGain);
+    wetGain.connect(outputGain);
+  
+    return {
+      input: inputGain,
+      output: outputGain,
+      updateParameters: (newParams) => {
+        const { rate: newRate, depth: newDepth, mix: newMix } = newParams;
+        lfo.frequency.setValueAtTime(newRate, this.audioContext.currentTime);
+        lfoGain.gain.setValueAtTime(newDepth * 0.003, this.audioContext.currentTime);
+        dryGain.gain.setValueAtTime(1 - newMix, this.audioContext.currentTime);
+        wetGain.gain.setValueAtTime(newMix, this.audioContext.currentTime);
+      }
+    };
+  }
+  
+  // Create Phaser effect chain
+  createPhaser(parameters = {}) {
+    const { rate = 0.5, depth = 0.5, mix = 0.8 } = parameters;
+  
+    const inputGain = this.audioContext.createGain();
+    const outputGain = this.audioContext.createGain();
+    const wetGain = this.audioContext.createGain();
+    const dryGain = this.audioContext.createGain();
+  
+    // Create multiple all-pass filters for phasing
+    const allPassFilters = [];
+    const numStages = 6;
+    
+    for (let i = 0; i < numStages; i++) {
+      const filter = this.audioContext.createBiquadFilter();
+      filter.type = 'allpass';
+      filter.frequency.setValueAtTime(200 + i * 300, this.audioContext.currentTime);
+      filter.Q.setValueAtTime(10, this.audioContext.currentTime);
+      allPassFilters.push(filter);
+    }
+  
+    // Create LFO for modulation
+    const lfo = this.audioContext.createOscillator();
+    const lfoGain = this.audioContext.createGain();
+    lfo.type = 'sine';
+    lfo.frequency.setValueAtTime(rate, this.audioContext.currentTime);
+    lfoGain.gain.setValueAtTime(depth * 1000, this.audioContext.currentTime);
+  
+    // Connect LFO to all filters
+    lfo.connect(lfoGain);
+    allPassFilters.forEach(filter => {
+      lfoGain.connect(filter.frequency);
+    });
+    lfo.start();
+  
+    // Chain the all-pass filters
+    let currentNode = inputGain;
+    allPassFilters.forEach(filter => {
+      currentNode.connect(filter);
+      currentNode = filter;
+    });
+  
+    // Set mix levels
+    dryGain.gain.setValueAtTime(1 - mix, this.audioContext.currentTime);
+    wetGain.gain.setValueAtTime(mix, this.audioContext.currentTime);
+  
+    // Connect the chain
+    inputGain.connect(dryGain);
+    currentNode.connect(wetGain);
+    dryGain.connect(outputGain);
+    wetGain.connect(outputGain);
+  
+    return {
+      input: inputGain,
+      output: outputGain,
+      updateParameters: (newParams) => {
+        const { rate: newRate, depth: newDepth, mix: newMix } = newParams;
+        lfo.frequency.setValueAtTime(newRate, this.audioContext.currentTime);
+        lfoGain.gain.setValueAtTime(newDepth * 1000, this.audioContext.currentTime);
+        dryGain.gain.setValueAtTime(1 - newMix, this.audioContext.currentTime);
+        wetGain.gain.setValueAtTime(newMix, this.audioContext.currentTime);
+      }
+    };
+  }
+  
+  // Create Auto Pan effect chain
+  createAutoPan(parameters = {}) {
+    const { rate = 0.5, depth = 0.5 } = parameters;
+  
+    const inputGain = this.audioContext.createGain();
+    const outputGain = this.audioContext.createGain();
+    const leftGain = this.audioContext.createGain();
+    const rightGain = this.audioContext.createGain();
+    const splitter = this.audioContext.createChannelSplitter(2);
+    const merger = this.audioContext.createChannelMerger(2);
+  
+    // Create LFO for panning
+    const lfo = this.audioContext.createOscillator();
+    const lfoGain = this.audioContext.createGain();
+    const lfoOffset = this.audioContext.createGain();
+    
+    lfo.type = 'sine';
+    lfo.frequency.setValueAtTime(rate, this.audioContext.currentTime);
+    lfoGain.gain.setValueAtTime(depth * 0.5, this.audioContext.currentTime);
+    lfoOffset.gain.setValueAtTime(0.5, this.audioContext.currentTime);
+  
+    // Connect LFO to panning
+    lfo.connect(lfoGain);
+    lfoGain.connect(lfoOffset);
+    lfoOffset.connect(leftGain.gain);
+    
+    // Invert for right channel
+    const inverter = this.audioContext.createGain();
+    inverter.gain.setValueAtTime(-1, this.audioContext.currentTime);
+    lfoGain.connect(inverter);
+    inverter.connect(rightGain.gain);
+    
+    lfo.start();
+  
+    // Connect the chain
+    inputGain.connect(splitter);
+    splitter.connect(leftGain, 0);
+    splitter.connect(rightGain, 1);
+    leftGain.connect(merger, 0, 0);
+    rightGain.connect(merger, 0, 1);
+    merger.connect(outputGain);
+  
+    return {
+      input: inputGain,
+      output: outputGain,
+      updateParameters: (newParams) => {
+        const { rate: newRate, depth: newDepth } = newParams;
+        lfo.frequency.setValueAtTime(newRate, this.audioContext.currentTime);
+        lfoGain.gain.setValueAtTime(newDepth * 0.5, this.audioContext.currentTime);
+      }
+    };
+  }
+  
+  // Create Overdrive effect chain
+  createOverdrive(parameters = {}) {
+    const { dist = 0.5, tone = 0.5, lowCut = 0.5 } = parameters;
+  
+    const inputGain = this.audioContext.createGain();
+    const outputGain = this.audioContext.createGain();
+    const preGain = this.audioContext.createGain();
+  
+    // Create waveshaper for overdrive (softer than distortion)
+    const waveshaper = this.audioContext.createWaveShaper();
+    const curve = this.createOverdriveCurve(dist);
+    waveshaper.curve = curve;
+    waveshaper.oversample = '2x';
+  
+    // Create tone control
+    const toneFilter = this.audioContext.createBiquadFilter();
+    toneFilter.type = 'highshelf';
+    toneFilter.frequency.setValueAtTime(2000, this.audioContext.currentTime);
+    toneFilter.gain.setValueAtTime((tone - 0.5) * 20, this.audioContext.currentTime);
+  
+    // Create low cut filter
+    const lowCutFilter = this.audioContext.createBiquadFilter();
+    lowCutFilter.type = 'highpass';
+    const lowCutFreq = 50 + (lowCut * 500);
+    lowCutFilter.frequency.setValueAtTime(lowCutFreq, this.audioContext.currentTime);
+  
+    // Set gain levels
+    preGain.gain.setValueAtTime(1 + dist, this.audioContext.currentTime);
+    outputGain.gain.setValueAtTime(0.7, this.audioContext.currentTime);
+  
+    // Connect the chain
+    inputGain.connect(preGain);
+    preGain.connect(lowCutFilter);
+    lowCutFilter.connect(waveshaper);
+    waveshaper.connect(toneFilter);
+    toneFilter.connect(outputGain);
+  
+    return {
+      input: inputGain,
+      output: outputGain,
+      updateParameters: (newParams) => {
+        const { dist: newDist, tone: newTone, lowCut: newLowCut } = newParams;
+        const newCurve = this.createOverdriveCurve(newDist);
+        waveshaper.curve = newCurve;
+        preGain.gain.setValueAtTime(1 + newDist, this.audioContext.currentTime);
+        toneFilter.gain.setValueAtTime((newTone - 0.5) * 20, this.audioContext.currentTime);
+        const newLowCutFreq = 50 + (newLowCut * 500);
+        lowCutFilter.frequency.setValueAtTime(newLowCutFreq, this.audioContext.currentTime);
+      }
+    };
+  }
+  
+  // Create Auto-Wah effect chain
+  createAutoWah(parameters = {}) {
+    const { rate = 0.5, mix = 0.8 } = parameters;
+  
+    const inputGain = this.audioContext.createGain();
+    const outputGain = this.audioContext.createGain();
+    const wetGain = this.audioContext.createGain();
+    const dryGain = this.audioContext.createGain();
+  
+    // Create wah filter
+    const wahFilter = this.audioContext.createBiquadFilter();
+    wahFilter.type = 'bandpass';
+    wahFilter.Q.setValueAtTime(15, this.audioContext.currentTime);
+  
+    // Create LFO for wah modulation
+    const lfo = this.audioContext.createOscillator();
+    const lfoGain = this.audioContext.createGain();
+    const lfoOffset = this.audioContext.createGain();
+    
+    lfo.type = 'sine';
+    lfo.frequency.setValueAtTime(rate, this.audioContext.currentTime);
+    lfoGain.gain.setValueAtTime(1500, this.audioContext.currentTime);
+    lfoOffset.gain.setValueAtTime(800, this.audioContext.currentTime);
+  
+    // Connect LFO to filter frequency
+    lfo.connect(lfoGain);
+    lfoGain.connect(lfoOffset);
+    lfoOffset.connect(wahFilter.frequency);
+    lfo.start();
+  
+    // Set mix levels
+    dryGain.gain.setValueAtTime(1 - mix, this.audioContext.currentTime);
+    wetGain.gain.setValueAtTime(mix, this.audioContext.currentTime);
+  
+    // Connect the chain
+    inputGain.connect(dryGain);
+    inputGain.connect(wahFilter);
+    wahFilter.connect(wetGain);
+    dryGain.connect(outputGain);
+    wetGain.connect(outputGain);
+  
+    return {
+      input: inputGain,
+      output: outputGain,
+      updateParameters: (newParams) => {
+        const { rate: newRate, mix: newMix } = newParams;
+        lfo.frequency.setValueAtTime(newRate, this.audioContext.currentTime);
+        dryGain.gain.setValueAtTime(1 - newMix, this.audioContext.currentTime);
+        wetGain.gain.setValueAtTime(newMix, this.audioContext.currentTime);
+      }
+    };
+  }
+  
+  // Create Rotary effect chain
+  createRotary(parameters = {}) {
+    const { rate = 0.5 } = parameters;
+  
+    const inputGain = this.audioContext.createGain();
+    const outputGain = this.audioContext.createGain();
+    const splitter = this.audioContext.createChannelSplitter(2);
+    const merger = this.audioContext.createChannelMerger(2);
+  
+    // Create doppler effect with delay and modulation
+    const delayL = this.audioContext.createDelay(0.1);
+    const delayR = this.audioContext.createDelay(0.1);
+    
+    // Create LFOs for rotary modulation
+    const lfoL = this.audioContext.createOscillator();
+    const lfoR = this.audioContext.createOscillator();
+    const lfoGainL = this.audioContext.createGain();
+    const lfoGainR = this.audioContext.createGain();
+    
+    lfoL.type = 'sine';
+    lfoR.type = 'sine';
+    lfoL.frequency.setValueAtTime(rate * 2, this.audioContext.currentTime);
+    lfoR.frequency.setValueAtTime(rate * 2, this.audioContext.currentTime);
+    
+    // Phase offset for stereo effect
+    const phaseOffset = Math.PI / 2;
+    lfoGainL.gain.setValueAtTime(0.01, this.audioContext.currentTime);
+    lfoGainR.gain.setValueAtTime(0.01, this.audioContext.currentTime);
+  
+    // Connect LFOs to delays
+    lfoL.connect(lfoGainL);
+    lfoR.connect(lfoGainR);
+    lfoGainL.connect(delayL.delayTime);
+    lfoGainR.connect(delayR.delayTime);
+    
+    lfoL.start();
+    lfoR.start(this.audioContext.currentTime + phaseOffset);
+  
+    // Connect the chain
+    inputGain.connect(splitter);
+    splitter.connect(delayL, 0);
+    splitter.connect(delayR, 1);
+    delayL.connect(merger, 0, 0);
+    delayR.connect(merger, 0, 1);
+    merger.connect(outputGain);
+  
+    return {
+      input: inputGain,
+      output: outputGain,
+      updateParameters: (newParams) => {
+        const { rate: newRate } = newParams;
+        lfoL.frequency.setValueAtTime(newRate * 2, this.audioContext.currentTime);
+        lfoR.frequency.setValueAtTime(newRate * 2, this.audioContext.currentTime);
+      }
+    };
+  }
+  
+  // Create Stereo Chorus effect chain
+  createStereoChorus(parameters = {}) {
+    const { rate = 0.5, depth = 0.5, mix = 0.8 } = parameters;
+  
+    const inputGain = this.audioContext.createGain();
+    const outputGain = this.audioContext.createGain();
+    const splitter = this.audioContext.createChannelSplitter(2);
+    const merger = this.audioContext.createChannelMerger(2);
+    const wetGain = this.audioContext.createGain();
+    const dryGain = this.audioContext.createGain();
+  
+    // Create separate delays for left and right channels
+    const delayL = this.audioContext.createDelay(0.1);
+    const delayR = this.audioContext.createDelay(0.1);
+    
+    // Create LFOs with phase offset for stereo width
+    const lfoL = this.audioContext.createOscillator();
+    const lfoR = this.audioContext.createOscillator();
+    const lfoGainL = this.audioContext.createGain();
+    const lfoGainR = this.audioContext.createGain();
+    
+    lfoL.type = 'sine';
+    lfoR.type = 'sine';
+    lfoL.frequency.setValueAtTime(rate, this.audioContext.currentTime);
+    lfoR.frequency.setValueAtTime(rate * 1.1, this.audioContext.currentTime); // Slightly different rate
+    
+    lfoGainL.gain.setValueAtTime(depth * 0.005, this.audioContext.currentTime);
+    lfoGainR.gain.setValueAtTime(depth * 0.005, this.audioContext.currentTime);
+  
+    // Connect LFOs to delays
+    lfoL.connect(lfoGainL);
+    lfoR.connect(lfoGainR);
+    lfoGainL.connect(delayL.delayTime);
+    lfoGainR.connect(delayR.delayTime);
+    
+    lfoL.start();
+    lfoR.start(this.audioContext.currentTime + Math.PI / 4); // Phase offset
+  
+    // Set mix levels
+    dryGain.gain.setValueAtTime(1 - mix, this.audioContext.currentTime);
+    wetGain.gain.setValueAtTime(mix, this.audioContext.currentTime);
+  
+    // Connect the chain
+    inputGain.connect(dryGain);
+    inputGain.connect(splitter);
+    splitter.connect(delayL, 0);
+    splitter.connect(delayR, 1);
+    delayL.connect(merger, 0, 0);
+    delayR.connect(merger, 0, 1);
+    merger.connect(wetGain);
+    dryGain.connect(outputGain);
+    wetGain.connect(outputGain);
+  
+    return {
+      input: inputGain,
+      output: outputGain,
+      updateParameters: (newParams) => {
+        const { rate: newRate, depth: newDepth, mix: newMix } = newParams;
+        lfoL.frequency.setValueAtTime(newRate, this.audioContext.currentTime);
+        lfoR.frequency.setValueAtTime(newRate * 1.1, this.audioContext.currentTime);
+        lfoGainL.gain.setValueAtTime(newDepth * 0.005, this.audioContext.currentTime);
+        lfoGainR.gain.setValueAtTime(newDepth * 0.005, this.audioContext.currentTime);
+        dryGain.gain.setValueAtTime(1 - newMix, this.audioContext.currentTime);
+        wetGain.gain.setValueAtTime(newMix, this.audioContext.currentTime);
+      }
+    };
+  }
+  
+  // Create Tape Wobble effect chain
+  createTapeWobble(parameters = {}) {
+    const { flutterRate = 0.3, flutterDepth = 0.4, wowRate = 0.1, wowDepth = 0.3 } = parameters;
+  
+    const inputGain = this.audioContext.createGain();
+    const outputGain = this.audioContext.createGain();
+    const delayNode = this.audioContext.createDelay(0.1);
+    
+    // Create flutter LFO (high frequency modulation)
+    const flutterLfo = this.audioContext.createOscillator();
+    const flutterGain = this.audioContext.createGain();
+    flutterLfo.type = 'sine';
+    flutterLfo.frequency.setValueAtTime(flutterRate * 10, this.audioContext.currentTime);
+    flutterGain.gain.setValueAtTime(flutterDepth * 0.002, this.audioContext.currentTime);
+    
+    // Create wow LFO (low frequency modulation)
+    const wowLfo = this.audioContext.createOscillator();
+    const wowGain = this.audioContext.createGain();
+    wowLfo.type = 'sine';
+    wowLfo.frequency.setValueAtTime(wowRate, this.audioContext.currentTime);
+    wowGain.gain.setValueAtTime(wowDepth * 0.01, this.audioContext.currentTime);
+    
+    // Combine flutter and wow
+    const combiner = this.audioContext.createGain();
+    combiner.gain.setValueAtTime(0.02, this.audioContext.currentTime); // Base delay time
+    
+    flutterLfo.connect(flutterGain);
+    wowLfo.connect(wowGain);
+    flutterGain.connect(combiner);
+    wowGain.connect(combiner);
+    combiner.connect(delayNode.delayTime);
+    
+    flutterLfo.start();
+    wowLfo.start();
+
+    // Add some filtering for tape character
+    const tapeFilter = this.audioContext.createBiquadFilter();
+    tapeFilter.type = 'lowpass';
+    tapeFilter.frequency.setValueAtTime(8000, this.audioContext.currentTime);
+    tapeFilter.Q.setValueAtTime(0.7, this.audioContext.currentTime);
+
+    // Connect the chain
+    inputGain.connect(delayNode);
+    delayNode.connect(tapeFilter);
+    tapeFilter.connect(outputGain);
+
+    return {
+      input: inputGain,
+      output: outputGain,
+      updateParameters: (newParams) => {
+        const { flutterRate: newFlutterRate, flutterDepth: newFlutterDepth, wowRate: newWowRate, wowDepth: newWowDepth } = newParams;
+        flutterLfo.frequency.setValueAtTime(newFlutterRate * 10, this.audioContext.currentTime);
+        flutterGain.gain.setValueAtTime(newFlutterDepth * 0.002, this.audioContext.currentTime);
+        wowLfo.frequency.setValueAtTime(newWowRate, this.audioContext.currentTime);
+        wowGain.gain.setValueAtTime(newWowDepth * 0.01, this.audioContext.currentTime);
+      }
+    };
+  }
+
+  // Create overdrive curve (softer than distortion)
+  createOverdriveCurve(drive) {
+    const samples = 44100;
+    const curve = new Float32Array(samples);
+    const driveValue = Math.max(1, drive * 10);
+
+    for (let i = 0; i < samples; i++) {
+      const x = (i * 2) / samples - 1;
+      curve[i] = Math.tanh(x * driveValue) * 0.8;
+    }
 
     return curve;
   }
 
-  // Apply effect to an audio source
+  // Update the applyEffect method to include all new effects
   applyEffect(audioSource, effectType, parameters, effectInstanceId) {
     let effectChain;
 
     switch (effectType) {
       case "Classic Dist":
         effectChain = this.createClassicDistortion(parameters);
+        break;
+      case "Chorus":
+        effectChain = this.createChorus(parameters);
+        break;
+      case "Flanger":
+        effectChain = this.createFlanger(parameters);
+        break;
+      case "Phaser":
+        effectChain = this.createPhaser(parameters);
+        break;
+      case "Auto Pan":
+        effectChain = this.createAutoPan(parameters);
         break;
       case "Clipper":
         effectChain = this.createClipper(parameters);
@@ -397,6 +940,21 @@ export class AudioEffectsProcessor {
         break;
       case "Juicy Distrotion":
         effectChain = this.createJuicyDistortion(parameters);
+        break;
+      case "Overdrive":
+        effectChain = this.createOverdrive(parameters);
+        break;
+      case "Auto-Wah":
+        effectChain = this.createAutoWah(parameters);
+        break;
+      case "Rotary":
+        effectChain = this.createRotary(parameters);
+        break;
+      case "Stereo Chorus":
+        effectChain = this.createStereoChorus(parameters);
+        break;
+      case "Tape Wobble":
+        effectChain = this.createTapeWobble(parameters);
         break;
       default:
         return audioSource; // No effect applied
