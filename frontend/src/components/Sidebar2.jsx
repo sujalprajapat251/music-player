@@ -26,6 +26,7 @@ import { ReactComponent as Track8 } from '../Images/track8.svg'
 import { ReactComponent as Wav } from '../Images/wav.svg'
 import Drum from "./Drum";
 import NewProject from "./NewProjectModel";
+import { setShowLoopLibrary } from "../Redux/Slice/ui.slice";
 
 const Sidebar2 = () => {
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
@@ -313,7 +314,13 @@ const Sidebar2 = () => {
       </div>
       <NewProject open={showNewProject} setOpen={setShowNewProject} />
       {showAddTrackModal && (
-        <AddNewTrackModel onClose={() => setShowAddTrackModal(false)} onOpenLoopLibrary={() => setShowAddTrackModal(false)} />
+        <AddNewTrackModel
+          onClose={() => setShowAddTrackModal(false)}
+          onOpenLoopLibrary={() => {
+            dispatch(setShowLoopLibrary(true));
+            setShowAddTrackModal(false);
+          }}
+        />
       )}
 
     </>

@@ -51,6 +51,7 @@ import Guitar from "./Guitar";
 import Orchestral from "./Orchestral";
 import PricingModel from './PricingModel';
 import { useParams } from 'react-router-dom';
+import { setShowLoopLibrary } from "../Redux/Slice/ui.slice";
 
 const Timeline = () => {
 
@@ -1689,6 +1690,16 @@ const Timeline = () => {
   }, []);
 
   const [pricingModalOpen, setPricingModalOpen] = useState(false);
+  const showLoopLibrary = useSelector((state) => state.ui?.showLoopLibrary);
+
+  useEffect(() => {
+    if (showLoopLibrary && !showOffcanvas) {
+      setShowOffcanvas(true);
+    }
+    if (!showLoopLibrary && showOffcanvas) {
+      setShowOffcanvas(false);
+    }
+  }, [showLoopLibrary]);
 
   const handleContextMenuAction = useCallback((action, overrideTrackId, overrideClipId) => {
     const trackId = overrideTrackId ?? contextMenu.trackId;
@@ -3359,7 +3370,7 @@ const Timeline = () => {
         <div className="absolute top-[60px] right-[0] -translate-x-1/2 z-30">
           <div
             className="bg-[#FFFFFF] w-[40px] h-[40px] flex items-center justify-center rounded-full cursor-pointer"
-            onClick={() => { setShowOffcanvas((prev) => !prev); setShowOffcanvasEffects(false); }}
+            onClick={() => { const next = !showOffcanvas; setShowOffcanvas(next); setShowOffcanvasEffects(false); dispatch(setShowLoopLibrary(next)); }}
           >
             <img src={offce} alt="Off canvas" />
           </div>
@@ -3387,7 +3398,7 @@ const Timeline = () => {
       {showAddTrackModal && (
         <AddNewTrackModel
           onClose={() => setShowAddTrackModal(false)}
-          onOpenLoopLibrary={() => { setShowOffcanvas(true); setShowOffcanvasEffects(false); }}
+          onOpenLoopLibrary={() => { setShowOffcanvas(true); setShowOffcanvasEffects(false); dispatch(setShowLoopLibrary(true)); }}
         />
       )}
       {/* Hidden file input for import */}
@@ -3428,7 +3439,7 @@ const Timeline = () => {
           }
         }}
       />
-      <MusicOff showOffcanvas={showOffcanvas} setShowOffcanvas={setShowOffcanvas} />
+      <MusicOff showOffcanvas={showOffcanvas} setShowOffcanvas={(v) => { setShowOffcanvas(v); dispatch(setShowLoopLibrary(Boolean(v))); }} />
       <Effects showOffcanvas={showOffcanvasEffects} setShowOffcanvas={setShowOffcanvasEffects} />
 
       {/* Context Menu */}
@@ -3437,7 +3448,7 @@ const Timeline = () => {
         position={contextMenu.position}
         onClose={handleContextMenuClose}
         onAction={handleContextMenuAction}
-        onOpenMusicOff={() => setShowOffcanvas(true)}
+        onOpenMusicOff={() => { setShowOffcanvas(true); dispatch(setShowLoopLibrary(true)); }}
       />
 
       {/* Section Context Menu */}
