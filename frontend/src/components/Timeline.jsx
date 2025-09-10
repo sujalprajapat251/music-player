@@ -169,16 +169,22 @@ const Timeline = () => {
       })
       : hitsForTrack;
 
-    trimmedHits.forEach((hit, idx) => {
-      const hitTime = hit.currentTime || 0;
-      if (hitTime >= windowStart && hitTime < windowEnd) {
-        const key = `${currentTrackId}:${hitTime.toFixed(4)}:${idx}`;
-        if (scheduledKeysRef.current.has(key)) return;
-        scheduledKeysRef.current.add(key);
-        const delayMs = Math.max(0, Math.round((hitTime - nowSec) * 1000));
-        setTimeout(() => { playRecordedDrumHit(hit); }, delayMs);
-      }
-    });
+    // Check if the current track is muted before playing drum hits
+    const currentTrack = tracks.find(t => t.id === currentTrackId);
+    const isCurrentTrackMuted = currentTrack ? (soloTrackId ? soloTrackId !== currentTrack.id : (currentTrack.muted || false)) : false;
+
+    if (!isCurrentTrackMuted) {
+      trimmedHits.forEach((hit, idx) => {
+        const hitTime = hit.currentTime || 0;
+        if (hitTime >= windowStart && hitTime < windowEnd) {
+          const key = `${currentTrackId}:${hitTime.toFixed(4)}:${idx}`;
+          if (scheduledKeysRef.current.has(key)) return;
+          scheduledKeysRef.current.add(key);
+          const delayMs = Math.max(0, Math.round((hitTime - nowSec) * 1000));
+          setTimeout(() => { playRecordedDrumHit(hit); }, delayMs);
+        }
+      });
+    }
 
     const tick = setInterval(() => { }, 50);
     return () => clearInterval(tick);
@@ -1081,6 +1087,13 @@ const Timeline = () => {
         // Piano playback logic
         if (filteredPianoNotes.length > 0) {
           filteredPianoNotes.forEach(note => {
+            // Check if the track containing this note is muted
+            const track = tracks.find(t => t.id === note.trackId);
+            if (!track) return;
+            
+            const isMuted = soloTrackId ? soloTrackId !== track.id : (track.muted || false);
+            if (isMuted) return; // Skip playing notes from muted tracks
+
             const noteStartTime = note.startTime || 0;
             const noteEndTime = noteStartTime + (note.duration || 0.5);
 
@@ -2778,6 +2791,13 @@ const Timeline = () => {
     if (isPlaying && currentTime > 0) {
       // Check drum recorded data for playback
       filteredDrumData.forEach(drumHit => {
+        // Check if the track containing this drum hit is muted
+        const track = tracks.find(t => t.id === drumHit.trackId);
+        if (!track) return;
+        
+        const isMuted = soloTrackId ? soloTrackId !== track.id : (track.muted || false);
+        if (isMuted) return; // Skip playing drum hits from muted tracks
+
         const hitTime = drumHit.currentTime;
         const tolerance = 0.05; // 50ms tolerance
         const hitKey = `${drumHit.padId}-${Math.floor(hitTime * 10)}`; // Create unique key
@@ -2790,6 +2810,10 @@ const Timeline = () => {
 
       // Also check regular drum tracks
       tracks.forEach(track => {
+        // Check if this track is muted
+        const isMuted = soloTrackId ? soloTrackId !== track.id : (track.muted || false);
+        if (isMuted) return; // Skip muted tracks
+
         if (track.type === 'drum' && track.audioClips) {
           track.audioClips.forEach(clip => {
             if (clip.type === 'drum' && clip.drumSequence) {
@@ -2815,12 +2839,19 @@ const Timeline = () => {
       // Clear played hits when not playing
       playedDrumHitsRef.current.clear();
     }
-  }, [isPlaying, currentTime, tracks, filteredDrumData, playDrumSound]);
+  }, [isPlaying, currentTime, tracks, filteredDrumData, playDrumSound, soloTrackId]);
 
   // Enhance the existing playDrumSound function to handle pattern drum events
   useEffect(() => {
     // Check for pattern drum events that need to be played
     Object.entries(patternDrumEvents).forEach(([trackId, trackEvents]) => {
+      // Check if this track is muted
+      const track = tracks.find(t => t.id === trackId);
+      if (!track) return;
+      
+      const isMuted = soloTrackId ? soloTrackId !== track.id : (track.muted || false);
+      if (isMuted) return; // Skip muted tracks
+
       Object.entries(trackEvents).forEach(([clipId, drumEvents]) => {
         if (patternDrumPlayback[trackId]?.[clipId]) {
           // Play each drum event
@@ -2830,13 +2861,17 @@ const Timeline = () => {
         }
       });
     });
-  }, [patternDrumEvents, patternDrumPlayback, playDrumSound]);
+  }, [patternDrumEvents, patternDrumPlayback, playDrumSound, tracks, soloTrackId]);
 
   // Add this useEffect after the existing drum playback effect
   useEffect(() => {
     if (isPlaying && currentTime > 0) {
       // Check each track for pattern drum clips
       tracks.forEach(track => {
+        // Check if this track is muted
+        const isMuted = soloTrackId ? soloTrackId !== track.id : (track.muted || false);
+        if (isMuted) return; // Skip muted tracks
+
         if (track.audioClips) {
           track.audioClips.forEach(clip => {
             if (clip.fromPattern && clip.drumSequence) {
@@ -2851,7 +2886,7 @@ const Timeline = () => {
         }
       });
     }
-  }, [isPlaying, currentTime, tracks, dispatch]);
+  }, [isPlaying, currentTime, tracks, dispatch, soloTrackId]);
 
   // Initialize piano for playback when component mounts
   useEffect(() => {

@@ -35,6 +35,9 @@ const Knob = ({
   const center = size / 2;
 
   const onMouseDown = (e) => {
+    // Prevent parent containers from starting drag/reorder when using the knob
+    e.stopPropagation();
+    e.preventDefault();
     dragging.current = true;
     lastY.current = e.clientY;
     document.addEventListener("mousemove", onMouseMove);
@@ -63,6 +66,23 @@ const Knob = ({
     dragging.current = false;
     document.removeEventListener("mousemove", onMouseMove);
     document.removeEventListener("mouseup", onMouseUp);
+  };
+
+  // Support changing volume with mouse wheel while hovering the knob
+  const onWheel = (e) => {
+    // Prevent page scroll and parent handlers
+    e.stopPropagation();
+    e.preventDefault();
+    const step = e.deltaY > 0 ? -2 : 2; // step in volume units
+    setAngle((prev) => {
+      const currentVolume = angleToVolume(prev);
+      let nextVolume = Math.max(0, Math.min(100, currentVolume + step));
+      const nextAngle = volumeToAngle(nextVolume);
+      if (onChange) {
+        onChange(nextVolume, trackId);
+      }
+      return nextAngle;
+    });
   };
 
   return (
