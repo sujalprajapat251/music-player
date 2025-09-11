@@ -92,6 +92,7 @@ const PianoRolls = () => {
     const [activeNotes, setActiveNotes] = useState({});
     const [selectedNoteIndex, setSelectedNoteIndex] = useState(null);
     const [clipboardNote, setClipboardNote] = useState(null);
+    const DRUM_NOTE_DURATION = 0.15; // seconds - uniform drum note duration for consistent width
 
         // Determine instrument by selected track
         const isDrumTrack = useMemo(() => {
@@ -626,7 +627,10 @@ const PianoRolls = () => {
             }
         };
 
-        const defaultDuration = getTrackReferenceDuration();
+        let defaultDuration = getTrackReferenceDuration();
+        if (isDrumTrack) {
+            defaultDuration = DRUM_NOTE_DURATION;
+        }
         
         // Remove restriction: allow adding anywhere in the piano roll
         if (noteIndex >= 0 && noteIndex < NOTES.length) {
@@ -685,11 +689,21 @@ const PianoRolls = () => {
                 trackId: currentTrackId, // Ensure trackId is set to current track
                 timestamp: Date.now()
             };
-            
+
+            if (isDrumTrack) {
+                const padMapping = { 0: 'Q', 1: 'W', 2: 'E', 3: 'A', 4: 'S', 5: 'D', 6: 'Z', 7: 'X', 8: 'C' };
+                const soundMapping = { 0: 'kick', 1: 'snare', 2: 'hihat', 3: 'openhat', 4: 'crash', 5: 'tom1', 6: 'tom2', 7: 'tom3', 8: 'perc' };
+                
+                newNote.padId = padMapping[noteIndex] || 'Q';
+                newNote.drumSound = soundMapping[noteIndex] || 'kick';
+                newNote.drumMachine = selectedDrumMachine?.name || 'default';
+            }
+
             // Add note to local state with real-time updates
             setNotes(prev => {
                 const updated = [...prev, newNote];
-                syncNotesToRedux(updated);
+                // Use setTimeout to prevent synchronous Redux update during render
+                setTimeout(() => syncNotesToRedux(updated), 0);
                 return updated;
             });
             
@@ -798,36 +812,141 @@ const PianoRolls = () => {
         updateNote(index, updatedNote, { syncRedux: false });
     };
 
+    // Add this function after your existing helper functions
+    const convertDrumHitsToPianoNotes = (drumHits, drumMachine) => {
+        if (!Array.isArray(drumHits)) return [];
+        
+        // Map pad IDs to piano roll rows (NOTES array indices)
+        const padToNoteMapping = {
+            'Q': 0,   // Top row - kick
+            'W': 1,   // Snare  
+            'E': 2,   // Hi-hat
+            'A': 3,   // Open hi-hat
+            'S': 4,   // Crash
+            'D': 5,   // Tom 1
+            'Z': 6,   // Tom 2
+            'X': 7,   // Tom 3
+            'C': 8    // Percussion
+        };
+    
+        return drumHits.map(hit => {
+            const padId = hit.padId || 'Q';
+            const noteIndex = padToNoteMapping[padId] || 0;
+            const note = NOTES[noteIndex];
+            
+            return {
+                note,
+                start: hit.currentTime || 0,
+                duration: DRUM_NOTE_DURATION,
+                velocity: 0.8,
+                id: hit.id || `drum_note_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+                trackId: hit.trackId,
+                timestamp: Date.now(),
+                // Keep drum-specific properties
+                padId: hit.padId,
+                drumSound: hit.sound,
+                drumMachine: hit.drumMachine
+            };
+        });
+    };
+
+    // Update your existing useEffect that loads notes from Redux
+    useEffect(() => {
+        if (!currentTrackId) {
+            setNotes([]);
+            return;
+        }
+        
+        let localNotes = [];
+        
+        if (isDrumTrack) {
+            // Convert drum hits to piano roll format
+            const trackDrumHits = Array.isArray(drumRecordedData) 
+                ? drumRecordedData.filter(hit => (hit.trackId ?? null) === (currentTrackId ?? null))
+                : [];
+            localNotes = convertDrumHitsToPianoNotes(trackDrumHits, selectedDrumMachine);
+        } else {
+            // Use existing piano notes logic
+            const trackNotes = Array.isArray(pianoNotes) 
+                ? pianoNotes.filter(note => (note.trackId ?? null) === (currentTrackId ?? null))
+                : [];
+            localNotes = trackNotes.map(note => ({
+                note: note.note,
+                start: note.startTime,
+                duration: note.duration,
+                velocity: note.velocity || 0.8,
+                id: note.id,
+                trackId: note.trackId,
+                timestamp: Date.now()
+            }));
+        }
+        
+        // Only update if notes are actually different to prevent infinite renders
+        setNotes(prevNotes => {
+            // Quick length check first
+            if (prevNotes.length !== localNotes.length) {
+                return localNotes;
+            }
+            
+            // Deep comparison only if lengths match
+            if (localNotes.length === 0) return prevNotes;
+            
+            const hasChanged = prevNotes.some((prevNote, index) => {
+                const localNote = localNotes[index];
+                return !localNote || 
+                       prevNote.id !== localNote.id || 
+                       Math.abs((prevNote.start || 0) - (localNote.start || 0)) > 0.001 || 
+                       Math.abs((prevNote.duration || 0) - (localNote.duration || 0)) > 0.001 ||
+                       prevNote.note !== localNote.note;
+            });
+            
+            if (hasChanged) {
+                return localNotes;
+            }
+            
+            return prevNotes;
+        });
+    // CRITICAL: Only depend on the data, not on functions to prevent infinite loops
+    }, [pianoNotes, drumRecordedData, currentTrackId, isDrumTrack]);
+    
     
     // Sync notes to Redux so Timeline shows red region + white mini boxes
     const syncNotesToRedux = useCallback((list) => {
+        if (!currentTrackId || !Array.isArray(list)) return;
         try {
             // Only sync entries that belong to the current track
             const currentTrackNotes = list.filter(n => (n.trackId ?? null) === (currentTrackId ?? null));
 
             if (isDrumTrack) {
-                // Map piano-roll note rows to drum hits for the timeline
-                const hits = currentTrackNotes.map((n, idx) => {
-                    const midi = noteNameToMidi(n.note);
-                    const pads = selectedDrumMachine.pads || [];
-                    const pad = pads.length > 0 ? pads[midi % pads.length] : {};
+                // Convert piano roll notes back to drum hits
+                const hits = currentTrackNotes.map((n) => {
+                    // Use stored drum properties or derive from note position
+                    const padMapping = { 0: 'Q', 1: 'W', 2: 'E', 3: 'A', 4: 'S', 5: 'D', 6: 'Z', 7: 'X', 8: 'C' };
+                    const soundMapping = { 0: 'kick', 1: 'snare', 2: 'hihat', 3: 'openhat', 4: 'crash', 5: 'tom1', 6: 'tom2', 7: 'tom3', 8: 'perc' };
+
+                    const noteIndex = NOTES.indexOf(n.note);
+                    const padId = n.padId || padMapping[noteIndex] || 'Q';
+                    const sound = n.drumSound || soundMapping[noteIndex] || 'kick';
+
                     return {
                         trackId: n.trackId,
-                        currentTime: n.start,
-                        decay: Math.max(0.05, Number(n.duration) || 0.15),
-                        // Pass through drum synthesis params when available
-                        type: pad.type,
-                        freq: pad.freq,
-                        sound: pad.sound,
-                        padId: pad.id ?? (midi % pads.length),
-                        drumMachine: selectedDrumMachine?.name,
-                        id: n.id
+                        currentTime: n.start || 0,
+                        decay: DRUM_NOTE_DURATION,
+                        padId: padId,
+                        sound: sound,
+                        drumMachine: n.drumMachine || selectedDrumMachine?.name || 'default',
+                        id: n.id,
+                        type: 'synth', // Default type for drum synthesis
+                        freq: 60 // Default frequency
                     };
                 });
 
+                // Update drum data without affecting other tracks
                 const existing = Array.isArray(drumRecordedData) ? drumRecordedData : [];
-                const others = existing.filter(h => (h.trackId ?? null) !== (currentTrackId ?? null));
-                dispatch(setDrumRecordedData([...others, ...hits]));
+                const otherTracks = existing.filter(h => (h.trackId ?? null) !== (currentTrackId ?? null));
+                const updated = [...otherTracks, ...hits];
+
+                dispatch(setDrumRecordedData(updated));
             } else {
                 // Melodic: map to piano notes for the timeline
                 const mapped = currentTrackNotes.map(n => ({
@@ -850,44 +969,46 @@ const PianoRolls = () => {
     }, [dispatch, noteNameToMidi, currentTrackId, pianoNotes, isDrumTrack, selectedDrumMachine, drumRecordedData]);
     
     // Clear local notes when track changes to prevent cross-contamination
-    useEffect(() => {
-        setNotes([]);
-    }, [currentTrackId]);
+    // useEffect(() => {
+    //     setNotes([]);
+    // }, [currentTrackId]);
     
-    // Load/refresh local notes whenever Redux notes for this track change
-    useEffect(() => {
-        if (!Array.isArray(pianoNotes) || !currentTrackId) return;
+    // Load/refresh local notes whenever Redux notes for this track change 
+    // miss some notes (uncomment to solve)
+
+    // useEffect(() => {
+    //     if (!Array.isArray(pianoNotes) || !currentTrackId) return;
         
-        // Only load notes that belong to the current track
-        const trackNotes = pianoNotes.filter(note => (note.trackId ?? null) === (currentTrackId ?? null));
+    //     // Only load notes that belong to the current track
+    //     const trackNotes = pianoNotes.filter(note => (note.trackId ?? null) === (currentTrackId ?? null));
         
-        const localNotes = trackNotes.map(note => ({
-            note: note.note,
-            start: note.startTime,
-            duration: note.duration,
-            velocity: note.velocity || 0.8,
-            id: note.id,
-            trackId: note.trackId,
-            timestamp: Date.now()
-        }));
+    //     const localNotes = trackNotes.map(note => ({
+    //         note: note.note,
+    //         start: note.startTime,
+    //         duration: note.duration,
+    //         velocity: note.velocity || 0.8,
+    //         id: note.id,
+    //         trackId: note.trackId,
+    //         timestamp: Date.now()
+    //     }));
         
-        // Only update if the notes are actually different to avoid unnecessary re-renders
-        setNotes(prevNotes => {
-            if (prevNotes.length !== localNotes.length) return localNotes;
+    //     // Only update if the notes are actually different to avoid unnecessary re-renders
+    //     setNotes(prevNotes => {
+    //         if (prevNotes.length !== localNotes.length) return localNotes;
             
-            // Check if any note has changed
-            const hasChanged = prevNotes.some((prevNote, index) => {
-                const localNote = localNotes[index];
-                return !localNote || 
-                       prevNote.id !== localNote.id || 
-                       prevNote.start !== localNote.start || 
-                       prevNote.duration !== localNote.duration ||
-                       prevNote.note !== localNote.note;
-            });
+    //         // Check if any note has changed
+    //         const hasChanged = prevNotes.some((prevNote, index) => {
+    //             const localNote = localNotes[index];
+    //             return !localNote || 
+    //                    prevNote.id !== localNote.id || 
+    //                    prevNote.start !== localNote.start || 
+    //                    prevNote.duration !== localNote.duration ||
+    //                    prevNote.note !== localNote.note;
+    //         });
             
-            return hasChanged ? localNotes : prevNotes;
-        });
-    }, [pianoNotes, currentTrackId]);
+    //         return hasChanged ? localNotes : prevNotes;
+    //     });
+    // }, [pianoNotes, currentTrackId]);
     
     // piano key handling over
 
@@ -1276,19 +1397,19 @@ const PianoRolls = () => {
     //     console.log("Detected Notes:", notes);
     // };
     
-    useEffect(() => {
-        if (track[0]?.audioClips[0]?.url) {
-            (async () => {
-                const audioBuffer = await decodeAudio(track[0].audioClips[0].url);
-                if (audioBuffer) {
-                    const detected = detectNotes(audioBuffer);
-                    if (detected && Array.isArray(detected)) {
-                        syncNotesToRedux(detected);
-                    }
-                }
-            })();
-        }
-    }, [track, syncNotesToRedux]);
+    // useEffect(() => {
+    //     if (track[0]?.audioClips[0]?.url) {
+    //         (async () => {
+    //             const audioBuffer = await decodeAudio(track[0].audioClips[0].url);
+    //             if (audioBuffer) {
+    //                 const detected = detectNotes(audioBuffer);
+    //                 if (detected && Array.isArray(detected)) {
+    //                     syncNotesToRedux(detected);
+    //                 }
+    //             }
+    //         })();
+    //     }
+    // }, [track, syncNotesToRedux]);
 
     const decodeAudio = async (fileOrUrl) => {
         let arrayBuffer;

@@ -517,8 +517,8 @@ const TimelineTrack = ({
   const pianoRecordingClip = useSelector((state) => selectStudioState(state).pianoRecordingClip);
   const bpm = useSelector((state) => selectStudioState(state).bpm || 120);
 
-  console.log("..........................nots",pianoNotes)
-  console.log("..........................clip",pianoRecordingClip)
+  // console.log("..........................nots",pianoNotes)
+  // console.log("..........................clip",pianoRecordingClip)
 
   // Get drum recording data from Redux
   const drumRecordedData = useSelector((state) => selectStudioState(state).drumRecordedData);
@@ -564,7 +564,7 @@ const TimelineTrack = ({
     return notes;
   }, [pianoNotes, trackId, trackPianoClip]);
 
-  console.log("trackPianoNotes z::: > ", trackPianoNotes)
+  // console.log("trackPianoNotes z::: > ", trackPianoNotes)
 
   // Derive per-track drum data with trimming applied
   const trackDrumNotes = useMemo(() => {
