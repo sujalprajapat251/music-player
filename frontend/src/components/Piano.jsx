@@ -93,7 +93,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
     }
   }, [defaultAngle]);
 
-
   const radius = (size - stroke) / 2;
   const center = size / 2;
   const onMouseDown = (e) => {
@@ -114,7 +113,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
       if (onChange) {
         onChange(next);
       }
-
       return next;
     });
   };
@@ -271,7 +269,6 @@ const other = [
   { name: "Simple Player" },
   { name: "Alternating Stride" }
 ];
-
 
 const Pianodemo = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -1993,7 +1990,7 @@ const Pianodemo = ({ onClose }) => {
                                 {INSTRUMENTS[currentInstrumentIndex].category}
                               </div>
                             </div>
-                          </div>~
+                          </div>
 
                           <button onClick={nextInstrument} className="text-gray-400 hover:text-white transition-colors p-1 lg:p-2">
                             <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] text-[#FFFFFF99]' />
