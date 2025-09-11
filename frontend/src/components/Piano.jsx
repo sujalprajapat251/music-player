@@ -335,6 +335,8 @@ const Pianodemo = ({ onClose }) => {
   const convolverNodeRef = useRef(null);
   const activeAudioNodes = useRef({});
   const recordAnchorRef = useRef({ systemMs: 0, playheadSec: 0 });
+  // Lock instrument for the duration of a recording session
+  const recordingInstrumentRef = useRef(null);
   const selectedInstrument = INSTRUMENTS[currentInstrumentIndex].id;
 
   // Update Redux when local instrument changes
@@ -379,9 +381,12 @@ const Pianodemo = ({ onClose }) => {
   useEffect(() => {
     if (getIsRecording) {
       recordAnchorRef.current = { systemMs: Date.now(), playheadSec: studioCurrentTime };
+      // Capture the instrument at recording start so the whole take uses one instrument
+      recordingInstrumentRef.current = selectedInstrument;
       hendleRecord();
     } else {
       hendleStopRecord();
+      recordingInstrumentRef.current = null;
     }
   }, [getIsRecording, studioCurrentTime]);
 
@@ -557,7 +562,7 @@ const Pianodemo = ({ onClose }) => {
         duration: 0.05,
         midiNumber: effectiveMidi,
         trackId: currentTrackId || null,
-        instrumentId: selectedInstrument,
+        instrumentId: recordingInstrumentRef.current || selectedInstrument,
         id: `${midiNumber}-${Date.now()}-${Math.random()}`
       };
       const updated = [...(pianoNotesRef.current || []), newEvent];
