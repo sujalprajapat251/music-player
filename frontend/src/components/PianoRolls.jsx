@@ -15,7 +15,9 @@ import { drumMachineTypes, createSynthSound } from '../Utils/drumMachineUtils';
 import { FaPaste, FaRegCopy } from 'react-icons/fa';
 import { MdDelete } from "react-icons/md";
 import { IoCutOutline } from 'react-icons/io5';
-import audio from '../Images/piano-beats.mp3'
+import audio from '../Images/piano-beats.mp3';
+
+
 const generatePianoKeys = () => {
     // Preserve original labeling scheme used in the UI
     const keys = [];

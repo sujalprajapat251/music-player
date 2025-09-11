@@ -4,6 +4,8 @@ import { IoClose } from 'react-icons/io5';
 import { useDispatch, useSelector } from 'react-redux';
 import { removeEffect, updateEffectParameter } from '../Redux/Slice/effects.slice';
 import { getEffectsProcessor } from '../Utils/audioEffectsProcessor';
+import { removeEffectFromTrack, updateTrackEffectParameter, setSelectedTrackId } from '../Redux/Slice/effects.slice';
+import { selectStudioState } from '../Redux/rootReducer';
 
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
@@ -107,12 +109,12 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onValueChan
         setAngle((prev) => {
             let next = prev + deltaY * 1.5; // adjust sensitivity as needed
             next = Math.max(min, Math.min(max, next));
-            
+
             // Call the callback to update Redux
             if (onValueChange) {
                 onValueChange(parameterIndex, next);
             }
-            
+
             return next;
         });
     };
@@ -263,12 +265,12 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle, onValueCha
         setAngle((prev) => {
             let next = prev + deltaY * 1.5; // adjust sensitivity as needed
             next = Math.max(min, Math.min(max, next));
-            
+
             // Call the callback to update Redux
             if (onValueChange) {
                 onValueChange(parameterIndex, next);
             }
-            
+
             return next;
         });
     };
@@ -363,20 +365,45 @@ const ClassicDist = () => {
     };
 
     const dispatch = useDispatch();
+    const { trackEffects, selectedTrackId } = useSelector((state) => state.effects);
+    const currentTrackId = useSelector((state) => selectStudioState(state)?.currentTrackId);
     const { activeEffects } = useSelector((state) => state.effects);
 
     // Get the current effect's instanceId from activeEffects
-    const currentEffect = activeEffects.find(effect => effect.name === "Classic Dist");
+    // const currentEffect = activeEffects.find(effect => effect.name === "Classic Dist");
+    // const currentInstanceId = currentEffect?.instanceId;
+
+    // Use selectedTrackId from effects or fall back to currentTrackId from studio
+    const activeTrackId = selectedTrackId || currentTrackId;
+
+    // Get effects for the currently selected track
+    const trackSpecificEffects = trackEffects[activeTrackId] || [];
+    // Get the current effect's instanceId from track-specific effects or fallback to activeEffects
+    const currentEffect = trackSpecificEffects.find(effect =>
+        effect.name === "Classic Dist" || effect.name === "ClassicDist"
+    ) || activeEffects.find(effect =>
+        effect.name === "Classic Dist" || effect.name === "ClassicDist"
+    );
     const currentInstanceId = currentEffect?.instanceId;
 
-    const handleRemoveEffect = (instanceId) => {
+const handleRemoveEffect = (instanceId) => {
+    if (!instanceId) return;
+    
+    if (activeTrackId && trackSpecificEffects.some(effect => effect.instanceId === instanceId)) {
+        // Remove from track-specific effects
+        dispatch(removeEffectFromTrack({ trackId: activeTrackId, instanceId }));
+    } else if (activeEffects.some(effect => effect.instanceId === instanceId)) {
+        // Remove from general active effects
         dispatch(removeEffect(instanceId));
-    };
+    }
+};
 
     // Handle knob value changes
+    // specific track
     const handleKnobChange = (parameterIndex, value) => {
-        if (currentInstanceId) {
-            dispatch(updateEffectParameter({
+        if (currentInstanceId && activeTrackId) {
+            dispatch(updateTrackEffectParameter({
+                trackId: activeTrackId,
                 instanceId: currentInstanceId,
                 parameterIndex: parameterIndex,
                 value: value
@@ -391,12 +418,19 @@ const ClassicDist = () => {
         }
         // Return default values based on parameter index
         switch (parameterIndex) {
-            case 0: return -90; // Mix
-            case 1: return 0;   // Amount
-            case 2: return 90;  // Makeup
+            case 0: return -90; // Dist (Mix)
+            case 1: return 0;   // Tone (Amount)
+            case 2: return 90;  // Low Cut (Makeup)
             default: return 0;
         }
     };
+
+    // Show track info in the component
+    const trackName = useSelector((state) => {
+        const tracks = selectStudioState(state)?.tracks || [];
+        const track = tracks.find(t => t.id === activeTrackId);
+        return track?.name || 'No Track Selected';
+    });
 
     return (
         <div className='bg-[#141414]'>
@@ -415,10 +449,10 @@ const ClassicDist = () => {
 
                 {/* Dist Knob - Top Left */}
                 <div className="absolute top-[20px] left-[30px] sm:top-[30px] sm:left-[40px] md600:top-[25px] md600:left-[40px] md:top-[25px] md:left-[40px]">
-                    <Knob 
-                        label="Mix" 
-                        min={-135} 
-                        max={135} 
+                    <Knob
+                        label="Dist"
+                        min={-135}
+                        max={135}
                         defaultAngle={getCurrentParameterValue(0)}
                         onValueChange={handleKnobChange}
                         parameterIndex={0}
@@ -427,10 +461,10 @@ const ClassicDist = () => {
 
                 {/* Tone Knob - Top Right */}
                 <div className="absolute top-[50px] right-[30px] sm:top-[60px] sm:right-[50px] md600:top-[65px] md600:right-[45px] md:top-[80px] md:right-[35px]">
-                    <Knob 
-                        label="Amount" 
-                        min={-135} 
-                        max={135} 
+                    <Knob
+                        label="Tone"
+                        min={-135}
+                        max={135}
                         defaultAngle={getCurrentParameterValue(1)}
                         onValueChange={handleKnobChange}
                         parameterIndex={1}
@@ -439,10 +473,10 @@ const ClassicDist = () => {
 
                 {/* Low cut Knob - Bottom Center */}
                 <div className="absolute bottom-[15px] left-[30px] sm:bottom-[25px] sm:left-[40px] md600:left-[40px] md600:bottom-[45px] md:left-[40px] md:bottom-[45px]">
-                    <Knob1 
-                        label="Makeup" 
-                        min={-135} 
-                        max={135} 
+                    <Knob1
+                        label="Low Cut"
+                        min={-135}
+                        max={135}
                         defaultAngle={getCurrentParameterValue(2)}
                         onValueChange={handleKnobChange}
                         parameterIndex={2}
@@ -454,4 +488,3 @@ const ClassicDist = () => {
 }
 
 export default ClassicDist
- 

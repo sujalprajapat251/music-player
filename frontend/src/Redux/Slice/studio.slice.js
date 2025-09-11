@@ -4,6 +4,7 @@ import { drumMachineTypes } from '../../Utils/drumMachineUtils';
 import WavEncoder from 'wav-encoder';
 import { selectStudioState } from '../rootReducer';
 import { setAlert } from './alert.slice';
+
 const initialState = {
   tracks: [],
   trackHeight: 70, // Standard height for each track
@@ -62,7 +63,7 @@ const studioSlice = createSlice({
       console.log('all trackid', action.payload);
     },
     addTrack: (state, action) => {
-      console.log(">>>>>>>>>>>>>>>>>>>>>>>>",action.payload)
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>>", action.payload)
       // Ensure new tracks have frozen property, audioClips array, and a unique color
       const track = {
         ...action.payload,
@@ -139,7 +140,7 @@ const studioSlice = createSlice({
         state.pianoNotes = (state.pianoNotes || []).filter(n => n?.trackId != trackId);
         state.guitarNotes = (state.guitarNotes || []).filter(n => n?.trackId != trackId);
         state.drumRecordedData = (state.drumRecordedData || []).filter(n => n?.trackId != trackId);
-        
+
         if (state.pianoRecordingClip?.trackId == trackId) {
           state.pianoRecordingClip = null;
         }
@@ -149,7 +150,7 @@ const studioSlice = createSlice({
         if (state.drumRecordingClip?.trackId == trackId) {
           state.drumRecordingClip = null;
         }
-        
+
         // Set flag to indicate track was deleted for audio cleanup
         state.trackDeleted = { trackId, timestamp: Date.now() };
       }
@@ -587,11 +588,6 @@ const studioSlice = createSlice({
     clearTrackDeleted: (state) => {
       state.trackDeleted = null;
     },
-
-    // ... existing code ...
-
-    // ****************** Guitar *****************
-   
   },
 });
 
@@ -660,7 +656,7 @@ export const {
   moveTrackUp,
   moveTrackDown,
   reorderTracks,
-   clearTrackDeleted,
+  clearTrackDeleted,
 } = studioSlice.actions;
 
 export default studioSlice.reducer;

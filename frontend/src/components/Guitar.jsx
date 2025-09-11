@@ -1985,19 +1985,6 @@ const Guitar = ({ onClose }) => {
                                                 </div>
                                             </div>
 
-                                            {/* {isRecording ? (<button onClick={hendleStopRecord} className="cursor-pointer">
-                        <FaStop />
-                    </button>
-                    ) :
-                        (<button onClick={hendleRecord} className="cursor-pointer">
-                            <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
-                                <p className="rounded-full p-[3px] sm:p-[3px] lg:p-2 bg-[#FF6767]"></p>
-                                <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px]">Rec</p>
-                            </div>
-                        </button>)
-                    } */}
-
-
                                             <div className="flex space-x-1 md600:space-x-2 lg:space-x-4 2xl:space-x-6">
                                                 <div className="flex flex-col items-center">
                                                     <Knob label="Reverb" min={-135} max={135} defaultAngle={reverb} onChange={(value) => setReverb(value)} />
