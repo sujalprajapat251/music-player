@@ -232,12 +232,12 @@ const AutoPan = () => {
             <div className={`w-[150px] h-[140px] sm:w-[190px] sm:h-[180px] md600:w-[220px] md600:h-[210px] md:w-[230px] md:h-[265px] lg:w-[240px] lg:h-[282px] xl:w-[240px] xl:h-[285px] 2xl:w-[256px] 2xl:h-[300px] bg-[#302f2f] relative ${!isPoweredOn ? 'opacity-50 pointer-events-none' : ''}`}>
                 {/* Tone Knob - Top Right */}
                 <div className="absolute top-[30px] right-[30px] md600:top-[40px] md600:right-[40px] md:top-[50px] md:right-[40px]">
-                    <Knob1 label="Rate" min={-135} max={135} defaultAngle={0} />
+                    <Knob1 label="Depth" min={-135} max={135} defaultAngle={0} />
                 </div>
 
                 {/* Low cut Knob - Bottom Center */}
                 <div className="absolute top-[80px] left-[30px] md600:top-[100px] md600:left-[40px] md:top-[130px] md:left-[40px]">
-                    <Knob1 label="Depth" min={-135} max={135} defaultAngle={90} />
+                    <Knob1 label="Rate" min={-135} max={135} defaultAngle={90} />
                 </div>
             </div>
         </div>

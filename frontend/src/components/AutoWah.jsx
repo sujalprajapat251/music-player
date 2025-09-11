@@ -233,12 +233,12 @@ const AutoWah = () => {
             <div className={`w-[150px] h-[140px] sm:w-[190px] sm:h-[180px] md600:w-[220px] md600:h-[210px] md:w-[230px] md:h-[265px] lg:w-[240px] lg:h-[282px] xl:w-[240px] xl:h-[285px] 2xl:w-[256px] 2xl:h-[300px] bg-[#302f2f] relative ${!isPoweredOn ? 'opacity-50 pointer-events-none' : ''}`}>
                 {/* Tone Knob - Top Right */}
                 <div className="absolute top-[50px] right-[30px] sm:top-[50px] sm:right-[35px] md600:top-[50px] md600:right-[50px] md:top-[60px] md:right-[50px]  xl:top-[50px] xl:right-[50px]">
-                    <Knob1 label="Rate" min={-135} max={135} defaultAngle={0} />
+                    <Knob1 label="Mix" min={-135} max={135} defaultAngle={0} />
                 </div>
 
                 {/* Low cut Knob - Bottom Center */}
                 <div className="absolute top-[50px] left-[30px] sm:top-[50px] sm:left-[35px] md600:top-[50px] md600:left-[50px] md:top-[60px] md:left-[50px] xl:top-[50px] xl:left-[60px]">
-                    <Knob1 label="Depth" min={-135} max={135} defaultAngle={90} />
+                    <Knob1 label="Rate" min={-135} max={135} defaultAngle={90} />
                 </div>
             </div>
         </div>

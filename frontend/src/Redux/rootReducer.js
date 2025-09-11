@@ -20,6 +20,8 @@ import loopReducer from './Slice/loop.slice';
 import uiReducer from './Slice/ui.slice';
 import audioSettingsReducer from './Slice/audioSettings.slice';
 import undoRedoReducer from './Slice/undoRedo.slice';
+// Remove duplicate import since effectsReducer is already imported above
+
 
 // Create a selector that handles the redux-undo state structure
 export const selectStudioState = (state) => {
@@ -34,6 +36,7 @@ export const selectStudioState = (state) => {
 };
 // Convenience selector: tracks now include pianoNotes/pianoClip
 export const selectTracks = (state) => (selectStudioState(state)?.tracks || []);
+
 export const rootReducer = combineReducers({
     alert: alertSlice,
     auth: authSlice,

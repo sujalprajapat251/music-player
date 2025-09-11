@@ -4,6 +4,7 @@ import { Rnd } from "react-rnd";
 import reverceIcon from "../Images/reverce.svg";
 import { useSelector, useDispatch } from 'react-redux';
 import { setPianoNotes, setPianoRecordingClip, setDrumRecordedData, setDrumRecordingClip, setGuitarNotes, setGuitarRecordingClip } from '../Redux/Slice/studio.slice';
+import { setSelectedTrackId } from '../Redux/Slice/effects.slice';
 import { selectStudioState } from '../Redux/rootReducer';
 import { drumMachineTypes } from '../Utils/drumMachineUtils';
 
@@ -135,7 +136,6 @@ const ResizableTrimHandle = ({
           {type === 'start' ? '[>' : '<]'}
         </div>
       </div>
-
     </div>
   );
 };
@@ -504,6 +504,14 @@ const TimelineTrack = ({
   color
 }) => {
   const dispatch = useDispatch();
+  const { selectedTrackId } = useSelector((state) => state.effects);
+  const isTrackSelected = selectedTrackId === trackId;
+
+  // Handle track selection for effects
+  const handleTrackSelect = useCallback(() => {
+    dispatch(setSelectedTrackId(trackId));
+  }, [dispatch, trackId]);
+
   // Get piano notes from Redux
   const pianoNotes = useSelector((state) => selectStudioState(state).pianoNotes);
   const pianoRecordingClip = useSelector((state) => selectStudioState(state).pianoRecordingClip);
@@ -544,7 +552,6 @@ const TimelineTrack = ({
   }, [tracks, trackId]);
   const trackPianoClip = activeClipForThisTrack || persistedTrackClip;
   const trackDrumClip = (drumRecordingClip && (drumRecordingClip.trackId ?? null) === trackId) ? drumRecordingClip : null;
-
 
   // Derive per-track piano data with trimming applied
   const trackPianoNotes = useMemo(() => {
@@ -601,13 +608,25 @@ const TimelineTrack = ({
 
   return (
     <div
+      className={`timeline-track ${isTrackSelected ? 'selected-for-effects' : ''}`}
+      onClick={handleTrackSelect}
       style={{
         position: "relative",
         width: "100%",
         height: height,
         background: "transparent",
+        border: isTrackSelected ? '2px solid #8F7CFD' : '1px solid transparent',
+        borderRadius: '4px',
+        padding: '2px'
       }}
     >
+      {/* Track selection indicator */}
+      {isTrackSelected && (
+        <div className="absolute top-0 right-0 bg-[#8F7CFD] text-white text-xs px-2 py-1 rounded-bl-md">
+          Effects Active
+        </div>
+      )}
+
       {/* Background for last recording region with resizable handles */}
       {isPianoTrack && displayClip && displayClip.start != null && displayClip.end != null && (
         <div

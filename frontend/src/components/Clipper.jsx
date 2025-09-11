@@ -413,7 +413,7 @@ const Clipper = () => {
                 {/* Threshold Knob - Top Left */}
                 <div className="absolute top-[20px] left-[30px] sm:top-[30px] sm:left-[40px] md600:top-[25px] md600:left-[40px] md:top-[25px] md:left-[40px]">
                     <Knob 
-                        label="Threshold" 
+                        label="Mix" 
                         min={-135} 
                         max={135} 
                         defaultAngle={getCurrentParameterValue(0)}
@@ -425,7 +425,7 @@ const Clipper = () => {
                 {/* Ratio Knob - Top Right */}
                 <div className="absolute top-[50px] right-[30px] sm:top-[60px] sm:right-[50px] md600:top-[65px] md600:right-[45px] md:top-[80px] md:right-[35px]">
                     <Knob 
-                        label="Ratio" 
+                        label="Amount" 
                         min={-135} 
                         max={135} 
                         defaultAngle={getCurrentParameterValue(1)}
@@ -437,7 +437,7 @@ const Clipper = () => {
                 {/* Mix Knob - Bottom Center */}
                 <div className="absolute bottom-[15px] left-[30px] sm:bottom-[25px] sm:left-[40px] md600:left-[40px] md600:bottom-[45px] md:left-[40px] md:bottom-[45px]">
                     <Knob1 
-                        label="Mix" 
+                        label="MakeUp" 
                         min={-135} 
                         max={135} 
                         defaultAngle={getCurrentParameterValue(2)}

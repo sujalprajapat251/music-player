@@ -18,30 +18,22 @@ import TapeWobble from '../../components/TapeWobble';
 const EFFECT_CONFIGS = {
     "Classic Dist": {
         parameters: [
-            { name: "Mix", min: -135, max: 135, defaultAngle: -90, value: -90 },
-            { name: "Amount", min: -135, max: 135, defaultAngle: 0, value: 0 },
-            { name: "Makeup", min: -135, max: 135, defaultAngle: 90, value: 90 }
-        ]
-    },
-    "Bitcrushar": {
-        parameters: [
-            { name: "Bit Depth", min: -135, max: 135, defaultAngle: 0 },
-            { name: "Sample Rate", min: -135, max: 135, defaultAngle: 45 },
-            { name: "Mix", min: -135, max: 135, defaultAngle: 90 }
+            { name: "Dist", min: -135, max: 135, defaultAngle: 45, value: 45 },
+            { name: "Tone", min: -135, max: 135, defaultAngle: 0, value: 0 },
+            { name: "Low Cut", min: -135, max: 135, defaultAngle: -90, value: -90 }
         ]
     },
     "Chorus": {
         parameters: [
             { name: "Rate", min: -135, max: 135, defaultAngle: 0 },
             { name: "Depth", min: -135, max: 135, defaultAngle: 45 },
-            { name: "Mix", min: -135, max: 135, defaultAngle: 90 }
         ]
     },
     "Flanger": {
         parameters: [
             { name: "Rate", min: -135, max: 135, defaultAngle: 0 },
             { name: "Depth", min: -135, max: 135, defaultAngle: 45 },
-            { name: "Feedback", min: -135, max: 135, defaultAngle: 90 }
+            { name: "Mix", min: -135, max: 135, defaultAngle: 90 }
         ]
     },
     "Phaser": {
@@ -55,77 +47,55 @@ const EFFECT_CONFIGS = {
         parameters: [
             { name: "Rate", min: -135, max: 135, defaultAngle: 0 },
             { name: "Depth", min: -135, max: 135, defaultAngle: 45 },
-            { name: "Shape", min: -135, max: 135, defaultAngle: 90 }
         ]
     },
     "Clipper": {
         parameters: [
-            { name: "Threshold", min: -135, max: 135, defaultAngle: 0 },
-            { name: "Ratio", min: -135, max: 135, defaultAngle: 45 },
-            { name: "Mix", min: -135, max: 135, defaultAngle: 90 }
+            { name: "Mix", min: -135, max: 135, defaultAngle: 0 },
+            { name: "Amount", min: -135, max: 135, defaultAngle: 45 },
+            { name: "Makeup", min: -135, max: 135, defaultAngle: 90 }
         ]
     },
     "Crusher": {
         parameters: [
-            { name: "Amount", min: -135, max: 135, defaultAngle: 0 },
-            { name: "Sample Rate", min: -135, max: 135, defaultAngle: 45 },
+            { name: "Low Cut", min: -135, max: 135, defaultAngle: 0 },
+            { name: "High Cut", min: -135, max: 135, defaultAngle: 45 },
+            { name: "Grain", min: -135, max: 135, defaultAngle: 90 },
             { name: "Mix", min: -135, max: 135, defaultAngle: 90 }
         ]
     },
     "Fuzz": {
         parameters: [
-            { name: "Drive", min: -135, max: 135, defaultAngle: 0 },
-            { name: "Tone", min: -135, max: 135, defaultAngle: 45 },
-            { name: "Mix", min: -135, max: 135, defaultAngle: 90 }
+            { name: "Grain", min: -135, max: 135, defaultAngle: 0 },
+            { name: "Bite", min: -135, max: 135, defaultAngle: 45 },
+            { name: "Low Cut", min: -135, max: 135, defaultAngle: 90 }
         ]
     },
     "Juicy Distrotion": {
         parameters: [
-            { name: "Drive", min: -135, max: 135, defaultAngle: 0 },
+            { name: "Dist", min: -135, max: 135, defaultAngle: 0 },
+            { name: "Volume", min: -135, max: 135, defaultAngle: 90 },
             { name: "Tone", min: -135, max: 135, defaultAngle: 45 },
+            { name: "Low Cut", min: -135, max: 135, defaultAngle: 45 },
             { name: "Mix", min: -135, max: 135, defaultAngle: 90 }
         ]
     },
     "Overdrive": {
         parameters: [
-            { name: "Drive", min: -135, max: 135, defaultAngle: 0 },
+            { name: "Dist", min: -135, max: 135, defaultAngle: 0 },
             { name: "Tone", min: -135, max: 135, defaultAngle: 45 },
-            { name: "Level", min: -135, max: 135, defaultAngle: 90 }
+            { name: "Low Cut", min: -135, max: 135, defaultAngle: 90 }
         ]
     },
     "Auto-Wah": {
         parameters: [
             { name: "Rate", min: -135, max: 135, defaultAngle: 0 },
-            { name: "Depth", min: -135, max: 135, defaultAngle: 45 },
-            { name: "Mix", min: -135, max: 135, defaultAngle: 90 }
-        ]
-    },
-    "Instant Sidechain": {
-        parameters: [
-            { name: "Attack", min: -135, max: 135, defaultAngle: 0 },
-            { name: "Release", min: -135, max: 135, defaultAngle: 45 },
-            { name: "Threshold", min: -135, max: 135, defaultAngle: 90 }
-        ]
-    },
-    "Pitch Shifter": {
-        parameters: [
-            { name: "Pitch", min: -135, max: 135, defaultAngle: 0 },
-            { name: "Fine", min: -135, max: 135, defaultAngle: 45 },
             { name: "Mix", min: -135, max: 135, defaultAngle: 90 }
         ]
     },
     "Rotary": {
         parameters: [
             { name: "Rate", min: -135, max: 135, defaultAngle: 0 },
-            { name: "Depth", min: -135, max: 135, defaultAngle: 45 },
-            { name: "Mix", min: -135, max: 135, defaultAngle: 90 }
-        ]
-    },
-    "Rotary Pro": {
-        parameters: [
-            { name: "Rate", min: -135, max: 135, defaultAngle: 0 },
-            { name: "Depth", min: -135, max: 135, defaultAngle: 45 },
-            { name: "Mix", min: -135, max: 135, defaultAngle: 90 }
         ]
     },
     "Stereo Chorus": {
@@ -137,34 +107,33 @@ const EFFECT_CONFIGS = {
     },
     "Tape Wobble": {
         parameters: [
-            { name: "Rate", min: -135, max: 135, defaultAngle: 0 },
-            { name: "Depth", min: -135, max: 135, defaultAngle: 45 },
-            { name: "Mix", min: -135, max: 135, defaultAngle: 90 }
+            { name: "Flutter Rate", min: -135, max: 135, defaultAngle: 0 },
+            { name: "Flutter Depth", min: -135, max: 135, defaultAngle: 45 },
+            { name: "Wow Rate", min: -135, max: 135, defaultAngle: 0 },
+            { name: "Wow Depth", min: -135, max: 135, defaultAngle: 45 }
         ]
     }
 };
 
 const EFFECT_COMPONENTS = {
     "Fuzz": Fuzz,
-    "Clipper" : Clipper,
-    "ClassicDist" : ClassicDist,
-    "Chorus" : Chorus,
-    "Crusher" : Crusher,
-    "JuicyDistrotion" : JuicyDistrotion,
-    "Overdrive" : Overdrive,
-    "AutoPan" : AutoPan,
-    "AutoWah" : AutoWah,
-    "Flanger" : Flanger,
-    "Phaser" : Phaser,
-    "Rotary" : Rotary,
-    "StereoChorus" : StereoChorus,
-    "TapeWobble" : TapeWobble
-    // "Classic Dist": ClassicDist,
-    // "Bitcrushar": Bitcrushar,
-    // etc.
+    "Clipper": Clipper,
+    "ClassicDist": ClassicDist,
+    "Chorus": Chorus,
+    "Crusher": Crusher,
+    "JuicyDistrotion": JuicyDistrotion,
+    "Overdrive": Overdrive,
+    "AutoPan": AutoPan,
+    "AutoWah": AutoWah,
+    "Flanger": Flanger,
+    "Phaser": Phaser,
+    "Rotary": Rotary,
+    "StereoChorus": StereoChorus,
+    "TapeWobble": TapeWobble
 };
 
 const initialState = {
+    trackEffects: {}, // New: Store effects per track ID
     activeEffects: [],
     effectsLibrary: [
         { id: 1, name: "Bitcrushar", subscription: true, color: "#8F7CFD", category: "Distortion" },
@@ -187,10 +156,11 @@ const initialState = {
         { id: 18, name: "Tape Wobble", subscription: true, color: "#409C9F", category: "Modulation" },
     ],
     selectedEffect: null,
-    showEffectsLibrary: false, 
+    showEffectsLibrary: false,
     showEffectsOffcanvas: false,
     showEffectsTwo: false, // Add this line
-    activeTabs: ''
+    activeTabs: '',
+    selectedTrackId: null // New: Track which track is selected for effects
 };
 
 const effectsSlice = createSlice({
@@ -199,19 +169,19 @@ const effectsSlice = createSlice({
     reducers: {
         addEffect: (state, action) => {
             const effect = action.payload;
-            
+
             const componentMapping = {
                 "Classic Dist": "ClassicDist",
-                "Juicy Distrotion": "JuicyDistrotion", 
+                "Juicy Distrotion": "JuicyDistrotion",
                 "Auto Pan": "AutoPan",
                 "Auto-Wah": "AutoWah",
                 "Stereo Chorus": "StereoChorus",
                 "Tape Wobble": "TapeWobble"
             };
-            
+
             const componentKey = componentMapping[effect.name] || effect.name;
             const component = EFFECT_COMPONENTS[componentKey];
-            
+
             const newEffect = {
                 ...effect,
                 instanceId: Date.now(),
@@ -223,7 +193,7 @@ const effectsSlice = createSlice({
                 ]
             };
             console.log('====================================');
-            console.log("newEffect :::>",newEffect);
+            console.log("newEffect :::>", newEffect);
             console.log('====================================');
             state.activeEffects.push(newEffect);
         },
@@ -263,15 +233,88 @@ const effectsSlice = createSlice({
         },
         setActiveTabs: (state, action) => {
             state.activeTabs = action.payload;
-        }
+        },
+        // New action to add effect to specific track
+        addEffectToTrack: (state, action) => {
+            const { trackId, effect } = action.payload;
+
+            const componentMapping = {
+                "Classic Dist": "ClassicDist",
+                "Juicy Distrotion": "JuicyDistrotion",
+                "Auto Pan": "AutoPan",
+                "Auto-Wah": "AutoWah",
+                "Stereo Chorus": "StereoChorus",
+                "Tape Wobble": "TapeWobble"
+            };
+
+            const componentKey = componentMapping[effect.name] || effect.name;
+            const component = EFFECT_COMPONENTS[componentKey];
+
+            const newEffect = {
+                ...effect,
+                instanceId: Date.now(),
+                component: component,
+                trackId: trackId, // Associate with specific track
+                parameters: EFFECT_CONFIGS[effect.name]?.parameters || [
+                    { name: "Parameter 1", min: -135, max: 135, defaultAngle: 0, value: 0 },
+                    { name: "Parameter 2", min: -135, max: 135, defaultAngle: 45, value: 45 },
+                    { name: "Parameter 3", min: -135, max: 135, defaultAngle: 90, value: 90 }
+                ]
+            };
+
+            // Initialize track effects array if it doesn't exist
+            if (!state.trackEffects[trackId]) {
+                state.trackEffects[trackId] = [];
+            }
+
+            state.trackEffects[trackId].push(newEffect);
+        },
+
+        // New action to remove effect from specific track
+        removeEffectFromTrack: (state, action) => {
+            const { trackId, instanceId } = action.payload;
+            if (state.trackEffects[trackId]) {
+                // Filter out the effect with the specified instanceId
+                state.trackEffects[trackId] = state.trackEffects[trackId].filter(
+                    effect => effect.instanceId !== instanceId
+                );
+            }
+        },
+
+        // New action to update effect parameter for specific track
+        updateTrackEffectParameter: (state, action) => {
+            const { trackId, instanceId, parameterIndex, value } = action.payload;
+            if (state.trackEffects[trackId]) {
+                const effect = state.trackEffects[trackId].find(e => e.instanceId === instanceId);
+                if (effect && effect.parameters[parameterIndex]) {
+                    effect.parameters[parameterIndex].value = value;
+                }
+            }
+        },
+
+        // New action to set selected track for effects
+        setSelectedTrackId: (state, action) => {
+            state.selectedTrackId = action.payload;
+        },
+
+        // New action to get effects for specific track
+        getTrackEffects: (state, action) => {
+            const trackId = action.payload;
+            return state.trackEffects[trackId] || [];
+        },
     }
 });
 
-export const { 
-    addEffect, 
-    removeEffect, 
-    updateEffectParameter, 
-    setSelectedEffect, 
+export const {
+    addEffect,
+    removeEffect,
+    updateEffectParameter,
+    addEffectToTrack,
+    removeEffectFromTrack,
+    updateTrackEffectParameter,
+    setSelectedTrackId,
+    getTrackEffects,
+    setSelectedEffect,
     setShowEffectsLibrary,
     setShowEffectsOffcanvas,
     toggleEffectsOffcanvas,
@@ -281,4 +324,4 @@ export const {
     setActiveTabs
 } = effectsSlice.actions;
 
-export default effectsSlice.reducer; 
+export default effectsSlice.reducer;

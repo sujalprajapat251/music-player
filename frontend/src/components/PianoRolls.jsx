@@ -7,7 +7,7 @@ import 'react-resizable/css/styles.css';
 import * as d3 from 'd3';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectGridSettings } from '../Redux/Slice/grid.slice';
-import { setPlaying, setCurrentTime as setStudioCurrentTime, setPianoNotes, setPianoRecordingClip, setRecordingAudio } from '../Redux/Slice/studio.slice';
+import { setPlaying, setCurrentTime as setStudioCurrentTime, setPianoNotes, setPianoRecordingClip, setRecordingAudio, setDrumRecordedData } from '../Redux/Slice/studio.slice';
 import { selectStudioState } from '../Redux/rootReducer';
 import { getGridDivisions, parseTimeSignature, getGridSpacingWithTimeSignature } from '../Utils/gridUtils';
 import { getAudioContext, ensureAudioUnlocked } from '../Utils/audioContext';
@@ -15,7 +15,9 @@ import { drumMachineTypes, createSynthSound } from '../Utils/drumMachineUtils';
 import { FaPaste, FaRegCopy } from 'react-icons/fa';
 import { MdDelete } from "react-icons/md";
 import { IoCutOutline } from 'react-icons/io5';
-import audio from '../Images/piano-beats.mp3'
+import audio from '../Images/piano-beats.mp3';
+
+
 const generatePianoKeys = () => {
     // Preserve original labeling scheme used in the UI
     const keys = [];
@@ -63,7 +65,9 @@ const PianoRolls = () => {
 
     const pianoRecording = useSelector((state) => selectStudioState(state).pianoRecord);
     const pianoNotes = useSelector((state) => selectStudioState(state).pianoNotes || []);
+    const drumRecordedData = useSelector((state) => selectStudioState(state)?.drumRecordedData || []);
     const pianoRecordingClip = useSelector((state) => selectStudioState(state).pianoRecordingClip);
+    const drumRecordingClip = useSelector((state) => selectStudioState(state).drumRecordingClip);
     // console.log('pianoRecording ::: > ', pianoRecording)
 
     const baseWidth = 1000;  // Increased base width for more content
@@ -89,11 +93,21 @@ const PianoRolls = () => {
     const [selectedNoteIndex, setSelectedNoteIndex] = useState(null);
     const [clipboardNote, setClipboardNote] = useState(null);
 
+        // Determine instrument by selected track
+        const isDrumTrack = useMemo(() => {
+            if (!selectedTrack) return false;
+            const name = (selectedTrack.name || '').toLowerCase();
+            return selectedTrack.type === 'drum' || name.includes('drum');
+        }, [selectedTrack]);
+
     // Get track bounds for constraining notes
     const getTrackBounds = useCallback(() => {
         const trackObj = tracks?.find?.(t => t.id === currentTrackId);
-        const persistedClip = trackObj?.pianoClip || null;
-        const activeClip = (pianoRecordingClip && (pianoRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? pianoRecordingClip : persistedClip;
+        // Prefer corresponding clip type depending on track
+        const persistedPiano = trackObj?.pianoClip || null;
+        const activePiano = (pianoRecordingClip && (pianoRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? pianoRecordingClip : persistedPiano;
+        const activeDrum = (drumRecordingClip && (drumRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? drumRecordingClip : null;
+        const activeClip = isDrumTrack ? activeDrum : activePiano;
         if (activeClip && activeClip.start != null && activeClip.end != null) {
             return {
                 start: activeClip.start,
@@ -114,7 +128,7 @@ const PianoRolls = () => {
             start: 0,
             end: 8 // Default 8 seconds
         };
-    }, [pianoRecordingClip, currentTrackId, notes, tracks]);
+    }, [pianoRecordingClip, drumRecordingClip, currentTrackId, notes, tracks, isDrumTrack]);
 
     const renderRuler = useCallback(() => {
         if (!timelineHeaderRef.current) return;
@@ -684,6 +698,16 @@ const PianoRolls = () => {
             // Clip sizing stays controlled by TimelineTrack
         }
     };
+
+    // Drum instrument selection (default kit)
+    const selectedDrumInstrument = useSelector((state) => selectStudioState(state)?.selectedDrumInstrument);
+    const selectedDrumMachine = useMemo(() => {
+        if (selectedDrumInstrument) {
+            const found = drumMachineTypes.find(d => d.name === selectedDrumInstrument);
+            if (found) return found;
+        }
+        return drumMachineTypes[0];
+    }, [selectedDrumInstrument]);
     
     // No updateRecordingClip here; TimelineTrack manages the clip bounds
     const handleKeyDown = (note) => {
@@ -778,29 +802,52 @@ const PianoRolls = () => {
     // Sync notes to Redux so Timeline shows red region + white mini boxes
     const syncNotesToRedux = useCallback((list) => {
         try {
-            // Only sync notes that belong to the current track
+            // Only sync entries that belong to the current track
             const currentTrackNotes = list.filter(n => (n.trackId ?? null) === (currentTrackId ?? null));
-            const mapped = currentTrackNotes.map(n => ({
-                note: n.note,
-                startTime: n.start,
-                duration: n.duration,
-                midiNumber: noteNameToMidi(n.note),
-                trackId: n.trackId,
-                id: n.id,
-                velocity: n.velocity || 0.8
-            }));
-            
-            // Get all existing notes from Redux
-            const currentReduxNotes = Array.isArray(pianoNotes) ? pianoNotes : [];
-            
-            // Remove notes from current track and add new ones
-            const otherTrackNotes = currentReduxNotes.filter(n => (n.trackId ?? null) !== (currentTrackId ?? null));
-            const updatedNotes = [...otherTrackNotes, ...mapped];
-            
-            dispatch(setPianoNotes(updatedNotes));
+
+            if (isDrumTrack) {
+                // Map piano-roll note rows to drum hits for the timeline
+                const hits = currentTrackNotes.map((n, idx) => {
+                    const midi = noteNameToMidi(n.note);
+                    const pads = selectedDrumMachine.pads || [];
+                    const pad = pads.length > 0 ? pads[midi % pads.length] : {};
+                    return {
+                        trackId: n.trackId,
+                        currentTime: n.start,
+                        decay: Math.max(0.05, Number(n.duration) || 0.15),
+                        // Pass through drum synthesis params when available
+                        type: pad.type,
+                        freq: pad.freq,
+                        sound: pad.sound,
+                        padId: pad.id ?? (midi % pads.length),
+                        drumMachine: selectedDrumMachine?.name,
+                        id: n.id
+                    };
+                });
+
+                const existing = Array.isArray(drumRecordedData) ? drumRecordedData : [];
+                const others = existing.filter(h => (h.trackId ?? null) !== (currentTrackId ?? null));
+                dispatch(setDrumRecordedData([...others, ...hits]));
+            } else {
+                // Melodic: map to piano notes for the timeline
+                const mapped = currentTrackNotes.map(n => ({
+                    note: n.note,
+                    startTime: n.start,
+                    duration: n.duration,
+                    midiNumber: noteNameToMidi(n.note),
+                    trackId: n.trackId,
+                    id: n.id,
+                    velocity: n.velocity || 0.8
+                }));
+
+                const currentReduxNotes = Array.isArray(pianoNotes) ? pianoNotes : [];
+                const otherTrackNotes = currentReduxNotes.filter(n => (n.trackId ?? null) !== (currentTrackId ?? null));
+                const updatedNotes = [...otherTrackNotes, ...mapped];
+                dispatch(setPianoNotes(updatedNotes));
+            }
         } catch {}
         // do nothing for clip sizing here
-    }, [dispatch, noteNameToMidi, currentTrackId, pianoNotes]);
+    }, [dispatch, noteNameToMidi, currentTrackId, pianoNotes, isDrumTrack, selectedDrumMachine, drumRecordedData]);
     
     // Clear local notes when track changes to prevent cross-contamination
     useEffect(() => {
@@ -858,12 +905,7 @@ const PianoRolls = () => {
     const [localPlayheadTime, setLocalPlayheadTime] = useState(0);
     const playbackStartRef = useRef({ systemTime: 0, audioTime: 0 });
 
-    // Determine instrument by selected track
-    const isDrumTrack = useMemo(() => {
-        if (!selectedTrack) return false;
-        const name = (selectedTrack.name || '').toLowerCase();
-        return selectedTrack.type === 'drum' || name.includes('drum');
-    }, [selectedTrack]);
+    
 
     // Build simple audio chain and load base context
     useEffect(() => {
@@ -900,15 +942,7 @@ const PianoRolls = () => {
             });
     }, [isDrumTrack, selectedInstrument]);
 
-    // Drum instrument selection (default kit)
-    const selectedDrumInstrument = useSelector((state) => selectStudioState(state)?.selectedDrumInstrument);
-    const selectedDrumMachine = useMemo(() => {
-        if (selectedDrumInstrument) {
-            const found = drumMachineTypes.find(d => d.name === selectedDrumInstrument);
-            if (found) return found;
-        }
-        return drumMachineTypes[0];
-    }, [selectedDrumInstrument]);
+
 
     // Unified play helper
     const playNoteForTrack = useCallback((note, duration = 0.2) => {
@@ -1108,6 +1142,32 @@ const PianoRolls = () => {
     useEffect(() => {
         notesScheduledRef.current = false;
     }, [notes]);
+
+    // Real-time visual shift of recording-sourced drum notes when the drum clip moves
+    const prevDrumClipRef = useRef(null);
+    useEffect(() => {
+        if (!isDrumTrack || !currentTrackId) return;
+        const clip = (drumRecordingClip && (drumRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? drumRecordingClip : null;
+        const prev = prevDrumClipRef.current;
+        prevDrumClipRef.current = clip ? { start: clip.start, end: clip.end } : null;
+        if (!clip || !prev) return;
+        const deltaStart = (clip.start || 0) - (prev.start || 0);
+        const deltaEnd = (clip.end || 0) - (prev.end || 0);
+        if (deltaStart === 0 && deltaEnd === 0) return;
+        // Determine if user moved the whole clip (both edges shift equally) vs trimmed
+        const EPS = 1e-4;
+        const isMove = Math.abs(deltaStart - deltaEnd) < EPS && Math.abs(deltaStart) > EPS;
+        if (!isMove) {
+            // Trim: do NOT move notes. They will be hidden visually by the red region and timeline filtering.
+            return;
+        }
+        const delta = deltaStart;
+        // Movement: shift all notes for this drum track to keep visuals in sync while dragging
+        setNotes(prevNotes => prevNotes.map(n => {
+            if ((n.trackId ?? null) !== (currentTrackId ?? null)) return n;
+            return { ...n, start: Math.max(0, (n.start || 0) + delta) };
+        }));
+    }, [isDrumTrack, currentTrackId, drumRecordingClip]);
 
     // right click menu handler 
     const menuRef = useRef(null);
@@ -1552,8 +1612,10 @@ const PianoRolls = () => {
                     {/* Red background region - mirrors TimelineTrack clip when available */}
                     {(() => {
                         const trackObj = tracks?.find?.(t => t.id === currentTrackId);
-                        const persistedClip = trackObj?.pianoClip || null;
-                        const activeClip = (pianoRecordingClip && (pianoRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? pianoRecordingClip : persistedClip;
+                        const persistedPiano = trackObj?.pianoClip || null;
+                        const activePiano = (pianoRecordingClip && (pianoRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? pianoRecordingClip : persistedPiano;
+                        const activeDrum = (drumRecordingClip && (drumRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? drumRecordingClip : null;
+                        const activeClip = isDrumTrack ? activeDrum : activePiano;
                         if (activeClip && activeClip.start != null && activeClip.end != null) {
                             const left = (activeClip.start || 0) * timelineWidthPerSecond;
                             const width = Math.max(0, (activeClip.end - activeClip.start)) * timelineWidthPerSecond;

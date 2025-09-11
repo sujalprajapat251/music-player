@@ -52,6 +52,8 @@ import Orchestral from "./Orchestral";
 import PricingModel from './PricingModel';
 import { useParams } from 'react-router-dom';
 import { setShowLoopLibrary } from "../Redux/Slice/ui.slice";
+import { getAllMusic } from "../Redux/Slice/music.slice";
+import { setSelectedTrackId } from '../Redux/Slice/effects.slice';
 
 const Timeline = () => {
 
@@ -96,6 +98,7 @@ const Timeline = () => {
 
   // Piano playback functionality
   const pianoRef = useRef(null);
+  const instrumentCacheRef = useRef({});
   const pianoAudioContextRef = useRef(null);
   const activePianoNotesRef = useRef(new Set());
 
@@ -111,7 +114,7 @@ const Timeline = () => {
   const isPlaying = useSelector((state) => selectStudioState(state)?.isPlaying || false);
   const currentTime = useSelector((state) => selectStudioState(state)?.currentTime || 0);
   const audioDuration = useSelector((state) => selectStudioState(state)?.audioDuration || 150);
-
+  const trackEffectsState = useSelector(state => state.effects?.trackEffects || {});
   // eslint-disable-next-line no-unused-vars
   const audioSettings = useSelector((state) => state.audioSettings);
   const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
@@ -169,16 +172,22 @@ const Timeline = () => {
       })
       : hitsForTrack;
 
-    trimmedHits.forEach((hit, idx) => {
-      const hitTime = hit.currentTime || 0;
-      if (hitTime >= windowStart && hitTime < windowEnd) {
-        const key = `${currentTrackId}:${hitTime.toFixed(4)}:${idx}`;
-        if (scheduledKeysRef.current.has(key)) return;
-        scheduledKeysRef.current.add(key);
-        const delayMs = Math.max(0, Math.round((hitTime - nowSec) * 1000));
-        setTimeout(() => { playRecordedDrumHit(hit); }, delayMs);
-      }
-    });
+    // Check if the current track is muted before playing drum hits
+    const currentTrack = tracks.find(t => t.id === currentTrackId);
+    const isCurrentTrackMuted = currentTrack ? (soloTrackId ? soloTrackId !== currentTrack.id : (currentTrack.muted || false)) : false;
+
+    if (!isCurrentTrackMuted) {
+      trimmedHits.forEach((hit, idx) => {
+        const hitTime = hit.currentTime || 0;
+        if (hitTime >= windowStart && hitTime < windowEnd) {
+          const key = `${currentTrackId}:${hitTime.toFixed(4)}:${idx}`;
+          if (scheduledKeysRef.current.has(key)) return;
+          scheduledKeysRef.current.add(key);
+          const delayMs = Math.max(0, Math.round((hitTime - nowSec) * 1000));
+          setTimeout(() => { playRecordedDrumHit(hit); }, delayMs);
+        }
+      });
+    }
 
     const tick = setInterval(() => { }, 50);
     return () => clearInterval(tick);
@@ -232,6 +241,8 @@ const Timeline = () => {
   }, [zoomLevel]);
 
   const trackDeleted = useSelector((state) => selectStudioState(state).trackDeleted);
+  // Selected instrument for piano playback (sync with Piano.jsx)
+  const selectedInstrument = useSelector((state) => selectStudioState(state)?.selectedInstrument || 'acoustic_grand_piano');
 
   // Stop all piano notes
   const stopAllPianoNotes = useCallback(() => {
@@ -363,30 +374,58 @@ const Timeline = () => {
     return audioContextRef.current;
   }, []);
 
-  // Initialize piano for playback
+  // Initialize or reinitialize piano for playback when instrument changes
   const initializePiano = useCallback(async () => {
+    try {
+      if (!pianoAudioContextRef.current) {
+        pianoAudioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      // Stop any active notes before switching instruments
+      stopAllPianoNotes();
+      // Always (re)load the currently selected instrument
+      pianoRef.current = await Soundfont.instrument(
+        pianoAudioContextRef.current,
+        selectedInstrument
+      );
+      console.log("Piano instrument loaded for playback:", selectedInstrument);
+    } catch (error) {
+      console.error("Error loading piano instrument for playback:", selectedInstrument, error);
+    }
+  }, [selectedInstrument, stopAllPianoNotes]);
+
+  // Ensure instrument is ready on mount and whenever selection changes
+  useEffect(() => {
+    initializePiano();
+  }, [initializePiano]);
+
+  // Play piano note
+  const getInstrument = useCallback(async (instrumentId) => {
     if (!pianoAudioContextRef.current) {
       pianoAudioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
     }
-
-    if (!pianoRef.current) {
-      try {
-        pianoRef.current = await Soundfont.instrument(pianoAudioContextRef.current, 'acoustic_grand_piano');
-        console.log("Piano instrument loaded for playback");
-      } catch (error) {
-        console.error("Error loading piano instrument for playback:", error);
-      }
+    const cache = instrumentCacheRef.current || {};
+    const key = instrumentId || selectedInstrument || 'acoustic_grand_piano';
+    if (cache[key]) return cache[key];
+    try {
+      const inst = await Soundfont.instrument(pianoAudioContextRef.current, key);
+      cache[key] = inst;
+      instrumentCacheRef.current = cache;
+      return inst;
+    } catch (e) {
+      console.warn('Failed to load', key, e);
+      return pianoRef.current; // fallback to current
     }
-  }, []);
+  }, [selectedInstrument]);
 
-  // Play piano note
-  const playPianoNote = useCallback((midiNumber, duration = 0.5) => {
-    if (pianoRef.current && pianoAudioContextRef.current) {
+  const playPianoNote = useCallback(async (midiNumber, duration = 0.5, instrumentId) => {
+    if (pianoAudioContextRef.current) {
       try {
         if (pianoAudioContextRef.current.state === 'suspended') {
           pianoAudioContextRef.current.resume();
         }
-        const audioNode = pianoRef.current.play(midiNumber, undefined, { duration });
+        const instrument = await getInstrument(instrumentId);
+        if (!instrument) return;
+        const audioNode = instrument.play(midiNumber, undefined, { duration });
         activePianoNotesRef.current.add(audioNode);
 
         // Clean up after note duration
@@ -397,7 +436,7 @@ const Timeline = () => {
         console.error("Error playing piano note:", error);
       }
     }
-  }, []);
+  }, [getInstrument]);
 
 
 
@@ -416,7 +455,7 @@ const Timeline = () => {
     sectionId: null
   });
 
-  console.log("==========================================", tracks)
+  // console.log("==========================================", tracks)
 
   const allTracks = useMemo(() => {
     // Now that piano data is embedded per track, just expose it from each track
@@ -553,9 +592,7 @@ const Timeline = () => {
 
   const getTrackType = useSelector((state) => selectStudioState(state).newtrackType);
 
-
   // Mute functionality
-
   useEffect(() => {
     players.forEach(playerObj => {
       const track = tracks.find(t => t.id === playerObj.trackId);
@@ -728,8 +765,6 @@ const Timeline = () => {
     }
   }, [patternDrumPlayback, isPlaying, playPatternDrumSound]);
 
-
-
   // Add effects processor reference
   const effectsProcessorRef = useRef(null);
 
@@ -810,9 +845,9 @@ const Timeline = () => {
         activeEffects.forEach((effect) => {
           if (effect.name === "Classic Dist" && effect.parameters) {
             const parameters = {
-              mix: effectsProcessorRef.current.angleToParameter(effect.parameters[0]?.value || -90),
-              amount: effectsProcessorRef.current.angleToParameter(effect.parameters[1]?.value || 0),
-              makeup: effectsProcessorRef.current.angleToParameter(effect.parameters[2]?.value || 90)
+              mix: (effect.parameters[0]?.value + 135) / 270,
+              amount: (effect.parameters[1]?.value + 135) / 270,
+              makeup: (effect.parameters[2]?.value + 135) / 270
             };
 
             // Create effect chain using Web Audio API nodes
@@ -865,30 +900,38 @@ const Timeline = () => {
     }
   }, [masterVolume, tracks, players, tempoRatio, activeEffects]);
 
-  // Listen for effect parameter changes and update audio
+  // Listen for track-specific effect parameter changes and update audio
   useEffect(() => {
     if (!effectsProcessorRef.current) return;
 
-    activeEffects.forEach((effect) => {
-      if (effect.name === "Classic Dist" && effect.parameters) {
-        const parameters = {
-          mix: effectsProcessorRef.current.angleToParameter(effect.parameters[0]?.value || -90),
-          amount: effectsProcessorRef.current.angleToParameter(effect.parameters[1]?.value || 0),
-          makeup: effectsProcessorRef.current.angleToParameter(effect.parameters[2]?.value || 90)
-        };
+    // Update effects for each track separately
 
-        // Update all active players with this effect
-        players.forEach((playerObj) => {
-          if (playerObj.appliedEffects) {
-            const appliedEffect = playerObj.appliedEffects.find(ae => ae.effectId === effect.instanceId);
-            if (appliedEffect && appliedEffect.chain.updateParameters) {
-              appliedEffect.chain.updateParameters(parameters);
+    Object.keys(trackEffectsState).forEach(trackId => {
+      const trackEffects = trackEffectsState[trackId] || [];
+
+      trackEffects.forEach((effect) => {
+        if (effect.name === "Classic Dist" && effect.parameters) {
+          const parameters = {
+            mix: effectsProcessorRef.current.angleToParameter(effect.parameters[0]?.value || -90),
+            amount: effectsProcessorRef.current.angleToParameter(effect.parameters[1]?.value || 0),
+            makeup: effectsProcessorRef.current.angleToParameter(effect.parameters[2]?.value || 90)
+          };
+
+          // Update only players for this specific track
+          players.forEach((playerObj) => {
+            if (playerObj.trackId === trackId && playerObj.appliedEffects) {
+              const appliedEffect = playerObj.appliedEffects.find(
+                ae => ae.effectId === effect.instanceId && ae.trackId === trackId
+              );
+              if (appliedEffect && appliedEffect.chain.updateParameters) {
+                appliedEffect.chain.updateParameters(parameters);
+              }
             }
-          }
-        });
-      }
+          });
+        }
+      });
     });
-  }, [activeEffects, players]);
+  }, [trackEffectsState, players]);
 
   // Fixed seek logic to respect trim boundaries
   const movePlayhead = (e) => {
@@ -1081,6 +1124,13 @@ const Timeline = () => {
         // Piano playback logic
         if (filteredPianoNotes.length > 0) {
           filteredPianoNotes.forEach(note => {
+            // Check if the track containing this note is muted
+            const track = tracks.find(t => t.id === note.trackId);
+            if (!track) return;
+            
+            const isMuted = soloTrackId ? soloTrackId !== track.id : (track.muted || false);
+            if (isMuted) return; // Skip playing notes from muted tracks
+
             const noteStartTime = note.startTime || 0;
             const noteEndTime = noteStartTime + (note.duration || 0.5);
 
@@ -1089,7 +1139,8 @@ const Timeline = () => {
               // Check if we haven't already played this note in this time range
               const noteKey = `${note.id}-${Math.floor(noteStartTime * 10)}`;
               if (!activePianoNotesRef.current.has(noteKey)) {
-                playPianoNote(note.midiNumber, note.duration || 0.5);
+                // Always use the currently selected instrument to re-voice the entire recording uniformly
+                playPianoNote(note.midiNumber, note.duration || 0.5, selectedInstrument);
                 activePianoNotesRef.current.add(noteKey);
 
                 // Remove the note key after the note duration
@@ -1368,7 +1419,6 @@ const Timeline = () => {
       .attr("stroke", "white")
       .attr("stroke-width", 1);
   }, [audioDuration, selectedGrid, selectedTime, selectedRuler, timelineWidthPerSecond]);
-
 
   // Keep a stable reference to the render function to avoid linter no-undef complaints
   const renderRulerRef = useRef(() => { });
@@ -1717,7 +1767,7 @@ const Timeline = () => {
     const isDrumRecording = clipId === 'drum-recording';
     const isRecordingClip = isPianoRecording || isDrumRecording;
 
-    console.log(isRecordingClip); 
+    // console.log(isRecordingClip); 
 
     // Helper to split a regular clip at currentTime
     const splitSelectedClip = () => {
@@ -1757,7 +1807,7 @@ const Timeline = () => {
         const clipStart = pianoRecordingClip.start;
         const clipEnd = pianoRecordingClip.end;
         const splitPoint = currentTime;
-        
+
         if (splitPoint <= clipStart || splitPoint >= clipEnd) return;
 
         const leftClip = {
@@ -1783,9 +1833,9 @@ const Timeline = () => {
           trimEnd: clipEnd - splitPoint,
           type: 'piano',
           fromRecording: true,
-          pianoNotes: pianoNotes.filter(note => 
-            note.trackId === trackId && 
-            note.startTime >= splitPoint && 
+          pianoNotes: pianoNotes.filter(note =>
+            note.trackId === trackId &&
+            note.startTime >= splitPoint &&
             note.startTime < clipEnd
           )
         };
@@ -1795,7 +1845,7 @@ const Timeline = () => {
         const clipStart = drumRecordingClip.start;
         const clipEnd = drumRecordingClip.end;
         const splitPoint = currentTime;
-        
+
         if (splitPoint <= clipStart || splitPoint >= clipEnd) return;
 
         const leftClip = {
@@ -1821,9 +1871,9 @@ const Timeline = () => {
           trimEnd: clipEnd - splitPoint,
           type: 'drum',
           fromRecording: true,
-          drumSequence: drumRecordedData.filter(hit => 
-            hit.trackId === trackId && 
-            hit.currentTime >= splitPoint && 
+          drumSequence: drumRecordedData.filter(hit =>
+            hit.trackId === trackId &&
+            hit.currentTime >= splitPoint &&
             hit.currentTime < clipEnd
           )
         };
@@ -1927,16 +1977,16 @@ const Timeline = () => {
 
     const copyRecordingClip = () => {
       if (isPianoRecording && pianoRecordingClip) {
-        setClipboard({ 
-          type: 'piano-recording', 
-          clip: { ...pianoRecordingClip }, 
+        setClipboard({
+          type: 'piano-recording',
+          clip: { ...pianoRecordingClip },
           trackId,
           notes: pianoNotes.filter(note => note.trackId === trackId)
         });
       } else if (isDrumRecording && drumRecordingClip) {
-        setClipboard({ 
-          type: 'drum-recording', 
-          clip: { ...drumRecordingClip }, 
+        setClipboard({
+          type: 'drum-recording',
+          clip: { ...drumRecordingClip },
           trackId,
           hits: drumRecordedData.filter(hit => hit.trackId === trackId)
         });
@@ -1947,7 +1997,7 @@ const Timeline = () => {
       copyRecordingClip();
       deleteRecordingClip();
     };
-    
+
     const deleteRecordingClip = () => {
       if (isPianoRecording) {
         dispatch(setPianoRecordingClip(null));
@@ -2319,11 +2369,7 @@ const Timeline = () => {
         setPricingModalOpen(true);
         break;
       default:
-      // Unknown action
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [contextMenu, tracks, clipboard, dispatch, currentTime, setPlayers, setShowOffcanvasEffects, setShowOffcanvas]);
-    // Track-level actions (existing code continues...)
     // ... rest of the existing track-level actions
   }, [contextMenu, tracks, clipboard, dispatch, currentTime, setPlayers, setShowOffcanvasEffects, setShowOffcanvas, pianoRecordingClip, drumRecordingClip, pianoNotes, drumRecordedData]);
 
@@ -2778,6 +2824,13 @@ const Timeline = () => {
     if (isPlaying && currentTime > 0) {
       // Check drum recorded data for playback
       filteredDrumData.forEach(drumHit => {
+        // Check if the track containing this drum hit is muted
+        const track = tracks.find(t => t.id === drumHit.trackId);
+        if (!track) return;
+        
+        const isMuted = soloTrackId ? soloTrackId !== track.id : (track.muted || false);
+        if (isMuted) return; // Skip playing drum hits from muted tracks
+
         const hitTime = drumHit.currentTime;
         const tolerance = 0.05; // 50ms tolerance
         const hitKey = `${drumHit.padId}-${Math.floor(hitTime * 10)}`; // Create unique key
@@ -2790,6 +2843,10 @@ const Timeline = () => {
 
       // Also check regular drum tracks
       tracks.forEach(track => {
+        // Check if this track is muted
+        const isMuted = soloTrackId ? soloTrackId !== track.id : (track.muted || false);
+        if (isMuted) return; // Skip muted tracks
+
         if (track.type === 'drum' && track.audioClips) {
           track.audioClips.forEach(clip => {
             if (clip.type === 'drum' && clip.drumSequence) {
@@ -2815,12 +2872,19 @@ const Timeline = () => {
       // Clear played hits when not playing
       playedDrumHitsRef.current.clear();
     }
-  }, [isPlaying, currentTime, tracks, filteredDrumData, playDrumSound]);
+  }, [isPlaying, currentTime, tracks, filteredDrumData, playDrumSound, soloTrackId]);
 
   // Enhance the existing playDrumSound function to handle pattern drum events
   useEffect(() => {
     // Check for pattern drum events that need to be played
     Object.entries(patternDrumEvents).forEach(([trackId, trackEvents]) => {
+      // Check if this track is muted
+      const track = tracks.find(t => t.id === trackId);
+      if (!track) return;
+      
+      const isMuted = soloTrackId ? soloTrackId !== track.id : (track.muted || false);
+      if (isMuted) return; // Skip muted tracks
+
       Object.entries(trackEvents).forEach(([clipId, drumEvents]) => {
         if (patternDrumPlayback[trackId]?.[clipId]) {
           // Play each drum event
@@ -2830,13 +2894,17 @@ const Timeline = () => {
         }
       });
     });
-  }, [patternDrumEvents, patternDrumPlayback, playDrumSound]);
+  }, [patternDrumEvents, patternDrumPlayback, playDrumSound, tracks, soloTrackId]);
 
   // Add this useEffect after the existing drum playback effect
   useEffect(() => {
     if (isPlaying && currentTime > 0) {
       // Check each track for pattern drum clips
       tracks.forEach(track => {
+        // Check if this track is muted
+        const isMuted = soloTrackId ? soloTrackId !== track.id : (track.muted || false);
+        if (isMuted) return; // Skip muted tracks
+
         if (track.audioClips) {
           track.audioClips.forEach(clip => {
             if (clip.fromPattern && clip.drumSequence) {
@@ -2851,7 +2919,7 @@ const Timeline = () => {
         }
       });
     }
-  }, [isPlaying, currentTime, tracks, dispatch]);
+  }, [isPlaying, currentTime, tracks, dispatch, soloTrackId]);
 
   // Initialize piano for playback when component mounts
   useEffect(() => {
@@ -3011,48 +3079,67 @@ const Timeline = () => {
 
   const { id: projectId } = useParams();
   const allMusic = useSelector((state) => state.music?.allmusic || []);
+  const musicLoading = useSelector((state) => state.music?.loading || false);
 
   useEffect(() => {
-    // When navigating from File.jsx with a project ID, populate timeline from that project's data
+    if (!projectId) return;
+    
     try {
-      if (!projectId) return;
       const project = (allMusic || []).find(m => String(m?._id) === String(projectId));
       if (!project) return;
-
+  
       const incomingTracks = Array.isArray(project.musicdata) ? project.musicdata : [];
-
-      // Build studio tracks and aggregate note/drum data
       const studioTracks = [];
       const aggregatedPianoNotes = [];
       const aggregatedDrumData = [];
       let maxEnd = 0;
-
+  
       incomingTracks.forEach((t, idx) => {
         const trackId = t.id ?? (t._id ?? (Date.now() + Math.random() + idx));
-       const audioClips = Array.isArray(t.audioClips) ? t.audioClips.map((c) => { 
-          const duration = Number(c.duration || 0);
-          const trimStart = Number(c.trimStart || 0);
-          const trimEnd = Number((c.trimEnd != null ? c.trimEnd : duration) || duration);
-          const startTime = Number(c.startTime || 0);
-          const visible = Math.max(0, trimEnd - trimStart);
-          maxEnd = Math.max(maxEnd, startTime + (visible || duration));
-          return {
-            id: c.id ?? (Date.now() + Math.random()),
-            name: c.name || 'Clip',
-            url: c.url || null,
-            color: c.color || t.color,
-            startTime,
-            duration: duration || visible || 0,
-            trimStart,
-            trimEnd,
-            type: c.type,
-            playbackRate: c.playbackRate || 1,
-            drumSequence: Array.isArray(c.drumSequence) ? c.drumSequence : undefined,
-            fromPattern: c.fromPattern || undefined,
-          };
-        }) : [];
-
-        // Piano notes: ensure trackId
+        
+        // Filter and validate audio clips
+        const audioClips = Array.isArray(t.audioClips) 
+          ? t.audioClips
+              .filter(c => {
+                // Only include clips with valid data
+                return c && (
+                  c.url ||                    // Has audio URL
+                  c.type === 'piano' ||       // Piano clip
+                  c.type === 'drum' ||        // Drum clip
+                  c.fromRecording ||          // From recording
+                  c.fromPattern ||            // From pattern
+                  (c.duration && Number(c.duration) > 0) // Has valid duration
+                );
+              })
+              .map((c) => {
+                const duration = Number(c.duration || 0);
+                const trimStart = Number(c.trimStart || 0);
+                const trimEnd = Number((c.trimEnd != null ? c.trimEnd : duration) || duration);
+                const startTime = Number(c.startTime || 0);
+                const visible = Math.max(0, trimEnd - trimStart);
+                
+                // Update max end time
+                maxEnd = Math.max(maxEnd, startTime + (visible || duration));
+                
+                return {
+                  id: c.id ?? (Date.now() + Math.random()),
+                  name: c.name || 'Clip',
+                  url: c.url || null,
+                  color: c.color || t.color || '#FFB6C1',
+                  startTime,
+                  duration: duration || visible || 0,
+                  trimStart,
+                  trimEnd,
+                  type: c.type,
+                  playbackRate: c.playbackRate || 1,
+                  drumSequence: Array.isArray(c.drumSequence) ? c.drumSequence : undefined,
+                  fromPattern: c.fromPattern || undefined,
+                  fromRecording: c.fromRecording || undefined,
+                };
+              })
+          : [];
+  
+        // Handle piano notes
         if (Array.isArray(t.pianoNotes)) {
           t.pianoNotes.forEach(n => {
             const note = { ...n };
@@ -3062,8 +3149,8 @@ const Timeline = () => {
             maxEnd = Math.max(maxEnd, end);
           });
         }
-
-        // Drum recorded data: ensure trackId and currentTime/decay
+  
+        // Handle drum recorded data
         if (Array.isArray(t.drumRecordedData)) {
           t.drumRecordedData.forEach(d => {
             const hit = { ...d };
@@ -3073,38 +3160,55 @@ const Timeline = () => {
             maxEnd = Math.max(maxEnd, end);
           });
         }
-
-        // Consider piano clip bounds for duration
+  
+        // Consider piano clip bounds
         if (t.pianoClip && t.pianoClip.start != null && t.pianoClip.end != null) {
           maxEnd = Math.max(maxEnd, Number(t.pianoClip.end) || 0);
         }
-
-        studioTracks.push({
-          id: trackId,
-          name: t.name || `Track ${idx + 1}`,
-          type: t.type || t.trackType || 'audio',
-          color: t.color,
-          volume: Number(t.volume || 80),
-          muted: Boolean(t.muted || false),
-          frozen: Boolean(t.frozen || false),
-          audioClips,
-          pianoNotes: Array.isArray(t.pianoNotes) ? t.pianoNotes.map(n => ({ ...n, trackId })) : [],
-          pianoClip: t.pianoClip || null,
-        });
+  
+        // Only add tracks that have valid content
+        if (audioClips.length > 0 || 
+            (Array.isArray(t.pianoNotes) && t.pianoNotes.length > 0) ||
+            (Array.isArray(t.drumRecordedData) && t.drumRecordedData.length > 0) ||
+            t.pianoClip) {
+          
+          studioTracks.push({
+            id: trackId,
+            name: t.name || `Track ${idx + 1}`,
+            type: t.type || t.trackType || 'audio',
+            color: t.color || '#FFB6C1',
+            volume: Number(t.volume || 80),
+            muted: Boolean(t.muted || false),
+            frozen: Boolean(t.frozen || false),
+            audioClips,
+            pianoNotes: Array.isArray(t.pianoNotes) ? t.pianoNotes.map(n => ({ ...n, trackId })) : [],
+            pianoClip: t.pianoClip || null,
+          });
+        }
       });
-
-      // Dispatch to studio
+  
+      // Update Redux state
       dispatch(setTracks(studioTracks));
       if (aggregatedPianoNotes.length > 0) dispatch(setPianoNotes(aggregatedPianoNotes));
       if (aggregatedDrumData.length > 0) dispatch(setDrumRecordedData(aggregatedDrumData));
-
-      // Set project duration with a small tail
+  
+      // Set project duration
       if (maxEnd > 0) dispatch(setAudioDuration(Math.ceil(maxEnd + 1)));
-
+  
       // Focus first track
       if (studioTracks.length > 0) dispatch(setCurrentTrackId(studioTracks[0].id));
-    } catch (_) { }
+      
+    } catch (error) {
+      console.error('Error loading project data:', error);
+    }
   }, [projectId, allMusic, dispatch]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    if (!musicLoading && (!allMusic || allMusic.length === 0)) {
+      dispatch(getAllMusic());
+    }
+  }, [projectId, allMusic, musicLoading, dispatch]);
 
   return (
     <>
@@ -3291,7 +3395,7 @@ const Timeline = () => {
               height: "100%",
               width: "2px",
               pointerEvents: "none",
-              zIndex:10,
+              zIndex: 10,
               transform: `translateX(${playheadPosition}px)`,
               willChange: "transform",
               transition: (isMagnetEnabled && isDragging.current) ? "none" : "transform 0.05s linear" // Only disable during mouse drag with magnet
@@ -3342,7 +3446,6 @@ const Timeline = () => {
             >
               <img src={magnetIcon} alt="Magnet" />
             </div>
-
           </div>
 
           <div ref={gridSettingRef} className="hover:bg-[#1F1F1F] w-[30px] h-[30px] flex items-center justify-center rounded-full relative" onClick={() => setShowGridSetting((prev) => !prev)}>
@@ -3430,7 +3533,7 @@ const Timeline = () => {
               volume: 80,
               audioClips: [newClip],
             };
-            
+
             dispatch(addTrack(newTrack));
           } catch (err) {
             // Failed to import audio file

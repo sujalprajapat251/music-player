@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import axios from "axios";
 import { BASE_URL } from "../../Utils/baseUrl";
 import { setAlert } from "./alert.slice";
+import axiosInstance from "../../Utils/axiosInstance";
 
 const initialStateUsers = {
     allmusic: [],
@@ -21,7 +21,7 @@ export const createMusic = createAsyncThunk(
     async (data, { dispatch, rejectWithValue }) => {
         try {
             const token = await sessionStorage.getItem("token");
-            const response = await axios.post(`${BASE_URL}/createMusic`, data,
+            const response = await axiosInstance.post(`${BASE_URL}/createMusic`, data,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -41,13 +41,36 @@ export const getAllMusic = createAsyncThunk(
     async (_, { dispatch, rejectWithValue }) => {
         try {
             const token = await sessionStorage.getItem("token");
-            const response = await axios.get(`${BASE_URL}/allMusic`,
+            const response = await axiosInstance.get(`${BASE_URL}/allMusic`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     }
                 }
             );
+            console.log("HIHIHIHII", response);
+            return response.data.music;
+        } catch (error) {
+            return handleErrors(error, dispatch, rejectWithValue);
+        }
+    }
+);
+
+
+export const deleteMusic = createAsyncThunk(
+    "music/deleteMusic",
+    async (deleteId, { dispatch, rejectWithValue }) => {
+        try {
+            const token = await sessionStorage.getItem("token");
+            const response = await axiosInstance.delete(`${BASE_URL}/deleteMusic/${deleteId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+            
+            console.log("HIHIHIHII", response);
             return response.data.music;
         } catch (error) {
             return handleErrors(error, dispatch, rejectWithValue);

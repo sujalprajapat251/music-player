@@ -7,7 +7,7 @@ import subscription from "../../Images/subscriptionIcon.svg";
 import Logout from "../../Images/Logout.svg";
 import project from "../../Images/projectsIcon.svg";
 import Demo from "../../Images/DemoIcon.svg";
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getUserById } from '../../Redux/Slice/user.slice';
 import { IMAGE_URL } from '../../Utils/baseUrl';
@@ -23,11 +23,21 @@ const Sidebar = () => {
   const [pricingModalOpen, setPricingModalOpen] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const curruser = useSelector((state) => state.user.currUser);
 
   useEffect(() => {
     dispatch(getUserById());
   }, [dispatch])
+
+  // Update active menu item based on the current route
+  useEffect(() => {
+    if (location.pathname.includes('demo-project')) {
+      setActiveItem("Demo Projects");
+    } else if (location.pathname.includes('project')) {
+      setActiveItem("Projects");
+    }
+  }, [location.pathname]);
 
   // Determine which image to show
   let userProfileImg = profileimg;
