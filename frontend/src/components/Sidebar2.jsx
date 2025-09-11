@@ -157,6 +157,30 @@ const Sidebar2 = () => {
     const instrument = instruments.find(inst => inst.id === instrumentId);
     return instrument ? instrument.name : 'Piano';
   };
+  const getInstrumentCategory = (instrumentId) => {
+    const instruments = [
+      { id: 'acoustic_grand_piano', name: 'Piano', category: 'Jazz Chord Memos' },
+      { id: 'whistle', name: 'Whistle', category: 'Effects' },
+      { id: 'fx_1_rain', name: 'Rain', category: 'Atmospheric' },
+      { id: 'fx_3_crystal', name: 'Crystal', category: 'Ambient' },
+      { id: 'fx_4_atmosphere', name: 'Atmosphere', category: 'Ambient' },
+      { id: 'fx_5_brightness', name: 'Brightness', category: 'Effects' },
+      { id: 'fx_6_goblins', name: 'Goblins', category: 'Fantasy' },
+      { id: 'fx_7_echoes', name: 'Echoes', category: 'Reverb' },
+      { id: 'fx_8_scifi', name: 'Sci-Fi', category: 'Futuristic' },
+      { id: 'glockenspiel', name: 'Glockenspiel', category: 'Percussion' },
+      { id: 'guitar_fret_noise', name: 'Guitar Fret', category: 'String' },
+      { id: 'guitar_harmonics', name: 'Guitar Harmonics', category: 'String' },
+      { id: 'gunshot', name: 'Gunshot', category: 'Effects' },
+      { id: 'harmonica', name: 'Harmonica', category: 'Wind' },
+      { id: 'harpsichord', name: 'Harpsichord', category: 'Baroque' },
+      { id: 'honkytonk_piano', name: 'Honky Tonk', category: 'Piano' },
+      { id: 'kalimba', name: 'Kalimba', category: 'African' },
+      { id: 'koto', name: 'Koto', category: 'Japanese' }
+    ];
+    const instrument = instruments.find(inst => inst.id === instrumentId);
+    return instrument ? instrument.category : '';
+  };
   return (
     <>
       <div style={{ pointerEvents: showNewProject ? 'none' : 'auto' }}>
@@ -252,7 +276,7 @@ const Sidebar2 = () => {
                         />
                       ) : (
                         <span className={`font-bold text-sm truncate flex-[0_0_auto] overflow-hidden whitespace-normal break-all w-[120px] [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical] ${track.frozen ? 'text-[#4CAF50]' : 'text-white'}`}>
-                          { track.id == currentTrackId ? getInstrumentDisplayName(selectedInstrument) : (track.name || `Track ${idx + 1}`)}
+                          { track.id == currentTrackId ? getInstrumentCategory(selectedInstrument) : (track.name || `Track ${idx + 1}`)}
                         </span>
                       )}
                       {track.frozen && (
@@ -260,7 +284,7 @@ const Sidebar2 = () => {
                       )}
                     </div>
                     <div className="flex flex-row items-center justify-around gap-x-2 mt-1">
-                      <span className={`w-6 h-6 rounded text-xs font-bold flex items-center justify-center ${isRecording ? 'bg-[#FF006B]' : 'bg-[#444]'} text-white`}>R</span>
+                      <span className={`w-6 h-6 rounded text-xs font-bold flex items-center justify-center ${(currentTrackId === track.id) ? 'bg-[#FF006B]' : 'bg-[#444]'} text-white`}>R</span>
                       <span className="w-8 h-8 rounded-full bg-transparent">
                         <img src={tk} alt="" className={`w-full h-full opacity-60`} />
                       </span>
@@ -279,14 +303,18 @@ const Sidebar2 = () => {
                         setEditingName(track.name || "");
                       }}
                     />
-                    <div className="flex items-center justify-center gap-x-4 w-full pb-4">
-                      <img src={headphone} alt="Headphone" className={`${soloTrackId === track.id ? 'd_muteicon' : ''}`}
+                    <div className="flex items-center justify-center gap-x-2 w-full pb-4">
+                      <img src={headphone} alt="Headphone" 
+                        className="rounded-[20px] p-1"
+                        style={soloTrackId === track.id ? { backgroundColor: '#A6A3AC' } : {}}
                         onClick={e => {
                           e.stopPropagation();
                           handleSoloTrack(track.id);
                         }}
                       />
-                      <img src={mute} alt="Mute"
+                      <img src={mute} alt="Mute" 
+                        className="rounded-[20px] p-1"
+                        style={isMuted ? { backgroundColor: '#A6A3AC' } : {}}
                         onClick={e => {
                           e.stopPropagation();
                           handleMuteTrack(track.id);
