@@ -1987,7 +1987,7 @@ const Pianodemo = ({ onClose }) => {
                                 {INSTRUMENTS[currentInstrumentIndex].category}
                               </div>
                             </div>
-                          </div>
+                          </div>~
 
                           <button onClick={nextInstrument} className="text-gray-400 hover:text-white transition-colors p-1 lg:p-2">
                             <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] text-[#FFFFFF99]' />
