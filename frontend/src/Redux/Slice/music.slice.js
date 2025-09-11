@@ -62,7 +62,7 @@ export const deleteMusic = createAsyncThunk(
     async (deleteId, { dispatch, rejectWithValue }) => {
         try {
             const token = await sessionStorage.getItem("token");
-            const response = await axios.delete(`${BASE_URL}/deleteMusic/${deleteId}`,
+            const response = await axiosInstance.delete(`${BASE_URL}/deleteMusic/${deleteId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
