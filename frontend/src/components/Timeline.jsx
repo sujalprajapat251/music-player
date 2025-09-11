@@ -1657,7 +1657,8 @@ const Timeline = () => {
             duration: audioDurationSec,
             trimStart: 0,
             trimEnd: audioDurationSec,
-            soundData: soundItem
+            soundData: soundItem,
+            musicoff: true,
           };
 
           dispatch(addAudioClipToTrack({
@@ -1676,7 +1677,8 @@ const Timeline = () => {
             duration: audioDurationSec,
             trimStart: 0,
             trimEnd: audioDurationSec,
-            soundData: soundItem
+            soundData: soundItem,
+            musicoff: true,
           };
 
           const newTrack = {

@@ -18,7 +18,7 @@ import Am7 from "../Images/am7.svg";
 import { FaPlus, FaStop } from "react-icons/fa6";
 import music from "../Images/playingsounds.svg";
 import BottomToolbar from './Layout/BottomToolbar';
-import { addPianoNote, setRecordingAudio, setPianoNotes, setPianoRecordingClip, setSelectedInstrument } from '../Redux/Slice/studio.slice';
+import { addPianoNote, setRecordingAudio, setPianoNotes, setPianoRecordingClip, setSelectedInstrument, updateTrack } from '../Redux/Slice/studio.slice';
 import PianoRolls from './PianoRolls';
 import * as Tone from "tone";
 import Effects2 from './Effects2';
@@ -289,14 +289,14 @@ const Pianodemo = ({ onClose }) => {
   const pianoSectionsRef = useRef(null);
 
   // Get the selected instrument from Redux
+  
   const selectedInstrumentFromRedux = useSelector((state) => selectStudioState(state)?.selectedInstrument || 'acoustic_grand_piano');
-
   useEffect(() => {
     const index = INSTRUMENTS.findIndex(inst => inst.id === selectedInstrumentFromRedux);
     if (index !== -1) {
       setCurrentInstrumentIndex(index);
     }
-  }, [selectedInstrumentFromRedux]);
+  }, []);
 
   useEffect(() => {
     const containerEl = pianoSectionsRef.current;
@@ -348,12 +348,21 @@ const Pianodemo = ({ onClose }) => {
 
   const getIsRecording = useSelector((state) => selectStudioState(state).isRecording);
   const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
+  const currentTrack = useSelector((state) => (selectStudioState(state).tracks || []).find(t => t.id === currentTrackId));
   const studioCurrentTime = useSelector((state) => selectStudioState(state).currentTime || 0);
   const existingPianoNotes = useSelector((state) => selectStudioState(state).pianoNotes || []);
   const tracks = useSelector((state) => selectStudioState(state).tracks || []);
 
 
   const getActiveTabs = useSelector((state) => state.effects.activeTabs);
+
+    // Sync the track's nametype with the selected instrument's display name unless user renamed (locked)
+    useEffect(() => {
+      const instrumentName = INSTRUMENTS.find(inst => inst.id === selectedInstrument)?.name || 'Piano';
+      if (currentTrackId && !currentTrack?.nametypeLocked) {
+        dispatch(updateTrack({ id: currentTrackId, updates: { nametype: instrumentName } }));
+      }
+    }, [selectedInstrument, currentTrack?.nametypeLocked, dispatch]);
 
   useEffect(() => {
     if (getActiveTabs) {
@@ -628,6 +637,21 @@ const Pianodemo = ({ onClose }) => {
     const newInstrument = INSTRUMENTS[newIndex].id;
     dispatch(setSelectedInstrument(newInstrument));
   };
+
+  useEffect(() => {
+    if (getIsRecording) return;
+    if (!Array.isArray(existingPianoNotes) || existingPianoNotes.length === 0) return;
+
+    const needsUpdate = existingPianoNotes.some(
+      (n) => (n.trackId === (currentTrackId || null)) && n.instrumentId !== selectedInstrument
+    );
+    if (!needsUpdate) return;
+
+    const updated = existingPianoNotes.map((n) =>
+      n.trackId === (currentTrackId || null) ? { ...n, instrumentId: selectedInstrument } : n
+    );
+    dispatch(setPianoNotes(updated));
+  }, [selectedInstrument, existingPianoNotes, currentTrackId, getIsRecording, dispatch]);
 
 
   const toggleButton = (section, index) => {

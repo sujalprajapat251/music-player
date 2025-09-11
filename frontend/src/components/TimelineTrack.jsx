@@ -56,7 +56,7 @@ const ResizableTrimHandle = ({
 
     const handleMouseUp = () => {
       onDragEnd();
-      document.removeEventListener('mousemove', handleMouseMove); 
+      document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
 
@@ -475,12 +475,12 @@ function midiToY(midi) {
 // This ensures that only notes/hits within the trimmed region are played
 const filterByTrimBoundaries = (items, trimStart, trimEnd, getTimeKey = 'startTime', getDurationKey = 'duration') => {
   if (!trimStart && !trimEnd) return items;
-  
+
   return items.filter(item => {
     const startTime = item[getTimeKey] || 0;
     const duration = item[getDurationKey] || 0.05;
     const endTime = startTime + duration;
-    
+
     // Only include items that overlap with the trimmed region
     return startTime < trimEnd && endTime > trimStart;
   });
@@ -517,8 +517,8 @@ const TimelineTrack = ({
   const pianoRecordingClip = useSelector((state) => selectStudioState(state).pianoRecordingClip);
   const bpm = useSelector((state) => selectStudioState(state).bpm || 120);
 
-  console.log("..........................nots",pianoNotes)
-  console.log("..........................clip",pianoRecordingClip)
+  // console.log("..........................nots", pianoNotes)
+  // console.log("..........................clip", pianoRecordingClip)
 
   // Get drum recording data from Redux
   const drumRecordedData = useSelector((state) => selectStudioState(state).drumRecordedData);
@@ -556,11 +556,11 @@ const TimelineTrack = ({
   // Derive per-track piano data with trimming applied
   const trackPianoNotes = useMemo(() => {
     const notes = Array.isArray(pianoNotes) ? pianoNotes.filter(n => (n?.trackId ?? null) === trackId) : [];
-    
+
     if (trackPianoClip && trackPianoClip.start != null && trackPianoClip.end != null) {
       return filterByTrimBoundaries(notes, trackPianoClip.start, trackPianoClip.end, 'startTime', 'duration');
     }
-    
+
     return notes;
   }, [pianoNotes, trackId, trackPianoClip]);
 
@@ -569,11 +569,11 @@ const TimelineTrack = ({
   // Derive per-track drum data with trimming applied
   const trackDrumNotes = useMemo(() => {
     const notes = Array.isArray(drumRecordedData) ? drumRecordedData.filter(n => (n?.trackId ?? null) === trackId) : [];
-    
+
     if (trackDrumClip && trackDrumClip.start != null && trackDrumClip.end != null) {
       return filterByTrimBoundaries(notes, trackDrumClip.start, trackDrumClip.end, 'currentTime', 'decay');
     }
-    
+
     return notes;
   }, [drumRecordedData, trackId, trackDrumClip]);
 
@@ -909,7 +909,7 @@ const TimelineTrack = ({
           )}
         </div>
       )}
-      
+
       {isDrumTrack && displayDrumClip && displayDrumClip.start != null && displayDrumClip.end != null && (
         <div
           style={{
@@ -919,7 +919,7 @@ const TimelineTrack = ({
             width: Math.max(0, (displayDrumClip.end - displayDrumClip.start)) * timelineWidthPerSecond,
             height: height,
             zIndex: 6,
-            background: 'transparent', 
+            background: 'transparent',
             border: `1px solid ${(color || displayDrumClip.color)}`,
             borderRadius: 6,
             pointerEvents: 'none'
@@ -1374,11 +1374,11 @@ const TimelineTrack = ({
               });
             });
           })()}
- 
+
           {/* Grid Overlay for Beat Divisions */}
         </div>
       )}
- 
+
       {/* Render each audio clip in the track */}
       {track.audioClips && track.audioClips.map((clip) => {
         const isBeatClip = clip.drumSequence && clip.drumSequence.length > 0;
@@ -1463,8 +1463,8 @@ const TimelineTrack = ({
                   const topY = rowIndex * (rowHeight + rowSpacing);
 
                   return (
-                    <div key={padId} style={{ 
-                      display: 'flex', 
+                    <div key={padId} style={{
+                      display: 'flex',
                       flex: 1,
                       position: 'relative',
                       borderBottom: rowIndex < orderedPadIds.length - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none'
@@ -1528,30 +1528,57 @@ const TimelineTrack = ({
           );
         }
         // Only show waveform for musicoff type
-        if (clip.type === 'drum' || clip.type === 'keys') {
-          return null;
+
+        // console.log("clip z::: > =========================",clip)
+        if (clip.musicoff) {
+          return (
+            <AudioClip
+              key={clip.id}
+              clip={clip}
+              onReady={onReady}
+              height={height}
+              trackId={trackId}
+              onTrimChange={onTrimChange}
+              onPositionChange={onPositionChange}
+              onRemoveClip={onRemoveClip}
+              timelineWidthPerSecond={timelineWidthPerSecond}
+              frozen={frozen}
+              gridSpacing={gridSpacing}
+              onContextMenu={onContextMenu}
+              onSelect={onSelect}
+              isSelected={selectedClipId === clip.id}
+              color={color}
+            />
+          );
         }
-        return (
-          <AudioClip
-            key={clip.id}
-            clip={clip}
-            onReady={onReady}
-            height={height}
-            trackId={trackId}
-            onTrimChange={onTrimChange}
-            onPositionChange={onPositionChange}
-            onRemoveClip={onRemoveClip}
-            timelineWidthPerSecond={timelineWidthPerSecond}
-            frozen={frozen}
-            gridSpacing={gridSpacing}
-            onContextMenu={onContextMenu}
-            onSelect={onSelect}
-            isSelected={selectedClipId === clip.id}
-            color={color}
-          />
-        );
+
+        // tracks.map((track) => {
+          // console.log("track z::: > =========================", track)
+        //   if (track?.type === 'audio') {
+        //     return (
+        //       <AudioClip
+        //           key={clip.id}
+        //           clip={clip}
+        //           onReady={onReady}
+        //           height={height}
+        //           trackId={trackId}
+        //           onTrimChange={onTrimChange}
+        //           onPositionChange={onPositionChange}
+        //           onRemoveClip={onRemoveClip}
+        //           timelineWidthPerSecond={timelineWidthPerSecond}
+        //           frozen={frozen}
+        //           gridSpacing={gridSpacing}
+        //           onContextMenu={onContextMenu}
+        //           onSelect={onSelect}
+        //           isSelected={selectedClipId === clip.id}
+        //           color={color}
+        //         />
+        //       );
+        //     }
+        //   });
+
       })}
-      
+
     </div>
   );
 };

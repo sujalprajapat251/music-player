@@ -73,7 +73,9 @@ const studioSlice = createSlice({
         color: action.payload.color || getNextTrackColor(), // Assign unique color
         audioClips: action.payload.audioClips || [], // Array to hold multiple audio clips
         pianoNotes: Array.isArray(action.payload.pianoNotes) ? action.payload.pianoNotes : [],
-        pianoClip: action.payload.pianoClip || null
+        pianoClip: action.payload.pianoClip || null,
+        nametype: action.payload.nametype || (action.payload.type === 'Keys' ? 'Piano' : action.payload.name),
+        nametypeLocked: !!action.payload.nametypeLocked
       };
       state.tracks.push(track);
       console.log('tracktracktracktrack', track);
@@ -174,9 +176,11 @@ const studioSlice = createSlice({
     },
     renameTrack: (state, action) => {
       const { trackId, newName } = action.payload;
+      console.log("delelellele",action.payload)
       const trackIndex = state.tracks.findIndex(track => track.id === trackId);
       if (trackIndex !== -1) {
-        state.tracks[trackIndex].name = newName;
+        state.tracks[trackIndex].nametype = newName;
+        state.tracks[trackIndex].nametypeLocked = true;
       }
     },
     freezeTrack: (state, action) => {

@@ -172,8 +172,9 @@ exports.permanentDeleteMusic = async (req, res) => {
 // restore all music from recycle bin
 exports.restoreAllMusic = async (req, res) => {
     try {
+        const userId = req.user.id; 
         const result = await Music.updateMany(
-            { isDeleted: true },
+            { userId, isDeleted: true },
             { $set: { isDeleted: false, deletedAt: null } }
         );
 
@@ -193,7 +194,8 @@ exports.restoreAllMusic = async (req, res) => {
 // permanently delete all music from recycle bin
 exports.permanentDeleteAllMusic = async (req, res) => {
     try {
-        const result = await Music.deleteMany({ isDeleted: true });
+        const userId = req.user.id;
+        const result = await Music.deleteMany({ userId, isDeleted: true });
 
         if (result.deletedCount === 0) {
             return res.status(404).json({ status: 404, message: "No music files found in recycle bin." });
@@ -207,5 +209,65 @@ exports.permanentDeleteAllMusic = async (req, res) => {
         return res.status(500).json({ status: 500, message: error.message });
     }
 };
+
+// Rename music file
+exports.renameMusic = async (req, res) => {
+    try {
+        const { id } = req.params; 
+        const { name } = req.body; 
+
+        if (!name || name.trim() === "") {
+            return res.status(400).json({ status: 400,message: "Name is required" });
+        }
+
+        const music = await Music.findByIdAndUpdate(
+            id,
+            { name: name },
+            { new: true } 
+        );
+
+        if (!music) {
+            return res.status(404).json({ status: 404,message: "Music file not found" });
+        }
+
+        res.status(200).json({
+            message: "Music file renamed successfully..!",
+            music
+        });
+    } catch (error) {
+        res.status(500).json({ status: 500, error: error.message });
+    }
+};
+
+// Move the Folder
+exports.moveMusicToFolder = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { folderId } = req.body; 
+
+        if (!folderId) {
+            return res.status(400).json({ status: 400,message: "FolderId is required" });
+        }
+
+        const music = await Music.findByIdAndUpdate(
+            id,
+            { folderId: folderId },
+            { new: true } 
+        );
+
+        if (!music) {
+            return res.status(404).json({ status: 404,message: "Music file not found" });
+        }
+
+        res.status(200).json({
+            message: "Music file moved successfully..!",
+            music
+        });
+    } catch (error) {
+        res.status(500).json({ status: 500, error: error.message });
+    }
+};
+
+
 
 

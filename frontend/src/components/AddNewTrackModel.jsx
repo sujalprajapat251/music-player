@@ -10,7 +10,7 @@ import { ReactComponent as Track8 } from '../Images/track8.svg'
 import { ReactComponent as ImpIcon } from '../Images/import.svg'
 import { ReactComponent as Loop } from '../Images/loop.svg'
 import { useDispatch } from "react-redux";
-import { addTrack, setCurrentTrackId, setTrackType, createTrackWithDefaults } from "../Redux/Slice/studio.slice";
+import { addTrack, setCurrentTrackId, setTrackType, createTrackWithDefaults, setSelectedInstrument } from "../Redux/Slice/studio.slice";
 import { getNextTrackColor } from "../Utils/colorUtils";
 import { selectStudioState } from "../Redux/rootReducer";
 import PricingModel from './PricingModel'
@@ -69,6 +69,12 @@ const AddNewTrackModel = ({ onClose, onOpenLoopLibrary }) => {
 
   // Add empty/instrument track
   const handleBoxSelect = (option) => {
+    const defaultInstrumentByType = {
+      'Keys': 'acoustic_grand_piano',
+      'Guitar': 'acoustic_guitar_nylon',
+      'Orchestral': 'orchestral_harp'
+    };
+
     const newTrack = {
       id: Date.now(),
       name: option.label,
@@ -79,6 +85,10 @@ const AddNewTrackModel = ({ onClose, onOpenLoopLibrary }) => {
     
     // Use the grouped action creator for better undo/redo
     dispatch(createTrackWithDefaults(newTrack));
+    // If it's a piano/guitar/orchestral track, set the default instrument to the first option
+    if (defaultInstrumentByType[option.label]) {
+      dispatch(setSelectedInstrument(defaultInstrumentByType[option.label]));
+    }
     onClose();
   };
 

@@ -257,14 +257,14 @@ const Sidebar2 = () => {
                         autoFocus
                         onChange={e => setEditingName(e.target.value)}
                           onBlur={() => {
-                            if (editingName.trim() && editingName !== track.name) {
+                            if (editingName.trim() && editingName !== track.nametype) {
                               dispatch(renameTrack({ trackId: track.id, newName: editingName.trim() }));
                             }
                             setEditingTrackId(null);
                           }}
                           onKeyDown={e => {
                             if (e.key === "Enter") {
-                              if (editingName.trim() && editingName !== track.name) {
+                              if (editingName.trim() && editingName !== track.nametype) {
                                 dispatch(renameTrack({ trackId: track.id, newName: editingName.trim() }));
                               }
                               setEditingTrackId(null);
@@ -276,7 +276,7 @@ const Sidebar2 = () => {
                         />
                       ) : (
                         <span className={`font-bold text-sm truncate flex-[0_0_auto] overflow-hidden whitespace-normal break-all w-[120px] [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical] ${track.frozen ? 'text-[#4CAF50]' : 'text-white'}`}>
-                          { track.id == currentTrackId ? getInstrumentCategory(selectedInstrument) : (track.name || `Track ${idx + 1}`)}
+                          { track.nametype || track.name || `Track ${idx + 1}` }
                         </span>
                       )}
                       {track.frozen && (
@@ -300,7 +300,7 @@ const Sidebar2 = () => {
                       color={track.color}
                       onRename={() => {
                         setEditingTrackId(track.id);
-                        setEditingName(track.name || "");
+                        setEditingName(track.nametype || "");
                       }}
                     />
                     <div className="flex items-center justify-center gap-x-2 w-full pb-4">
