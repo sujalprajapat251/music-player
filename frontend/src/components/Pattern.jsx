@@ -254,23 +254,52 @@ const Pattern = () => {
     const maxTime = Math.max(...recordedData.map(h => (h.currentTime || 0) + (h.decay || 0)));
     const requiredBeats = Math.max(targetPatternLength, Math.ceil(Math.max(1, Math.round(maxTime * 16)) / 16) * 16);
 
-    // Build patterns per pad using currentTime -> beat index
-    if (requiredBeats !== targetPatternLength) setPatternLength(requiredBeats);
-    setTracks(prevTracks => prevTracks.map(track => {
-      const padHits = hitsByPad[track.padId];
-      const newPattern = new Array(requiredBeats).fill(false);
-      if (padHits && padHits.length) {
-        for (const hit of padHits) {
-          const idx = Math.round((hit.currentTime || 0) * 16);
-          if (idx >= 0 && idx < requiredBeats) newPattern[idx] = true;
+    // Ensure all pads present in data exist as tracks (auto-add missing)
+    const padIdsInData = Object.keys(hitsByPad);
+    const kit = drumMachineTypes[currentDrumMachine] || { pads: [] };
+
+    setTracks(prevTracks => {
+      // Map of existing tracks by padId for quick lookup
+      const existingByPad = Object.fromEntries(prevTracks.map(t => [t.padId, t]));
+
+      // Create any missing tracks for pads present in recorded data
+      const missingTracks = padIdsInData
+        .filter(padId => !existingByPad[padId])
+        .map(padId => {
+          const sampleHit = hitsByPad[padId][0];
+          const padMeta = (kit.pads || []).find(p => p.id === padId);
+          const displayName = (padMeta?.sound || sampleHit?.sound || padId).toString();
+          return {
+            id: padId,
+            name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
+            padId,
+            pattern: new Array(requiredBeats).fill(false),
+          };
+        });
+
+      // Next, for every track (existing + newly added), build its pattern
+      const baseTracks = [...prevTracks, ...missingTracks];
+
+      // Update pattern length if needed
+      if (requiredBeats !== targetPatternLength) setPatternLength(requiredBeats);
+
+      return baseTracks.map(track => {
+        const padHits = hitsByPad[track.padId];
+        const newPattern = new Array(requiredBeats).fill(false);
+
+        if (padHits && padHits.length) {
+          for (const hit of padHits) {
+            const idx = Math.round((hit.currentTime || 0) * 16);
+            if (idx >= 0 && idx < requiredBeats) newPattern[idx] = true;
+          }
+        } else {
+          // expand existing pattern if needed
+          for (let i = 0; i < Math.min(track.pattern.length, requiredBeats); i++) newPattern[i] = track.pattern[i];
         }
-      } else {
-        // expand existing pattern if needed
-        for (let i = 0; i < Math.min(track.pattern.length, requiredBeats); i++) newPattern[i] = track.pattern[i];
-      }
-      return { ...track, pattern: newPattern };
-    }));
-  }, []);
+        return { ...track, pattern: newPattern };
+      });
+    });
+  }, [bpm, patternLength, currentDrumMachine]);
 
   // NEW FUNCTION: Convert track data to pattern
   const convertTrackDataToPattern = useCallback((selectedTrack) => {
