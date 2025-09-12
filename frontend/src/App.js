@@ -8,6 +8,7 @@ import Alert from './Pages/Alert';
 import Login from './Pages/Login';
 import Layout from './components/Layout/Layout';
 import Home2 from './components/Home2';
+import RecentlyDeleted from './components/RecentlyDeleted';
 import Demoproject from './Pages/Demoproject';
 import ContactUs from './Pages/ContactUs';
 import Faqs from './Pages/Faqs';
@@ -49,6 +50,7 @@ import React, { useEffect } from "react";
 import * as soundtouch from 'soundtouchjs';
 import Guitar from './components/Guitar';
 import File from './components/File';
+import OpenProjectModal from './components/OpenProjectModal';
 window.soundtouch = soundtouch;
 
 function App() {
@@ -126,11 +128,12 @@ function App() {
 
             <Route path='/login' element={<Login />} />
 
-            <Route path="/" element={<Layout />} >
-              <Route path='project' element={<Home2 />} />
-              <Route path='demo-project' element={<Demoproject />} />
-              <Route path='profile' element={<Profile />} />
-            </Route>
+          <Route path="/" element={<Layout />} >
+            <Route path='project' element={<Home2 />} />
+            <Route path='recently-deleted' element={<RecentlyDeleted />} />
+            <Route path='demo-project' element={<Demoproject />} />
+            <Route path='profile' element={<Profile />} />
+          </Route>
 
             <Route path='/sidebar' element={<Sidebar2 />} >
               <Route path='timeline' element={<Timeline />} />

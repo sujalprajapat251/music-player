@@ -59,9 +59,75 @@ const AdaptiveMenu = ({ button, children, placement = 'bottom-end', widthClass =
     );
 };
 
+  
 const Home2 = () => {
 
     const { openOffcanvas } = useOffcanvas();
+    // State for showing/hiding delete menu for MoreHorizontal
+    // Track which delete dropdown is open (by index)
+    const [openDeleteMenuIdx, setOpenDeleteMenuIdx] = useState(null);
+    const deleteMenuRef = useRef(null);
+
+    // Click-away listener for delete dropdown
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (deleteMenuRef.current && !deleteMenuRef.current.contains(event.target)) {
+                setOpenDeleteMenuIdx(null);
+            }
+        }
+        if (openDeleteMenuIdx !== null) {
+            document.addEventListener('mousedown', handleClickOutside);
+        } else {
+            document.removeEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [openDeleteMenuIdx]);
+    // State for showing the custom delete confirmation modal
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    // State for deleted audio items (recently deleted)
+    const [deletedAudios, setDeletedAudios] = useState(() => {
+        // Try to load from localStorage for persistence
+        const saved = localStorage.getItem('deletedAudios');
+        return saved ? JSON.parse(saved) : [];
+    });
+    // State for current audio info (for delete)
+    const [currentAudio, setCurrentAudio] = useState(null);
+
+    // Handler for delete action (move to recently deleted)
+    // Show the custom delete modal
+    const handleShowDeleteModal = (audio) => {
+        setCurrentAudio(audio);
+        setShowDeleteModal(true);
+        setOpenDeleteMenuIdx(null);
+    };
+
+    // Confirm delete action (move to recently deleted)
+    const handleDeleteAudio = () => {
+        if (currentAudio) {
+            const audioWithTimestamp = {
+                ...currentAudio,
+                deletedAt: Date.now()
+            };
+            setDeletedAudios(prev => {
+                const updated = [...prev, audioWithTimestamp];
+                localStorage.setItem('deletedAudios', JSON.stringify(updated));
+                return updated;
+            });
+            setShowDeleteModal(false);
+            setCurrentAudio(null);
+        }
+    };
+
+    // Cancel delete modal
+    const handleDeleteCancel = () => {
+        setShowDeleteModal(false);
+        setCurrentAudio(null);
+    };
+
+    // Check if Untitled song is deleted
+    const isAudioDeleted = deletedAudios.some(audio => audio.name === 'Untitled song');
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -275,6 +341,35 @@ const Home2 = () => {
     const initializeAudioContext = useCallback(async (musicId) => {
         const index = allMusic.findIndex(music => music._id === musicId);
         if (index === -1) return;
+  const audioRef = useRef(null);
+  const canvasRef = useRef(null);
+  const animationRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const dataArrayRef = useRef(null);
+  
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [duration, setDuration] = useState('0:00');
+  const [currentTime, setCurrentTime] = useState('0:00');
+  const [progress, setProgress] = useState(0);
+  const [audioLoaded, setAudioLoaded] = useState(false);
+
+  // Sample audio URL - you can replace this with your own audio file
+  const audioUrl = 'aaa.mp3';
+
+  const formatTime = (time) => {
+    if (isNaN(time)) return '0:00';
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const initializeAudioContext = useCallback(async () => {
+    if (!audioContextRef.current && audioRef.current) {
+      try {
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioContextRef.current.createMediaElementSource(audioRef.current);
+        analyserRef.current = audioContextRef.current.createAnalyser();
         
         if (!audioContextRefs.current[index] && musicAudioRefs.current[index]) {
             try {
@@ -761,6 +856,25 @@ const Home2 = () => {
                                         </MenuItem>
                                     </div>
                                 </AdaptiveMenu>
+                                    <MenuItems
+                                        transition
+                                        className="absolute right-0 mt-2 md600:mt-3 2xl:mt-3  z-30 w-36 sm:w-48 xl:w-52 2xl:w-64 origin-top-right  bg-[#1f1f1f] shadow-lg outline-none rounded-md"
+                                    >
+                                        <div className="">
+                                            <MenuItem>
+                                                <p
+                                                    className="block  px-3 sm:px-4 md600:px-5  lg:px-6 py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer"
+                                                    onClick={() => navigate('/recently-deleted', { state: { deletedAudios } })}
+                                                >
+                                                    <div className="flex items-center" >
+                                                        <DeleteIcon className='w-3 h-3 sm:w-3 sm:h-3 lg:w-4 lg:h-4 2xl:w-6 2xl:h-6 text-white' />
+                                                        <p className="text-white ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] sm:text-[14px] 2xl:text-[16px]">Recently Deleted</p>
+                                                    </div>
+                                                </p>
+                                            </MenuItem>
+                                        </div>
+                                    </MenuItems>
+                                {/* </Menu> */}
                             </div>
                             {/* Folder breadcrumb when viewing a folder */}
                             {activeFolderId && (
@@ -820,9 +934,7 @@ const Home2 = () => {
                         </div>
                     ))}
 
-                    {allMusic
-                        .filter(ele => !ele.isDeleted)
-                        .filter(ele => {
+                    {allMusic.filter(ele => !ele.isDeleted).filter(ele => {
                             if (!activeFolderId) return !getItemFolderId(ele);
                             const fid = getItemFolderId(ele);
                             return fid === activeFolderId;
@@ -1080,6 +1192,97 @@ const Home2 = () => {
                     </div>
                 </div>
             </Dialog>
+                    {/* Only show Untitled song if not deleted */}
+                    {!isAudioDeleted && (
+                        <div className="w-full mx-auto">
+                            <div className="flex items-center gap-4 p-4 rounded-xl shadow-sm">
+                                <audio ref={audioRef} src={require(`../Images/${audioUrl}`)} preload="metadata" crossOrigin="anonymous"/>
+                                <div className="relative flex-shrink-0">
+                                    <div className="w-12 h-12 rounded-lg flex items-center justify-center cursor-pointer transition-colors shadow-md">
+                                        <button onClick={handlePlayPauseTwo} className="text-white" disabled={!audioLoaded}>
+                                        {isPlaying ? (
+                                            <Pause size={20} fill="white" />
+                                        ) : (
+                                            <Play size={20} fill="white" className="ml-0.5" />
+                                        )}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-medium truncate">Untitled song</h3>
+                                    </div>
+                                    <div className="relative">
+                                        <canvas ref={canvasRef} className="w-full h-12 cursor-pointer" onClick={handleCanvasClick} style={{ display: 'block' }}/>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3 text-xs">
+                                    <div className="flex items-center gap-2">
+                                        <div className=" text-xs font-mono">{duration}</div>
+                                    </div>
+                                    <div className="relative">
+                                        <MoreHorizontal
+                                            size={16}
+                                            className="cursor-pointer transition-colors"
+                                            onClick={() => {
+                                                setOpenDeleteMenuIdx(openDeleteMenuIdx === 'untitled' ? null : 'untitled');
+                                                setCurrentAudio({
+                                                    name: 'Untitled song',
+                                                    duration,
+                                                    url: audioUrl
+                                                });
+                                            }}
+                                        />
+                                        {openDeleteMenuIdx === 'untitled' && (
+                                            <div
+                                                ref={deleteMenuRef}
+                                                className="absolute right-0 mt-2 bg-[#1f1f1f] shadow-lg rounded-md z-50 p-2"
+                                            >
+                                                <button
+                                                    className="text-white px-4 py-2 bg-red-500 rounded hover:bg-red-600"
+                                                    onClick={() => handleShowDeleteModal({ name: 'Untitled song', duration, url: audioUrl })}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                {/* </div> */}
+            {/* </div> */}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && currentAudio && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+                    <div className="bg-[#1F1F1F] rounded-xl shadow-lg p-8 w-full max-w-md relative">
+                        <button
+                            className="absolute top-4 right-4 text-gray-400 text-2xl font-bold hover:text-gray-600"
+                            onClick={handleDeleteCancel}
+                        >
+                            &times;
+                        </button>
+                        <h2 className="font-bold text-2xl text-white mb-4">Delete "{currentAudio.name}"</h2>
+                        <p className="text-[#FFFFFF99] mb-6">The project can be restored from "Recently deleted" for 30 days.</p>
+                        <div className="flex justify-end gap-4 mt-6">
+                            <button
+                                className="d_btn d_cancelbtn"
+                                onClick={handleDeleteCancel}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="d_btn d_deletebtn"
+                                onClick={handleDeleteAudio}
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* New Folder Modal */}
             <Dialog open={addfoldermodal} onClose={setAddFolderModal} className="relative z-10">
