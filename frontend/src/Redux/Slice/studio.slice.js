@@ -58,6 +58,11 @@ const studioSlice = createSlice({
   name: 'studio',
   initialState,
   reducers: {
+    resetStudio: (state) => {
+      // Reset global color index for new tracks as well
+      resetColorIndex();
+      return { ...initialState };
+    },
     setTracks: (state, action) => {
       state.tracks = action.payload;
       // console.log('all trackid', action.payload);
@@ -596,6 +601,7 @@ const studioSlice = createSlice({
 });
 
 export const {
+  resetStudio,
   setTracks,
   addTrack,
   updateTrack,

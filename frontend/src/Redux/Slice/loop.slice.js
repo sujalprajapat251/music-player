@@ -2,7 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
   loopStart: 0,
-  loopEnd: 10, // Default 10 seconds
+  loopEnd: 6, // Default 6 seconds
   isLoopEnabled: false,
   audioDuration: 0,
 };
@@ -38,7 +38,7 @@ const loopSlice = createSlice({
     },
     resetLoop: (state) => {
       state.loopStart = 0;
-      state.loopEnd = Math.min(10, state.audioDuration);
+      state.loopEnd = Math.min(6, state.audioDuration);
       state.isLoopEnabled = false;
     },
   },

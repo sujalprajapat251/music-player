@@ -30,7 +30,7 @@ import { setShowLoopLibrary } from "../Redux/Slice/ui.slice";
 
 const Sidebar2 = () => {
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
-  const [showNewProject, setShowNewProject] = useState(true);
+  const [showNewProject, setShowNewProject] = useState(false);
   const [editingTrackId, setEditingTrackId] = useState(null);
   const [editingName, setEditingName] = useState("");
   // Use Redux for open instrument; avoid local UI duplication
