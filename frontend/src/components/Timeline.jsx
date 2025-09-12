@@ -387,7 +387,7 @@ const Timeline = () => {
         pianoAudioContextRef.current,
         selectedInstrument
       );
-      console.log("Piano instrument loaded for playback:", selectedInstrument);
+      // console.log("Piano instrument loaded for playback:", selectedInstrument);
     } catch (error) {
       console.error("Error loading piano instrument for playback:", selectedInstrument, error);
     }

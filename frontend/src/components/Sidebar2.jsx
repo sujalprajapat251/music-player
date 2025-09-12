@@ -35,7 +35,7 @@ const Sidebar2 = () => {
   const [editingName, setEditingName] = useState("");
   // Use Redux for open instrument; avoid local UI duplication
   const tracks = useSelector((state) => selectStudioState(state).tracks);
-  console.log("tracks ::::: > ", tracks)
+  // console.log("tracks ::::: > ", tracks)
  
   const trackHeight = useSelector((state) => selectStudioState(state).trackHeight);
   const dispatch = useDispatch();
@@ -203,7 +203,7 @@ const Sidebar2 = () => {
               }
             `}</style>
             {(tracks || []).map((track, idx) => {
-              console.log(":llll", track)
+              // console.log(":llll", track)
               const isMuted = soloTrackId ? soloTrackId !== track.id : (track?.muted || false);
               const borderColor = track.id === currentTrackId ? track.color : '';
               const isDrumTrack = track.name === 'Drums & Machines' || track.type === 'drum';

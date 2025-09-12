@@ -60,10 +60,10 @@ const studioSlice = createSlice({
   reducers: {
     setTracks: (state, action) => {
       state.tracks = action.payload;
-      console.log('all trackid', action.payload);
+      // console.log('all trackid', action.payload);
     },
     addTrack: (state, action) => {
-      console.log(">>>>>>>>>>>>>>>>>>>>>>>>", action.payload)
+      // console.log(">>>>>>>>>>>>>>>>>>>>>>>>", action.payload)
       // Ensure new tracks have frozen property, audioClips array, and a unique color
       const track = {
         ...action.payload,
@@ -78,7 +78,7 @@ const studioSlice = createSlice({
         nametypeLocked: !!action.payload.nametypeLocked
       };
       state.tracks.push(track);
-      console.log('tracktracktracktrack', track);
+      // console.log('tracktracktracktrack', track);
     },
     updateTrack: (state, action) => {
       const { id, updates } = action.payload;
@@ -89,7 +89,7 @@ const studioSlice = createSlice({
     },
     // New action to add audio clip to existing track
     addAudioClipToTrack: (state, action) => {
-      console.log("-------------------------------audio", action.payload)
+      // console.log("-------------------------------audio", action.payload)
       const { trackId, audioClip } = action.payload;
       const trackIndex = state.tracks.findIndex(track => track.id == trackId); // Use == for type coercion
       if (trackIndex !== -1) {
@@ -248,7 +248,7 @@ const studioSlice = createSlice({
     },
     setRecordedData: (state, action) => {
       state.recordedData = action.payload;
-      console.log('pianoRecordpianoRecordpianoRecord', action.payload);
+      // console.log('pianoRecordpianoRecordpianoRecord', action.payload);
     },
     setTrackType: (state, action) => {
       state.newtrackType = action.payload;
@@ -401,7 +401,7 @@ const studioSlice = createSlice({
       }
     },
     addPianoNote: (state, action) => {
-      console.log("action.payload :: > ", action.payload)
+      // console.log("action.payload :: > ", action.payload)
       state.pianoNotes.push(action.payload);
       const t = state.tracks.find(tr => tr.id == action.payload?.trackId);
       if (t) {
@@ -434,7 +434,7 @@ const studioSlice = createSlice({
       state.tracks.forEach(t => { t.pianoNotes = []; });
     },
     setPianoRecordingClip: (state, action) => {
-      console.log(">>>>>>>>>>>>>>>>>>>>>>>>PianoRecordingClip", action.payload);
+      // console.log(">>>>>>>>>>>>>>>>>>>>>>>>PianoRecordingClip", action.payload);
       // Persist the active piano clip globally (for editing) and also store
       // a per-track copy so the clip bounds remain when switching tracks
       // action.payload expected: { start, end, color, trackId }
@@ -451,7 +451,7 @@ const studioSlice = createSlice({
       }
     },
     setDrumRecordingClip: (state, action) => {
-      console.log("reduxclip", action.payload)
+      // console.log("reduxclip", action.payload)
       state.drumRecordingClip = action.payload; // {start, end, color, trackId}
     },
     setSelectedKey: (state, action) => {
