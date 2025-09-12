@@ -56,6 +56,51 @@ export const getAllMusic = createAsyncThunk(
     }
 );
 
+export const renameMusic = createAsyncThunk(
+    "music/renameMusic",
+    async ({ musicId, musicName }, { dispatch, rejectWithValue }) => {
+        try {
+            const token = await sessionStorage.getItem("token");
+            const response = await axiosInstance.put(
+                `${BASE_URL}/renameMusic/${musicId}`,
+                { name: musicName },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+            dispatch(setAlert({ text: response.data.message || 'Music renamed', color: 'success' }));
+            return response.data.music;
+        } catch (error) {
+            return handleErrors(error, dispatch, rejectWithValue);
+        }
+    }
+);
+
+
+export const moveToFolderMusic = createAsyncThunk(
+    "music/moveToFolderMusic",
+    async ({ musicId, folderId }, { dispatch, rejectWithValue }) => {
+        try {
+            const token = await sessionStorage.getItem("token");
+            const response = await axiosInstance.put(
+                `${BASE_URL}/moveMusicToFolder/${musicId}`,
+                { folderId },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+            dispatch(setAlert({ text: response.data.message || 'Moved to folder', color: 'success' }));
+            return response.data.music;
+        } catch (error) {
+            return handleErrors(error, dispatch, rejectWithValue);
+        }
+    }
+);
+
 
 export const deleteMusic = createAsyncThunk(
     "music/deleteMusic",
@@ -113,8 +158,48 @@ const musicSlice = createSlice({
                 state.loading = false;
                 state.success = false;
                 state.message = action.payload?.message || 'Failed to load Music';
+            })  
+            .addCase(renameMusic.pending, (state) => {
+                state.loading = true;
+                state.message = 'Renaming music...';
             })
-    }
+            .addCase(renameMusic.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = true;
+                state.message = 'Music renamed successfully';
+                const updated = action.payload;
+                if (updated && updated._id) {
+                    state.allmusic = state.allmusic.map(m =>
+                        m._id === updated._id ? { ...m, ...updated } : m
+                    );
+                }
+            })
+            .addCase(renameMusic.rejected, (state, action) => {
+                state.loading = false;
+                state.success = false;
+                state.message = action.payload?.message || 'Failed to rename music';
+            })
+            .addCase(moveToFolderMusic.pending, (state) => {
+                state.loading = true;
+                state.message = 'Moving music to folder...';
+            })
+            .addCase(moveToFolderMusic.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = true;
+                state.message = 'Music moved successfully';
+                const updated = action.payload;
+                if (updated && updated._id) {
+                    state.allmusic = state.allmusic.map(m =>
+                        m._id === updated._id ? { ...m, ...updated } : m
+                    );
+                }
+            })
+            .addCase(moveToFolderMusic.rejected, (state, action) => {
+                state.loading = false;
+                state.success = false;
+                state.message = action.payload?.message || 'Failed to move music';
+            })
+        }
 });
 
 export const {
