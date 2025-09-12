@@ -20,6 +20,10 @@ const musicSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'folder',
     },
+    image: {  
+        type: String,
+        default: null
+    },
     isDeleted: {
         type: Boolean,
         default: false

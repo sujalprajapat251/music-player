@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const Music = require('../models/musicModel');
+const fs = require('fs');
 
 // create music
 exports.createMusic = async (req, res) => {
@@ -32,8 +33,8 @@ exports.createMusic = async (req, res) => {
 // get all music by user id
 exports.getAllMusic = async (req, res) => {
     try {
-        const userId = req.user.id; 
-        
+        const userId = req.user.id;
+
         const music = await Music.aggregate([
             {
                 $match: {
@@ -73,7 +74,7 @@ exports.getAllMusic = async (req, res) => {
 // update music
 exports.updateMusic = async (req, res) => {
     try {
-        const { id } = req.params; 
+        const { id } = req.params;
         const { name, musicdata, url, folderId } = req.body;
 
         const existingMusic = await Music.findById(id);
@@ -172,7 +173,7 @@ exports.permanentDeleteMusic = async (req, res) => {
 // restore all music from recycle bin
 exports.restoreAllMusic = async (req, res) => {
     try {
-        const userId = req.user.id; 
+        const userId = req.user.id;
         const result = await Music.updateMany(
             { userId, isDeleted: true },
             { $set: { isDeleted: false, deletedAt: null } }
@@ -213,21 +214,21 @@ exports.permanentDeleteAllMusic = async (req, res) => {
 // Rename music file
 exports.renameMusic = async (req, res) => {
     try {
-        const { id } = req.params; 
-        const { name } = req.body; 
+        const { id } = req.params;
+        const { name } = req.body;
 
         if (!name || name.trim() === "") {
-            return res.status(400).json({ status: 400,message: "Name is required" });
+            return res.status(400).json({ status: 400, message: "Name is required" });
         }
 
         const music = await Music.findByIdAndUpdate(
             id,
             { name: name },
-            { new: true } 
+            { new: true }
         );
 
         if (!music) {
-            return res.status(404).json({ status: 404,message: "Music file not found" });
+            return res.status(404).json({ status: 404, message: "Music file not found" });
         }
 
         res.status(200).json({
@@ -243,20 +244,20 @@ exports.renameMusic = async (req, res) => {
 exports.moveMusicToFolder = async (req, res) => {
     try {
         const { id } = req.params;
-        const { folderId } = req.body; 
+        const { folderId } = req.body;
 
         if (!folderId) {
-            return res.status(400).json({ status: 400,message: "FolderId is required" });
+            return res.status(400).json({ status: 400, message: "FolderId is required" });
         }
 
         const music = await Music.findByIdAndUpdate(
             id,
             { folderId: folderId },
-            { new: true } 
+            { new: true }
         );
 
         if (!music) {
-            return res.status(404).json({ status: 404,message: "Music file not found" });
+            return res.status(404).json({ status: 404, message: "Music file not found" });
         }
 
         res.status(200).json({
@@ -265,6 +266,57 @@ exports.moveMusicToFolder = async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ status: 500, error: error.message });
+    }
+};
+
+// Add Cover Image
+exports.addCoverImage = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!req.file) {
+            return res.status(400).json({ status: 400, message: "No file uploaded" });
+        }
+
+        const coverPath = req.file.path;
+
+        const music = await Music.findByIdAndUpdate(
+            id,
+            { image: coverPath },
+            { new: true }
+        );
+
+        if (!music) {
+            return res.status(404).json({ status: 404, message: "Music not found" });
+        }
+
+        res.status(200).json({ status: 200, message: "Cover image added successfully..!", data: music });
+    } catch (error) {
+        res.status(500).json({ status: 500, message: error.message });
+    }
+};
+
+// Remove Cover Image
+exports.removeCoverImage = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const music = await Music.findById(id);
+
+        if (!music) {
+            return res.status(404).json({ status: 404, message: "Music not found" });
+        }
+
+        if (music.image) {
+            fs.unlink(music.image, (err) => {
+                if (err) console.log("File deletion error:", err.message);
+            });
+        }
+
+        music.image = null;
+        await music.save();
+
+        res.status(200).json({ status: 200, message: "Cover image removed successfully..!", data: music });
+    } catch (error) {
+        res.status(500).json({ status: 500, message: error.message });
     }
 };
 

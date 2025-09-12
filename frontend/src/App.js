@@ -51,6 +51,7 @@ import * as soundtouch from 'soundtouchjs';
 import Guitar from './components/Guitar';
 import File from './components/File';
 import OpenProjectModal from './components/OpenProjectModal';
+import Sound from './components/Sound';
 window.soundtouch = soundtouch;
 
 function App() {
@@ -111,6 +112,7 @@ function App() {
             <Route path='piano' element={<Piano />} />
             <Route path='effcts2' element={<Effects2 />} />
             <Route path='file' element={<File />} />
+            <Route path='sound' element={<Sound />} />
             {/* <Route path='fuzz' element={<Fuzz />} />
           <Route path='Overdrive' element={<Overdrive />} />
           <Route path='autopan' element={<AutoPan />} />

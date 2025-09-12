@@ -3,15 +3,11 @@ import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
 import Soundfont from 'soundfont-player';
-// eslint-disable-next-line no-unused-vars
 import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio, setCurrentTrackId, setTrackType, triggerPatternDrumPlayback, clearTrackDeleted, setPianoNotes, setDrumRecordedData, setPianoRecordingClip, setDrumRecordingClip, setTracks } from "../Redux/Slice/studio.slice";
 import { selectStudioState } from "../Redux/rootReducer";
 import { createSynthSound, getAudioContext as getDrumAudioContext } from '../Utils/drumMachineUtils';
-// eslint-disable-next-line no-unused-vars
 import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM, zoomIn, zoomOut, resetZoom } from "../Redux/Slice/grid.slice";
-// eslint-disable-next-line no-unused-vars
 import { setAudioDuration as setLoopAudioDuration, toggleLoopEnabled, setLoopEnd, setLoopRange, selectIsLoopEnabled } from "../Redux/Slice/loop.slice";
-// eslint-disable-next-line no-unused-vars
 import { getGridSpacing, getGridSpacingWithTimeSignature, parseTimeSignature } from "../Utils/gridUtils";
 import { IMAGE_URL } from "../Utils/baseUrl";
 import { getAudioContext as getSharedAudioContext, ensureAudioUnlocked } from "../Utils/audioContext";
@@ -32,7 +28,6 @@ import AddNewTrackModel from "./AddNewTrackModel";
 import Piano from "./Piano";
 import WavEncoder from 'wav-encoder';
 import Drum from './Drum';
-// eslint-disable-next-line no-unused-vars
 import Pianodemo from "./Piano";
 import SectionContextMenu from "./SectionContextMenu";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
@@ -41,7 +36,6 @@ import LoopBar from "./LoopBar";
 import TimelineTrack from "./TimelineTrack";
 import ResizableSectionLabel from "./ResizableSectionLabel";
 import { useSectionLabels } from "../hooks/useSectionLabels";
-// eslint-disable-next-line no-unused-vars
 import { toggleEffectsOffcanvas } from "../Redux/Slice/effects.slice";
 import EditTrackNameModal from "./EditTrackNameModal";
 import { audioManager } from '../Utils/audioContext';
@@ -1658,7 +1652,6 @@ const Timeline = () => {
             trimStart: 0,
             trimEnd: audioDurationSec,
             soundData: soundItem,
-            musicoff: true,
           };
 
           dispatch(addAudioClipToTrack({
@@ -1678,7 +1671,6 @@ const Timeline = () => {
             trimStart: 0,
             trimEnd: audioDurationSec,
             soundData: soundItem,
-            musicoff: true,
           };
 
           const newTrack = {
@@ -3132,11 +3124,6 @@ const Timeline = () => {
                   duration: duration || visible || 0,
                   trimStart,
                   trimEnd,
-                  type: c.type,
-                  playbackRate: c.playbackRate || 1,
-                  drumSequence: Array.isArray(c.drumSequence) ? c.drumSequence : undefined,
-                  fromPattern: c.fromPattern || undefined,
-                  fromRecording: c.fromRecording || undefined,
                 };
               })
           : [];
@@ -3200,7 +3187,7 @@ const Timeline = () => {
       // Focus first track
       if (studioTracks.length > 0) dispatch(setCurrentTrackId(studioTracks[0].id));
       
-    } catch (error) {
+    } catch (error) { 
       console.error('Error loading project data:', error);
     }
   }, [projectId, allMusic, dispatch]);

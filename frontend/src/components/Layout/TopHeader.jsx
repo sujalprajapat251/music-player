@@ -309,6 +309,8 @@ const TopHeader = () => {
     };
 
     const handleSongNameSave = () => {
+        const normalized = (songName).trim();
+        setSongName(normalized === '' ? 'Untitled_song' : normalized);
         setIsEditingSongName(false);
     };
 
@@ -389,7 +391,7 @@ const TopHeader = () => {
         const user = sessionStorage.getItem("userId");
 
         // Build new tracks with a blob URL clip rendered from each track's pianoNotes (if present)
-        const serializedTracks = await Promise.all((tracks || []).map(async (t) => {
+        const serializedTracks = await Promise.all((tracks || [])?.map(async (t) => {
             const track = { ...t };
             const notes = Array.isArray(t.pianoNotes) ? t.pianoNotes : [];
             if (notes.length > 0) {

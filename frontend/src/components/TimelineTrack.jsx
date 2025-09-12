@@ -524,6 +524,8 @@ const TimelineTrack = ({
   const drumRecordedData = useSelector((state) => selectStudioState(state).drumRecordedData);
   const drumRecordingClip = useSelector((state) => selectStudioState(state).drumRecordingClip);
   const tracks = useSelector((state) => selectStudioState(state).tracks || []);
+  console.log("tracks-------------------------", tracks)
+
 
   const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
   const typeName = (track?.type || '').toString().toLowerCase();
@@ -1530,52 +1532,52 @@ const TimelineTrack = ({
         // Only show waveform for musicoff type
 
         // console.log("clip z::: > =========================",clip)
-        if (clip.musicoff) {
-          return (
-            <AudioClip
-              key={clip.id}
-              clip={clip}
-              onReady={onReady}
-              height={height}
-              trackId={trackId}
-              onTrimChange={onTrimChange}
-              onPositionChange={onPositionChange}
-              onRemoveClip={onRemoveClip}
-              timelineWidthPerSecond={timelineWidthPerSecond}
-              frozen={frozen}
-              gridSpacing={gridSpacing}
-              onContextMenu={onContextMenu}
-              onSelect={onSelect}
-              isSelected={selectedClipId === clip.id}
-              color={color}
-            />
-          );
-        }
+        // if (clip.musicoff) {
+        //   return (
+        //     <AudioClip
+        //       key={clip.id}
+        //       clip={clip}
+        //       onReady={onReady}
+        //       height={height}
+        //       trackId={trackId}
+        //       onTrimChange={onTrimChange}
+        //       onPositionChange={onPositionChange}
+        //       onRemoveClip={onRemoveClip}
+        //       timelineWidthPerSecond={timelineWidthPerSecond}
+        //       frozen={frozen}
+        //       gridSpacing={gridSpacing}
+        //       onContextMenu={onContextMenu}
+        //       onSelect={onSelect}
+        //       isSelected={selectedClipId === clip.id}
+        //       color={color}
+        //     />
+        //   );
+        // }
 
         // tracks.map((track) => {
           // console.log("track z::: > =========================", track)
-        //   if (track?.type === 'audio') {
-        //     return (
-        //       <AudioClip
-        //           key={clip.id}
-        //           clip={clip}
-        //           onReady={onReady}
-        //           height={height}
-        //           trackId={trackId}
-        //           onTrimChange={onTrimChange}
-        //           onPositionChange={onPositionChange}
-        //           onRemoveClip={onRemoveClip}
-        //           timelineWidthPerSecond={timelineWidthPerSecond}
-        //           frozen={frozen}
-        //           gridSpacing={gridSpacing}
-        //           onContextMenu={onContextMenu}
-        //           onSelect={onSelect}
-        //           isSelected={selectedClipId === clip.id}
-        //           color={color}
-        //         />
-        //       );
-        //     }
-        //   });
+          if (track?.type === 'audio') {
+            return (
+              <AudioClip
+                  key={clip.id}
+                  clip={clip}
+                  onReady={onReady}
+                  height={height}
+                  trackId={trackId}
+                  onTrimChange={onTrimChange}
+                  onPositionChange={onPositionChange}
+                  onRemoveClip={onRemoveClip}
+                  timelineWidthPerSecond={timelineWidthPerSecond}
+                  frozen={frozen}
+                  gridSpacing={gridSpacing}
+                  onContextMenu={onContextMenu}
+                  onSelect={onSelect}
+                  isSelected={selectedClipId === clip.id}
+                  color={color}
+                />
+              );
+            }
+          // });
 
       })}
 

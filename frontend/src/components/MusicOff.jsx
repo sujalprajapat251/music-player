@@ -149,7 +149,6 @@ const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
                     trimStart: 0,
                     trimEnd: audioDurationSec,
                     soundData: soundItem,
-                    musicoff: true
                 };
 
                 dispatch(addAudioClipToTrack({ trackId: selectedTrackId, audioClip: newClip }));
@@ -164,7 +163,6 @@ const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
                     trimStart: 0,
                     trimEnd: audioDurationSec,
                     soundData: soundItem,
-                    musicoff: true
                 };
 
                 const newTrackId = Date.now() + Math.random();
