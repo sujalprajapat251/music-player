@@ -3,6 +3,10 @@ export class AudioEffectsProcessor {
   constructor(audioContext) {
     this.audioContext = audioContext;
     this.effectsChain = new Map(); // Map of effect instanceId to audio nodes
+    
+    // Create master gain boost for all effects
+    this.masterGain = this.audioContext.createGain();
+    this.masterGain.gain.setValueAtTime(3.0, this.audioContext.currentTime); // 3x boost for all effects
   }
 
   // Create Classic Distortion effect chain
@@ -11,8 +15,10 @@ export class AudioEffectsProcessor {
 
     // Create audio nodes
     const inputGain = this.audioContext.createGain();
+    inputGain.gain.setValueAtTime(2.0, this.audioContext.currentTime); // Pre-amplify input signal
     const distortionGain = this.audioContext.createGain();
     const outputGain = this.audioContext.createGain();
+    outputGain.gain.setValueAtTime(1.5, this.audioContext.currentTime); // Boost output signal
 
     // Create waveshaper for extreme distortion
     const waveshaper = this.audioContext.createWaveShaper();
@@ -79,8 +85,11 @@ export class AudioEffectsProcessor {
 
     // Create audio nodes
     const inputGain = this.audioContext.createGain();
+    inputGain.gain.setValueAtTime(3.0, this.audioContext.currentTime); // Pre-amplify input signal
     const clipperGain = this.audioContext.createGain();
+    clipperGain.gain.setValueAtTime(2.5, this.audioContext.currentTime); // Boost clipper signal
     const outputGain = this.audioContext.createGain();
+    outputGain.gain.setValueAtTime(2.0, this.audioContext.currentTime); // Boost output signal
 
     // Create waveshaper for hard clipping
     const waveshaper = this.audioContext.createWaveShaper();
@@ -159,8 +168,11 @@ export class AudioEffectsProcessor {
 
     // Create audio nodes
     const inputGain = this.audioContext.createGain();
+    inputGain.gain.setValueAtTime(3.0, this.audioContext.currentTime); // Pre-amplify input signal
     const fuzzGain = this.audioContext.createGain();
+    fuzzGain.gain.setValueAtTime(2.5, this.audioContext.currentTime); // Boost fuzz signal
     const outputGain = this.audioContext.createGain();
+    outputGain.gain.setValueAtTime(2.0, this.audioContext.currentTime); // Boost output signal
 
     // Create fuzz distortion
     const waveshaper = this.audioContext.createWaveShaper();
@@ -213,8 +225,11 @@ export class AudioEffectsProcessor {
 
     // Create audio nodes
     const inputGain = this.audioContext.createGain();
+    inputGain.gain.setValueAtTime(2.5, this.audioContext.currentTime); // Pre-amplify input signal
     const distortionGain = this.audioContext.createGain();
+    distortionGain.gain.setValueAtTime(2.0, this.audioContext.currentTime); // Boost distortion signal
     const outputGain = this.audioContext.createGain();
+    outputGain.gain.setValueAtTime(2.0, this.audioContext.currentTime); // Boost output signal
 
     // Create distortion waveshaper
     const waveshaper = this.audioContext.createWaveShaper();
@@ -609,10 +624,13 @@ export class AudioEffectsProcessor {
   // Create Overdrive effect chain
   createOverdrive(parameters = {}) {
     const { dist = 0.5, tone = 0.5, lowCut = 0.5 } = parameters;
-  
+
     const inputGain = this.audioContext.createGain();
+    inputGain.gain.setValueAtTime(2.5, this.audioContext.currentTime); // Pre-amplify input signal
     const outputGain = this.audioContext.createGain();
+    outputGain.gain.setValueAtTime(2.0, this.audioContext.currentTime); // Boost output signal
     const preGain = this.audioContext.createGain();
+    preGain.gain.setValueAtTime(3.0, this.audioContext.currentTime); // Boost pre-gain signal
   
     // Create waveshaper for overdrive (softer than distortion)
     const waveshaper = this.audioContext.createWaveShaper();
@@ -966,8 +984,12 @@ export class AudioEffectsProcessor {
     // Connect audio source through the effect chain
     audioSource.disconnect();
     audioSource.connect(effectChain.input);
+    
+    // Connect effect output to master gain boost instead of returning directly
+    effectChain.output.disconnect();
+    effectChain.output.connect(this.masterGain);
 
-    return effectChain.output;
+    return this.masterGain;
   }
 
   // Update effect parameters
@@ -985,6 +1007,12 @@ export class AudioEffectsProcessor {
       // Disconnect and clean up
       effectChain.input.disconnect();
       effectChain.output.disconnect();
+      // Make sure master gain is disconnected from this effect
+      try {
+        effectChain.output.disconnect(this.masterGain);
+      } catch (e) {
+        // Already disconnected, ignore
+      }
       this.effectsChain.delete(effectInstanceId);
     }
   }

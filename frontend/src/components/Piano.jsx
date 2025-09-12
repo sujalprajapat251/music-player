@@ -93,7 +93,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
     }
   }, [defaultAngle]);
 
-
   const radius = (size - stroke) / 2;
   const center = size / 2;
   const onMouseDown = (e) => {
@@ -114,7 +113,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
       if (onChange) {
         onChange(next);
       }
-
       return next;
     });
   };
@@ -271,7 +269,6 @@ const other = [
   { name: "Simple Player" },
   { name: "Alternating Stride" }
 ];
-
 
 const Pianodemo = ({ onClose }) => {
   const dispatch = useDispatch();
