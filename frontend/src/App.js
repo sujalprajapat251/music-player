@@ -51,6 +51,7 @@ import * as soundtouch from 'soundtouchjs';
 import Guitar from './components/Guitar';
 import File from './components/File';
 import OpenProjectModal from './components/OpenProjectModal';
+import FolderView from './components/FolderView';
 window.soundtouch = soundtouch;
 
 function App() {
@@ -130,6 +131,7 @@ function App() {
 
           <Route path="/" element={<Layout />} >
             <Route path='project' element={<Home2 />} />
+            <Route path='project/folder/:id' element={<FolderView />} />
             <Route path='recently-deleted' element={<RecentlyDeleted />} />
             <Route path='demo-project' element={<Demoproject />} />
             <Route path='profile' element={<Profile />} />
