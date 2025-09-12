@@ -130,7 +130,7 @@ function App() {
 
           <Route path="/" element={<Layout />} >
             <Route path='project' element={<Home2 />} />
-            <Route path='recently-deleted' element={<RecentlyDeleted />} />
+            <Route path='recentlydeleted' element={<RecentlyDeleted />} />
             <Route path='demo-project' element={<Demoproject />} />
             <Route path='profile' element={<Profile />} />
           </Route>
@@ -138,6 +138,7 @@ function App() {
             <Route path='/sidebar' element={<Sidebar2 />} >
               <Route path='timeline' element={<Timeline />} />
               <Route path='timeline/:id' element={<Timeline />} />
+
               {/* <Route path='knob' element={<Knob />} />
             <Route path='loop' element={<Loops />} /> */}
               <Route path="effects" element={<Effects />} />

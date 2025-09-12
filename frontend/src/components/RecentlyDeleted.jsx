@@ -1,12 +1,17 @@
 import React, { useState } from "react";
+import axios from 'axios';
+import { useDispatch } from "react-redux";
+
 import { Menu, MenuButton, MenuItems, MenuItem, Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import { MoreHorizontal } from 'lucide-react';
 import { FiTrash2 } from 'react-icons/fi';
 import { useLocation, useNavigate } from "react-router-dom";
 import close from '../Images/close.svg';
+import { permanentDeleteAllMusic, permanentDeleteMusic, restoreAllMusic, restoreMusic } from "../Redux/Slice/music.slice";
 
 
 function RecentlyDeleted() {
+	const dispatch = useDispatch();
 	// Modal state for restore all
 	const [showRestoreAllModal, setShowRestoreAllModal] = useState(false);
 	// Modal state for permanently delete all
@@ -21,12 +26,7 @@ function RecentlyDeleted() {
 	};
 
 	// Confirm restore all
-	const handleRestoreAllConfirm = () => {
-		setRestoredAudios(prev => [...prev, ...deletedAudios]);
-		setDeletedAudios([]);
-		localStorage.setItem('deletedAudios', JSON.stringify([]));
-		setShowRestoreAllModal(false);
-	};
+	// (Removed duplicate handleRestoreAllConfirm function. See below for the async version.)
 
 	// Cancel restore all
 	const handleRestoreAllCancel = () => {
@@ -39,11 +39,7 @@ function RecentlyDeleted() {
 	};
 
 	// Confirm permanently delete all
-	const handleDeleteAllConfirm = () => {
-		setDeletedAudios([]);
-		localStorage.setItem('deletedAudios', JSON.stringify([]));
-		setShowDeleteAllModal(false);
-	};
+	// (Removed duplicate handleDeleteAllConfirm function. See below for the async version.)
 
 	// Cancel permanently delete all
 	const handleDeleteAllCancel = () => {
@@ -79,18 +75,70 @@ function RecentlyDeleted() {
 	};
 
 	// Handler for confirming restore in modal
-	const handleRestoreConfirm = () => {
+	const handleRestoreConfirm = async () => {
 		if (restoreIdx !== null) {
-			// Remove from deletedAudios state
 			const restoredAudio = deletedAudios[restoreIdx];
-			setRestoredAudios(prev => [...prev, restoredAudio]);
-			const updatedDeleted = deletedAudios.filter((_, i) => i !== restoreIdx);
-			setDeletedAudios(updatedDeleted);
-			// Update localStorage so Home2 can show restored item
-			localStorage.setItem('deletedAudios', JSON.stringify(updatedDeleted));
+			try {
+				// Call backend restore API
+				//await axios.post(`/api/music/restore/${restoredAudio._id}`);  Use the correct endpoint and ID field
+				// Remove from deletedAudios state
+				await dispatch(restoreMusic(restoredAudio._id)).unwrap();
+				setRestoredAudios(prev => [...prev, restoredAudio]);
+				const updatedDeleted = deletedAudios.filter((_, i) => i !== restoreIdx);
+				setDeletedAudios(updatedDeleted);
+				localStorage.setItem('deletedAudios', JSON.stringify(updatedDeleted));
+			} catch (error) {
+				alert('Restore failed: ' + (error.response?.data?.message || error.message));
+			}
 		}
 		setShowRestoreModal(false);
 		setRestoreIdx(null);
+	};
+
+	const handleDeleteConfirm = async () => {
+		if (deleteIdx !== null) {
+		const musicToDelete = deletedAudios[deleteIdx];
+		try {
+			await dispatch(permanentDeleteMusic(musicToDelete._id)).unwrap();
+
+			// UI update karo
+			const updatedDeleted = deletedAudios.filter((_, i) => i !== deleteIdx);
+			setDeletedAudios(updatedDeleted);
+			localStorage.setItem('deletedAudios', JSON.stringify(updatedDeleted));
+		} catch (error) {
+			alert('Permanent delete failed: ' + (error.message || "Unknown error"));
+		}
+		setShowDeleteModal(false);
+		setDeleteIdx(null);
+		}
+	};
+
+	const handleRestoreAllConfirm = async () => {
+		try {
+			await dispatch(restoreAllMusic()).unwrap();
+
+			// UI update karo
+			setRestoredAudios(prev => [...prev, ...deletedAudios]);
+			setDeletedAudios([]);
+			localStorage.setItem('deletedAudios', JSON.stringify([]));
+
+			setShowRestoreAllModal(false);
+		} catch (error) {
+		alert('Restore all failed: ' + (error.message || "Unknown error"));
+		}
+	};
+
+	const handleDeleteAllConfirm = async () => {
+		try {
+			await dispatch(permanentDeleteAllMusic()).unwrap();
+
+			// UI update karo
+			setDeletedAudios([]);
+			localStorage.setItem('deletedAudios', JSON.stringify([]));
+			setShowDeleteAllModal(false);
+		} catch (error) {
+		alert('Permanent delete all failed: ' + (error.message || "Unknown error"));
+		}
 	};
 
 	// Handler for canceling restore modal
@@ -104,15 +152,15 @@ function RecentlyDeleted() {
 		setShowDeleteModal(true);
 	};
 
-	const handleDeleteConfirm = () => {
-		if (deleteIdx !== null) {
-			const updatedDeleted = deletedAudios.filter((_, i) => i !== deleteIdx);
-			setDeletedAudios(updatedDeleted);
-			localStorage.setItem('deletedAudios', JSON.stringify(updatedDeleted));
-			setShowDeleteModal(false);
-			setDeleteIdx(null);
-		}
-	};
+	// const handleDeleteConfirm1 = () => {
+	// 	if (deleteIdx !== null) {
+	// 		const updatedDeleted = deletedAudios.filter((_, i) => i !== deleteIdx);
+	// 		setDeletedAudios(updatedDeleted);
+	// 		localStorage.setItem('deletedAudios', JSON.stringify(updatedDeleted));
+	// 		setShowDeleteModal(false);
+	// 		setDeleteIdx(null);
+	// 	}
+	// };
 
 	const handleDeleteCancel = () => {
 		setShowDeleteModal(false);
@@ -355,7 +403,7 @@ function RecentlyDeleted() {
 				</div>
 			)} */}
 			{/* Restore All Projects Modal */}
-			{/* Restore All Projects Modal */}
+			
 			{showRestoreAllModal && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
 					<div className="bg-[#1F1F1F] rounded-xl shadow-lg p-8 w-full max-w-md relative">

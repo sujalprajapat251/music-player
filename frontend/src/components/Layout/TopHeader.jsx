@@ -8,6 +8,7 @@ import subscription from "../../Images/subscriptionIcon.svg";
 import { IoIosShareAlt } from "react-icons/io";
 import { RxExit } from "react-icons/rx";
 import { Dialog, DialogBackdrop, DialogPanel, Menu, MenuButton } from '@headlessui/react';
+import OpenProjectModal from '../OpenProjectModal';
 import { ReactComponent as NewFolderIcon } from '../../Images/New Folder.svg';
 import { ReactComponent as OpenFolderIcon } from "../../Images/OpenFolder.svg";
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
@@ -83,6 +84,7 @@ const TopHeader = () => {
     const [lowlatencyomodal, setLowLatencyModel] = useState(false);
     const [midikeyboardmodal, setMidiKeyboardModel] = useState(false);
     const [exportProjectModal, setExportProjectModal] = useState(false);
+    const [openProjectModal, setOpenProjectModal] = useState(false);
     const [newProjectOpen, setNewProjectOpen] = useState(false);
     const [showUndoRedoToast, setShowUndoRedoToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
@@ -492,7 +494,6 @@ const TopHeader = () => {
         };
 
         const mixdown = await renderProjectMixdown(serializedTracks);
-
        
         dispatch(createMusic({
             name: songName,
@@ -506,6 +507,8 @@ const TopHeader = () => {
         <>
             <ExportPopup open={exportProjectModal} onClose={() => setExportProjectModal(false)} />
             <NewProject open={newProjectOpen} setOpen={setNewProjectOpen} />
+            {/* OpenProjectModal integration */}
+            <OpenProjectModal open={openProjectModal} onClose={() => setOpenProjectModal(false)} />
             <div className="flex justify-between bg-primary-light dark:bg-primary-dark border-b border-[#1414141A] dark:border-[#FFFFFF1A] px-2 py-2 sm:px-3 sm:py-1 md:px-5 md:py-2 xl:px-7">
                 <div className="flex gap-1 sm:gap-2 md:gap-3 lg:gap-5 xl:gap-7 items-center">
                     <p className="text-secondary-light dark:text-secondary-dark text-[12px] md:text-[14px] lg:text-[16px] xl:text-[18px]">LOGO</p>
@@ -528,7 +531,7 @@ const TopHeader = () => {
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
+                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`} onClick={() => setOpenProjectModal(true)}>
                                             <OpenFolderIcon className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Open...</span>
                                         </p>
                                     )}
