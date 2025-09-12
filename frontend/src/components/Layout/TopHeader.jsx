@@ -49,6 +49,8 @@ import axiosInstance from '../../Utils/axiosInstance';
 import { selectStudioState } from '../../Redux/rootReducer';
 import WavEncoder from 'wav-encoder';
 import NewProject from '../NewProjectModel';
+import ShareModal from '../Sharemodal';
+import PricingModel from '../PricingModel';
 
 const TopHeader = () => {
     const dispatch = useDispatch();
@@ -86,6 +88,8 @@ const TopHeader = () => {
     const [newProjectOpen, setNewProjectOpen] = useState(false);
     const [showUndoRedoToast, setShowUndoRedoToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
+    const [shareModalOpen, setShareModalOpen] = useState(false);
+    const [pricingModalOpen, setPricingModalOpen] = useState(false);
 
     // Add state for song name editing
     const [songName, setSongName] = useState('Untitled_song');
@@ -961,12 +965,18 @@ const TopHeader = () => {
                         <p className="text-secondary-light dark:text-secondary-dark text-[12px] hidden xl:block"> Export</p>
                     </div>
 
-                    <div className="flex xl:gap-2 bg-primary-dark dark:bg-primary-light justify-center  items-center md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full ">
+                    <div 
+                        className="flex xl:gap-2 bg-primary-dark dark:bg-primary-light justify-center  items-center md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full cursor-pointer hover:bg-opacity-80 transition-all"
+                        onClick={() => setPricingModalOpen(true)}
+                    >
                         <img src={subscription} alt="" className='h-[18px] w-[18px]' />
                         <p className="text-secondary-dark dark:text-secondary-light text-[12px]  font-semibold hidden xl:block">Upgrade Now</p>
                     </div>
 
-                    <div className="flex md:gap-2 bg-primary-dark dark:bg-primary-light  md:px-2 xl:px-3 md:py-1 rounded-full d_customborder">
+                    <div 
+                        className="flex md:gap-2 bg-primary-dark dark:bg-primary-light  md:px-2 xl:px-3 md:py-1 rounded-full d_customborder cursor-pointer hover:bg-opacity-80 transition-all"
+                        onClick={() => setShareModalOpen(true)}
+                    >
                         <IoIosShareAlt className="text-secondary-dark dark:text-secondary-light xl:text-[18px]" />
                         <p className="text-secondary-dark dark:text-secondary-light text-[12px] hidden md:block">Share</p>
                     </div>
@@ -1070,6 +1080,18 @@ const TopHeader = () => {
                     animation: fade-in 0.3s ease-out;
                 }
             `}</style>
+
+            {/* Share Modal */}
+            <ShareModal 
+                isOpen={shareModalOpen} 
+                onClose={() => setShareModalOpen(false)} 
+            />
+
+            {/* Pricing Modal */}
+            <PricingModel 
+                pricingModalOpen={pricingModalOpen} 
+                setPricingModalOpen={setPricingModalOpen} 
+            />
         </>
     )
 }

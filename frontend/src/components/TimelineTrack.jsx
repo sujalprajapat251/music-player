@@ -551,7 +551,13 @@ const TimelineTrack = ({
     return track?.pianoClip || null;
   }, [tracks, trackId]);
   const trackPianoClip = activeClipForThisTrack || persistedTrackClip;
-  const trackDrumClip = (drumRecordingClip && (drumRecordingClip.trackId ?? null) === trackId) ? drumRecordingClip : null;
+  const trackDrumClip = (() => {
+    // Prefer active clip for this track
+    if (drumRecordingClip && (drumRecordingClip.trackId ?? null) === trackId) return drumRecordingClip;
+    // Otherwise fall back to persisted per-track clip
+    const t = tracks?.find?.(tr => tr.id === trackId);
+    return t?.drumClip || null;
+  })();
 
   // Derive per-track piano data with trimming applied
   const trackPianoNotes = useMemo(() => {
