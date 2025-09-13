@@ -393,15 +393,19 @@ const TopHeader = () => {
         }
     };
 
+    const drumRecordingClip = useSelector((state) => selectStudioState(state).drumRecordingClip);
+
     const handleSaved = async () => {
         const user = sessionStorage.getItem("userId");
-
-        // Build new tracks with a blob URL clip rendered from each track's pianoNotes (if present)
+    
+        // Build new tracks with a blob URL clip rendered from each track's pianoNotes/drumData (if present)
         const serializedTracks = await Promise.all((tracks || [])?.map(async (t) => {
             const track = { ...t };
-            const notes = Array.isArray(t.pianoNotes) ? t.pianoNotes : [];
-            if (notes.length > 0) {
-                const render = await renderPianoNotesToWav(notes);
+            
+            // Handle piano notes
+            const pianoNotes = Array.isArray(t.pianoNotes) ? t.pianoNotes : [];
+            if (pianoNotes.length > 0) {
+                const render = await renderPianoNotesToWav(pianoNotes);
                 if (render && render.url) {
                     const existing = Array.isArray(track.audioClips) ? track.audioClips : [];
                     const clip = {
@@ -417,6 +421,32 @@ const TopHeader = () => {
                     track.audioClips = [...existing, clip];
                 }
             }
+            
+            // Handle drum data - check if this track is a drum track
+            // You might want to add a track type check here (e.g., track.type === 'drums')
+            const drumNotes = Array.isArray(t.pianoNotes) && track.type === 'drums' ? t.pianoNotes : [];
+            if (drumNotes.length > 0) {
+                // Add drumData to the track for backend storage (THIS sends drum data to backend)
+                track.drumData = drumNotes;
+                
+                // TODO: Implement renderDrumNotesToWav function and uncomment below
+                // const drumRender = await renderDrumNotesToWav(drumNotes);
+                // if (drumRender && drumRender.url) {
+                //     const existing = Array.isArray(track.audioClips) ? track.audioClips : [];
+                //     const clip = {
+                //         id: Date.now() + Math.random(),
+                //         name: 'Drum Render',
+                //         url: drumRender.url,
+                //         duration: drumRender.duration,
+                //         trimStart: 0,
+                //         trimEnd: drumRender.duration,
+                //         startTime: 0,
+                //         color: track.color || '#FF0000'
+                //     };
+                //     track.audioClips = [...existing, clip];
+                // }
+            }
+            
             return track;
         }));
 
@@ -506,6 +536,7 @@ const TopHeader = () => {
             musicdata: serializedTracks,
             userId: user,
             url: mixdown.url,
+            drumRecordingClip: drumRecordingClip // Include drum recording clip data
         }));
     }
 
