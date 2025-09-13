@@ -102,6 +102,53 @@ export const moveToFolderMusic = createAsyncThunk(
 );
 
 
+export const addCoverImage = createAsyncThunk(           
+    "music/addCoverImage",
+    async ({ musicId, file }, { dispatch, rejectWithValue }) => {
+        try {
+            const token = await sessionStorage.getItem("token");
+            const formData = new FormData();
+            formData.append('image', file); // field name must be 'image'
+
+            const response = await axiosInstance.post(
+                `${BASE_URL}/addCoverImage/${musicId}`,
+                formData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'multipart/form-data',
+                    }
+                }
+            );
+
+            dispatch(setAlert({ text: response.data.message, color: 'success' }));
+            return response.data.data; // backend returns { data: music }
+        } catch (error) {
+            return handleErrors(error, dispatch, rejectWithValue);
+        }
+    }
+);
+
+export const removeCoverImage = createAsyncThunk(
+    "music/removeCoverImage",
+    async (deleteId, { dispatch, rejectWithValue }) => {
+        try {
+            const token = await sessionStorage.getItem("token");
+            const response = await axiosInstance.delete(`${BASE_URL}/removeCoverImage/${deleteId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+            console.log("HIHIHIHII", response);
+            return response.data.music;
+        } catch (error) {
+            return handleErrors(error, dispatch, rejectWithValue);
+        }
+    }
+);
+
 export const deleteMusic = createAsyncThunk(
     "music/deleteMusic",
     async (deleteId, { dispatch, rejectWithValue }) => {
@@ -198,6 +245,26 @@ const musicSlice = createSlice({
                 state.loading = false;
                 state.success = false;
                 state.message = action.payload?.message || 'Failed to move music';
+            })
+            .addCase(addCoverImage.pending, (state) => {
+                state.loading = true;
+                state.message = 'Uploading cover image...';
+            })
+            .addCase(addCoverImage.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = true;
+                state.message = 'Cover image uploaded successfully';
+                const updated = action.payload;
+                if (updated && updated._id) {
+                    state.allmusic = state.allmusic.map(m =>
+                        m._id === updated._id ? { ...m, ...updated } : m
+                    );
+                }
+            })
+            .addCase(addCoverImage.rejected, (state, action) => {
+                state.loading = false;
+                state.success = false;
+                state.message = action.payload?.message || 'Failed to upload cover image';
             })
         }
 });
