@@ -618,7 +618,7 @@ const TimelineTrack = ({
     <div
       className={`timeline-track ${isTrackSelected ? 'selected-for-effects' : ''}`}
       onClick={handleTrackSelect}
-      style={{
+      style={{  
         position: "relative",
         width: "100%",
         height: height,

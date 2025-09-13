@@ -1657,7 +1657,8 @@ const Timeline = () => {
 
           dispatch(addAudioClipToTrack({
             trackId: trackId,
-            audioClip: newClip
+            audioClip: newClip,
+            type:'audio'
           }));
         } else if (isDroppingOnTimeline) {
           // Create new track with this clip when dropping on timeline
@@ -1678,7 +1679,8 @@ const Timeline = () => {
             id: Date.now() + Math.random(), // Ensure unique ID
             name: soundItem.soundname || 'New Track',
             color: trackColor, // Set the track color
-            audioClips: [newClip]
+            audioClips: [newClip],
+            type:'audio'
           };
 
           dispatch(addTrack(newTrack));

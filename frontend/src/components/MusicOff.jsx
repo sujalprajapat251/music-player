@@ -170,7 +170,8 @@ const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
                     id: newTrackId,
                     name: soundItem.soundname || 'New Track',
                     volume: 80,
-                    audioClips: [newClip]
+                    audioClips: [newClip],
+                    type:'audio'
                 };
 
                 dispatch(addTrack(newTrack));
