@@ -457,7 +457,20 @@ const studioSlice = createSlice({
     },
     setDrumRecordingClip: (state, action) => {
       // console.log("reduxclip", action.payload)
-      state.drumRecordingClip = action.payload; // {start, end, color, trackId}
+      // Persist the active drum clip globally (for editing) and also store
+      // a per-track copy so the clip bounds remain when switching tracks
+      // action.payload expected: { start, end, color, trackId }
+      state.drumRecordingClip = action.payload;
+
+      const payload = action.payload || {};
+      const trackId = payload.trackId;
+      if (trackId !== undefined && trackId !== null) {
+        const idx = state.tracks.findIndex(t => t.id == trackId);
+        if (idx !== -1) {
+          const { start, end, color } = payload;
+          state.tracks[idx].drumClip = { start, end, color, trackId };
+        }
+      }
     },
     setSelectedKey: (state, action) => {
       state.selectedKey = action.payload;
