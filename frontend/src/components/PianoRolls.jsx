@@ -860,9 +860,11 @@ const PianoRolls = () => {
     const handleNoteResize = (index, newDuration) => {
         const updatedNote = {
             ...notes[index],
-            duration: Math.max(0.05, newDuration) // Minimum duration
+            duration: Math.max(0.05, newDuration) // Allow any duration, not just DRUM_NOTE_DURATION
         };
-
+    
+        // Update local state for real-time feedback, but don't sync to Redux yet
+        // Redux sync will happen in onResizeStop for better performance
         updateNote(index, updatedNote, { syncRedux: false });
     };
 
@@ -891,7 +893,8 @@ const PianoRolls = () => {
             return {
                 note,
                 start: hit.currentTime || 0,
-                duration: DRUM_NOTE_DURATION,
+                // Use the duration from the hit data, or fall back to default
+                duration: hit.decay || hit.duration || DRUM_NOTE_DURATION,
                 velocity: 0.8,
                 id: hit.id || `drum_note_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
                 trackId: hit.trackId,
@@ -977,21 +980,22 @@ const PianoRolls = () => {
                     // Use stored drum properties or derive from note position
                     const padMapping = { 0: 'Q', 1: 'W', 2: 'E', 3: 'A', 4: 'S', 5: 'D', 6: 'Z', 7: 'X', 8: 'C' };
                     const soundMapping = { 0: 'kick', 1: 'snare', 2: 'hihat', 3: 'openhat', 4: 'crash', 5: 'tom1', 6: 'tom2', 7: 'tom3', 8: 'perc' };
-
+                
                     const noteIndex = NOTES.indexOf(n.note);
                     const padId = n.padId || padMapping[noteIndex] || 'Q';
                     const sound = n.drumSound || soundMapping[noteIndex] || 'kick';
-
+                
                     return {
                         trackId: n.trackId,
                         currentTime: n.start || 0,
-                        decay: DRUM_NOTE_DURATION,
+                        decay: n.duration || DRUM_NOTE_DURATION, // Use the actual note duration
+                        duration: n.duration || DRUM_NOTE_DURATION, // Also store as duration for TimelineTrack
                         padId: padId,
                         sound: sound,
                         drumMachine: n.drumMachine || selectedDrumMachine?.name || 'default',
                         id: n.id,
-                        type: 'synth', // Default type for drum synthesis
-                        freq: 60 // Default frequency
+                        type: 'synth',
+                        freq: 60
                     };
                 });
 
@@ -1873,7 +1877,16 @@ const PianoRolls = () => {
                                 // Note: duration is calculated dynamically for consistent beat widths
                                 position={{ x: n.start * timelineWidthPerSecond, y: getYFromNote(n.note) }}
                                 bounds="parent"
-                                enableResizing={{ right: true }}
+                                enableResizing={{ 
+                                    right: true, // Allow resizing for all notes, including drum notes
+                                    left: false,
+                                    top: false,
+                                    bottom: false,
+                                    topRight: false,
+                                    bottomRight: false,
+                                    bottomLeft: false,
+                                    topLeft: false
+                                }}
                                 dragAxis="both"
                                 dragGrid={[1, 30]}
                                 style={{ willChange: 'transform', zIndex: 3 }}
@@ -1882,11 +1895,12 @@ const PianoRolls = () => {
                                     // Real-time drag feedback
                                     const snappedY = Math.round(d.y / 30) * 30;
                                     let noteIndex = Math.round(d.y / 30);
-                                    // const noteIndex = isDrumTrack ? clamp(Math.round(d.y / 30), 0, 8) : Math.round(d.y / 30);
                                     
                                     // For drum tracks, clamp note index to drum pad range (0-8)
                                     if (isDrumTrack) {
                                         noteIndex = Math.max(0, Math.min(8, noteIndex));
+                                        // Also ensure the visual position matches the clamped noteIndex
+                                        d.y = noteIndex * 30;
                                     }
                                     
                                     const newNote = NOTES[noteIndex];
@@ -1901,55 +1915,80 @@ const PianoRolls = () => {
                                     // mark interaction finished and keep a short cooldown to swallow wrapper mouseup/click
                                     isDraggingRef.current = false;
                                     lastInteractionTimeRef.current = Date.now();
-                                    const snappedY = Math.round(d.y / 30) * 30;
+                                    
                                     let noteIndex = Math.round(d.y / 30);
-                                    // const noteIndex = isDrumTrack ? clamp(Math.round(d.y / 30), 0, 8) : Math.round(d.y / 30);
                                     
                                     // For drum tracks, clamp note index to drum pad range (0-8)
                                     if (isDrumTrack) {
                                         noteIndex = Math.max(0, Math.min(8, noteIndex));
+                                        // Force the final position to match the clamped noteIndex
+                                        d.y = noteIndex * 30;
                                     }
                                     
                                     const newNote = NOTES[noteIndex];
                                     
                                     // Use the same time calculation as Timeline.jsx
                                     const newStartTime = d.x / timelineWidthPerSecond;
-                                    const updates = { start: newStartTime, note: newNote };
+                                    
+                                    // Update the note with drum-specific properties if needed
+                                    const updates = { 
+                                        start: newStartTime, 
+                                        note: newNote,
+                                        ...(isDrumTrack ? (() => {
+                                            const padMapping = { 0: 'Q', 1: 'W', 2: 'E', 3: 'A', 4: 'S', 5: 'D', 6: 'Z', 7: 'X', 8: 'C' };
+                                            const soundMapping = { 0: 'kick', 1: 'snare', 2: 'hihat', 3: 'openhat', 4: 'crash', 5: 'tom1', 6: 'tom2', 7: 'tom3', 8: 'perc' };
+                                            return {
+                                                padId: padMapping[noteIndex] || 'Q',
+                                                drumSound: soundMapping[noteIndex] || 'kick',
+                                                drumMachine: selectedDrumMachine?.name || n.drumMachine || 'default'
+                                            };
+                                        })() : {})
+                                    };
+                                    
                                     setNotes(prev => {
                                         const updated = [...prev];
                                         updated[i] = { ...updated[i], ...updates };
                                         syncNotesToRedux(updated);
                                         return updated;
                                     });
+                                    
                                     // clear drag cache for this note
                                     if (dragCacheRef.current) {
                                         delete dragCacheRef.current[i];
                                     }
                                 }}
+                                
                                 onResizeStart={() => { isResizingRef.current = true; }}
                                 onResize={(e, direction, ref, delta, position) => {
                                     // Real-time resize feedback
                                     const newWidth = parseFloat(ref.style.width);
-                                    const newDuration = newWidth / timelineWidthPerSecond;
+                                    const newDuration = Math.max(0.05, newWidth / timelineWidthPerSecond); // Minimum duration of 0.05s
                                     
-                                    // Update note in real-time during resize
+                                    // Update note in real-time during resize (works for both drum and melodic notes)
                                     handleNoteResize(i, newDuration);
                                 }}
                                 onResizeStop={(e, direction, ref, delta, position) => {
                                     // mark interaction finished and keep a short cooldown to swallow wrapper mouseup/click
                                     isResizingRef.current = false;
                                     lastInteractionTimeRef.current = Date.now();
-                                    const newWidth = parseFloat(ref.style.width);
                                     
-                                    // Use the same time calculation as Timeline.jsx
-                                    const newDuration = newWidth / timelineWidthPerSecond;
+                                    const newWidth = parseFloat(ref.style.width);
+                                    const newDuration = Math.max(0.05, newWidth / timelineWidthPerSecond); // Minimum duration
                                     const newStartTime = position.x / timelineWidthPerSecond;
+                                    
+                                    // Update the note with the new duration and sync to Redux
+                                    // This ensures TimelineTrack shows the updated note size in real-time
                                     setNotes(prev => {
                                         const updated = [...prev];
-                                        updated[i] = { ...updated[i], duration: newDuration, start: newStartTime };
-                                        syncNotesToRedux(updated);
+                                        updated[i] = { 
+                                            ...updated[i], 
+                                            duration: newDuration, // Allow custom duration for drum notes
+                                            start: newStartTime 
+                                        };
+                                        syncNotesToRedux(updated); // Sync to Redux for TimelineTrack
                                         return updated;
                                     });
+                                    
                                     // clear drag cache for this note
                                     if (dragCacheRef.current) {
                                         delete dragCacheRef.current[i];
