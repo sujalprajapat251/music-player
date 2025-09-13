@@ -170,6 +170,95 @@ export const deleteMusic = createAsyncThunk(
     }
 );
 
+//restore button from recently deleted page
+
+export const restoreMusic = createAsyncThunk(
+    "music/restoreMusic",
+    async (musicId, { dispatch, rejectWithValue }) => {
+        try {
+            const token = await sessionStorage.getItem("token");
+            const response = await axiosInstance.put(
+                `${BASE_URL}/restoreMusic/${musicId}`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+            dispatch(setAlert({ text: response.data.message || 'Music restored successfully', color: 'success' }));
+            return response.data.music;
+        } catch (error) {
+            return handleErrors(error, dispatch, rejectWithValue);
+        }
+    }
+);
+
+export const permanentDeleteMusic = createAsyncThunk(
+    "music/permanentDeleteMusic",
+    async (musicId, { dispatch, rejectWithValue }) => {
+        try {
+            const token = await sessionStorage.getItem("token");
+            const response = await axiosInstance.delete(
+                `${BASE_URL}/permanentDeleteMusic/${musicId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+            dispatch(setAlert({ text: response.data.message || 'Music permanently deleted', color: 'success' }));
+            return { id: musicId }; // return id only
+        } catch (error) {
+            return handleErrors(error, dispatch, rejectWithValue);
+        }
+    }
+);
+
+export const restoreAllMusic = createAsyncThunk(
+    "music/restoreAllMusic",
+    async (_, { dispatch, rejectWithValue }) => {
+        try {
+            const token = await sessionStorage.getItem("token");
+            const response = await axiosInstance.put(
+                `${BASE_URL}/restoreAllMusic`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+            dispatch(setAlert({ text: response.data.message || 'All music restored successfully', color: 'success' }));
+            return response.data; // response.data.message, etc.
+        } catch (error) {
+            return handleErrors(error, dispatch, rejectWithValue);
+        }
+    }
+);
+
+export const permanentDeleteAllMusic = createAsyncThunk(
+    "music/permanentDeleteAllMusic",
+    async (_, { dispatch, rejectWithValue }) => {
+        try {
+            const token = await sessionStorage.getItem("token");
+            const response = await axiosInstance.delete(
+                `${BASE_URL}/permanentDeleteAllMusic`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+            dispatch(setAlert({ text: response.data.message || 'All music permanently deleted', color: 'success' }));
+            return response.data;
+        } catch (error) {
+            return handleErrors(error, dispatch, rejectWithValue);
+        }
+    }
+);
+
+
 const musicSlice = createSlice({
     name: 'music',
     initialState: initialStateUsers,
@@ -266,6 +355,59 @@ const musicSlice = createSlice({
                 state.success = false;
                 state.message = action.payload?.message || 'Failed to upload cover image';
             })
+
+            //restore button from recently deleted page
+
+            .addCase(restoreMusic.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = true;
+                state.message = 'Music restored successfully';
+                const restored = action.payload;
+                if (restored && restored._id) {
+                    // Deleted list mathi hataavi ne allmusic ma add karo
+                    state.allmusic = [...state.allmusic.filter(m => m._id !== restored._id), restored];
+                }
+            })
+            .addCase(restoreMusic.rejected, (state, action) => {
+                state.loading = false;
+                state.success = false;
+                state.message = action.payload?.message || 'Failed to restore music';
+            })
+
+            .addCase(permanentDeleteMusic.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = true;
+                state.message = 'Music permanently deleted';
+                const deletedId = action.payload.id;
+                state.allmusic = state.allmusic.filter(m => m._id !== deletedId);
+            })
+            .addCase(permanentDeleteMusic.rejected, (state, action) => {
+                state.loading = false;
+                state.success = false;
+                state.message = action.payload?.message || 'Failed to permanently delete music';
+            })
+
+            .addCase(restoreAllMusic.fulfilled, (state) => {
+                state.loading = false;
+                state.success = true;
+                state.message = 'All music restored successfully';
+            })
+            .addCase(restoreAllMusic.rejected, (state, action) => {
+                state.loading = false;
+                state.success = false;
+                state.message = action.payload?.message || 'Failed to restore all music';
+            })
+
+            .addCase(permanentDeleteAllMusic.fulfilled, (state) => {
+                state.loading = false;
+                state.success = true;
+                state.message = 'All music permanently deleted';
+            })
+            .addCase(permanentDeleteAllMusic.rejected, (state, action) => {
+                state.loading = false;
+                state.success = false;
+                state.message = action.payload?.message || 'Failed to permanently delete all music';
+            });
         }
 });
 
