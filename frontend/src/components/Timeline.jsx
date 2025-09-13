@@ -48,6 +48,7 @@ import { useParams } from 'react-router-dom';
 import { setShowLoopLibrary } from "../Redux/Slice/ui.slice";
 import { getAllMusic } from "../Redux/Slice/music.slice";
 import { setSelectedTrackId } from '../Redux/Slice/effects.slice';
+import { motion, AnimatePresence } from "framer-motion";
 
 const Timeline = () => {
 
@@ -3487,12 +3488,38 @@ const Timeline = () => {
       {/* <Drum onDrumRecordingComplete={handleDrumRecordingComplete} /> */}
 
       {/* Add Track Modal */}
-      {showAddTrackModal && (
+      {/* {showAddTrackModal && (
         <AddNewTrackModel
           onClose={() => setShowAddTrackModal(false)}
           onOpenLoopLibrary={() => { setShowOffcanvas(true); setShowOffcanvasEffects(false); dispatch(setShowLoopLibrary(true)); }}
         />
-      )}
+      )} */}
+
+      <AnimatePresence>
+              {showAddTrackModal && (
+                <motion.div
+                  className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                >
+                  <motion.div
+                    className="rounded-xl p-6 w-full"
+                    initial={{ y: 50, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: 50, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <AddNewTrackModel onClose={() => setShowAddTrackModal(false)} onOpenLoopLibrary={() => {
+                      dispatch(setShowLoopLibrary(true));
+                      setShowAddTrackModal(false);
+                    }} />
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
       {/* Hidden file input for import */}
       <input type="file" ref={fileInputRef} style={{ display: "none" }}
         onChange={async (e) => {
@@ -3552,22 +3579,78 @@ const Timeline = () => {
       />
 
       {/* Piano Component */}
-      {(showPiano || getTrackType === "Keys") && (
+      {/* {(showPiano || getTrackType === "Keys") && (
         <Piano onClose={() => { setShowPiano(false); dispatch(setTrackType(null)); }} />
-      )}
+      )} */}
+
+      <AnimatePresence>
+        {(showPiano || getTrackType === "Keys") && (
+          <motion.div
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: "0%", opacity: 1 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="fixed bottom-0 left-0 right-0 bg-white shadow-lg rounded-t-lg p-4 z-50"
+          >
+            <Piano onClose={() => { setShowPiano(false); dispatch(setTrackType(null)); }} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Drum Component */}
       {(showDrum || getTrackType === "Drums & Machines") && (
         <Drum onClose={() => { setShowDrum(false); dispatch(setTrackType(null)); }} />
       )}
 
-      {(showGuitar || getTrackType === "Guitar") && (
-        <Guitar onClose={() => { setShowGuitar(false); dispatch(setTrackType(null)); }} />
-      )}
+      {/* <AnimatePresence>
+        {(showDrum || getTrackType === "Drums & Machines") && (
+          <motion.div
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: "20%", opacity: 1 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="fixed bottom-0 left-0 right-0 bg-white shadow-lg rounded-t-lg p-4 z-50"
+          >
+            <Drum onClose={() => { setShowDrum(false); dispatch(setTrackType(null)); }} />
+          </motion.div>
+        )}
+      </AnimatePresence> */}
 
-      {(showOrchestral || getTrackType === "Orchestral") && (
+      {/* {(showGuitar || getTrackType === "Guitar") && (
+        <Guitar onClose={() => { setShowGuitar(false); dispatch(setTrackType(null)); }} />
+      )} */}
+
+      <AnimatePresence>
+        {(showGuitar || getTrackType === "Guitar") && (
+          <motion.div
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: "20%", opacity: 1 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="fixed bottom-0 left-0 right-0 bg-white shadow-lg rounded-t-lg p-4 z-50"
+          >
+            <Guitar onClose={() => { setShowGuitar(false); dispatch(setTrackType(null)); }} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* {(showOrchestral || getTrackType === "Orchestral") && (
         <Orchestral onClose={() => { setShowOrchestral(false); dispatch(setTrackType(null)); }} />
-      )}
+      )} */}
+
+      <AnimatePresence>
+        {(showOrchestral || getTrackType === "Orchestral") && (
+          <motion.div
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: "20%", opacity: 1 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="fixed bottom-0 left-0 right-0 bg-white shadow-lg rounded-t-lg p-4 z-50"
+          >
+            <Orchestral onClose={() => { setShowOrchestral(false); dispatch(setTrackType(null)); }} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Rename Section Modal */}
       <Dialog open={renameModal} onClose={() => setRenameModal(false)} className="relative z-10">

@@ -7,7 +7,7 @@ import 'react-resizable/css/styles.css';
 import * as d3 from 'd3';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectGridSettings } from '../Redux/Slice/grid.slice';
-import { setPlaying, setCurrentTime as setStudioCurrentTime, setPianoNotes, setPianoRecordingClip, setRecordingAudio, setDrumRecordedData } from '../Redux/Slice/studio.slice';
+import { setPlaying, setCurrentTime as setStudioCurrentTime, setPianoNotes, setPianoRecordingClip, setRecordingAudio, setDrumRecordedData, setDrumRecordingClip } from '../Redux/Slice/studio.slice';
 import { selectStudioState } from '../Redux/rootReducer';
 import { getGridDivisions, parseTimeSignature, getGridSpacingWithTimeSignature } from '../Utils/gridUtils';
 import { getAudioContext, ensureAudioUnlocked } from '../Utils/audioContext';
@@ -106,8 +106,9 @@ const PianoRolls = () => {
         const trackObj = tracks?.find?.(t => t.id === currentTrackId);
         // Prefer corresponding clip type depending on track
         const persistedPiano = trackObj?.pianoClip || null;
+        const persistedDrum = trackObj?.drumClip || null;
         const activePiano = (pianoRecordingClip && (pianoRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? pianoRecordingClip : persistedPiano;
-        const activeDrum = (drumRecordingClip && (drumRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? drumRecordingClip : null;
+        const activeDrum = (drumRecordingClip && (drumRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? drumRecordingClip : persistedDrum;
         const activeClip = isDrumTrack ? activeDrum : activePiano;
         if (activeClip && activeClip.start != null && activeClip.end != null) {
             return {
@@ -118,7 +119,7 @@ const PianoRolls = () => {
         // Fallback: derive from notes if no clip
         if (notes.length > 0) {
             const minStart = Math.min(...notes.map(n => n.start));
-            const maxEnd = Math.max(...notes.map(n => n.start + n.duration)) + 0.1;
+            const maxEnd = Math.max(...notes.map(n => n.start + n.duration));
             return {
                 start: minStart,
                 end: maxEnd
@@ -130,6 +131,13 @@ const PianoRolls = () => {
             end: 8 // Default 8 seconds
         };
     }, [pianoRecordingClip, drumRecordingClip, currentTrackId, notes, tracks, isDrumTrack]);
+
+    // For drum tracks, snap Y to 9 lanes (Q,W,E,A,S,D,Z,X,C)
+    const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
+    const getDrumNoteIndexFromY = useCallback((yPx) => {
+        const rawIndex = Math.floor(yPx / 30);
+        return clamp(rawIndex, 0, 8);
+    }, []);
 
     const renderRuler = useCallback(() => {
         if (!timelineHeaderRef.current) return;
@@ -538,8 +546,13 @@ const PianoRolls = () => {
     };
 
     let mouseDownTime = useRef(0);
-    const handleMouseDown = () => {
+    const mouseDownPosRef = useRef({ x: 0, y: 0 });
+    const handleMouseDown = (e) => {
         mouseDownTime.current = Date.now();
+        if (e && wrapperRef.current) {
+            const rect = wrapperRef.current.getBoundingClientRect();
+            mouseDownPosRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        }
     };
 
     const handleMouseUp = (e) => {
@@ -551,7 +564,16 @@ const PianoRolls = () => {
         if (menuVisible || pasteMenu || selectedNoteIndex) return;
 
         const elapsed = Date.now() - mouseDownTime.current;
-        if (elapsed < 200) {
+        // movement threshold to distinguish click vs drag
+        let movedEnough = false;
+        if (e && wrapperRef.current) {
+            const rect = wrapperRef.current.getBoundingClientRect();
+            const upPos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            const dx = Math.abs(upPos.x - mouseDownPosRef.current.x);
+            const dy = Math.abs(upPos.y - mouseDownPosRef.current.y);
+            movedEnough = dx > 3 || dy > 3;
+        }
+        if (elapsed < 200 && !movedEnough) {
             handleGridClick(e);
         }
     };
@@ -582,6 +604,9 @@ const PianoRolls = () => {
     }, [noteNameToMidi]);
 
     
+    // Deduplication guard to prevent multiple note creations from overlapping handlers
+    const lastCreateRef = useRef({ time: 0, noteIndex: -1, start: -1 });
+
     const handleGridClick = (e) => {
         // Block note creation while dragging or resizing
         if (isDraggingRef.current || isResizingRef.current) return;
@@ -598,9 +623,24 @@ const PianoRolls = () => {
         
         // Use the exact same time calculation as Timeline.jsx
         const start = x / timelineWidthPerSecond;
-        const noteIndex = Math.floor(y / 30);
-        
-        console.log('Note creation attempt:', { start, noteIndex, currentTrackId, tracks: tracks.length });
+
+        // For drum tracks, ignore clicks below the first 9 lanes entirely
+        if (isDrumTrack) {
+            const rawRow = Math.floor(y / 30);
+            if (rawRow < 0 || rawRow > 8) return; // do not create any note
+        }
+        const noteIndex = isDrumTrack ? getDrumNoteIndexFromY(y) : Math.floor(y / 30);
+
+        // Guard: ignore duplicate creations at the same lane and time within 250ms
+        const now = Date.now();
+        const last = lastCreateRef.current || { time: 0, noteIndex: -1, start: -1 };
+        const isSameLane = last.noteIndex === noteIndex;
+        const isSameStart = Math.abs((last.start || 0) - start) < 1e-3;
+        if (isSameLane && isSameStart && (now - (last.time || 0)) < 250) {
+            return;
+        }
+        lastCreateRef.current = { time: now, noteIndex, start };
+
         // Choose a sensible default duration for new notes:
         // If this track already has notes (e.g., from recording), match their typical size.
         const getTrackReferenceDuration = () => {
@@ -632,8 +672,9 @@ const PianoRolls = () => {
             defaultDuration = DRUM_NOTE_DURATION;
         }
         
-        // Remove restriction: allow adding anywhere in the piano roll
-        if (noteIndex >= 0 && noteIndex < NOTES.length) {
+        // For drum tracks, restrict to first 9 keys (drum pads)
+        const maxNoteIndex = isDrumTrack ? 8 : NOTES.length - 1;
+        if (noteIndex >= 0 && noteIndex <= maxNoteIndex) {
             const note = NOTES[noteIndex];
             
             // Check if the click is within the current track bounds
@@ -651,21 +692,26 @@ const PianoRolls = () => {
                 if (start < trackBounds.start) {
                     newStart = start;
                 } else if (start > trackBounds.end) {
-                    newEnd = start + defaultDuration + 0.1; // Add some padding for the new note
+                    newEnd = start + defaultDuration;
                 }
                 
                 // Update the track bounds by updating the piano recording clip
                 if (newStart !== trackBounds.start || newEnd !== trackBounds.end) {
                     const trackObj = tracks?.find?.(t => t.id === currentTrackId);
-                    const currentClip = trackObj?.pianoClip || null;
+                    const currentClip = isDrumTrack ? (trackObj?.drumClip || null) : (trackObj?.pianoClip || null);
                     
                     if (currentClip) {
-                        dispatch(setPianoRecordingClip({
+                        const payload = {
                             start: newStart,
                             end: newEnd,
                             color: currentClip.color,
                             trackId: currentTrackId
-                        }));
+                        };
+                        if (isDrumTrack) {
+                            dispatch(setDrumRecordingClip(payload));
+                        } else {
+                            dispatch(setPianoRecordingClip(payload));
+                        }
                     }
                 }
             }
@@ -765,7 +811,15 @@ const PianoRolls = () => {
         });
     };
 
-    const getYFromNote = (note) => NOTES.indexOf(note) * 30;
+    const getYFromNote = (note) => {
+        if (isDrumTrack) {
+            // For drum tracks, map notes back to their original drum pad positions (0-8)
+            const noteIndex = NOTES.indexOf(note);
+            // If the note is beyond the first 9 keys, clamp it to the drum range
+            return Math.min(noteIndex, 8) * 30;
+        }
+        return NOTES.indexOf(note) * 30;
+    };
 
     const updateNote = (index, updates, { syncRedux = false } = {}) => {
         setNotes(prev => {
@@ -1351,15 +1405,29 @@ const PianoRolls = () => {
 
             // Convert X to start time
             const start = newX / timelineWidthPerSecond;
+            let noteIndex = Math.round(newY / 30);
 
-            // Convert Y to note index
-            const noteIndex = Math.round(newY / 30);
+            if (isDrumTrack) {
+                if (noteIndex < 0 || noteIndex > 8) return;
+                // optional: clamp again just to be sure
+                noteIndex = Math.max(0, Math.min(8, noteIndex));
+            }
             const note = NOTES[noteIndex];
 
             const pastedNote = {
                 ...clipboardNote,
                 start,
                 note,
+                ...(isDrumTrack ? (() => {
+                    const padMapping = { 0: 'Q', 1: 'W', 2: 'E', 3: 'A', 4: 'S', 5: 'D', 6: 'Z', 7: 'X', 8: 'C' };
+                    const soundMapping = { 0: 'kick', 1: 'snare', 2: 'hihat', 3: 'openhat', 4: 'crash', 5: 'tom1', 6: 'tom2', 7: 'tom3', 8: 'perc' };
+                    return {
+                        padId: padMapping[noteIndex] || 'Q',
+                        drumSound: soundMapping[noteIndex] || 'kick',
+                        drumMachine: selectedDrumMachine?.name || clipboardNote.drumMachine || 'default'
+                    };
+                })() : {}),
+                trackId: currentTrackId || clipboardNote.trackId
             };
 
             setNotes((prev) => {
@@ -1385,7 +1453,7 @@ const PianoRolls = () => {
 
 
     // audio detection code 
-    const [notes1, setNotes1] = useState([]);
+    //const [notes1, setNotes1] = useState([]);
     // const handleFileChange = async (e) => {
     //     const file = e.target.files[0];
     //     if (!file) return;
@@ -1734,8 +1802,9 @@ const PianoRolls = () => {
                     {(() => {
                         const trackObj = tracks?.find?.(t => t.id === currentTrackId);
                         const persistedPiano = trackObj?.pianoClip || null;
+                        const persistedDrum = trackObj?.drumClip || null;
                         const activePiano = (pianoRecordingClip && (pianoRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? pianoRecordingClip : persistedPiano;
-                        const activeDrum = (drumRecordingClip && (drumRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? drumRecordingClip : null;
+                        const activeDrum = (drumRecordingClip && (drumRecordingClip.trackId ?? null) === (currentTrackId ?? null)) ? drumRecordingClip : persistedDrum;
                         const activeClip = isDrumTrack ? activeDrum : activePiano;
                         if (activeClip && activeClip.start != null && activeClip.end != null) {
                             const left = (activeClip.start || 0) * timelineWidthPerSecond;
@@ -1763,7 +1832,7 @@ const PianoRolls = () => {
                         // Fallback: derive region from local notes if no active clip
                         if (notes.length > 0) {
                             const minStart = Math.min(...notes.map(n => n.start));
-                            const maxEnd = Math.max(...notes.map(n => n.start + n.duration)) + 0.1;
+                            const maxEnd = Math.max(...notes.map(n => n.start + n.duration));
                             const left = minStart * timelineWidthPerSecond;
                             const width = (maxEnd - minStart) * timelineWidthPerSecond;
                             return (
@@ -1812,7 +1881,14 @@ const PianoRolls = () => {
                                 onDrag={(e, d) => {
                                     // Real-time drag feedback
                                     const snappedY = Math.round(d.y / 30) * 30;
-                                    const noteIndex = Math.round(d.y / 30);
+                                    let noteIndex = Math.round(d.y / 30);
+                                    // const noteIndex = isDrumTrack ? clamp(Math.round(d.y / 30), 0, 8) : Math.round(d.y / 30);
+                                    
+                                    // For drum tracks, clamp note index to drum pad range (0-8)
+                                    if (isDrumTrack) {
+                                        noteIndex = Math.max(0, Math.min(8, noteIndex));
+                                    }
+                                    
                                     const newNote = NOTES[noteIndex];
                                     
                                     // Use the same time calculation as Timeline.jsx
@@ -1826,7 +1902,14 @@ const PianoRolls = () => {
                                     isDraggingRef.current = false;
                                     lastInteractionTimeRef.current = Date.now();
                                     const snappedY = Math.round(d.y / 30) * 30;
-                                    const noteIndex = Math.round(d.y / 30);
+                                    let noteIndex = Math.round(d.y / 30);
+                                    // const noteIndex = isDrumTrack ? clamp(Math.round(d.y / 30), 0, 8) : Math.round(d.y / 30);
+                                    
+                                    // For drum tracks, clamp note index to drum pad range (0-8)
+                                    if (isDrumTrack) {
+                                        noteIndex = Math.max(0, Math.min(8, noteIndex));
+                                    }
+                                    
                                     const newNote = NOTES[noteIndex];
                                     
                                     // Use the same time calculation as Timeline.jsx

@@ -27,6 +27,7 @@ import { ReactComponent as Wav } from '../Images/wav.svg'
 import Drum from "./Drum";
 import NewProject from "./NewProjectModel";
 import { setShowLoopLibrary } from "../Redux/Slice/ui.slice";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Sidebar2 = () => {
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
@@ -341,7 +342,7 @@ const Sidebar2 = () => {
       <BottomToolbar />
       </div>
       <NewProject open={showNewProject} setOpen={setShowNewProject} />
-      {showAddTrackModal && (
+      {/* {showAddTrackModal && (
         <AddNewTrackModel
           onClose={() => setShowAddTrackModal(false)}
           onOpenLoopLibrary={() => {
@@ -349,7 +350,32 @@ const Sidebar2 = () => {
             setShowAddTrackModal(false);
           }}
         />
-      )}
+      )} */}
+
+      <AnimatePresence>
+        {showAddTrackModal && (
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
+            <motion.div
+              className="rounded-xl p-6 w-full"
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <AddNewTrackModel onClose={() => setShowAddTrackModal(false)} onOpenLoopLibrary={() => {
+                dispatch(setShowLoopLibrary(true));
+                setShowAddTrackModal(false);
+              }} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </>
   );
