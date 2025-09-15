@@ -232,16 +232,16 @@ export const permanentDeleteAllMusic = createAsyncThunk(
     "music/permanentDeleteAllMusic",
     async (_, { dispatch, rejectWithValue }) => {
         try {
-            const token = await sessionStorage.getItem("token");
+            const token = sessionStorage.getItem("token");
             const response = await axiosInstance.delete(
-                `${BASE_URL}/permanentDeleteAllMusic`,
+                `${BASE_URL}/permanentDeleteAll`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     }
                 }
             );
-            dispatch(setAlert({ text: response.data.message || 'All music permanently deleted', color: 'success' }));
+            dispatch(setAlert({ text: response.data.message , color: 'success' }));
             return response.data;
         } catch (error) {
             return handleErrors(error, dispatch, rejectWithValue);
