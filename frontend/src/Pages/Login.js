@@ -190,7 +190,7 @@ const Login = () => {
   return (
     <div className="relative w-full h-screen">
       <div className="absolute inset-0 z-0"><Animation /></div>
-      <div className="absolute inset-0 flex items-center justify-center w-full md:w-[800px] mx-auto">
+      <div className="absolute inset-0 flex items-center justify-center w-full md:w-[450px] mx-auto">
         {forgotPasswordStep === 0 && (
           <div className="bg-gray-950 bg-opacity-90 rounded-[4px] shadow-lg m-4 md:m-0 p-4 md:p-8 w-full max-w-md min-h-[600px]">
             {isSignIn ? (
@@ -420,7 +420,7 @@ const Login = () => {
                   <div className="flex-1 h-px m-0-10 bg-gradient-to-r from-black to-white/50"></div>
                 </div>
                 
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                 <GoogleLogin
                   onSuccess={(response) => {
                     const {
@@ -447,8 +447,8 @@ const Login = () => {
                 />
 
                 <div className='s_modal_btn2' >
-                  <FacebookLogin appId="2295150360940038" autoLoad={false} fields="name, email, picture" scope="" callback={handleResponse} text='signin_with' icon='fa-facebook' cssClass='s_facebook_btn' textButton='Sign in with Facebook'>
-                  <p className='mb-0'>Sign in with Facebook</p></FacebookLogin>
+                  <FacebookLogin appId="2295150360940038" autoLoad={false} fields="name, email, picture" scope="" callback={handleResponse} text='signin_with' icon='fa-facebook' cssClass="!flex !items-center !justify-center gap-2 w-full bg-[#1877f2] text-white text-sm font-medium px-4 py-3 rounded-md hover:bg-[#166fe0] focus:outline-none focus:ring-2 focus:ring-[#1877f2]/40 transition" textButton='Sign in with Facebook'>
+                  <p className='mb-0 text-sm font-medium'>Sign in with Facebook</p></FacebookLogin>
                 </div>
  
                 </div>
