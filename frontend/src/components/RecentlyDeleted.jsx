@@ -115,16 +115,16 @@ function RecentlyDeleted() {
 
 	const handleRestoreAllConfirm = async () => {
 		try {
-			await dispatch(restoreAllMusic()).unwrap();
+			for (const audio of deletedAudios) {
+			await dispatch(restoreMusic(audio._id)).unwrap();
+			}
 
-			// UI update karo
 			setRestoredAudios(prev => [...prev, ...deletedAudios]);
 			setDeletedAudios([]);
 			localStorage.setItem('deletedAudios', JSON.stringify([]));
-
 			setShowRestoreAllModal(false);
 		} catch (error) {
-		alert('Restore all failed: ' + (error.message || "Unknown error"));
+			alert('Restore all failed: ' + (error.message || "Unknown error"));
 		}
 	};
 

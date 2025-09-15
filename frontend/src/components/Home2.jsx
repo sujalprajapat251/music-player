@@ -549,18 +549,28 @@ const Home2 = () => {
             return autoUpdate(refs.reference.current, refs.floating.current, update);
         }
     }, [refs.reference, refs.floating, update]);
-
+    
 
     const handleDeleteMusic = async () => {
         if (!deleteId) return;
-        try {
-            await dispatch(deleteMusic(deleteId));
+            try {
+                await dispatch(deleteMusic(deleteId)).unwrap();
+
+                // get deleted item from allMusic
+                const deletedItem = allMusic.find(m => m._id === deleteId);
+                if (deletedItem) {
+                const existing = JSON.parse(localStorage.getItem("deletedAudios") || "[]");
+                const updated = [...existing, { ...deletedItem, deletedAt: Date.now() }];
+                localStorage.setItem("deletedAudios", JSON.stringify(updated));
+                }
+
             await dispatch(getAllMusic());
         } finally {
             setDeleteProModal(false);
             setDeleteId(null);
         }
     };
+
 
     // Add these new state variables for music rename functionality
     const [editingMusicId, setEditingMusicId] = useState(null);
@@ -964,12 +974,15 @@ const handleSaveCoverImage = async () => {
                       >
                           <div className="">
                               <MenuItem >
-                                  <p className="block  px-3 sm:px-4 md600:px-5  lg:px-6 py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" >
-                                      <div className="flex items-center" >
-                                          <DeleteIcon className='w-3 h-3 sm:w-3 sm:h-3 lg:w-4 lg:h-4 2xl:w-6 2xl:h-6 text-white' />
-                                          <p className="text-white ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] sm:text-[14px] 2xl:text-[16px]" onClick={() => navigate('/recently-deleted')}>Recently Deleted</p>
-                                      </div>
-                                  </p>
+                                <p
+                                    className="block  px-3 sm:px-4 md600:px-5  lg:px-6 py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer"
+                                    onClick={() => navigate('/recently-deleted')}
+                                >
+                                    <div className="flex items-center" >
+                                        <DeleteIcon className='w-3 h-3 sm:w-3 sm:h-3 lg:w-4 lg:h-4 2xl:w-6 2xl:h-6 text-white' />
+                                        <p className="text-white ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] sm:text-[14px] 2xl:text-[16px]">Recently Deleted</p>
+                                    </div>
+                                </p>
                               </MenuItem>
                           </div>
                       </AdaptiveMenu>

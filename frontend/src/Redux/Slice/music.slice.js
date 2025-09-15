@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { BASE_URL } from "../../Utils/baseUrl";
 import { setAlert } from "./alert.slice";
 import axiosInstance from "../../Utils/axiosInstance";
+import axios from "axios";
 
 const initialStateUsers = {
     allmusic: [],
@@ -216,25 +217,15 @@ export const permanentDeleteMusic = createAsyncThunk(
 );
 
 export const restoreAllMusic = createAsyncThunk(
-    "music/restoreAllMusic",
-    async (_, { dispatch, rejectWithValue }) => {
-        try {
-            const token = await sessionStorage.getItem("token");
-            const response = await axiosInstance.put(
-                `${BASE_URL}/restoreAllMusic`,
-                {},
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    }
-                }
-            );
-            dispatch(setAlert({ text: response.data.message || 'All music restored successfully', color: 'success' }));
-            return response.data; // response.data.message, etc.
-        } catch (error) {
-            return handleErrors(error, dispatch, rejectWithValue);
-        }
+  "music/restoreAll",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axios.post("/api/music/restore-all");
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response.data);
     }
+  }
 );
 
 export const permanentDeleteAllMusic = createAsyncThunk(
