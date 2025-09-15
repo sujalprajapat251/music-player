@@ -9,6 +9,7 @@ const initialStateUsers = {
     success: false,
     message: '',
     loading: false,
+    currentMusic: null,
 };
 
 const handleErrors = (error, dispatch, rejectWithValue) => {
@@ -253,7 +254,11 @@ export const permanentDeleteAllMusic = createAsyncThunk(
 const musicSlice = createSlice({
     name: 'music',
     initialState: initialStateUsers,
-    reducers: {},
+    reducers: {
+        setCurrentMusic: (state, action) => {
+            state.currentMusic = action.payload;
+        },
+    },
     extraReducers: (builder) => {
         builder
             .addCase(createMusic.pending, (state) => {
@@ -403,6 +408,7 @@ const musicSlice = createSlice({
 });
 
 export const {
+    setCurrentMusic,
 } = musicSlice.actions;
 
 export default musicSlice.reducer;

@@ -5,26 +5,47 @@ const fs = require('fs');
 // create music
 exports.createMusic = async (req, res) => {
     try {
-        const { name, musicdata, url, userId, folderId } = req.body;
+        const { name, musicdata, url, userId, folderId, drumRecordingClip } = req.body;
 
-        const existingmusic = await Music.findOne({ name });
-        if (existingmusic) {
-            return res.status(409).json({ status: 409, message: "Music Name already exists." });
+        // Check if music with this name already exists
+        const existingMusic = await Music.findOne({ name });
+        
+        if (existingMusic) {
+            // Update existing music
+            existingMusic.musicdata = musicdata || existingMusic.musicdata;
+            existingMusic.url = url || existingMusic.url;
+            existingMusic.userId = userId || existingMusic.userId;
+            existingMusic.folderId = folderId || existingMusic.folderId;
+            if (drumRecordingClip) {
+                existingMusic.drumRecordingClip = drumRecordingClip;
+            }
+
+            const updatedMusic = await existingMusic.save();
+
+            return res.status(200).json({
+                status: 200,
+                message: "Music updated successfully..!",
+                music: updatedMusic,
+                isUpdate: true
+            });
+        } else {
+            // Create new music
+            const newMusic = await Music.create({
+                name,
+                musicdata,
+                url,
+                userId,
+                folderId,
+                drumRecordingClip
+            });
+
+            return res.status(200).json({
+                status: 200,
+                message: "Music Saved successfully..!",
+                music: newMusic,
+                isUpdate: false
+            });
         }
-
-        const newMusic = await Music.create({
-            name,
-            musicdata,
-            url,
-            userId,
-            folderId,
-        });
-
-        return res.status(200).json({
-            status: 200,
-            message: "Music Saved successfully..!",
-            music: newMusic,
-        });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });
     }

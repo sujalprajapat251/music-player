@@ -46,7 +46,7 @@ import Orchestral from "./Orchestral";
 import PricingModel from './PricingModel';
 import { useParams } from 'react-router-dom';
 import { setShowLoopLibrary } from "../Redux/Slice/ui.slice";
-import { getAllMusic } from "../Redux/Slice/music.slice";
+import { getAllMusic, setCurrentMusic } from "../Redux/Slice/music.slice";
 import { setSelectedTrackId } from '../Redux/Slice/effects.slice';
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -3084,6 +3084,8 @@ const Timeline = () => {
     try {
       const project = (allMusic || []).find(m => String(m?._id) === String(projectId));
       if (!project) return;
+
+      dispatch(setCurrentMusic(project));
   
       const incomingTracks = Array.isArray(project.musicdata) ? project.musicdata : [];
       const studioTracks = [];
@@ -3146,8 +3148,8 @@ const Timeline = () => {
         }
   
         // Handle drum recorded data
-        if (Array.isArray(t.drumRecordedData)) {
-          t.drumRecordedData.forEach(d => {
+        if (Array.isArray(t.drumNotes)) {
+          t.drumNotes.forEach(d => {
             const hit = { ...d };
             if (hit.trackId == null) hit.trackId = trackId;
             aggregatedDrumData.push(hit);
@@ -3168,7 +3170,7 @@ const Timeline = () => {
         // Only add tracks that have valid content
         if (audioClips.length > 0 || 
             (Array.isArray(t.pianoNotes) && t.pianoNotes.length > 0) ||
-            (Array.isArray(t.drumRecordedData) && t.drumRecordedData.length > 0) ||
+            (Array.isArray(t.drumNotes) && t.drumNotes.length > 0) ||
             t.pianoClip || t.drumClip) {
           
           studioTracks.push({

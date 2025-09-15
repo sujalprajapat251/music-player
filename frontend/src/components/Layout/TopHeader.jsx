@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { PiArrowBendUpLeftBold, PiArrowBendUpRightBold } from "react-icons/pi";
 import { GoSun } from "react-icons/go";
 import savedicon from "../../Images/savedIcon.svg";
+import graySave from "../../Images/gray-save.png";
+import greenSave from "../../Images/green-save.png";
 import { IoMoonOutline } from 'react-icons/io5';
 import { HiDownload } from "react-icons/hi";
 import subscription from "../../Images/subscriptionIcon.svg";
@@ -92,10 +94,17 @@ const TopHeader = () => {
     const [toastMessage, setToastMessage] = useState('');
     const [shareModalOpen, setShareModalOpen] = useState(false);
     const [pricingModalOpen, setPricingModalOpen] = useState(false);
+    const [saveStatus, setSaveStatus] = useState('idle');
 
     // Add state for song name editing
     const [songName, setSongName] = useState('Untitled_song');
     const [isEditingSongName, setIsEditingSongName] = useState(false);
+
+    const currentMusic = useSelector((state) => state.music?.currentMusic);
+
+    useEffect(() => {
+        setSongName(currentMusic?.name || 'Untitled_song');
+    }, [currentMusic]);
 
     // Add state for selected sound quality
     const [selectedSoundQuality, setSelectedSoundQuality] = useState('High');
@@ -393,9 +402,11 @@ const TopHeader = () => {
         }
     };
 
-    const drumRecordingClip = useSelector((state) => selectStudioState(state).drumRecordingClip);
+    const drumRecordedData = useSelector((state) => selectStudioState(state).drumRecordedData);
 
     const handleSaved = async () => {
+        setSaveStatus('saving');
+        try {
         const user = sessionStorage.getItem("userId");
     
         // Build new tracks with a blob URL clip rendered from each track's pianoNotes/drumData (if present)
@@ -423,30 +434,58 @@ const TopHeader = () => {
             }
             
             // Handle drum data - check if this track is a drum track
-            // You might want to add a track type check here (e.g., track.type === 'drums')
-            const drumNotes = Array.isArray(t.pianoNotes) && track.type === 'drums' ? t.pianoNotes : [];
-            if (drumNotes.length > 0) {
-                // Add drumData to the track for backend storage (THIS sends drum data to backend)
-                track.drumData = drumNotes;
+            let drumNotes = [];
+            if (track.type === 'drum' || track.type === 'drums' || track.type === 'Drums & Machines') {
+                // Create separate drumNotes array for drum tracks
+                drumNotes = Array.isArray(t.drumNotes) ? t.drumNotes : [];
                 
-                // TODO: Implement renderDrumNotesToWav function and uncomment below
-                // const drumRender = await renderDrumNotesToWav(drumNotes);
-                // if (drumRender && drumRender.url) {
-                //     const existing = Array.isArray(track.audioClips) ? track.audioClips : [];
-                //     const clip = {
-                //         id: Date.now() + Math.random(),
-                //         name: 'Drum Render',
-                //         url: drumRender.url,
-                //         duration: drumRender.duration,
-                //         trimStart: 0,
-                //         trimEnd: drumRender.duration,
-                //         startTime: 0,
-                //         color: track.color || '#FF0000'
-                //     };
-                //     track.audioClips = [...existing, clip];
-                // }
+                // If no drumNotes array exists, create one and add drum data
+                if (drumNotes.length === 0) {
+                    // Check if there are drum notes in pianoNotes that should be moved to drumNotes
+                    if (Array.isArray(t.pianoNotes) && t.pianoNotes.length > 0) {
+                        drumNotes = [...t.pianoNotes];
+                        // Clear pianoNotes for drum tracks since we're using drumNotes
+                        track.pianoNotes = [];
+                    }
+                }
+                
+                // Pull drum hits from Redux drumRecordedData for this track
+                const reduxDrumHits = Array.isArray(drumRecordedData)
+                    ? drumRecordedData.filter(hit => (hit.trackId ?? null) === (track.id ?? null))
+                    : [];
+                // Add drum hits from redux to drumNotes array
+                drumNotes = [...drumNotes, ...reduxDrumHits];
+                
+                // Set the drumNotes array on the track
+                track.drumNotes = drumNotes;
             }
-            
+
+            // Normalize any blob/data audio clip URLs to persistent HTTP URLs by uploading
+            try {
+                const existingClips = Array.isArray(track.audioClips) ? track.audioClips : [];
+                if (existingClips.length > 0) {
+                    const normalizedClips = await Promise.all(existingClips.map(async (clip) => {
+                        const clipUrl = clip?.url;
+                        const isEphemeral = typeof clipUrl === 'string' && (clipUrl.startsWith('blob:') || clipUrl.startsWith('data:'));
+                        if (!isEphemeral) return clip;
+                        try {
+                            const res = await fetch(clipUrl);
+                            const audioBlob = await res.blob();
+                            const form = new FormData();
+                            const filename = `clip-${track.id ?? 'track'}-${Date.now()}.wav`;
+                            form.append('audio', audioBlob, filename);
+                            const uploadRes = await axiosInstance.post('/upload-audio', form, {
+                                headers: { 'Content-Type': 'multipart/form-data' }
+                            });
+                            const httpUrl = uploadRes?.data?.url || clipUrl;
+                            return { ...clip, url: httpUrl };
+                        } catch (_) {
+                            return clip;
+                        }
+                    }));
+                    track.audioClips = normalizedClips;
+                }
+            } catch (_) {}
             return track;
         }));
 
@@ -536,8 +575,12 @@ const TopHeader = () => {
             musicdata: serializedTracks,
             userId: user,
             url: mixdown.url,
-            drumRecordingClip: drumRecordingClip // Include drum recording clip data
+            drumRecordedData: Array.isArray(drumRecordedData) ? drumRecordedData : []
         }));
+            setSaveStatus('saved');
+        } catch (e) {
+            setSaveStatus('error');
+        }
     }
 
     return (
@@ -956,9 +999,11 @@ const TopHeader = () => {
                 </div >
 
                 <div className="flex gap-2 md:gap-3 lg:gap-5 xl:gap-7 items-center" >
-                    <div className="flex gap-2 items-center" onClick={handleSaved}>
-                        <img src={savedicon} alt="" className='h-[16px] md:h-full' />
-                        <p className="text-[#357935] text-[12px] hidden md600:block">Saved!</p>
+                    <div className="flex gap-2 items-center cursor-pointer" onClick={handleSaved}>
+                        <img src={saveStatus === 'saved' ? greenSave : graySave} alt="" className='w-[16px] h-[16px] md:h-full' />
+                        <p className={`${saveStatus === 'saved' ? 'text-[#357935]' : 'text-[#ffffff]'} text-[16px] hidden md600:block`}>
+                            {saveStatus === 'saved' ? 'Saved!' : 'Saved!'}
+                        </p>
                     </div>
                     {isEditingSongName ? (
                         <input

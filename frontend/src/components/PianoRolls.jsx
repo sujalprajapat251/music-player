@@ -733,7 +733,8 @@ const PianoRolls = () => {
                 velocity: 0.8, // Default velocity
                 id: `note_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`, // Unique ID for real-time updates
                 trackId: currentTrackId, // Ensure trackId is set to current track
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                ...(isDrumTrack ? { isUserDuration: false } : {})
             };
 
             if (isDrumTrack) {
@@ -893,8 +894,7 @@ const PianoRolls = () => {
             return {
                 note,
                 start: hit.currentTime || 0,
-                // Use the duration from the hit data, or fall back to default
-                duration: hit.decay || hit.duration || DRUM_NOTE_DURATION,
+                duration: (hit.isUserDuration ? (hit.decay || hit.duration) : null) || DRUM_NOTE_DURATION,
                 velocity: 0.8,
                 id: hit.id || `drum_note_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
                 trackId: hit.trackId,
@@ -990,6 +990,7 @@ const PianoRolls = () => {
                         currentTime: n.start || 0,
                         decay: n.duration || DRUM_NOTE_DURATION, // Use the actual note duration
                         duration: n.duration || DRUM_NOTE_DURATION, // Also store as duration for TimelineTrack
+                        isUserDuration: n.isUserDuration === true,
                         padId: padId,
                         sound: sound,
                         drumMachine: n.drumMachine || selectedDrumMachine?.name || 'default',
@@ -1983,7 +1984,8 @@ const PianoRolls = () => {
                                         updated[i] = { 
                                             ...updated[i], 
                                             duration: newDuration, // Allow custom duration for drum notes
-                                            start: newStartTime 
+                                            start: newStartTime,
+                                            ...(isDrumTrack ? { isUserDuration: true } : {})
                                         };
                                         syncNotesToRedux(updated); // Sync to Redux for TimelineTrack
                                         return updated;
