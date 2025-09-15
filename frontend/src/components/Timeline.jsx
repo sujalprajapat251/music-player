@@ -3090,33 +3090,36 @@ const Timeline = () => {
       const aggregatedPianoNotes = [];
       const aggregatedDrumData = [];
       let maxEnd = 0;
-  
+
+      // Check for saved project duration
+      let savedDuration = 0;
+
+      // Check multiple possible duration properties
+      if (project.duration && Number(project.duration) > 0) {
+        savedDuration = Number(project.duration);
+      }
+      
+      if (project.audioDuration && Number(project.audioDuration) > 0) {
+        savedDuration = Math.max(savedDuration, Number(project.audioDuration));
+      }
+
+      // Process tracks and calculate maxEnd
       incomingTracks.forEach((t, idx) => {
         const trackId = t.id ?? (t._id ?? (Date.now() + Math.random() + idx));
         
         // Filter and validate audio clips
         const audioClips = Array.isArray(t.audioClips) 
           ? t.audioClips
-              .filter(c => {
-                // Only include clips with valid data
-                return c && (
-                  c.url ||                    // Has audio URL
-                  c.type === 'piano' ||       // Piano clip
-                  c.type === 'drum' ||        // Drum clip
-                  c.fromRecording ||          // From recording
-                  c.fromPattern ||            // From pattern
-                  (c.duration && Number(c.duration) > 0) // Has valid duration
-                );
-              })
+              .filter(c => c && (c.url || c.type === 'piano' || c.type === 'drum' || c.fromRecording || c.fromPattern || (c.duration && Number(c.duration) > 0)))
               .map((c) => {
                 const duration = Number(c.duration || 0);
                 const trimStart = Number(c.trimStart || 0);
                 const trimEnd = Number((c.trimEnd != null ? c.trimEnd : duration) || duration);
                 const startTime = Number(c.startTime || 0);
                 const visible = Math.max(0, trimEnd - trimStart);
+                const clipEnd = startTime + (visible || duration);
                 
-                // Update max end time
-                maxEnd = Math.max(maxEnd, startTime + (visible || duration));
+                maxEnd = Math.max(maxEnd, clipEnd);
                 
                 return {
                   id: c.id ?? (Date.now() + Math.random()),
@@ -3137,8 +3140,8 @@ const Timeline = () => {
             const note = { ...n };
             if (note.trackId == null) note.trackId = trackId;
             aggregatedPianoNotes.push(note);
-            const end = (note.startTime || 0) + (note.duration || 0.05);
-            maxEnd = Math.max(maxEnd, end);
+            const noteEnd = (note.startTime || 0) + (note.duration || 0.05);
+            maxEnd = Math.max(maxEnd, noteEnd);
           });
         }
   
@@ -3148,8 +3151,8 @@ const Timeline = () => {
             const hit = { ...d };
             if (hit.trackId == null) hit.trackId = trackId;
             aggregatedDrumData.push(hit);
-            const end = (hit.currentTime || 0) + (hit.decay || 0.2);
-            maxEnd = Math.max(maxEnd, end);
+            const hitEnd = (hit.currentTime || 0) + (hit.decay || 0.2);
+            maxEnd = Math.max(maxEnd, hitEnd);
           });
         }
   
@@ -3157,12 +3160,16 @@ const Timeline = () => {
         if (t.pianoClip && t.pianoClip.start != null && t.pianoClip.end != null) {
           maxEnd = Math.max(maxEnd, Number(t.pianoClip.end) || 0);
         }
-  
+        
+        if (t.drumClip && t.drumClip.start != null && t.drumClip.end != null) {
+          maxEnd = Math.max(maxEnd, Number(t.drumClip.end) || 0);
+        }
+
         // Only add tracks that have valid content
         if (audioClips.length > 0 || 
             (Array.isArray(t.pianoNotes) && t.pianoNotes.length > 0) ||
             (Array.isArray(t.drumRecordedData) && t.drumRecordedData.length > 0) ||
-            t.pianoClip) {
+            t.pianoClip || t.drumClip) {
           
           studioTracks.push({
             id: trackId,
@@ -3175,25 +3182,70 @@ const Timeline = () => {
             audioClips,
             pianoNotes: Array.isArray(t.pianoNotes) ? t.pianoNotes.map(n => ({ ...n, trackId })) : [],
             pianoClip: t.pianoClip || null,
+            drumClip: t.drumClip || null,
           });
         }
       });
-  
+
+      // Calculate final duration - PRIORITIZE SAVED DURATION
+      let finalDuration = savedDuration; // Start with saved duration
+      
+      if (finalDuration === 0) {
+        // Only if no saved duration, calculate from content
+        finalDuration = maxEnd > 0 ? Math.max(maxEnd + 10, 150) : 150;
+      } else {
+        // If we have saved duration, ensure it covers all content but don't reduce it
+        finalDuration = Math.max(savedDuration, maxEnd + 5);
+      }
+
       // Update Redux state
       dispatch(setTracks(studioTracks));
-      if (aggregatedPianoNotes.length > 0) dispatch(setPianoNotes(aggregatedPianoNotes));
-      if (aggregatedDrumData.length > 0) dispatch(setDrumRecordedData(aggregatedDrumData));
-  
-      // Set project duration
-      if (maxEnd > 0) dispatch(setAudioDuration(Math.ceil(maxEnd + 1)));
-  
+
+      // Set duration AFTER tracks to prevent override
+      setTimeout(() => {
+        dispatch(setAudioDuration(finalDuration));
+      }, 100);
+
+      if (aggregatedPianoNotes.length > 0) {
+        dispatch(setPianoNotes(aggregatedPianoNotes));
+      }
+      if (aggregatedDrumData.length > 0) {
+        dispatch(setDrumRecordedData(aggregatedDrumData));
+      }
+
       // Focus first track
-      if (studioTracks.length > 0) dispatch(setCurrentTrackId(studioTracks[0].id));
+      if (studioTracks.length > 0) {
+        dispatch(setCurrentTrackId(studioTracks[0].id));
+      }
       
     } catch (error) { 
       console.error('Error loading project data:', error);
     }
   }, [projectId, allMusic, dispatch]);
+
+  // Add a protective effect to prevent audioDuration from being reduced unexpectedly
+  const savedDurationRef = useRef(0);
+
+  useEffect(() => {
+    if (audioDuration > savedDurationRef.current) {
+      savedDurationRef.current = audioDuration;
+    } else if (audioDuration < savedDurationRef.current && savedDurationRef.current > 0) {
+      console.log('⚠️ AudioDuration being reduced from', savedDurationRef.current, 'to', audioDuration);
+      // Uncomment the next line if you want to prevent duration reduction
+      // dispatch(setAudioDuration(savedDurationRef.current));
+    }
+  }, [audioDuration]);
+  
+  // Enhanced timeline container effect with width locking
+  useEffect(() => {
+    if (timelineContainerRef.current && audioDuration > 0) {
+      const expectedWidth = Math.max(audioDuration, 12) * timelineWidthPerSecond;
+      
+      // Force update the container min-width and store it
+      timelineContainerRef.current.style.minWidth = `${expectedWidth}px`;
+      timelineContainerRef.current.setAttribute('data-expected-width', expectedWidth.toString());
+    }
+  }, [audioDuration, timelineWidthPerSecond]);
 
   useEffect(() => {
     if (!projectId) return;

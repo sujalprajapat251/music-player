@@ -328,7 +328,7 @@ const Sidebar2 = () => {
             })}
 
             {/* Add New Track Button */}
-            <div className="flex items-center justify-center gap-2 py-3 px-4 text-secondary-light dark:text-secondary-dark cursor-pointer" onClick={() => setShowAddTrackModal(true)} style={{ height: `${trackHeight + 8}px` }}>
+            <div className="flex items-center justify-center gap-2 py-3 px-4 text-secondary-light dark:text-secondary-dark cursor-pointer border-t-[1px] border-b-[1px] border-[#7b7b7b8c]" onClick={() => setShowAddTrackModal(true)} style={{ height: `${trackHeight + 8}px` }}>
               <span className="text-xl font-bold">+</span>
               <span>Add New Track</span>
             </div>
