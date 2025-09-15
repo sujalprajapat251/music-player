@@ -3,7 +3,7 @@ import WaveSurfer from "wavesurfer.js";
 import { Rnd } from "react-rnd";
 import reverceIcon from "../Images/reverce.svg";
 import { useSelector, useDispatch } from 'react-redux';
-import { setPianoNotes, setPianoRecordingClip, setDrumRecordedData, setDrumRecordingClip, setGuitarNotes, setGuitarRecordingClip } from '../Redux/Slice/studio.slice';
+import { setPianoNotes, setPianoRecordingClip, setDrumRecordedData, setDrumRecordingClip, setGuitarNotes, setGuitarRecordingClip, setCurrentTrackId } from '../Redux/Slice/studio.slice';
 import { setSelectedTrackId } from '../Redux/Slice/effects.slice';
 import { selectStudioState } from '../Redux/rootReducer';
 import { drumMachineTypes } from '../Utils/drumMachineUtils';
@@ -507,9 +507,10 @@ const TimelineTrack = ({
   const { selectedTrackId } = useSelector((state) => state.effects);
   const isTrackSelected = selectedTrackId === trackId;
 
-  // Handle track selection for effects
+  // Handle track selection for effects and sidebar
   const handleTrackSelect = useCallback(() => {
     dispatch(setSelectedTrackId(trackId));
+    dispatch(setCurrentTrackId(trackId));
   }, [dispatch, trackId]);
 
   // Get piano notes from Redux
@@ -623,7 +624,7 @@ const TimelineTrack = ({
         width: "100%",
         height: height,
         background: "transparent",
-        border: isTrackSelected ? '2px solid #8F7CFD' : '1px solid transparent',
+        // border: isTrackSelected ? '2px solid #8F7CFD' : '1px solid transparent',
         borderRadius: '4px',
         padding: '2px'
       }}
