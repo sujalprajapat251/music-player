@@ -297,67 +297,65 @@ const Home2 = () => {
         }
     }, [allMusic]);
 
-    const drawWaveform = useCallback((musicId) => {
-        const index = allMusic.findIndex(music => music._id === musicId);
-        if (index === -1) return;
-        
-        const canvas = canvasRefs.current[index];
+    // Update the drawWaveform function to work with filtered music
+    const drawWaveform = useCallback((musicId, filteredIndex) => {
+        const canvas = canvasRefs.current[filteredIndex];
         if (!canvas) return;
-    
+
         const ctx = canvas.getContext('2d');
         const width = canvas.width;
         const height = canvas.height;
-    
+
         ctx.clearRect(0, 0, width, height);
-    
+
         const barCount = 150;
         const barWidth = 2;
         const barSpacing = (width - barCount * barWidth) / (barCount - 1);
         
         const progress = musicProgress[musicId] || 0;
-    
+
         // Static waveform pattern - this creates the consistent wave shape
         for (let i = 0; i < barCount; i++) {
             // Create a static waveform pattern using sine waves
             const seed = i * 0.1;
             const barHeight = Math.max(3, (Math.sin(seed) * 0.5 + 0.5 + Math.sin(seed * 3) * 0.3) * height * 0.7);
-    
+
             const x = i * (barWidth + barSpacing);
             const y = (height - barHeight) / 2;
-    
+
             // Color based on progress - blue for played portion, gray for unplayed
             const progressPoint = progress * barCount;
             const color = i < progressPoint ? '#3B82F6' : '#D1D5DB';
-    
+
             ctx.fillStyle = color;
             ctx.fillRect(x, y, barWidth, barHeight);
         }
-    }, [allMusic, musicProgress]);
+    }, [musicProgress]);
     
 
 
 
-    const handlePlayPauseMusic = async (musicId, idx) => {
-        const id = idx;
-        if (id === -1 || !musicAudioRefs.current[id]) {
+    // Update the handlePlayPauseMusic function to work with filtered indices
+    const handlePlayPauseMusic = async (musicId, filteredIndex) => {
+        if (filteredIndex === -1 || !musicAudioRefs.current[filteredIndex]) {
             console.log('Audio ref not found for:', musicId);
             return;
         }
-    
-        const audioRef = musicAudioRefs.current[id];
+
+        const audioRef = musicAudioRefs.current[filteredIndex];
         const isPlaying = playingMusicId === musicId;
-    
+
         if (isPlaying) {
             audioRef.pause();
             setPlayingMusicId(null);
         } else {
             // Pause all other music
             musicAudioRefs.current.forEach((ref, i) => {
-                if (i !== id && ref) {
+                if (i !== filteredIndex && ref) {
                     ref.pause();
                 }
             });
-    
+
             try {
                 await audioRef.play();
                 setPlayingMusicId(musicId);
@@ -367,14 +365,14 @@ const Home2 = () => {
         }
     };
 
-    const handleTimeUpdate = (musicId) => {
-        const index = allMusic.findIndex(music => music._id === musicId);
-        if (index === -1 || !musicAudioRefs.current[index]) return;
+    // Update the handleTimeUpdate function to work with filtered indices
+    const handleTimeUpdate = (musicId, filteredIndex) => {
+        if (filteredIndex === -1 || !musicAudioRefs.current[filteredIndex]) return;
         
-        const audioRef = musicAudioRefs.current[index];
+        const audioRef = musicAudioRefs.current[filteredIndex];
         const current = audioRef.currentTime;
         const total = audioRef.duration;
-    
+
         setMusicCurrentTimes(prev => ({
             ...prev,
             [musicId]: formatTime(current)
@@ -387,13 +385,12 @@ const Home2 = () => {
         }));
     };
 
-    const handleLoadedMetadata = (musicId) => {
+    // Update the handleLoadedMetadata function to work with filtered indices
+    const handleLoadedMetadata = (musicId, filteredIndex) => {
+        if (filteredIndex === -1 || !musicAudioRefs.current[filteredIndex]) return;
         
-        const index = allMusic.findIndex(music => music._id === musicId);
-        if (index === -1 || !musicAudioRefs.current[index]) return;
-        
-        const audioRef = musicAudioRefs.current[index];
-        console.log(`Audio loaded for ${musicId}:`, audioRef.duration); // Debug log
+        const audioRef = musicAudioRefs.current[filteredIndex];
+        console.log(`Audio loaded for ${musicId}:`, audioRef.duration);
         
         setMusicDurations(prev => ({
             ...prev,
@@ -405,16 +402,62 @@ const Home2 = () => {
         }));
     };
 
-    const handleCanvasClick = (e, musicId) => {
-        const index = allMusic.findIndex(music => music._id === musicId);
-        if (index === -1 || !musicAudioRefs.current[index] || !musicAudioLoaded[musicId]) return;
+    // Add state for waveform analysis data
+    const [waveformAnalysisData, setWaveformAnalysisData] = useState({});
+
+    // Function to get sorted and filtered music
+    const getSortedAndFilteredMusic = () => {
+        if (!allMusic || allMusic.length === 0) return [];
+
+        // First filter music files
+        let filtered = allMusic
+            .filter(ele => !ele.isDeleted)
+            .filter(ele => {
+                if (!activeFolderId) return !getItemFolderId(ele);
+                const fid = getItemFolderId(ele);
+                return fid === activeFolderId;
+            })
+            .filter(ele => {
+                // Add search functionality for audio names
+                if (!searchText.trim()) return true;
+                return ele?.name?.toLowerCase().includes(searchText.toLowerCase());
+            });
+
+        // Then sort based on selected option
+        const sorted = [...filtered].sort((a, b) => {
+            const aData = waveformAnalysisData[a._id];
+            const bData = waveformAnalysisData[b._id];
+            
+            switch (sortBy) {
+                case 'Last updated':
+                    return new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt);
+                
+                case 'Oldest updated':
+                    return new Date(a.updatedAt || a.createdAt) - new Date(b.updatedAt || b.createdAt);
+                
+                case 'Last created':
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                
+                case 'Title':
+                    return (a?.name || '').toLowerCase().localeCompare((b?.name || '').toLowerCase());
+                default:
+                    return 0;
+            }
+        });
         
-        const music = allMusic[index];
+        return sorted;
+    };
+
+    // Update the music rendering to use sorted data
+    const sortedAndFilteredMusic = getSortedAndFilteredMusic();
+
+    const handleCanvasClick = (e, musicId, filteredIndex) => {
+        const music = sortedAndFilteredMusic[filteredIndex];
         const audioUrl = music.url ? (music.url.startsWith('http') ? music.url : `${IMAGE_URL}${music.url}`) : null;
         if (!audioUrl) return;
 
-        const audioRef = musicAudioRefs.current[index];
-        const canvas = canvasRefs.current[index];
+        const audioRef = musicAudioRefs.current[filteredIndex];
+        const canvas = canvasRefs.current[filteredIndex];
         const rect = canvas.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
         const clickProgress = clickX / canvas.width;
@@ -428,40 +471,40 @@ const Home2 = () => {
     };
 
     useEffect(() => {
-      allMusic.forEach((music, index) => {
-        const audio = musicAudioRefs.current[index];
-        if (audio) {
-          const musicId = music._id;
-          
-          const handlePlay = () => setPlayingMusicId(musicId);
-          const handlePause = () => setPlayingMusicId(null);
-          const handleEnded = () => {
-            setPlayingMusicId(null);
-            setMusicProgress(prev => ({ ...prev, [musicId]: 0 }));
-            setMusicCurrentTimes(prev => ({ ...prev, [musicId]: '0:00' }));
-          };
-          const handleTimeUpdateEvent = () => handleTimeUpdate(musicId);
-          const handleLoadedMetadataEvent = () => handleLoadedMetadata(musicId);
+        sortedAndFilteredMusic.forEach((music, index) => {
+            const audio = musicAudioRefs.current[index];
+            if (audio) {
+                const musicId = music._id;
+                
+                const handlePlay = () => setPlayingMusicId(musicId);
+                const handlePause = () => setPlayingMusicId(null);
+                const handleEnded = () => {
+                    setPlayingMusicId(null);
+                    setMusicProgress(prev => ({ ...prev, [musicId]: 0 }));
+                    setMusicCurrentTimes(prev => ({ ...prev, [musicId]: '0:00' }));
+                };
+                const handleTimeUpdateEvent = () => handleTimeUpdate(musicId, index);
+                const handleLoadedMetadataEvent = () => handleLoadedMetadata(musicId, index);
 
-          audio.addEventListener('play', handlePlay);
-          audio.addEventListener('pause', handlePause);
-          audio.addEventListener('ended', handleEnded);
-          audio.addEventListener('timeupdate', handleTimeUpdateEvent);
-          audio.addEventListener('loadedmetadata', handleLoadedMetadataEvent);
+                audio.addEventListener('play', handlePlay);
+                audio.addEventListener('pause', handlePause);
+                audio.addEventListener('ended', handleEnded);
+                audio.addEventListener('timeupdate', handleTimeUpdateEvent);
+                audio.addEventListener('loadedmetadata', handleLoadedMetadataEvent);
 
-          return () => {
-            audio.removeEventListener('play', handlePlay);
-            audio.removeEventListener('pause', handlePause);
-            audio.removeEventListener('ended', handleEnded);
-            audio.removeEventListener('timeupdate', handleTimeUpdateEvent);
-            audio.removeEventListener('loadedmetadata', handleLoadedMetadataEvent);
-          };
-        }
-      });
-    }, [allMusic]);
+                return () => {
+                    audio.removeEventListener('play', handlePlay);
+                    audio.removeEventListener('pause', handlePause);
+                    audio.removeEventListener('ended', handleEnded);
+                    audio.removeEventListener('timeupdate', handleTimeUpdateEvent);
+                    audio.removeEventListener('loadedmetadata', handleLoadedMetadataEvent);
+                };
+            }
+        });
+    }, [sortedAndFilteredMusic]);
 
     useEffect(() => {
-        allMusic.forEach((music, index) => {
+        sortedAndFilteredMusic.forEach((music, index) => {
             const canvas = canvasRefs.current[index];
             if (canvas) {
                 const musicId = music._id;
@@ -469,7 +512,7 @@ const Home2 = () => {
                     const container = canvas.parentElement;
                     canvas.width = container.offsetWidth;
                     canvas.height = 48;
-                    drawWaveform(musicId);
+                    drawWaveform(musicId, index);
                 };
 
                 resizeCanvas();
@@ -483,13 +526,13 @@ const Home2 = () => {
                 };
             }
         });
-    }, [allMusic, drawWaveform]);
+    }, [sortedAndFilteredMusic, drawWaveform]);
 
     useEffect(() => {
-        allMusic.forEach((music) => {
-            drawWaveform(music._id);
+        sortedAndFilteredMusic.forEach((music, index) => {
+            drawWaveform(music._id, index);
         });
-    }, [allMusic, drawWaveform, musicProgress]);
+    }, [sortedAndFilteredMusic, drawWaveform, musicProgress]);
 
     const buttonRef = useRef(null);
     const {
@@ -712,6 +755,67 @@ const handleSaveCoverImage = async () => {
       }
     };
 
+    // Function to analyze waveform data for sorting
+    const analyzeWaveformData = useCallback(async (musicId, audioElement) => {
+        if (!audioElement || waveformAnalysisData[musicId]) return;
+        
+        try {
+            // Create audio context for analysis
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioContext.createMediaElementSource(audioElement);
+            const analyser = audioContext.createAnalyser();
+            
+            analyser.fftSize = 2048;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+            
+            // Get frequency data
+            analyser.getByteFrequencyData(dataArray);
+            
+            // Calculate waveform metrics
+            const intensity = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
+            const complexity = calculateComplexity(dataArray);
+            const duration = audioElement.duration || 0;
+            
+            setWaveformAnalysisData(prev => ({
+                ...prev,
+                [musicId]: {
+                    intensity,
+                    complexity,
+                    duration,
+                    analyzed: true
+                }
+            }));
+            
+            // Clean up
+            audioContext.close();
+        } catch (error) {
+            console.warn('Waveform analysis failed for', musicId, error);
+            // Set default values if analysis fails
+            setWaveformAnalysisData(prev => ({
+                ...prev,
+                [musicId]: {
+                    intensity: 0,
+                    complexity: 0,
+                    duration: 0,
+                    analyzed: false
+                }
+            }));
+        }
+    }, [waveformAnalysisData]);
+
+    // Helper function to calculate waveform complexity
+    const calculateComplexity = (dataArray) => {
+        let complexity = 0;
+        for (let i = 1; i < dataArray.length; i++) {
+            complexity += Math.abs(dataArray[i] - dataArray[i - 1]);
+        }
+        return complexity / dataArray.length;
+    };
+
     return (
       <>
       <div className="p-3 lg:p-5 xl:p-6 2xl:p-8 3xl:p-10 bg-[#141414]">
@@ -863,7 +967,7 @@ const handleSaveCoverImage = async () => {
                                   <p className="block  px-3 sm:px-4 md600:px-5  lg:px-6 py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" >
                                       <div className="flex items-center" >
                                           <DeleteIcon className='w-3 h-3 sm:w-3 sm:h-3 lg:w-4 lg:h-4 2xl:w-6 2xl:h-6 text-white' />
-                                          <p className="text-white ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] sm:text-[14px] 2xl:text-[16px]">Recently Deleted</p>
+                                          <p className="text-white ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] sm:text-[14px] 2xl:text-[16px]" onClick={() => navigate('/recently-deleted')}>Recently Deleted</p>
                                       </div>
                                   </p>
                               </MenuItem>
@@ -915,18 +1019,12 @@ const handleSaveCoverImage = async () => {
             </div>
           ))}
 
-          {allMusic
-            .filter(ele => !ele.isDeleted)
-            .filter(ele => {
-                if (!activeFolderId) return !getItemFolderId(ele);
-                const fid = getItemFolderId(ele);
-                return fid === activeFolderId;
-            })
-            .map((ele, index) => {
+          {sortedAndFilteredMusic.map((ele, index) => {
               const isPlaying = playingMusicId === ele._id;
               const duration = musicDurations[ele._id] || '0:00';
               const audioLoaded = musicAudioLoaded[ele._id] || false;
               const isEditing = editingMusicId === ele._id;
+              const waveformData = waveformAnalysisData[ele._id];
               
               // Construct the full audio URL
               // Construct the full audio URL
@@ -943,7 +1041,7 @@ const handleSaveCoverImage = async () => {
                               src={audioUrl} 
                               preload="metadata" 
                               crossOrigin="anonymous"
-                              onLoadedMetadata={() => handleLoadedMetadata(ele._id)} // Add this line
+                              onLoadedMetadata={() => handleLoadedMetadata(ele._id, index)} // Add this line
                               onError={(e) => {
                                   console.error(`Audio error for ${ele.name}:`, e);
                                   console.error("Failed URL:", audioUrl);
@@ -962,21 +1060,35 @@ const handleSaveCoverImage = async () => {
                                   <img src="" alt="" className="w-full h-full object-cover" />
                               )}
                           </div>
+                          {/* Add waveform analysis indicators */}
+                          {waveformData && (
+                              <div className="flex items-center gap-2 text-xs text-gray-400">
+                                  {sortBy === 'Waveform Intensity' && (
+                                      <span>Intensity: {waveformData.intensity.toFixed(1)}</span>
+                                  )}
+                                  {sortBy === 'Waveform Complexity' && (
+                                      <span>Complexity: {waveformData.complexity.toFixed(1)}</span>
+                                  )}
+                                  {sortBy === 'Waveform Duration' && (
+                                      <span>Duration: {formatTime(waveformData.duration)}</span>
+                                  )}
+                              </div>
+                          )}
                           <div className="relative flex-shrink-0">
-<div className="w-12 h-12 rounded-lg flex items-center justify-center cursor-pointer transition-colors shadow-md">
-  <button 
-      onClick={() => handlePlayPauseMusic(ele._id, index)} 
-      className="text-white" 
-      // disabled={!audioLoaded || !audioUrl}
-  >
-      {isPlaying ? (
-          <Pause size={20} fill="white" />
-      ) : (
-          <Play size={20} fill="white" className="ml-0.5" />
-      )}
-  </button>
-</div>
-</div>
+                            <div className="w-12 h-12 rounded-lg flex items-center justify-center cursor-pointer transition-colors shadow-md">
+                                <button 
+                                    onClick={() => handlePlayPauseMusic(ele._id, index)} 
+                                    className="text-white" 
+                                    // disabled={!audioLoaded || !audioUrl}
+                                >
+                                    {isPlaying ? (
+                                        <Pause size={20} fill="white" />
+                                    ) : (
+                                        <Play size={20} fill="white" className="ml-0.5" />
+                                    )}
+                                </button>
+                            </div>
+                          </div>
                           <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between">
                                   {isEditing ? (
@@ -1012,14 +1124,14 @@ const handleSaveCoverImage = async () => {
                                   <canvas 
                                       ref={el => canvasRefs.current[index] = el} 
                                       className="w-full h-12 cursor-pointer" 
-                                      onClick={(e) => handleCanvasClick(e, ele._id)} 
+                                      onClick={(e) => handleCanvasClick(e, ele._id, index)} 
                                       style={{ display: 'block' }} 
                                   />
                               </div>
                           </div>
                           <div className="flex items-center gap-3 text-xs">
                               <div className="flex items-center gap-2">
-                                  <div className="text-lg font-mono">{duration}</div>
+                                  <div className="text-md font-mono">{duration}</div>
                               </div>
                               <Menu as="div" className="relative inline-block text-left">
                                   <div>
@@ -1027,7 +1139,7 @@ const handleSaveCoverImage = async () => {
                                           ref={refs.setReference}
                                           className="outline-none"
                                       >
-                                          <BsThreeDotsVertical size={20} className="cursor-pointer transition-colors" />
+                                          <BsThreeDotsVertical size={16} className="cursor-pointer transition-colors" />
                                       </MenuButton>
                                   </div>
 
@@ -1097,7 +1209,7 @@ const handleSaveCoverImage = async () => {
                                                   <button
                                                       type="button"
                                                       onClick={() => { setSelectedProjectName(ele?.name || ''); setDeleteId(ele?._id || ele?.id); setDeleteProModal(true); }}
-                                                      className={`flex items-center gap-2 px-4 py-2 text-sm ${active ? "bg-red-100 text-red-600" : "text-red-600"}`}
+                                                      className={`flex items-center gap-2 px-4 py-2 text-sm ${active ? "text-red-600" : "text-red-600"}`}
                                                   >
                                                       🗑️ Delete
                                                   </button>
