@@ -351,27 +351,30 @@ const Sidebar2 = () => {
           }}
         />
       )} */}
-
+      
       <AnimatePresence>
         {showAddTrackModal && (
           <motion.div
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+            className="fixed inset-0 flex items-center justify-center z-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
           >
             <motion.div
-              className="rounded-xl p-6 w-full"
+              className="bg-primary-light dark:bg-primary-dark rounded-xl p-6 w-[600px] max-w-[90%]"
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 50, opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <AddNewTrackModel onClose={() => setShowAddTrackModal(false)} onOpenLoopLibrary={() => {
-                dispatch(setShowLoopLibrary(true));
-                setShowAddTrackModal(false);
-              }} />
+              <AddNewTrackModel
+                onClose={() => setShowAddTrackModal(false)}
+                onOpenLoopLibrary={() => {
+                  dispatch(setShowLoopLibrary(true));
+                  setShowAddTrackModal(false);
+                }}
+              />
             </motion.div>
           </motion.div>
         )}
