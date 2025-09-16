@@ -658,10 +658,7 @@ const Home2 = () => {
         }
     };
 
-
-
-
-    // Change cover image
+// Change cover image
 // Change cover image
 const [open, setOpen] = useState(false);
 const [image, setImage] = useState(null);
