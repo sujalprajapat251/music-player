@@ -3,7 +3,7 @@ import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
 import Soundfont from 'soundfont-player';
-import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio, setCurrentTrackId, setTrackType, triggerPatternDrumPlayback, clearTrackDeleted, setPianoNotes, setDrumRecordedData, setPianoRecordingClip, setDrumRecordingClip, setTracks } from "../Redux/Slice/studio.slice";
+import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio, setCurrentTrackId, setTrackType, triggerPatternDrumPlayback, clearTrackDeleted, setPianoNotes, setDrumRecordedData, setPianoRecordingClip, setDrumRecordingClip, setTracks, updateTrack, addPianoNote } from "../Redux/Slice/studio.slice";
 import { selectStudioState } from "../Redux/rootReducer";
 import { createSynthSound, getAudioContext as getDrumAudioContext } from '../Utils/drumMachineUtils';
 import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM, zoomIn, zoomOut, resetZoom } from "../Redux/Slice/grid.slice";
@@ -1122,7 +1122,7 @@ const Timeline = () => {
             // Check if the track containing this note is muted
             const track = tracks.find(t => t.id === note.trackId);
             if (!track) return;
-            
+
             const isMuted = soloTrackId ? soloTrackId !== track.id : (track.muted || false);
             if (isMuted) return; // Skip playing notes from muted tracks
 
@@ -1658,7 +1658,7 @@ const Timeline = () => {
           dispatch(addAudioClipToTrack({
             trackId: trackId,
             audioClip: newClip,
-            type:'audio'
+            type: 'audio'
           }));
         } else if (isDroppingOnTimeline) {
           // Create new track with this clip when dropping on timeline
@@ -1680,7 +1680,7 @@ const Timeline = () => {
             name: soundItem.soundname || 'New Track',
             color: trackColor, // Set the track color
             audioClips: [newClip],
-            type:'audio'
+            type: 'audio'
           };
 
           dispatch(addTrack(newTrack));
@@ -1752,7 +1752,7 @@ const Timeline = () => {
     const trackId = overrideTrackId ?? contextMenu.trackId;
     const clipId = overrideClipId ?? contextMenu.clipId;
 
-    if (!trackId) return;
+    if (!trackId) return; 
 
     const track = tracks.find(t => t.id === trackId);
     if (!track) return;
@@ -1972,36 +1972,93 @@ const Timeline = () => {
       }
     };
 
+
     const copyRecordingClip = () => {
       if (isPianoRecording && pianoRecordingClip) {
+        const { start, end } = pianoRecordingClip;
         setClipboard({
+          op: 'copy',
           type: 'piano-recording',
           clip: { ...pianoRecordingClip },
           trackId,
-          notes: pianoNotes.filter(note => note.trackId === trackId)
+          // Only copy notes within the clip bounds
+          notes: pianoNotes.filter(note =>
+            note.trackId === trackId &&
+            (note.startTime || 0) >= start &&
+            (note.startTime || 0) < end
+          )
         });
       } else if (isDrumRecording && drumRecordingClip) {
+        const { start, end } = drumRecordingClip;
         setClipboard({
+          op: 'copy',
           type: 'drum-recording',
           clip: { ...drumRecordingClip },
           trackId,
-          hits: drumRecordedData.filter(hit => hit.trackId === trackId)
+          // Only copy hits within the clip bounds
+          hits: drumRecordedData.filter(hit =>
+            hit.trackId === trackId &&
+            (hit.currentTime || 0) >= start &&
+            (hit.currentTime || 0) < end
+          )
         });
       }
     };
 
     const cutRecordingClip = () => {
-      copyRecordingClip();
+      // Build clipboard with op: 'cut' so paste can decide whether to move or duplicate
+      if (isPianoRecording && pianoRecordingClip) {
+        const { start, end } = pianoRecordingClip;
+        setClipboard({
+          op: 'cut',
+          type: 'piano-recording',
+          clip: { ...pianoRecordingClip },
+          trackId,
+          // Only include notes within the clip bounds
+          notes: pianoNotes.filter(note =>
+            note.trackId === trackId &&
+            (note.startTime || 0) >= start &&
+            (note.startTime || 0) < end
+          )
+        });
+      } else if (isDrumRecording && drumRecordingClip) {
+        const { start, end } = drumRecordingClip;
+        setClipboard({
+          op: 'cut',
+          type: 'drum-recording',
+          clip: { ...drumRecordingClip },
+          trackId,
+          // Only include hits within the clip bounds
+        
+
+
+    
+
+  hits: drumRecordedData.filter(hit =>
+            hit.trackId === trackId &&
+            (hit.currentTime || 0) >= start &&
+            (hit.currentTime || 0) < end
+          )
+        });
+      }
+      // Then remove original (same behavior as before for Cut)
       deleteRecordingClip();
     };
 
+
     const deleteRecordingClip = () => {
       if (isPianoRecording) {
+        // Remove active clip and per-track mirror so the background disappears
         dispatch(setPianoRecordingClip(null));
+        dispatch(updateTrack({ id: trackId, updates: { pianoClip: null } }));
+        // Remove all notes for this track
         const updatedNotes = pianoNotes.filter(note => note.trackId !== trackId);
         dispatch(setPianoNotes(updatedNotes));
       } else if (isDrumRecording) {
+        // Remove active clip and per-track mirror so the background disappears
         dispatch(setDrumRecordingClip(null));
+        dispatch(updateTrack({ id: trackId, updates: { drumClip: null } }));
+        // Remove all hits for this track
         const updatedDrumData = drumRecordedData.filter(hit => hit.trackId !== trackId);
         dispatch(setDrumRecordedData(updatedDrumData));
       }
@@ -2009,6 +2066,25 @@ const Timeline = () => {
 
     const pasteRecordingClip = () => {
       if (!clipboard) return;
+
+      // Helper: create a visual background block as a normal audio clip (no URL)
+      const addVisualBackgroundClip = ({ type, duration, startTime, color }) => {
+        const clipName = type === 'piano-recording' ? 'Piano Recording (Copy)' : 'Drum Recording (Copy)';
+        dispatch(addAudioClipToTrack({
+          trackId,
+          audioClip: {
+            name: clipName,
+            url: null,
+            color: color || (track?.color || '#FFB6C1'),
+            startTime,
+            duration,
+            trimStart: 0,
+            trimEnd: duration,
+            type,
+            fromRecording: true
+          }
+        }));
+      };
 
       if (clipboard.type === 'piano-recording' && clipboard.clip && clipboard.notes) {
         const newStartTime = currentTime;
@@ -2023,10 +2099,22 @@ const Timeline = () => {
         const adjustedNotes = clipboard.notes.map(note => ({
           ...note,
           trackId: trackId,
-          startTime: note.startTime - clipboard.clip.start + newStartTime
+          startTime: (note.startTime || 0) - clipboard.clip.start + newStartTime
         }));
 
-        dispatch(setPianoRecordingClip(newClip));
+        if (clipboard.op === 'cut') {
+          // Move the background (Cut behavior unchanged)
+          dispatch(setPianoRecordingClip(newClip)); // also sets track.pianoClip internally
+        } else {
+          // Copy: keep original background; add a visual background block for the duplicate
+          addVisualBackgroundClip({
+            type: 'piano-recording',
+            duration,
+            startTime: newStartTime,
+            color: clipboard.clip.color
+          });
+        }
+        // In both cases, add the duplicated notes
         dispatch(setPianoNotes([...pianoNotes, ...adjustedNotes]));
       } else if (clipboard.type === 'drum-recording' && clipboard.clip && clipboard.hits) {
         const newStartTime = currentTime;
@@ -2041,13 +2129,28 @@ const Timeline = () => {
         const adjustedHits = clipboard.hits.map(hit => ({
           ...hit,
           trackId: trackId,
-          currentTime: hit.currentTime - clipboard.clip.start + newStartTime
+          currentTime: (hit.currentTime || 0) - clipboard.clip.start + newStartTime
         }));
 
-        dispatch(setDrumRecordingClip(newClip));
+        if (clipboard.op === 'cut') {
+          // Move the background (Cut behavior unchanged)
+          dispatch(setDrumRecordingClip(newClip)); // also sets track.drumClip internally
+        } else {
+          // Copy: keep original background; add a visual background block for the duplicate
+          addVisualBackgroundClip({
+            type: 'drum-recording',
+            duration,
+            startTime: newStartTime,
+            color: clipboard.clip.color
+          });
+        }
+        // In both cases, add the duplicated hits
         dispatch(setDrumRecordedData([...drumRecordedData, ...adjustedHits]));
       }
     };
+
+
+
 
     // Numeric pitch change via semitones from structured payload
     const applyPitchChange = (semitones) => {
@@ -2259,6 +2362,11 @@ const Timeline = () => {
 
     switch (action) {
       case 'paste':
+        // Allow pasting recording clips (piano/drum) at the track level at the current ruler position
+        if (clipboard && (clipboard.type === 'piano-recording' || clipboard.type === 'drum-recording')) {
+          pasteRecordingClip();
+          break;
+        }
         if (clipboard && clipboard.type === 'clip' && clipboard.clip) {
           let newStartTime = 0;
           if (track.audioClips && track.audioClips.length > 0) {
@@ -2824,7 +2932,7 @@ const Timeline = () => {
         // Check if the track containing this drum hit is muted
         const track = tracks.find(t => t.id === drumHit.trackId);
         if (!track) return;
-        
+
         const isMuted = soloTrackId ? soloTrackId !== track.id : (track.muted || false);
         if (isMuted) return; // Skip playing drum hits from muted tracks
 
@@ -2878,7 +2986,7 @@ const Timeline = () => {
       // Check if this track is muted
       const track = tracks.find(t => t.id === trackId);
       if (!track) return;
-      
+
       const isMuted = soloTrackId ? soloTrackId !== track.id : (track.muted || false);
       if (isMuted) return; // Skip muted tracks
 
@@ -3080,7 +3188,7 @@ const Timeline = () => {
 
   useEffect(() => {
     if (!projectId) return;
-    
+
     try {
       const project = (allMusic || []).find(m => String(m?._id) === String(projectId));
       if (!project) return;
@@ -3100,7 +3208,7 @@ const Timeline = () => {
       if (project.duration && Number(project.duration) > 0) {
         savedDuration = Number(project.duration);
       }
-      
+
       if (project.audioDuration && Number(project.audioDuration) > 0) {
         savedDuration = Math.max(savedDuration, Number(project.audioDuration));
       }
@@ -3108,34 +3216,34 @@ const Timeline = () => {
       // Process tracks and calculate maxEnd
       incomingTracks.forEach((t, idx) => {
         const trackId = t.id ?? (t._id ?? (Date.now() + Math.random() + idx));
-        
+
         // Filter and validate audio clips
-        const audioClips = Array.isArray(t.audioClips) 
+        const audioClips = Array.isArray(t.audioClips)
           ? t.audioClips
-              .filter(c => c && (c.url || c.type === 'piano' || c.type === 'drum' || c.fromRecording || c.fromPattern || (c.duration && Number(c.duration) > 0)))
-              .map((c) => {
-                const duration = Number(c.duration || 0);
-                const trimStart = Number(c.trimStart || 0);
-                const trimEnd = Number((c.trimEnd != null ? c.trimEnd : duration) || duration);
-                const startTime = Number(c.startTime || 0);
-                const visible = Math.max(0, trimEnd - trimStart);
-                const clipEnd = startTime + (visible || duration);
-                
-                maxEnd = Math.max(maxEnd, clipEnd);
-                
-                return {
-                  id: c.id ?? (Date.now() + Math.random()),
-                  name: c.name || 'Clip',
-                  url: c.url || null,
-                  color: c.color || t.color || '#FFB6C1',
-                  startTime,
-                  duration: duration || visible || 0,
-                  trimStart,
-                  trimEnd,
-                };
-              })
+            .filter(c => c && (c.url || c.type === 'piano' || c.type === 'drum' || c.fromRecording || c.fromPattern || (c.duration && Number(c.duration) > 0)))
+            .map((c) => {
+              const duration = Number(c.duration || 0);
+              const trimStart = Number(c.trimStart || 0);
+              const trimEnd = Number((c.trimEnd != null ? c.trimEnd : duration) || duration);
+              const startTime = Number(c.startTime || 0);
+              const visible = Math.max(0, trimEnd - trimStart);
+              const clipEnd = startTime + (visible || duration);
+
+              maxEnd = Math.max(maxEnd, clipEnd);
+
+              return {
+                id: c.id ?? (Date.now() + Math.random()),
+                name: c.name || 'Clip',
+                url: c.url || null,
+                color: c.color || t.color || '#FFB6C1',
+                startTime,
+                duration: duration || visible || 0,
+                trimStart,
+                trimEnd,
+              };
+            })
           : [];
-  
+
         // Handle piano notes
         if (Array.isArray(t.pianoNotes)) {
           t.pianoNotes.forEach(n => {
@@ -3146,7 +3254,7 @@ const Timeline = () => {
             maxEnd = Math.max(maxEnd, noteEnd);
           });
         }
-  
+
         // Handle drum recorded data
         if (Array.isArray(t.drumNotes)) {
           t.drumNotes.forEach(d => {
@@ -3157,12 +3265,12 @@ const Timeline = () => {
             maxEnd = Math.max(maxEnd, hitEnd);
           });
         }
-  
+
         // Consider piano clip bounds
         if (t.pianoClip && t.pianoClip.start != null && t.pianoClip.end != null) {
           maxEnd = Math.max(maxEnd, Number(t.pianoClip.end) || 0);
         }
-        
+
         if (t.drumClip && t.drumClip.start != null && t.drumClip.end != null) {
           maxEnd = Math.max(maxEnd, Number(t.drumClip.end) || 0);
         }
@@ -3191,7 +3299,7 @@ const Timeline = () => {
 
       // Calculate final duration - PRIORITIZE SAVED DURATION
       let finalDuration = savedDuration; // Start with saved duration
-      
+
       if (finalDuration === 0) {
         // Only if no saved duration, calculate from content
         finalDuration = maxEnd > 0 ? Math.max(maxEnd + 10, 150) : 150;
@@ -3219,8 +3327,8 @@ const Timeline = () => {
       if (studioTracks.length > 0) {
         dispatch(setCurrentTrackId(studioTracks[0].id));
       }
-      
-    } catch (error) { 
+
+    } catch (error) {
       console.error('Error loading project data:', error);
     }
   }, [projectId, allMusic, dispatch]);
@@ -3237,12 +3345,12 @@ const Timeline = () => {
       // dispatch(setAudioDuration(savedDurationRef.current));
     }
   }, [audioDuration]);
-  
+
   // Enhanced timeline container effect with width locking
   useEffect(() => {
     if (timelineContainerRef.current && audioDuration > 0) {
       const expectedWidth = Math.max(audioDuration, 12) * timelineWidthPerSecond;
-      
+
       // Force update the container min-width and store it
       timelineContainerRef.current.style.minWidth = `${expectedWidth}px`;
       timelineContainerRef.current.setAttribute('data-expected-width', expectedWidth.toString());
@@ -3552,29 +3660,29 @@ const Timeline = () => {
       )} */}
 
       <AnimatePresence>
-              {showAddTrackModal && (
-                <motion.div
-                  className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.5, ease: "easeInOut" }}
-                >
-                  <motion.div
-                    className="rounded-xl p-6 w-full"
-                    initial={{ y: 50, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 50, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <AddNewTrackModel onClose={() => setShowAddTrackModal(false)} onOpenLoopLibrary={() => {
-                      dispatch(setShowLoopLibrary(true));
-                      setShowAddTrackModal(false);
-                    }} />
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+        {showAddTrackModal && (
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
+            <motion.div
+              className="rounded-xl p-6 w-full"
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <AddNewTrackModel onClose={() => setShowAddTrackModal(false)} onOpenLoopLibrary={() => {
+                dispatch(setShowLoopLibrary(true));
+                setShowAddTrackModal(false);
+              }} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Hidden file input for import */}
       <input type="file" ref={fileInputRef} style={{ display: "none" }}
