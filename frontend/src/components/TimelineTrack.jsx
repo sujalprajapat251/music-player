@@ -1358,8 +1358,9 @@ const TimelineTrack = ({
                   }
                 }
 
+                const minPixelWidth = 6;
                 const leftX = (hitStartTime || 0) * timelineWidthPerSecond;
-                let hitWidth = Math.max(2, (drumHit.decay || 0.2) * timelineWidthPerSecond);
+                let hitWidth = Math.max(minPixelWidth, (drumHit.duration || 0.05) * timelineWidthPerSecond);
 
                 // Get drum machine color for this hit
                 const drumColor = drumHit.drumMachine ?
@@ -1376,7 +1377,7 @@ const TimelineTrack = ({
                       position: 'absolute',
                       left: `${leftX}px`,
                       top: `${topY}px`,
-                      width: `5px`,
+                      width: `${hitWidth}px`,
                       height: `2px`,
                       background: '#FFFFFF',
                       borderRadius: '1px',
