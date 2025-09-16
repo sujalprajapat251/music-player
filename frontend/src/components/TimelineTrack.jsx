@@ -233,6 +233,15 @@ const AudioClip = ({
         try {
           if (isMounted && wavesurfer.current) {
             wavesurfer.current.load(clip.url);
+            const maybePromise = wavesurfer.current.load(clip.url);
+            if (maybePromise && typeof maybePromise.catch === 'function') {
+              maybePromise.catch((e) => {
+                const name = e?.name || '';
+                const msg = e?.message || String(e || '');
+                if (name === 'AbortError' || /abort/i.test(msg)) return;
+                try { console.warn('WaveSurfer load error:', e); } catch (_) {}
+              });
+            }
           }
         } catch (e) {
           if (!(e && (e.name === 'AbortError' || String(e).includes('aborted')))) {

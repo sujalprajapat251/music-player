@@ -4,9 +4,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Dialog, DialogBackdrop, DialogPanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { useFloating, offset, flip, shift, autoUpdate } from "@floating-ui/react";
 import { BsThreeDotsVertical } from 'react-icons/bs';
-import { Play, Pause } from 'lucide-react';
+import { Play, Pause, X } from 'lucide-react';
 import { IMAGE_URL } from '../Utils/baseUrl';
-import { getAllMusic, renameMusic, moveToFolderMusic, deleteMusic } from '../Redux/Slice/music.slice';
+import { getAllMusic, renameMusic, moveToFolderMusic, deleteMusic, addCoverImage, removeCoverImage } from '../Redux/Slice/music.slice';
 import { getFolderByUserId } from '../Redux/Slice/folder.slice';
 import close from '../Images/close.svg';
 
@@ -36,6 +36,12 @@ const FolderView = () => {
   const [deleteId, setDeleteId] = useState(null);
   const [selectedProjectName, setSelectedProjectName] = useState('');
 
+  const [open, setOpen] = useState(false);
+  const [image, setImage] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedMusicId, setSelectedMusicId] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
   const musicAudioRefs = useRef([]);
   const canvasRefs = useRef([]);
   const animationRefs = useRef([]);
@@ -57,6 +63,12 @@ const FolderView = () => {
       .filter(m => !m.isDeleted)
       .filter(m => getItemFolderId(m) === id);
   }, [allMusic, id]);
+
+  const getCoverUrl = (m) => {
+    const candidate = m?.coverImage || m?.cover || m?.image || m?.thumbnail;
+    if (!candidate) return null;
+    return candidate.startsWith('http') ? candidate : `${IMAGE_URL}${candidate}`;
+  };
 
   const formatTime = (time) => {
     if (isNaN(time)) return '0:00';
@@ -101,37 +113,23 @@ const FolderView = () => {
     const barCount = 150;
     const barWidth = 2;
     const barSpacing = (width - barCount * barWidth) / (barCount - 1);
-    const startX = 0;
-
-    const isPlaying = playingMusicId === musicId;
     const progress = musicProgress[musicId] || 0;
+    const progressPoint = progress * barCount;
 
-    if (analyserRefs.current[index] && dataArrayRefs.current[index] && isPlaying) {
-      analyserRefs.current[index].getByteFrequencyData(dataArrayRefs.current[index]);
-      for (let i = 0; i < barCount; i++) {
-        const dataIndex = Math.floor((i / barCount) * dataArrayRefs.current[index].length);
-        const barHeight = Math.max(3, (dataArrayRefs.current[index][dataIndex] / 255) * height * 0.8);
-        const x = startX + i * (barWidth + barSpacing);
-        const y = (height - barHeight) / 2;
-        const progressPoint = progress * barCount;
-        ctx.fillStyle = i < progressPoint ? '#3B82F6' : '#D1D5DB';
-        ctx.fillRect(x, y, barWidth, barHeight);
-      }
-    } else {
-      for (let i = 0; i < barCount; i++) {
-        const seed = i * 0.1;
-        const barHeight = Math.max(3, (Math.sin(seed) * 0.5 + 0.5 + Math.sin(seed * 3) * 0.3) * height * 0.7);
-        const x = startX + i * (barWidth + barSpacing);
-        const y = (height - barHeight) / 2;
-        const progressPoint = progress * barCount;
-        ctx.fillStyle = i < progressPoint ? '#3B82F6' : '#D1D5DB';
-        ctx.fillRect(x, y, barWidth, barHeight);
-      }
+    // Static waveform pattern (same as Home2)
+    for (let i = 0; i < barCount; i++) {
+      const seed = i * 0.1;
+      const barHeight = Math.max(
+        3,
+        (Math.sin(seed) * 0.5 + 0.5 + Math.sin(seed * 3) * 0.3) * height * 0.7
+      );
+      const x = i * (barWidth + barSpacing);
+      const y = (height - barHeight) / 2;
+
+      ctx.fillStyle = i < progressPoint ? '#3B82F6' : '#D1D5DB';
+      ctx.fillRect(x, y, barWidth, barHeight);
     }
-    if (isPlaying) {
-      animationRefs.current[index] = requestAnimationFrame(() => drawWaveform(musicId));
-    }
-  }, [items, playingMusicId, musicProgress]);
+  }, [items, musicProgress]);
 
   const handlePlayPauseMusic = async (musicId) => {
     const index = items.findIndex(m => m._id === musicId);
@@ -306,6 +304,132 @@ const FolderView = () => {
     }
   };
 
+  const sanitizeFileName = (name) =>
+    (name || 'track').replace(/[<>:"/\\|?*\x00-\x1F]/g, '_').slice(0, 200);
+
+  const handleExport = async (music) => {
+    try {
+        const audioUrl = music?.url
+            ? (music.url.startsWith('http') ? music.url : `${IMAGE_URL}${music.url}`)
+            : null;
+        if (!audioUrl) return;
+
+        const res = await fetch(audioUrl, { mode: 'cors' });
+        if (!res.ok) throw new Error('Failed to download audio');
+        const blob = await res.blob();
+
+        const fileName = `${sanitizeFileName(music?.name)}.mp3`;
+
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(objectUrl);
+    } catch (e) {
+        console.error('Export failed:', e);
+    }
+  };
+
+  // Cover image functions
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return;
+    if (file.size > 5 * 1024 * 1024) return;
+    setSelectedFile(file);
+    setImage(URL.createObjectURL(file));
+  };
+
+  const handleSaveCoverImage = async () => {
+    if (!image || !selectedMusicId) return;
+    
+    setUploading(true);
+    
+    try {
+      // Get the actual file from the input
+      const fileInput = document.getElementById('file-upload');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        alert('Please select an image file');
+        return;
+      }
+      
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('musicId', selectedMusicId);
+      formData.append('coverImage', file);
+      
+      // Dispatch the addCoverImage action
+      await dispatch(addCoverImage(formData));
+      
+      // Refresh the music list to show updated cover
+      await dispatch(getAllMusic());
+      
+      // Reset state and close modal
+      setImage(null);
+      setSelectedMusicId(null);
+      setOpen(false);
+      
+      // Reset file input
+      fileInput.value = '';
+      
+    } catch (error) {
+      console.error('Error uploading cover image:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+  
+  const handleCloseCoverModal = () => {
+    setOpen(false);
+    setImage(null);
+    setSelectedMusicId(null);
+    setUploading(false);
+    
+    // Reset file input
+    const fileInput = document.getElementById('file-upload');
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
+  
+  // Remove selected image (and clear the file input)
+  const handleRemoveSelectedImage = () => {
+    setImage(null);
+    setSelectedFile(null);
+    const input = document.getElementById('file-upload');
+    if (input) input.value = '';
+  };
+
+  // Remove existing cover image from server
+  const handleRemoveCoverImage = async () => {
+    if (!selectedMusicId) return;
+    setUploading(true);
+    try {
+      await dispatch(removeCoverImage(selectedMusicId));
+      await dispatch(getAllMusic());
+      setImage(null);
+      setSelectedFile(null);
+      const input = document.getElementById('file-upload');
+      if (input) input.value = '';
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Fallback: when modal opens, preload the current cover if no preview is set yet
+  useEffect(() => {
+    if (open && selectedMusicId && !image) {
+      const m = allMusic.find(x => x._id === selectedMusicId);
+      const url = m ? getCoverUrl(m) : null;
+      if (url) setImage(url);
+    }
+  }, [open, selectedMusicId, allMusic, image]);
+
   const audioUrl = (m) => (m.url ? (m.url.startsWith('http') ? m.url : `${IMAGE_URL}${m.url}`) : null);
 
   const folderName = useMemo(() => (folders?.find(f => f._id === id)?.folderName || 'Folder'), [folders, id]);
@@ -327,6 +451,7 @@ const FolderView = () => {
             const audioLoaded = musicAudioLoaded[ele._id] || false;
             const isEditing = editingMusicId === ele._id;
             const url = audioUrl(ele);
+            const coverUrl = getCoverUrl(ele);
 
             return (
               <div className="w-full mx-auto" key={ele._id}>
@@ -335,25 +460,48 @@ const FolderView = () => {
                     <audio
                       ref={el => musicAudioRefs.current[index] = el}
                       src={url}
-                      preload="metadata"
+                      preload="auto"
                       crossOrigin="anonymous"
-                    />
+                      onLoadedMetadata={() => handleLoadedMetadata(ele._id)}
+                      onCanPlay={() =>
+                        setMusicAudioLoaded(prev => ({ ...prev, [ele._id]: true }))
+                      }
+                      onTimeUpdate={() => handleTimeUpdate(ele._id)}
+                      onEnded={() => {
+                        setPlayingMusicId(null);
+                        setMusicProgress(prev => ({ ...prev, [ele._id]: 0 }));
+                        setMusicCurrentTimes(prev => ({ ...prev, [ele._id]: '0:00' }));
+                      }}
+                      onPlay={() => setPlayingMusicId(ele._id)}
+                      onPause={() => setPlayingMusicId(null)}
+                      onError={(e) => {
+                        console.error('Audio failed to load:', url, e);
+                      }}
+                  />
                   ) : (
                     <div className="text-red-500 text-xs p-2">No audio file available</div>
                   )}
 
+                  <div className='w-12 h-12 bg-white rounded overflow-hidden flex items-center justify-center'>
+                    {coverUrl ? (
+                      <img src={coverUrl} alt={ele?.name || 'cover'} className="w-full h-full object-cover" />
+                    ) : (
+                      <img src="" alt="" className="w-full h-full object-cover" />
+                    )}
+                  </div>
+
                   <div className="relative flex-shrink-0">
                     <div className="w-12 h-12 rounded-lg flex items-center justify-center cursor-pointer transition-colors shadow-md">
-                      <button
+                    <button
                         onClick={() => handlePlayPauseMusic(ele._id)}
                         className="text-white"
-                        disabled={!audioLoaded || !url}
+                        disabled={!url}
                       >
                         {isPlaying ? <Pause size={20} fill="white" /> : <Play size={20} fill="white" className="ml-0.5" />}
                       </button>
                     </div>
                   </div>
-
+                    
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       {isEditing ? (
@@ -419,10 +567,40 @@ const FolderView = () => {
                             {({ active }) => (
                               <button
                                 type="button"
+                                onClick={() => {
+                                  setSelectedMusicId(ele._id);
+                                  // Preload existing cover into the selector preview
+                                  setImage(coverUrl || null);
+                                  setOpen(true);
+                                }}
+                                className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
+                              >
+                                🖼️ Change cover
+                              </button>
+                            )}
+                          </MenuItem>
+
+                          <MenuItem>
+                            {({ active }) => (
+                              <button
+                                type="button"
                                 onClick={() => { setMoveMusicId(ele._id); setMoveModalOpen(true); }}
                                 className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
                               >
                                 <span className="flex items-center gap-2">📁 Move to folder</span>
+                                <span>›</span>
+                              </button>
+                            )}
+                          </MenuItem>
+
+                          <MenuItem>
+                            {({ active }) => (
+                              <button
+                                type="button"
+                                onClick={() => handleExport(ele)}
+                                className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
+                              >
+                                <span className="flex items-center gap-2">⬇ Export (MP3)</span>
                                 <span>›</span>
                               </button>
                             )}
@@ -451,6 +629,81 @@ const FolderView = () => {
           })}
         </div>
       </div>
+
+      {/* Change Cover Model */}
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20">
+          <div className="bg-[#222222] rounded-xl shadow-lg w-[500px] max-w-[90%] relative">
+            {/* Close Button */}
+            <button className="absolute top-3 right-3 text-white hover:text-gray-300" onClick={handleCloseCoverModal} disabled={uploading}><X size={20} /></button>
+            {/* Title */}
+            <div className="px-6 pt-6 pb-4">
+              <h2 className="text-lg font-semibold text-white">Edit cover</h2>
+            </div>
+            {/* Image Upload Box */}
+              <div className="p-12 flex flex-col items-center">
+              <label htmlFor="file-upload" className={`border-2 border-dashed border-gray-300 rounded-md w-52 h-52 flex flex-col items-center justify-center text-center cursor-pointer ${uploading ? 'opacity-50 cursor-not-allowed' : '' }`}>
+                {image ? (
+                  <img src={image} alt="preview" className="w-full h-full object-cover rounded-md"/>
+                ) : (
+                  <>
+                    <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M3 7l9 6 9-6M3 7l9 6 9-6"/>
+                    </svg>
+                    <p className="text-white text-sm mt-2">Select an image, or drag it here</p>
+                    <span className="mt-2 inline-block px-3 py-1 text-sm border rounded-md">Select</span>
+                  </>
+                )}
+              </label>
+              <input id="file-upload" type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={uploading}/>
+              
+              {/* Remove buttons */}
+              {image && !uploading && (
+                <>
+                  {selectedFile ? (
+                    <button type="button" onClick={handleRemoveSelectedImage} className="mt-4 px-4 py-1 rounded-full bg-[#E11D48] text-white text-sm">Remove</button>
+                  ) : (
+                    <button type="button" onClick={handleRemoveCoverImage} className="mt-4 px-4 py-1 rounded-full bg-[#E11D48] text-white text-sm">Remove</button>
+                  )}
+                </>
+              )}
+              
+              {/* Upload progress indicator */}
+              {uploading && (
+                <div className="mt-4 flex items-center gap-2 text-white">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span className="text-sm">Uploading...</span>
+                </div>
+              )}
+            </div>
+
+              {/* Footer Buttons */}
+              <div className="p-6 flex justify-end gap-3 border-t">
+              <button onClick={() => { setOpen(false); setImage(null); setSelectedFile(null); setSelectedMusicId(null); }} className="px-4 py-2 rounded-full border text-white" disabled={uploading}>Cancel</button>
+              <button
+                  onClick={async () => {
+                  if (!selectedMusicId || !selectedFile) return;
+                  setUploading(true);
+                  try {
+                      await dispatch(addCoverImage({ musicId: selectedMusicId, file: selectedFile }));
+                      await dispatch(getAllMusic());
+                      setOpen(false);
+                      setImage(null);
+                      setSelectedFile(null);
+                      setSelectedMusicId(null);
+                  } finally {
+                      setUploading(false);
+                  }
+                  }}
+                  className={`px-6 py-2 rounded-full text-white ${image && !uploading ? "bg-black hover:bg-gray-800" : "bg-gray-600 cursor-not-allowed"}`}
+                  disabled={!image || uploading}
+              >
+                  {uploading ? 'Saving...' : 'Save'}
+              </button>
+              </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Modal */}
       <Dialog open={deleteModalOpen} onClose={setDeleteModalOpen} className="relative z-10">
