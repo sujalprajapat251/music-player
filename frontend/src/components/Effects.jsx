@@ -85,6 +85,13 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
     const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas, showEffectsTwo, showEffectsTwoState } = useSelector((state) => state.effects);
     // console.log("hhhh", showEffectsTwoState);
 
+    // Normalize strings for robust matching
+    const normalize = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]+/g, '').trim();
+
+    // Build category chips from the effects list to ensure they match
+    const effectCategories = Array.from(new Set(effects.map(e => e.category).filter(Boolean))).sort();
+    // console.log("hhhh", showEffectsTwoState);
+
     useEffect(() => {
         dispatch(getAllCategory());
     }, [dispatch])
@@ -170,11 +177,12 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
     const filteredEffects = effects.filter(effect => {
 
         if (selectedCategory) {
-            const categoryMatches = effect.category?.toLowerCase() === selectedCategory.toLowerCase();
+            const categoryMatches = normalize(effect.category) === normalize(selectedCategory);
             if (!categoryMatches) return false;
         }
         if (searchTerm.trim()) {
-            const searchMatches = effect.name.toLowerCase().includes(searchTerm.toLowerCase()) || effect.category?.toLowerCase().includes(searchTerm.toLowerCase());
+            const s = searchTerm.toLowerCase();
+            const searchMatches = effect.name.toLowerCase().includes(s) || (effect.category || '').toLowerCase().includes(s);
             if (!searchMatches) return false;
         }
         return true;
@@ -206,10 +214,17 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
                                 </div>
                             </div>
                             <div className='flex flex-wrap gap-1 md600:gap-2 3xl:gap-3'>
-                                {category.map((categoryItem, index) => {
-                                    const isSelected = selectedCategory === categoryItem.name;
+                                {/* All category */}
+                                <div
+                                    className={`bg-[#E5E5E5] dark:bg-[#262529] w-[67px] md600:w-[64px] md:w-[65px] lg:w-[64px] xl:w-[83px] 2xl:w-[77px] 3xl:w-[70px] rounded-[2px] text-secondary-light dark:text-secondary-dark text-[10px] lg:text-[12px] lg:py-[4px] xl:py-[5px] text-center cursor-pointer hover:bg-[#b8b8b8] dark:hover:bg-gray-600 transition-colors duration-200 ${selectedCategory === null ? 'border-2 border-blue-500 bg-blue-100 dark:bg-blue-900' : ''}`}
+                                    onClick={() => handleCategoryClick(null)}
+                                >
+                                    All
+                                </div>
+                                {effectCategories.map((cat, index) => {
+                                    const isSelected = normalize(selectedCategory) === normalize(cat);
                                     return (
-                                        <div key={index} className={`bg-[#E5E5E5] dark:bg-[#262529] w-[67px] md600:w-[64px] md:w-[65px] lg:w-[64px] xl:w-[83px] 2xl:w-[77px] 3xl:w-[70px] rounded-[2px] text-secondary-light dark:text-secondary-dark text-[10px] lg:text-[12px] lg:py-[4px] xl:py-[5px] text-center cursor-pointer hover:bg-[#b8b8b8] dark:hover:bg-gray-600 transition-colors duration-200 ${isSelected ? 'border-2 border-blue-500 bg-blue-100 dark:bg-blue-900' : ''}`} onClick={() => handleCategoryClick(categoryItem.name)}>{categoryItem?.name}</div>
+                                        <div key={index} className={`bg-[#E5E5E5] dark:bg-[#262529] w-[67px] md600:w-[64px] md:w-[65px] lg:w-[64px] xl:w-[83px] 2xl:w-[77px] 3xl:w-[70px] rounded-[2px] text-secondary-light dark:text-secondary-dark text-[10px] lg:text-[12px] lg:py-[4px] xl:py-[5px] text-center cursor-pointer hover:bg-[#b8b8b8] dark:hover:bg-gray-600 transition-colors duration-200 ${isSelected ? 'border-2 border-blue-500 bg-blue-100 dark:bg-blue-900' : ''}`} onClick={() => handleCategoryClick(cat)}>{cat}</div>
                                     )
                                 })}
                             </div>

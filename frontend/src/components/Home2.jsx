@@ -879,10 +879,7 @@ const handleSaveCoverImage = async () => {
                                             <h3 className="text-[#fff] font-[500] text-[12px] sm:text-[14px] md:text-[12px] 2xl:text-[14px] 3xl:text-[16px] mb-[2px]">{sound?.soundname}</h3>
                                             <p className="text-[#FFFFFF99] font-[400] text-[10px] sm:text-[12px] md:text-[10px] xl:text-[14px]">{sound?.category[0]?.name}</p>
                                         </div>
-                                        <button
-                                            onClick={() => handlePlayPause(index)}
-                                            className="bg-[#141414] text-black rounded-full w-[20px] h-[20px] sm:w-[28px] sm:h-[28px] md:w-[24px] md:h-[24px] lg:w-[28px] lg:h-[28px] flex justify-center items-center border-[0.5px] border-[#FFFFFF1A]"
-                                        >
+                                        <button onClick={() => handlePlayPause(index)} className="bg-[#141414] text-black rounded-full w-[20px] h-[20px] sm:w-[28px] sm:h-[28px] md:w-[24px] md:h-[24px] lg:w-[28px] lg:h-[28px] flex justify-center items-center border-[0.5px] border-[#FFFFFF1A]">
                                             <img src={playingIndex === index ? pause : play} alt="" className='w-2 h-2 sm:w-3 sm:h-3' />
                                         </button>
                                         <audio
@@ -910,39 +907,23 @@ const handleSaveCoverImage = async () => {
                       <div className='bg-[#FFFFFF0F]'>
                           <div className="flex gap-1 sm:gap-2 md600:gap-4 md:gap-3 lg:gap-4 2xl:gap-5 py-1 px-2  sm:px-3 md600:py-2 md600:px-5 md:py-1 md:px-4 lg:py-2 lg:px-5 items-center justify-center">
                               <FiSearch className="text-white text-[14px] sm:text-[18px] md:text-[20px] lg:text-[24px]" />
-                              <input
-                                  type="text"
-                                  className="outline-none w-32 sm:w-40 md:w-full text-[10px] sm:text-[12px] md600:text-[16px] md:text-[20px] border-0 bg-transparent text-white"
-                                  placeholder="Search..."
-                                  value={searchText}
-                                  onChange={(e) => setSearchText(e.target.value)}
-                              />
+                              <input type="text" className="outline-none w-32 sm:w-40 md:w-full text-[10px] sm:text-[12px] md600:text-[16px] md:text-[20px] border-0 bg-transparent text-white" placeholder="Search..." value={searchText} onChange={(e) => setSearchText(e.target.value)}/>
                               <IoClose className="text-white ms-auto cursor-pointer sm:text-[18px] md:text-[20px] lg:text-[24px]" onClick={() => { setActiveSearch(false); setSearchText(""); }} />
                           </div>
                       </div>
                       :
                       <>
                           <div className='flex relative pe-2' ref={sortDropdownRef}>
-                              <button
-                                  onClick={toggleSortDropdown}
-                                  className='flex items-center gap-2 md600:gap-3 text-white cursor-pointer hover:text-gray-300 transition-colors'
-                              >
+                              <button onClick={toggleSortDropdown} className='flex items-center gap-2 md600:gap-3 text-white cursor-pointer hover:text-gray-300 transition-colors'>
                                   <span className='text-[10px] sm:text-[12px] md600:text-[16px]'>Sort by : {sortBy}</span>
-                                  <IoIosArrowDown
-                                      className={`text-white transition-transform  duration-300 ${isSortDropdownOpen ? 'rotate-180' : 'rotate-0'
-                                          }`}
-                                  />
+                                  <IoIosArrowDown className={`text-white transition-transform  duration-300 ${isSortDropdownOpen ? 'rotate-180' : 'rotate-0'}`}/>
                               </button>
 
                               {/* Dropdown Menu */}
                               {isSortDropdownOpen && (
                                   <div className="absolute top-full right-0 md600:mt-2 bg-[#1F1F1F] rounded-lg shadow-lg z-10 min-w-[150px] md600:min-w-[200px]">
                                       {sortOptions.map((option) => (
-                                          <div
-                                              key={option.value}
-                                              onClick={() => handleSortSelect(option)}
-                                              className="flex items-center py-1 px-2 sm:py-2 sm:px-3 md600:px-4 md600:py-3 md:px-3 md:py-2 2xl:px-4 2xl:py-3 hover:bg-[#3b3b3b] cursor-pointer transition-colors"
-                                          >
+                                          <div key={option.value} onClick={() => handleSortSelect(option)} className="flex items-center py-1 px-2 sm:py-2 sm:px-3 md600:px-4 md600:py-3 md:px-3 md:py-2 2xl:px-4 2xl:py-3 hover:bg-[#3b3b3b] cursor-pointer transition-colors">
                                               <div className="flex items-center">
                                                   <div className={`w-3 h-3 md600:w-4 md600:h-4 md:w-3 md:h-3 2xl:w-4 2xl:h-4 border-2 rounded-full mr-2 md600:mr-3 md:mr-2 2xl:mr-3 flex items-center justify-center ${sortBy === option.value
                                                       ? 'border-white'
@@ -965,16 +946,10 @@ const handleSaveCoverImage = async () => {
                       </>
                   }
                   <div className='my-auto px-2 md600:px-3 md:px-2 2xl:px-3' >
-                      <AdaptiveMenu
-                          button={<BsThreeDotsVertical className='text-white text-[12px] sm:text-[14px]  xl:text-[18px] 3xl:text-[20px]' />}
-                          widthClass="w-36 sm:w-48 xl:w-52 2xl:w-64"
-                      >
+                      <AdaptiveMenu button={<BsThreeDotsVertical className='text-white text-[12px] sm:text-[14px]  xl:text-[18px] 3xl:text-[20px]' />} widthClass="w-36 sm:w-48 xl:w-52 2xl:w-64">
                           <div className="">
                               <MenuItem >
-                                <p
-                                    className="block  px-3 sm:px-4 md600:px-5  lg:px-6 py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer"
-                                    onClick={() => navigate('/recently-deleted')}
-                                >
+                                <p className="block  px-3 sm:px-4 md600:px-5  lg:px-6 py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" onClick={() => navigate('/recently-deleted')}>
                                     <div className="flex items-center" >
                                         <DeleteIcon className='w-3 h-3 sm:w-3 sm:h-3 lg:w-4 lg:h-4 2xl:w-6 2xl:h-6 text-white' />
                                         <p className="text-white ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] sm:text-[14px] 2xl:text-[16px]">Recently Deleted</p>
@@ -987,12 +962,7 @@ const handleSaveCoverImage = async () => {
                   {/* Folder breadcrumb when viewing a folder */}
                   {activeFolderId && (
                       <div className="flex items-center gap-2 text-white mt-3">
-                          <button
-                              className="underline hover:text-gray-300"
-                              onClick={() => { setActiveFolderId(null); setActiveFolderName(''); }}
-                          >
-                              Show all
-                          </button>
+                          <button className="underline hover:text-gray-300" onClick={() => { setActiveFolderId(null); setActiveFolderName(''); }}>Show all</button>
                           <span>/</span>
                           <span className="font-semibold">{activeFolderName}</span>
                       </div>
@@ -1036,8 +1006,6 @@ const handleSaveCoverImage = async () => {
               const isEditing = editingMusicId === ele._id;
               const waveformData = waveformAnalysisData[ele._id];
               
-              // Construct the full audio URL
-              // Construct the full audio URL
               const audioUrl = ele.url ? (ele.url.startsWith('http') ? ele.url : `${IMAGE_URL}${ele.url}`) : null;
 
               const coverUrl = getCoverUrl(ele);
@@ -1051,7 +1019,7 @@ const handleSaveCoverImage = async () => {
                               src={audioUrl} 
                               preload="metadata" 
                               crossOrigin="anonymous"
-                              onLoadedMetadata={() => handleLoadedMetadata(ele._id, index)} // Add this line
+                              onLoadedMetadata={() => handleLoadedMetadata(ele._id, index)}
                               onError={(e) => {
                                   console.error(`Audio error for ${ele.name}:`, e);
                                   console.error("Failed URL:", audioUrl);
@@ -1059,9 +1027,7 @@ const handleSaveCoverImage = async () => {
                               onLoadStart={() => console.log(`Loading audio for ${ele.name}:`, audioUrl)}
                           />
                           ) : (
-                              <div className="text-red-500 text-xs p-2">
-                                  No audio file available
-                              </div>
+                              <div className="text-red-500 text-xs p-2">No audio file available</div>
                           )}
                           <div className='w-12 h-12 bg-white rounded overflow-hidden flex items-center justify-center'>
                               {coverUrl ? (
@@ -1086,11 +1052,7 @@ const handleSaveCoverImage = async () => {
                           )}
                           <div className="relative flex-shrink-0">
                             <div className="w-12 h-12 rounded-lg flex items-center justify-center cursor-pointer transition-colors shadow-md">
-                                <button 
-                                    onClick={() => handlePlayPauseMusic(ele._id, index)} 
-                                    className="text-white" 
-                                    // disabled={!audioLoaded || !audioUrl}
-                                >
+                                <button  onClick={() => handlePlayPauseMusic(ele._id, index)}  className="text-white">
                                     {isPlaying ? (
                                         <Pause size={20} fill="white" />
                                     ) : (
@@ -1104,39 +1066,16 @@ const handleSaveCoverImage = async () => {
                                   {isEditing ? (
                                       <div className="flex items-center gap-2 flex-1">
                                           <div className="w-3 h-3 bg-purple-500 rounded-sm"></div>
-                                          <input
-                                              type="text"
-                                              value={editingMusicName}
-                                              onChange={(e) => setEditingMusicName(e.target.value)}
-                                              onKeyDown={(e) => handleInlineRenameKeyPress(e, ele._id)}
-                                              onBlur={() => handleInlineRenameSave(ele._id)}
-                                              className="flex-1 bg-transparent text-white border border-purple-500 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                              autoFocus
-                                          />
-                                          <button
-                                              onClick={() => handleInlineRenameSave(ele._id)}
-                                              className="px-3 py-1 bg-purple-600 text-white text-xs rounded hover:bg-purple-700 transition-colors"
-                                          >
-                                              Save
-                                          </button>
-                                          <button
-                                              onClick={handleInlineRenameCancel}
-                                              className="px-3 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 transition-colors"
-                                          >
-                                              Cancel
-                                          </button>
+                                          <input type="text" value={editingMusicName} onChange={(e) => setEditingMusicName(e.target.value)} onKeyDown={(e) => handleInlineRenameKeyPress(e, ele._id)} onBlur={() => handleInlineRenameSave(ele._id)} className="flex-1 bg-transparent text-white border border-purple-500 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" autoFocus/>
+                                          <button onClick={() => handleInlineRenameSave(ele._id)} className="px-3 py-1 bg-purple-600 text-white text-xs rounded hover:bg-purple-700 transition-colors">Save</button>
+                                          <button onClick={handleInlineRenameCancel} className="px-3 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700 transition-colors">Cancel</button>
                                       </div>
                                   ) : (
                                       <h3 className="text-sm font-medium truncate">{ele?.name}</h3>
                                   )}
                               </div>
                               <div className="relative">
-                                  <canvas 
-                                      ref={el => canvasRefs.current[index] = el} 
-                                      className="w-full h-12 cursor-pointer" 
-                                      onClick={(e) => handleCanvasClick(e, ele._id, index)} 
-                                      style={{ display: 'block' }} 
-                                  />
+                                  <canvas  ref={el => canvasRefs.current[index] = el}  className="w-full h-12 cursor-pointer"  onClick={(e) => handleCanvasClick(e, ele._id, index)}  style={{ display: 'block' }} />
                               </div>
                           </div>
                           <div className="flex items-center gap-3 text-xs">
@@ -1145,10 +1084,7 @@ const handleSaveCoverImage = async () => {
                               </div>
                               <Menu as="div" className="relative inline-block text-left">
                                   <div>
-                                      <MenuButton
-                                          ref={refs.setReference}
-                                          className="outline-none"
-                                      >
+                                      <MenuButton ref={refs.setReference} className="outline-none">
                                           <BsThreeDotsVertical size={16} className="cursor-pointer transition-colors" />
                                       </MenuButton>
                                   </div>
@@ -1157,10 +1093,7 @@ const handleSaveCoverImage = async () => {
                                       <div className="py-1">
                                           <MenuItem>
                                               {({ active }) => (
-                                                  <button
-                                                      onClick={() => handleMusicRenameClick(ele._id, ele.name)}
-                                                      className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
-                                                  >
+                                                  <button onClick={() => handleMusicRenameClick(ele._id, ele.name)} className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
                                                       <span className="font-medium">A</span>
                                                       Rename
                                                   </button>
@@ -1169,16 +1102,7 @@ const handleSaveCoverImage = async () => {
 
                                           <MenuItem>
                                               {({ active }) => (
-                                                  <button
-                                                  type="button"
-                                                  onClick={() => {
-                                                      setSelectedMusicId(ele._id);
-                                                      // Preload existing cover into the selector preview
-                                                      setImage(coverUrl || null);
-                                                      setOpen(true);
-                                                  }}
-                                                  className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
-                                                  >
+                                                  <button type="button" onClick={() => { setSelectedMusicId(ele._id); setImage(coverUrl || null); setOpen(true);}} className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
                                                   🖼️ Change cover
                                                   </button>
                                               )}
@@ -1186,11 +1110,7 @@ const handleSaveCoverImage = async () => {
 
                                           <MenuItem>
                                               {({ active }) => (
-                                                  <button
-                                                      type="button"
-                                                      onClick={() => { setMoveMusicId(ele._id); setMoveModalOpen(true); }}
-                                                      className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
-                                                  >
+                                                  <button type="button" onClick={() => { setMoveMusicId(ele._id); setMoveModalOpen(true); }} className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
                                                       <span className="flex items-center gap-2">📁 Move to folder</span>
                                                       <span>›</span>
                                                   </button>
@@ -1201,11 +1121,7 @@ const handleSaveCoverImage = async () => {
 
                                           <MenuItem>
                                               {({ active }) => (
-                                                  <button
-                                                      type="button"
-                                                      onClick={() => handleExport(ele)}
-                                                      className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
-                                                  >
+                                                  <button type="button" onClick={() => handleExport(ele)} className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
                                                       <span className="flex items-center gap-2">⬇ Export (MP3)</span>
                                                       <span>›</span>
                                                   </button>
@@ -1216,11 +1132,7 @@ const handleSaveCoverImage = async () => {
 
                                           <MenuItem>
                                               {({ active }) => (
-                                                  <button
-                                                      type="button"
-                                                      onClick={() => { setSelectedProjectName(ele?.name || ''); setDeleteId(ele?._id || ele?.id); setDeleteProModal(true); }}
-                                                      className={`flex items-center gap-2 px-4 py-2 text-sm ${active ? "text-red-600" : "text-red-600"}`}
-                                                  >
+                                                  <button type="button" onClick={() => { setSelectedProjectName(ele?.name || ''); setDeleteId(ele?._id || ele?.id); setDeleteProModal(true); }} className={`flex items-center gap-2 px-4 py-2 text-sm ${active ? "text-red-600" : "text-red-600"}`}>
                                                       🗑️ Delete
                                                   </button>
                                               )}

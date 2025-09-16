@@ -433,34 +433,24 @@ const TopHeader = () => {
                 }
             }
             
-            // Handle drum data - check if this track is a drum track
             let drumNotes = [];
             if (track.type === 'drum' || track.type === 'drums' || track.type === 'Drums & Machines') {
-                // Create separate drumNotes array for drum tracks
                 drumNotes = Array.isArray(t.drumNotes) ? t.drumNotes : [];
                 
-                // If no drumNotes array exists, create one and add drum data
                 if (drumNotes.length === 0) {
-                    // Check if there are drum notes in pianoNotes that should be moved to drumNotes
                     if (Array.isArray(t.pianoNotes) && t.pianoNotes.length > 0) {
                         drumNotes = [...t.pianoNotes];
-                        // Clear pianoNotes for drum tracks since we're using drumNotes
                         track.pianoNotes = [];
                     }
                 }
                 
-                // Pull drum hits from Redux drumRecordedData for this track
                 const reduxDrumHits = Array.isArray(drumRecordedData)
                     ? drumRecordedData.filter(hit => (hit.trackId ?? null) === (track.id ?? null))
                     : [];
-                // Add drum hits from redux to drumNotes array
                 drumNotes = [...drumNotes, ...reduxDrumHits];
-                
-                // Set the drumNotes array on the track
                 track.drumNotes = drumNotes;
             }
 
-            // Normalize any blob/data audio clip URLs to persistent HTTP URLs by uploading
             try {
                 const existingClips = Array.isArray(track.audioClips) ? track.audioClips : [];
                 if (existingClips.length > 0) {
@@ -842,10 +832,8 @@ const TopHeader = () => {
                                                     <input type="checkbox" className="sr-only peer" checked={isLowLatency}
                                                         onChange={() => {
                                                             if (!isLowLatency) {
-                                                                // Only show modal when enabling low latency
                                                                 setLowLatencyModel(true);
                                                             } else {
-                                                                // Directly disable when unchecking
                                                                 setIsLowLatency(false);
                                                             }
                                                         }}
@@ -1163,16 +1151,10 @@ const TopHeader = () => {
             `}</style>
 
             {/* Share Modal */}
-            <ShareModal 
-                isOpen={shareModalOpen} 
-                onClose={() => setShareModalOpen(false)} 
-            />
+            <ShareModal isOpen={shareModalOpen} onClose={() => setShareModalOpen(false)} projectId={currentMusic?._id}/>
 
             {/* Pricing Modal */}
-            <PricingModel 
-                pricingModalOpen={pricingModalOpen} 
-                setPricingModalOpen={setPricingModalOpen} 
-            />
+            <PricingModel pricingModalOpen={pricingModalOpen} setPricingModalOpen={setPricingModalOpen} />
         </>
     )
 }
