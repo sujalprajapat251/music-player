@@ -94,6 +94,9 @@ const PianoRolls = () => {
     const [clipboardNote, setClipboardNote] = useState(null);
     const DRUM_NOTE_DURATION = 0.15; // seconds - uniform drum note duration for consistent width
 
+    // Bottom toolbar active tool state
+    const [activeTool, setActiveTool] = useState('pencil');
+
         // Determine instrument by selected track
         const isDrumTrack = useMemo(() => {
             if (!selectedTrack) return false;
@@ -1590,15 +1593,7 @@ const PianoRolls = () => {
 
     return (
         <>
-            {/* Zoom Controls */}
-            <div
-                className={`relative w-full h-[490px] bg-[#1e1e1e] text-white ${selectedNoteIndex || pasteMenu ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'}  `}
-                onWheel={handleWheel}
-            >
-                {/* Control Icons - Right Side */}
-
-
-                {/* Timeline Header Container with Horizontal Scroll */}
+            <div className={`relative w-full h-[490px] bg-[#1e1e1e] text-white ${selectedNoteIndex || pasteMenu ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'}  pb-12`} onWheel={handleWheel}>
                 <div
                     ref={timelineContainerRef}
                     className="fixed left-0 right-0 h-[80px] overflow-x-auto overflow-y-hidden z-[5] hover:bg-[#2a2a2a] transition-colors duration-150"
@@ -1607,8 +1602,7 @@ const PianoRolls = () => {
                     onMouseDown={onHeaderMouseDown}
                     onScroll={handleScroll}
                     onWheel={(e) => {
-                        // Smooth horizontal scrolling on header (trackpads and mouse wheels)
-                        if (e.ctrlKey || e.metaKey) return; // let zoom handler handle this
+                        if (e.ctrlKey || e.metaKey) return;
                         const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
                         if (delta) {
                             e.preventDefault();
@@ -1618,98 +1612,45 @@ const PianoRolls = () => {
                         }
                     }}
                 >
-                    <div style={{
-                        width: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`,
-                        height: "100%",
-                        position: "relative",
-                        minWidth: "100%",
-                        transition: "width 0.2s ease-in-out"
-                    }}>
-                        <svg
-                            ref={timelineHeaderRef}
-                            width="100%"
-                            height="100%"
-                            style={{ 
-                                color: "white", 
-                                width: "100%", 
-                                transition: "width 0.2s ease-in-out"
-                            }}
-                        />
+                    <div style={{ width: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`, height: "100%", position: "relative", minWidth: "100%", transition: "width 0.2s ease-in-out"}}>
+                        <svg ref={timelineHeaderRef} width="100%" height="100%" style={{ color: "white", width: "100%", transition: "width 0.2s ease-in-out"}}/>
                     </div>
                 </div>
 
-                {/* Purple Playhead - spans full timeline and grid */}
                 <div
                     ref={playheadRef}
-                    style={{
-                        position: "fixed",
-                        top: "110px",
-                        left: `${PIANO_KEYS_WIDTH}px`,
-                        height: "100%",
-                        width: "2px",
-                        background: "#AD00FF",
-                        zIndex: 25,
-                        pointerEvents: "auto",
-                        cursor: "pointer",
-                        transform: `translateX(${localPlayheadTime * timelineWidthPerSecond - (timelineContainerRef.current?.scrollLeft || 0)}px)`,
-                        willChange: "transform"
-                    }}
+                    style={{ position: "fixed", top: "110px", left: `${PIANO_KEYS_WIDTH}px`, height: "100%", width: "2px", background: "#AD00FF", zIndex: 25, pointerEvents: "auto", cursor: "pointer", transform: `translateX(${localPlayheadTime * timelineWidthPerSecond - (timelineContainerRef.current?.scrollLeft || 0)}px)`, willChange: "transform"}}
                     onClick={(e) => {
-                        // Calculate the time position based on click location
                         const rect = playheadRef.current.getBoundingClientRect();
                         const x = e.clientX - rect.left + (timelineContainerRef.current?.scrollLeft || 0);
                         
-                        // Account for piano keys width offset
                         const adjustedX = Math.max(0, x - PIANO_KEYS_WIDTH);
                         const width = Math.max(audioDuration, 12) * timelineWidthPerSecond;
                         const rawTime = (adjustedX / width) * audioDuration;
                         const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
                         const snappedTime = Math.max(0, Math.min(audioDuration, Math.round(rawTime / gridSpacing) * gridSpacing));
                         
-                        // Dispatch the same action that Timeline uses
                         dispatch(setStudioCurrentTime(snappedTime));
                         try { Tone.Transport.seconds = snappedTime; } catch {}
                         setLocalPlayheadTime(snappedTime);
                         
-                        // Force immediate playhead position update
                         if (playheadRef.current) {
                             const scrollLeft = timelineContainerRef.current?.scrollLeft || 0;
                             playheadRef.current.style.transform = `translateX(${snappedTime * timelineWidthPerSecond - scrollLeft}px)`;
                         }
                     }}
                 >
-                    {/* Purple triangle at top */}
-                    <div
-                        style={{
-                            position: "absolute",
-                            top: "0px",
-                            left: "-6px",
-                            width: "16px",
-                            height: "5px",
-                            borderLeft: "0px solid transparent",
-                            borderRight: "0px solid transparent",
-                            borderTop: "15px solid #AD00FF",
-                            borderRadius: "3px",
-                        }}
-                    />
+                    <div style={{ position: "absolute", top: "0px", left: "-6px", width: "16px", height: "5px", borderLeft: "0px solid transparent", borderRight: "0px solid transparent", borderTop: "15px solid #AD00FF", borderRadius: "3px",}}/>
                 </div>
 
-                {/* Piano Keys Column */}
                 <div className="absolute left-0 top-[80px] w-24 h-[560px] bg-[#1a1a1a] border-r border-gray-700" style={{zIndex: 3}}>
                     {NOTES.map((note) => (
-                        <button
-                            key={note}
-                            onMouseDown={() => handleKeyDown(note)}
-                            onMouseUp={() => handleKeyUp(note)}
-                            onMouseLeave={() => handleKeyUp(note)}
-                            className={`h-[30px] min-h-[30px] text-xs ${note.includes('#') ? 'bg-black text-white w-[50%]' : 'bg-white w-full'} border`}
-                        >
+                        <button key={note} onMouseDown={() => handleKeyDown(note)} onMouseUp={() => handleKeyUp(note)} onMouseLeave={() => handleKeyUp(note)} className={`h-[30px] min-h-[30px] text-xs ${note.includes('#') ? 'bg-black text-white w-[50%]' : 'bg-white w-full'} border`}>
                             {note}
                         </button>
                     ))}
                 </div>
 
-                {/* Scrollable Piano Roll Grid */}
                 <div
                     ref={wrapperRef}
                     className={`absolute left-24 top-[80px] right-0 ${selectedNoteIndex || pasteMenu ? 'overflow-hidden' : ' overflow-x-auto overflow-y-auto'}`}
@@ -1717,39 +1658,31 @@ const PianoRolls = () => {
                     onScroll={handleScroll}
                     onMouseDown={handleMouseDown}
                     onMouseUp={(e) => {
-                        if (e.button !== 0) return; // only left click
-                        // Do not create a new note when clicking on an existing note
+                        if (e.button !== 0) return;
                         if (e.target.closest && e.target.closest('.note-box')) return;
                         handleMouseUp(e);
                     }}
-                                         onClick={(e) => {
-                        // Handle clicks on the grid background to move playhead and create notes
+                    onClick={(e) => {
                          if (e.target === wrapperRef.current || e.target.tagName === 'svg' || e.target.classList.contains('note-bg-div')) {
                              const rect = wrapperRef.current.getBoundingClientRect();
                              const x = e.clientX - rect.left + wrapperRef.current.scrollLeft;
                              
-                             // Calculate time directly from x position without width scaling
                              const rawTime = x / timelineWidthPerSecond;
                              const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
                              const snappedTime = Math.max(0, Math.min(audioDuration, Math.round(rawTime / gridSpacing) * gridSpacing));
                              
-                             // Sync playhead with timeline
                              dispatch(setStudioCurrentTime(snappedTime));
                              try { Tone.Transport.seconds = snappedTime; } catch {}
                              setLocalPlayheadTime(snappedTime);
                              
-                             // Force immediate playhead position update
                              if (playheadRef.current) {
                                  const scrollLeft = wrapperRef.current.scrollLeft || 0;
                                  playheadRef.current.style.transform = `translateX(${snappedTime * timelineWidthPerSecond - scrollLeft}px)`;
                              }
                          }
                         
-                        // Also handle note creation when clicking anywhere in the piano roll area
-                        // This ensures notes can be created outside the red background region
                         if (!e.target.closest('.note-box') && !e.target.classList.contains('note-bg-div')) {
                             console.log('Wrapper clicked, creating note...');
-                            // Create a synthetic event for note creation
                             const syntheticEvent = {
                                 ...e,
                                 clientX: e.clientX,
@@ -1762,7 +1695,6 @@ const PianoRolls = () => {
                     onContextMenu={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
-                        // if right-clicking on a note box, let that handler manage
                         if (e.target.closest('.note-box')) return;
                         if (clipboardNote) {
                             const wrapperRect = wrapperRef.current.getBoundingClientRect();
@@ -1772,31 +1704,16 @@ const PianoRolls = () => {
                                 x: e.clientX - wrapperRect.left,
                                 y: e.clientY - wrapperRect.top,
                             });
-                            // console.log('iscalled')
                         }
                     }}
 
                 >
-                    {/* Transform the playhead for smooth movement without reflow */}
                     <style>{`.pianoroll-playhead-transform{transform: translateX(${(typeof localPlayheadTime === 'number' ? localPlayheadTime : 0) * timelineWidthPerSecond}px);}`}</style>
                     <div className="pianoroll-playhead-transform" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 24 }} />
-                    
-                    {/* Invisible clickable overlay for note creation - covers the entire piano roll area */}
-                    <div
-                        style={{
-                            position: 'absolute',
-                            left: 0,
-                            top: 0,
-                            width: '100%',
-                            height: '100%',
-                            zIndex: 1,
-                            pointerEvents: 'auto'
-                        }}
+                    <div style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', zIndex: 1, pointerEvents: 'auto'}}
                         onClick={(e) => {
-                            // Only handle clicks that aren't on notes or the red background
                             if (!e.target.closest('.note-box') && !e.target.classList.contains('note-bg-div')) {
                                 console.log('Invisible overlay clicked, creating note...');
-                                // Create a synthetic event for note creation
                                 const syntheticEvent = {
                                     ...e,
                                     clientX: e.clientX,
@@ -1808,7 +1725,6 @@ const PianoRolls = () => {
                         }}
                     />
                     
-                    {/* Red background region - mirrors TimelineTrack clip when available */}
                     {(() => {
                         const trackObj = tracks?.find?.(t => t.id === currentTrackId);
                         const persistedPiano = trackObj?.pianoClip || null;
@@ -1820,46 +1736,20 @@ const PianoRolls = () => {
                             const left = (activeClip.start || 0) * timelineWidthPerSecond;
                             const width = Math.max(0, (activeClip.end - activeClip.start)) * timelineWidthPerSecond;
                             return (
-                                <div
-                                    className="note-bg-div border border-[#E44F65] "
-                                    style={{
-                                        position: 'absolute',
-                                        left: `${left}px`,
-                                        top: 0,
-                                        width: `${width}px`,
-                                        height: '100%',
-                                        background: 'rgba(255, 0, 0, 0.1)',
-                                        zIndex: 2,
-                                        opacity: 1,
-                                        borderRadius: '5px',
-                                        transition: "left 0.2s ease-in-out, width 0.2s ease-in-out"
-                                    }}
+                                <div className="note-bg-div border border-[#E44F65] " style={{ position: 'absolute', left: `${left}px`, top: 0, width: `${width}px`, height: '100%', background: 'rgba(255, 0, 0, 0.1)', zIndex: 2, opacity: 1, borderRadius: '5px', transition: "left 0.2s ease-in-out, width 0.2s ease-in-out"}}
                                     onMouseDown={handleMouseDown}
                                     onMouseUp={handleMouseUp}
                                 />
                             );
                         }
-                        // Fallback: derive region from local notes if no active clip
                         if (notes.length > 0) {
                             const minStart = Math.min(...notes.map(n => n.start));
                             const maxEnd = Math.max(...notes.map(n => n.start + n.duration));
                             const left = minStart * timelineWidthPerSecond;
                             const width = (maxEnd - minStart) * timelineWidthPerSecond;
                             return (
-                                <div
-                                    className="note-bg-div border border-[#E44F65] "
-                                    style={{
-                                        position: 'absolute',
-                                        left: `${left}px`,
-                                        top: 0,
-                                        width: `${width}px`,
-                                        height: '100%',
-                                        background: 'rgba(255, 0, 0, 0.1)',
-                                        zIndex: 2,
-                                        opacity: 1,
-                                        borderRadius: '5px',
-                                        transition: "left 0.2s ease-in-out, width 0.2s ease-in-out" // Smooth transition for zoom
-                                    }}
+                                <div className="note-bg-div border border-[#E44F65] "
+                                    style={{ position: 'absolute', left: `${left}px`, top: 0, width: `${width}px`, height: '100%', background: 'rgba(255, 0, 0, 0.1)', zIndex: 2, opacity: 1, borderRadius: '5px', transition: "left 0.2s ease-in-out, width 0.2s ease-in-out"}}
                                     onMouseDown={handleMouseDown}
                                     onMouseUp={handleMouseUp}
                                 />
@@ -1867,11 +1757,9 @@ const PianoRolls = () => {
                         }
                         return null;
                     })()}
-                    {/* {console.log('notes',notes)} */}
                     {notes.map((n, i) => {
                         const trackBounds = getTrackBounds();
                         
-                        // Skip notes that are completely outside track bounds
                         if (n.start >= trackBounds.end || (n.start + n.duration) <= trackBounds.start) {
                             return null;
                         }
@@ -1880,11 +1768,10 @@ const PianoRolls = () => {
                             <Rnd
                                 key={i}
                                 size={{ width: n.duration * timelineWidthPerSecond > 15 ? n.duration * timelineWidthPerSecond : 15, height: 24 }}
-                                // Note: duration is calculated dynamically for consistent beat widths
                                 position={{ x: n.start * timelineWidthPerSecond, y: getYFromNote(n.note) }}
                                 bounds="parent"
                                 enableResizing={{ 
-                                    right: true, // Allow resizing for all notes, including drum notes
+                                    right: true,
                                     left: false,
                                     top: false,
                                     bottom: false,
@@ -1898,47 +1785,34 @@ const PianoRolls = () => {
                                 style={{ willChange: 'transform', zIndex: 3 }}
                                 onDragStart={() => { isDraggingRef.current = true; }}
                                 onDrag={(e, d) => {
-                                    // Real-time drag feedback
                                     const snappedY = Math.round(d.y / 30) * 30;
                                     let noteIndex = Math.round(d.y / 30);
                                     
-                                    // For drum tracks, clamp note index to drum pad range (0-8)
                                     if (isDrumTrack) {
                                         noteIndex = Math.max(0, Math.min(8, noteIndex));
-                                        // Also ensure the visual position matches the clamped noteIndex
                                         d.y = noteIndex * 30;
                                     }
                                     
                                     const newNote = NOTES[noteIndex];
-                                    
-                                    // Use the same time calculation as Timeline.jsx
                                     const newStartTime = d.x / timelineWidthPerSecond;
                                     
-                                    // Update note in real-time during drag
                                     handleNoteDrag(i, newStartTime, newNote);
                                 }}
                                 onDragStop={(e, d) => {
-                                    // Prevent event propagation to avoid triggering handleGridClick
                                     e.stopPropagation();
-                                    // mark interaction finished and keep a short cooldown to swallow wrapper mouseup/click
                                     isDraggingRef.current = false;
                                     lastInteractionTimeRef.current = Date.now();
                                     
                                     let noteIndex = Math.round(d.y / 30);
                                     
-                                    // For drum tracks, clamp note index to drum pad range (0-8)
                                     if (isDrumTrack) {
                                         noteIndex = Math.max(0, Math.min(8, noteIndex));
-                                        // Force the final position to match the clamped noteIndex
                                         d.y = noteIndex * 30;
                                     }
                                     
                                     const newNote = NOTES[noteIndex];
-                                    
-                                    // Use the same time calculation as Timeline.jsx
                                     const newStartTime = d.x / timelineWidthPerSecond;
                                     
-                                    // Update the note with drum-specific properties if needed
                                     const updates = { 
                                         start: newStartTime, 
                                         note: newNote,
@@ -1960,7 +1834,6 @@ const PianoRolls = () => {
                                         return updated;
                                     });
                                     
-                                    // clear drag cache for this note
                                     if (dragCacheRef.current) {
                                         delete dragCacheRef.current[i];
                                     }
@@ -1968,39 +1841,31 @@ const PianoRolls = () => {
                                 
                                 onResizeStart={() => { isResizingRef.current = true; }}
                                 onResize={(e, direction, ref, delta, position) => {
-                                    // Real-time resize feedback
                                     const newWidth = parseFloat(ref.style.width);
-                                    const newDuration = Math.max(0.05, newWidth / timelineWidthPerSecond); // Minimum duration of 0.05s
-                                    
-                                    // Update note in real-time during resize (works for both drum and melodic notes)
+                                    const newDuration = Math.max(0.05, newWidth / timelineWidthPerSecond);
                                     handleNoteResize(i, newDuration);
                                 }}
                                 onResizeStop={(e, direction, ref, delta, position) => {
-                                    // Prevent event propagation to avoid triggering handleGridClick
                                     e.stopPropagation();
-                                    // mark interaction finished and keep a short cooldown to swallow wrapper mouseup/click
                                     isResizingRef.current = false;
                                     lastInteractionTimeRef.current = Date.now();
                                     
                                     const newWidth = parseFloat(ref.style.width);
-                                    const newDuration = Math.max(0.05, newWidth / timelineWidthPerSecond); // Minimum duration
+                                    const newDuration = Math.max(0.05, newWidth / timelineWidthPerSecond);
                                     const newStartTime = position.x / timelineWidthPerSecond;
                                     
-                                    // Update the note with the new duration and sync to Redux
-                                    // This ensures TimelineTrack shows the updated note size in real-time
                                     setNotes(prev => {
                                         const updated = [...prev];
                                         updated[i] = { 
                                             ...updated[i], 
-                                            duration: newDuration, // Allow custom duration for drum notes
+                                            duration: newDuration,
                                             start: newStartTime,
                                             ...(isDrumTrack ? { isUserDuration: true } : {})
                                         };
-                                        syncNotesToRedux(updated); // Sync to Redux for TimelineTrack
+                                        syncNotesToRedux(updated);
                                         return updated;
                                     });
                                     
-                                    // clear drag cache for this note
                                     if (dragCacheRef.current) {
                                         delete dragCacheRef.current[i];
                                     }
@@ -2009,12 +1874,10 @@ const PianoRolls = () => {
                                 <div
                                     className={`note-box bg-red-500 rounded w-full h-full relative z-1 ${selectedNoteIndex === i ? 'border-[2px] border-yellow-400' : 'border'} transition-colors duration-75 hover:bg-red-400 cursor-grab active:cursor-grabbing`}
                                     onClick={(e) => {
-                                        // Left click: just play the note
                                         e.stopPropagation();
                                         playNoteForTrack(n.note, Math.max(0.1, n.duration || 0.2));
                                     }}
                                     onContextMenu={(e) => {
-                                        // Right click: open the note context menu
                                         e.preventDefault();
                                         e.stopPropagation();
                                         const wrapperRect = wrapperRef.current.getBoundingClientRect();
@@ -2027,16 +1890,7 @@ const PianoRolls = () => {
                                     }}
                                 >
                                     {(menuVisible && selectedNoteIndex === i) ? (
-                                        <ul
-                                            className="absolute bg-[#1F1F1F] text-black border border-[#1F1F1F] shadow rounded flex"
-                                            style={{
-                                                top: '100%',
-                                                right: 0,
-                                                zIndex: 1000,
-                                                listStyle: 'none',
-                                                padding: '0px   ',
-                                            }}
-                                        >
+                                        <ul className="absolute bg-[#1F1F1F] text-black border border-[#1F1F1F] shadow rounded flex" style={{ top: '100%', right: 0, zIndex: 1000, listStyle: 'none', padding: '0px   ',}}>
                                             <li className="hover:bg-gray-200 hover:text-[#1F1F1F] cursor-pointer text-sm p-3 text-white" onClick={() => { handleCut() }}><IoCutOutline className='text-[16px]' /></li>
                                             <li className="hover:bg-gray-200 hover:text-[#1F1F1F] cursor-pointer text-sm p-3 text-white" onClick={() => { handleCopy() }}><FaRegCopy className='text-[16px]' /></li>
                                             <li className="hover:bg-gray-200 hover:text-[#1F1F1F] cursor-pointer text-sm p-3 text-white" onClick={() => { handleDelete() }}><MdDelete className='text-[16px]' /></li>
@@ -2047,25 +1901,11 @@ const PianoRolls = () => {
                         );
                     })}
 
-                    <svg ref={svgRef} style={{ 
-                        width: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`, 
-                        height: "100%",
-                        transition: "width 0.2s ease-in-out" // Smooth transition for zoom like Timeline.jsx
-                    }}>
+                    <svg ref={svgRef} style={{ width: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`, height: "100%",transition: "width 0.2s ease-in-out"}}>
                         <g />
                     </svg>
-                    {/* {console.log('consition', pasteMenu && !menuVisible && clipboardNote, pasteMenu, menuVisible, clipboardNote)} */}
                     {(pasteMenu && clipboardNote) ? (
-                        <span
-                            className='bg-[#1F1F1F] text-white hover:bg-gray-200 hover:text-[#1F1F1F] absolute cursor-pointer text-sm p-3'
-                            ref={pasteMenuRef}
-                            style={{
-                                top: position.y,
-                                left: position.x,
-                                zIndex: 9999,
-                                listStyle: 'none',
-                                padding: '4px',
-                            }}
+                        <span className='bg-[#1F1F1F] text-white hover:bg-gray-200 hover:text-[#1F1F1F] absolute cursor-pointer text-sm p-3' ref={pasteMenuRef} style={{ top: position.y, left: position.x, zIndex: 9999, listStyle: 'none', padding: '4px', }}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handlePaste();
@@ -2074,6 +1914,50 @@ const PianoRolls = () => {
                             <FaPaste className='text-[16px]' />
                         </span>
                     ) : null}
+                </div>
+
+                {/* Bottom-centered toolbar */}
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 transform z-[10000]">
+                    <div className="flex items-center gap-2 bg-[#1F1F1F] text-white px-2 py-1 rounded-full shadow-md">
+                        {/* Cursor */}
+                        <button
+                            className={`p-2 rounded hover:bg-gray-700 transition ${activeTool === 'cursor' ? 'bg-gray-600' : ''}`}
+                            onClick={() => setActiveTool('cursor')}
+                            title="Cursor"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 4l12 8-12 8V4z" />
+                            </svg>
+                        </button>
+                        {/* Pencil */}
+                        <button
+                            className={`p-2 rounded hover:bg-gray-700 transition ${activeTool === 'pencil' ? 'bg-gray-600' : ''}`}
+                            onClick={() => setActiveTool('pencil')}
+                            title="Pencil"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536M9 13l6-6 3 3-6 6H9v-3z" />
+                            </svg>
+                        </button>
+                        {/* V letter */}
+                        <button
+                            className={`p-2 rounded hover:bg-gray-700 transition font-bold ${activeTool === 'v' ? 'bg-gray-600' : ''}`}
+                            onClick={() => setActiveTool('v')}
+                            title="Select (V)"
+                        >
+                            V
+                        </button>
+                        {/* Trash */}
+                        <button
+                            className={`p-2 rounded hover:bg-gray-700 transition ${activeTool === 'trash' ? 'bg-gray-600' : ''}`}
+                            onClick={() => setActiveTool('trash')}
+                            title="Delete"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3m-4 0h14" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div >
 
