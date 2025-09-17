@@ -63,7 +63,7 @@ const handleNativeShare = async () => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99]">
       <div className="rounded-lg p-6 w-full max-w-md mx-4 shadow-2xl bg-[#1F1F1F]">
         {/* Header with close button */}
         <div className="flex justify-end mb-4">

@@ -3631,8 +3631,14 @@ const Timeline = () => {
           >
             <img src={offce} alt="Off canvas" />
           </div>
-          <div className="bg-[#1F1F1F] w-[40px] h-[40px] flex items-center justify-center rounded-full mt-2 cursor-pointer">
-            <img src={fxIcon} alt="Effects" onClick={() => { setShowOffcanvasEffects((prev) => !prev); setShowOffcanvas(false); }} />
+          <div className="bg-[#1F1F1F] w-[40px] h-[40px] flex items-center justify-center rounded-full mt-2 cursor-pointer"
+            onClick={() => {  
+              setShowOffcanvasEffects((prev) => !prev);
+              setShowOffcanvas(false);
+              dispatch(setShowLoopLibrary(false));}}         
+          >
+            {/* <img src={fxIcon} alt="Effects" onClick={() => { setShowOffcanvasEffects((prev) => !prev); setShowOffcanvas(false); }} /> */}
+            <img src={fxIcon} alt="Effects" />
           </div>
         </div>
 

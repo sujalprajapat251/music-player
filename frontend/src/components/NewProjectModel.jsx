@@ -23,7 +23,7 @@ const NewProject = ({ open, setOpen, showClose = true }) => {
     }
   };
   return (
-    <Dialog open={open} onClose={() => {}} className="relative z-10">
+    <Dialog open={open} onClose={() => {}} className="relative z-50">
       <DialogBackdrop className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4 text-center">

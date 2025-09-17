@@ -804,7 +804,7 @@ const Pattern = () => {
         <div className="m-5 mx-auto">
 
           {/* Header Controls */}
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex justify-between items-center mb-2">
             <div className="flex items-center gap-4">
               <button
                 onClick={togglePlay}
@@ -845,7 +845,7 @@ const Pattern = () => {
           </div>
 
           {/* Beat Indicator Dots */}
-          <div className="mt-6 max-h-[300px] overflow-auto">
+          <div className="relative mt-5 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-[#474747] scrollbar-track-transparent">
             <div className="flex">
               {/* Fixed Labels Column */}
               <div className="w-32 flex-shrink-0 z-10 bg-black">
@@ -856,9 +856,9 @@ const Pattern = () => {
                 <div className="h-6 mb-4"></div>
 
                 {/* Fixed Track Labels */}
-                <div className="space-y-5">
+                <div className="space-y-3">
                   {tracks.map((track) => (
-                    <div key={track.id} className="relative" ref={activeDropdown === track.id ? dropdownRef : null}>
+                    <div key={track.id} className="relative">
                       <div className="bg-[#1F1F1F] rounded p-3 text-center font-medium flex justify-between items-center h-10">
                         <button
                           onClick={() => toggleDropdown(track.id)}
@@ -879,7 +879,7 @@ const Pattern = () => {
                         </button>
                       </div>
 
-                      {/* Dropdown Menu */}
+                     
                       {activeDropdown === track.id && (
                         <div className="absolute top-full left-0 w-full mt-1 dark:bg-primary-dark border border-gray-600 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
                           {getAvailableInstruments(track.id).map((option) => (
@@ -901,7 +901,6 @@ const Pattern = () => {
                     </div>
                   ))}
 
-                  {/* Add Track Button */}
                   {hasAvailableInstruments() && (
                     <button
                       onClick={() => addTrack(tracks.length + 1)}
@@ -915,7 +914,7 @@ const Pattern = () => {
               </div>
 
               {/* Scrollable Content */}
-              <div className="overflow-x-auto flex-1">
+              <div className="space-y-3 overflow-y-auto flex-1">
                 <div className="min-w-max">
                   {/* Beat Indicator Dots */}
                   <div className="flex items-center gap-2 h-3 mb-2">
@@ -949,7 +948,7 @@ const Pattern = () => {
                   </div>
 
                   {/* Section Numbers */}
-                  <div className="flex items-center gap-2 h-6 mb-3">
+                  <div className="flex items-center gap-2 h-6 mb-4">
                     <div className="flex gap-1">
                       {Array.from({ length: Math.ceil(patternLength / 16) }, (_, sectionIndex) => (
                         <div key={sectionIndex} className="flex justify-center items-center mx-2" style={{ width: `${16 * 36}px` }}>
@@ -962,7 +961,7 @@ const Pattern = () => {
                   </div>
 
                   {/* Beat Grids */}
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {tracks.map((track) => (
                       <div key={track.id} className="flex items-center gap-2 h-10">
                         <div className="flex gap-1">

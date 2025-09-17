@@ -210,7 +210,7 @@ const drawWaveform = useCallback((musicId, idx) => {
     <div>
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70"
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black bg-opacity-70"
           onClick={onClose}
         >
           <div
