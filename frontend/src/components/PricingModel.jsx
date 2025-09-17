@@ -309,7 +309,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
               />
             </div>
             <div className="pri-next-btn text-center mt-3">
-              <button className="bg-[#FFFFFF] py-[10px] px-[90px] md:px-[168px] rounded">
+              <button className="bg-[#FFFFFF] cursor-pointer text-[#141414] py-[10px] px-[90px] md:px-[168px] rounded">
                 Next
               </button>
             </div>
