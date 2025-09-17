@@ -614,6 +614,11 @@ const PianoRolls = () => {
         if (pasteMenu) return;
         // Only respond to clicks on the grid background, not on notes
         if (e.target.closest && e.target.closest('.note-box')) return;
+
+        const currentTime = Date.now();
+        if (currentTime - lastInteractionTimeRef.current < 300) {
+            return; // Wait 300ms after drag/resize operations before allowing new note creation
+        }
         
         // Allow note creation anywhere in the piano roll area, not just on SVG or red background
         // This enables clicking outside the red background region to create new notes
@@ -1913,6 +1918,8 @@ const PianoRolls = () => {
                                     handleNoteDrag(i, newStartTime, newNote);
                                 }}
                                 onDragStop={(e, d) => {
+                                    // Prevent event propagation to avoid triggering handleGridClick
+                                    e.stopPropagation();
                                     // mark interaction finished and keep a short cooldown to swallow wrapper mouseup/click
                                     isDraggingRef.current = false;
                                     lastInteractionTimeRef.current = Date.now();
@@ -1969,6 +1976,8 @@ const PianoRolls = () => {
                                     handleNoteResize(i, newDuration);
                                 }}
                                 onResizeStop={(e, direction, ref, delta, position) => {
+                                    // Prevent event propagation to avoid triggering handleGridClick
+                                    e.stopPropagation();
                                     // mark interaction finished and keep a short cooldown to swallow wrapper mouseup/click
                                     isResizingRef.current = false;
                                     lastInteractionTimeRef.current = Date.now();

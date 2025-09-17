@@ -8,7 +8,7 @@ import TrashIcon from '../Images/trash.svg'
 import FreezeIcon from '../Images/freeze.svg'
 import waveIcon from '../Images/wave.svg'
 import { useDispatch, useSelector } from "react-redux";
-import { updateTrack, renameTrack, removeTrack, freezeTrack, duplicateTrack, updateTrackAudio, exportTrack, exportTrackAudio, deleteTrackWithCleanup } from "../Redux/Slice/studio.slice";
+import { updateTrack, renameTrack, removeTrack, freezeTrack, duplicateTrack, updateTrackAudio, exportTrack, exportTrackAudio, deleteTrackWithCleanup, setTrackType } from "../Redux/Slice/studio.slice";
 import { selectStudioState } from "../hooks/useUndoRedo";
 const MENU_COLORS = [
   "#F05959", "#49B1A5", "#C579C8", "#5572F9",
@@ -216,18 +216,18 @@ const TrackMenu = ({ trackId, color, onRename }) => {
           <MenuItem
             icon={<img src={TrashIcon} alt="Delete track" style={{ width: 16, height: 16, filter: "invert(1)" }} />}
             label="Delete track"
-            onClick={() => {
+            onClick={(e) => {
               // Ensure track exists before removing
+              e.stopPropagation();
               if (track) {
                 if (isShiftPressed) {
-                  // If Shift is pressed, delete without confirmation
                   dispatch(deleteTrackWithCleanup(trackId));
-                  setOpen(false);
                 } else {
                   dispatch(deleteTrackWithCleanup(trackId));
-                  setOpen(false);
                 }
+                setOpen(false);
               }
+              dispatch(setTrackType(null));
             }}
             className="py-2 px-3"
           />
