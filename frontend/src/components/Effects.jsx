@@ -216,7 +216,7 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
                             <div className='flex flex-wrap gap-1 md600:gap-2 3xl:gap-3'>
                                 {/* All category */}
                                 <div
-                                    className={`bg-[#E5E5E5] dark:bg-[#262529] w-[67px] md600:w-[64px] md:w-[65px] lg:w-[64px] xl:w-[83px] 2xl:w-[77px] 3xl:w-[70px] rounded-[2px] text-secondary-light dark:text-secondary-dark text-[10px] lg:text-[12px] lg:py-[4px] xl:py-[5px] text-center cursor-pointer hover:bg-[#b8b8b8] dark:hover:bg-gray-600 transition-colors duration-200 ${selectedCategory === null ? 'border-2 border-blue-500 bg-blue-100 dark:bg-blue-900' : ''}`}
+                                    className={`bg-[#E5E5E5] dark:bg-[#262529] w-[67px] md600:w-[64px] md:w-[65px] lg:w-[64px] xl:w-[83px] 2xl:w-[77px] 3xl:w-[70px] rounded-[2px] text-secondary-light dark:text-secondary-dark text-[10px] lg:text-[12px] lg:py-[4px] xl:py-[5px] text-center cursor-pointer hover:bg-[#b8b8b8] dark:hover:bg-gray-600 transition-colors duration-200`}
                                     onClick={() => handleCategoryClick(null)}
                                 >
                                     All

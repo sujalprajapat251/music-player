@@ -13,6 +13,7 @@ const { createCategory, getAllCategory, getCategoryById, deleteCategory, updateC
 const { createSubscribe, getAllSubscribe } = require('../controller/subscribeController');
 const { createMusic, getAllMusic, deleteMusic, updateMusic, restoreMusic, permanentDeleteMusic, restoreAllMusic, permanentDeleteAllMusic, renameMusic, moveMusicToFolder, addCoverImage, removeCoverImage } = require('../controller/musicController');
 const { uploadAudio } = require('../helper/uploadController');
+const { getMusicByIdPublic } = require('../controller/publicController');
 
 // auth Routes
 
@@ -92,5 +93,8 @@ indexRoutes.get('/view/terms', getTerms);
 
 indexRoutes.post('/createsubscribe', createSubscribe);
 indexRoutes.get('/allsubscribe', getAllSubscribe);
+
+// Public share route
+indexRoutes.get('/public/music/:id', getMusicByIdPublic);
 
 module.exports = indexRoutes

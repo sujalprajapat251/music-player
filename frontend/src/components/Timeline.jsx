@@ -49,6 +49,8 @@ import { setShowLoopLibrary } from "../Redux/Slice/ui.slice";
 import { getAllMusic, setCurrentMusic } from "../Redux/Slice/music.slice";
 import { setSelectedTrackId } from '../Redux/Slice/effects.slice';
 import { motion, AnimatePresence } from "framer-motion";
+import { io } from 'socket.io-client';
+import { BASE_URL } from '../Utils/baseUrl';
 
 const Timeline = () => {
 
@@ -3190,10 +3192,11 @@ const Timeline = () => {
     if (!projectId) return;
 
     try {
-      const project = (allMusic || []).find(m => String(m?._id) === String(projectId));
-      if (!project) return;
-
-      dispatch(setCurrentMusic(project));
+    // Inside the effect that currently reads from allMusic:
+const project = (allMusic || []).find(m => String(m?._id) === String(projectId));
+if (!project) return;
+dispatch(setCurrentMusic(project));
+loadProjectIntoStudio(project);
   
       const incomingTracks = Array.isArray(project.musicdata) ? project.musicdata : [];
       const studioTracks = [];
@@ -3364,6 +3367,245 @@ const Timeline = () => {
     }
   }, [projectId, allMusic, musicLoading, dispatch]);
 
+  // Add near other helpers at top-level inside component:
+const loadProjectIntoStudio = useCallback((project) => {
+  if (!project) return;
+  try {
+    const incomingTracks = Array.isArray(project.musicdata) ? project.musicdata : [];
+    const studioTracks = [];
+    const aggregatedPianoNotes = [];
+    const aggregatedDrumData = [];
+    let maxEnd = 0;
+
+    let savedDuration = 0;
+    if (project.duration && Number(project.duration) > 0) savedDuration = Number(project.duration);
+    if (project.audioDuration && Number(project.audioDuration) > 0) {
+      savedDuration = Math.max(savedDuration, Number(project.audioDuration));
+    }
+
+    incomingTracks.forEach((t, idx) => {
+      const trackId = t.id ?? (t._id ?? (Date.now() + Math.random() + idx));
+
+      const audioClips = Array.isArray(t.audioClips)
+        ? t.audioClips
+            .filter(c => c && (c.url || c.type === 'piano' || c.type === 'drum' || c.fromRecording || c.fromPattern || (c.duration && Number(c.duration) > 0)))
+            .map((c) => {
+              const duration = Number(c.duration || 0);
+              const trimStart = Number(c.trimStart || 0);
+              const trimEnd = Number((c.trimEnd != null ? c.trimEnd : duration) || duration);
+              const startTime = Number(c.startTime || 0);
+              const visible = Math.max(0, trimEnd - trimStart);
+              const clipEnd = startTime + (visible || duration);
+              maxEnd = Math.max(maxEnd, clipEnd);
+              return {
+                id: c.id ?? (Date.now() + Math.random()),
+                name: c.name || 'Clip',
+                url: c.url || null,
+                color: c.color || t.color || '#FFB6C1',
+                startTime,
+                duration: duration || visible || 0,
+                trimStart,
+                trimEnd,
+              };
+            })
+        : [];
+
+      if (Array.isArray(t.pianoNotes)) {
+        t.pianoNotes.forEach(n => {
+          const note = { ...n };
+          if (note.trackId == null) note.trackId = trackId;
+          aggregatedPianoNotes.push(note);
+          const noteEnd = (note.startTime || 0) + (note.duration || 0.05);
+          maxEnd = Math.max(maxEnd, noteEnd);
+        });
+      }
+
+      if (Array.isArray(t.drumNotes)) {
+        t.drumNotes.forEach(d => {
+          const hit = { ...d };
+          if (hit.trackId == null) hit.trackId = trackId;
+          aggregatedDrumData.push(hit);
+          const hitEnd = (hit.currentTime || 0) + (hit.decay || 0.2);
+          maxEnd = Math.max(maxEnd, hitEnd);
+        });
+      }
+
+      if (t.pianoClip && t.pianoClip.start != null && t.pianoClip.end != null) {
+        maxEnd = Math.max(maxEnd, Number(t.pianoClip.end) || 0);
+      }
+      if (t.drumClip && t.drumClip.start != null && t.drumClip.end != null) {
+        maxEnd = Math.max(maxEnd, Number(t.drumClip.end) || 0);
+      }
+
+      if (audioClips.length > 0 ||
+          (Array.isArray(t.pianoNotes) && t.pianoNotes.length > 0) ||
+          (Array.isArray(t.drumNotes) && t.drumNotes.length > 0) ||
+          t.pianoClip || t.drumClip) {
+        studioTracks.push({
+          id: trackId,
+          name: t.name || `Track ${idx + 1}`,
+          type: t.type || t.trackType || 'audio',
+          color: t.color || '#FFB6C1',
+          volume: Number(t.volume || 80),
+          muted: Boolean(t.muted || false),
+          frozen: Boolean(t.frozen || false),
+          audioClips,
+          pianoNotes: Array.isArray(t.pianoNotes) ? t.pianoNotes.map(n => ({ ...n, trackId })) : [],
+          pianoClip: t.pianoClip || null,
+          drumClip: t.drumClip || null,
+        });
+      }
+    });
+
+    let finalDuration = savedDuration;
+    if (finalDuration === 0) {
+      finalDuration = maxEnd > 0 ? Math.max(maxEnd + 10, 150) : 150;
+    } else {
+      finalDuration = Math.max(savedDuration, maxEnd + 5);
+    }
+
+    dispatch(setTracks(studioTracks));
+    setTimeout(() => {
+      dispatch(setAudioDuration(finalDuration));
+    }, 100);
+
+    if (aggregatedPianoNotes.length > 0) dispatch(setPianoNotes(aggregatedPianoNotes));
+    if (aggregatedDrumData.length > 0) dispatch(setDrumRecordedData(aggregatedDrumData));
+    if (studioTracks.length > 0) dispatch(setCurrentTrackId(studioTracks[0].id));
+  } catch (e) {
+    console.error('Error processing project data:', e);
+  }
+}, [dispatch]);
+
+
+
+
+
+
+
+
+
+
+
+
+  const socketRef = { current: null };
+
+  // inside component after hooks
+  useEffect(() => {
+    // Connect socket once
+    if (!socketRef.current) {
+      const origin = window.location.origin;
+      // Backend runs on 4000 in dev; build BASE_URL is used for API, derive ws origin from it
+      const wsUrl = (BASE_URL || '').replace(/\/api$/,'');
+      socketRef.current = io(wsUrl, { withCredentials: true });
+    }
+    const s = socketRef.current;
+    if (projectId && s) {
+      s.emit('project:join', { projectId });
+      const onChange = ({ change }) => {
+        // TODO: apply remote changes (clip moves, note edits) into Redux
+        // Placeholder: console log for now
+        console.log('Remote change', change);
+      };
+      s.on('project:change', onChange);
+      return () => {
+        s.off('project:change', onChange);
+      };
+    }
+  }, [projectId]);
+
+  // Ensure we can open shared link even if user not authenticated: fetch public project
+  useEffect(() => {
+    if (!projectId) return;
+    if ((allMusic || []).some(m => String(m?._id) === String(projectId))) return;
+    // Fallback fetch public project
+    (async () => {
+      try {
+        const apiBase = (BASE_URL || '').replace(/\/$/,'');
+        const res = await fetch(`${apiBase.replace(/\/api$/,'')}/api/public/music/${projectId}`);
+        if (!res.ok) return;
+        // In the fallback public fetch effect:
+const json = await res.json();
+if (json && json.data) {
+  dispatch(setCurrentMusic(json.data));
+  loadProjectIntoStudio(json.data); // <-- add this line
+}
+      } catch (_) {}
+    })();
+  }, [projectId, allMusic, dispatch]);
+
+  // after socketRef initialization handlers
+  useEffect(() => {
+    const s = socketRef.current;
+    if (!s) return;
+
+    const onSyncState = ({ state, from }) => {
+      // Apply incoming state: tracks, notes, duration
+      try {
+        if (state.tracks) dispatch(setTracks(state.tracks));
+        if (Array.isArray(state.pianoNotes)) dispatch(setPianoNotes(state.pianoNotes));
+        if (Array.isArray(state.drumRecordedData)) dispatch(setDrumRecordedData(state.drumRecordedData));
+        if (Number.isFinite(state.audioDuration)) dispatch(setAudioDuration(state.audioDuration));
+      } catch (_) {}
+    };
+    const onRequestSync = () => {
+      // Send my current state to the room
+      const state = {
+        tracks,
+        pianoNotes,
+        drumRecordedData,
+        audioDuration
+      };
+      s.emit('project:sync-state', { projectId, state });
+    };
+    s.on('project:sync-state', onSyncState);
+    s.on('project:request-sync', onRequestSync);
+    // Ask others for sync if I just joined
+    if (projectId) s.emit('project:request-sync', { projectId });
+    return () => {
+      s.off('project:sync-state', onSyncState);
+      s.off('project:request-sync', onRequestSync);
+    };
+  }, [projectId, tracks, pianoNotes, drumRecordedData, audioDuration, dispatch]);
+
+  // Helper to broadcast minimal change
+  const emitChange = useCallback((change) => {
+    const s = socketRef.current;
+    if (!s || !projectId) return;
+    s.emit('project:change', { projectId, change });
+  }, [projectId]);
+
+  // Wrap existing change handlers to also emit
+  const handleTrackPositionChangeWithBroadcast = useCallback((trackId, clipId, newStartTime) => {
+    handleTrackPositionChange(trackId, clipId, newStartTime);
+    emitChange({ type: 'move-clip', trackId, clipId, startTime: newStartTime });
+  }, [handleTrackPositionChange, emitChange]);
+
+  const handleTrimChangeWithBroadcast = useCallback((trackId, clipId, trimData) => {
+    handleTrimChange(trackId, clipId, trimData);
+    emitChange({ type: 'trim-clip', trackId, clipId, ...trimData });
+  }, [handleTrimChange, emitChange]);
+
+  // Apply incoming granular changes
+  useEffect(() => {
+    const s = socketRef.current;
+    if (!s) return;
+    const onChange = ({ change }) => {
+      if (!change || typeof change !== 'object') return;
+      if (change.type === 'move-clip') {
+        dispatch(updateAudioClip({ trackId: change.trackId, clipId: change.clipId, updates: { startTime: Math.max(0, Number(change.startTime)||0) } }));
+      } else if (change.type === 'trim-clip') {
+        const updates = {};
+        if (Number.isFinite(change.trimStart)) updates.trimStart = change.trimStart;
+        if (Number.isFinite(change.trimEnd)) updates.trimEnd = change.trimEnd;
+        if (Number.isFinite(change.newStartTime)) updates.startTime = Math.max(0, change.newStartTime);
+        dispatch(updateAudioClip({ trackId: change.trackId, clipId: change.clipId, updates }));
+      }
+    };
+    s.on('project:change', onChange);
+    return () => s.off('project:change', onChange);
+  }, [dispatch]);
+
   return (
     <>
       <EditTrackNameModal isOpen={edirNameModel} onClose={() => setEdirNameModel(false)} onSave={handleSave} />
@@ -3515,8 +3757,8 @@ const Timeline = () => {
                       trackId={track.id}
                       height={trackHeight}
                       onReady={handleReady}
-                      onTrimChange={(clipId, trimData) => handleTrimChange(track.id, clipId, trimData)}
-                      onPositionChange={(clipId, newStartTime) => handleTrackPositionChange(track.id, clipId, newStartTime)}
+                      onTrimChange={(clipId, trimData) => handleTrimChangeWithBroadcast(track.id, clipId, trimData)}
+                      onPositionChange={(clipId, newStartTime) => handleTrackPositionChangeWithBroadcast(track.id, clipId, newStartTime)}
                       onRemoveClip={(clipId) => dispatch(removeAudioClip({
                         trackId: track.id,
                         clipId: clipId

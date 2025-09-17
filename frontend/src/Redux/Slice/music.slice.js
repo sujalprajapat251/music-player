@@ -270,6 +270,7 @@ const musicSlice = createSlice({
                 state.success = true;
                 state.message = 'Music created successfully';
                 state.allmusic = Array.isArray(action.payload) ? action.payload : [];
+                state.currentMusic = action.payload;
             })
             .addCase(createMusic.rejected, (state, action) => {
                 state.loading = false;

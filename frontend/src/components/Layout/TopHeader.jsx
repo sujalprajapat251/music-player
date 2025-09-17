@@ -54,6 +54,7 @@ import WavEncoder from 'wav-encoder';
 import NewProject from '../NewProjectModel';
 import ShareModal from '../Sharemodal';
 import PricingModel from '../PricingModel';
+import { setCurrentMusic } from '../../Redux/Slice/music.slice';
 
 const TopHeader = () => {
     const dispatch = useDispatch();
@@ -560,13 +561,16 @@ const TopHeader = () => {
 
         const mixdown = await renderProjectMixdown(serializedTracks);
        
-        dispatch(createMusic({
+        const result = await dispatch(createMusic({
             name: songName,
             musicdata: serializedTracks,
             userId: user,
             url: mixdown.url,
             drumRecordedData: Array.isArray(drumRecordedData) ? drumRecordedData : []
         }));
+        if (result.payload) {
+            dispatch(setCurrentMusic(result.payload));
+        }
             setSaveStatus('saved');
         } catch (e) {
             setSaveStatus('error');
