@@ -949,7 +949,7 @@ const Pattern = () => {
                   </div>
 
                   {/* Section Numbers */}
-                  <div className="flex items-center gap-2 h-6 mb-4">
+                  <div className="flex items-center gap-2 h-6 mb-3">
                     <div className="flex gap-1">
                       {Array.from({ length: Math.ceil(patternLength / 16) }, (_, sectionIndex) => (
                         <div key={sectionIndex} className="flex justify-center items-center mx-2" style={{ width: `${16 * 36}px` }}>
@@ -962,7 +962,7 @@ const Pattern = () => {
                   </div>
 
                   {/* Beat Grids */}
-                  <div className="space-y-5">
+                  <div className="space-y-2">
                     {tracks.map((track) => (
                       <div key={track.id} className="flex items-center gap-2 h-10">
                         <div className="flex gap-1">
