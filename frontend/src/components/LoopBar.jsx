@@ -4,7 +4,8 @@ import {
   selectLoopSettings, 
   setLoopRange, 
   setLoopStart, 
-  setLoopEnd 
+  setLoopEnd, 
+  toggleLoopEnabled
 } from "../Redux/Slice/loop.slice";
 import { selectGridSettings } from "../Redux/Slice/grid.slice";
 import { getGridSpacingWithTimeSignature } from "../Utils/gridUtils";
@@ -160,9 +161,10 @@ const LoopBar = () => {
           boxShadow: isLoopEnabled
             ? "0 2px 8px rgba(255, 140, 0, 0.4)"
             : "0 1px 4px rgba(255, 140, 0, 0.2)",
-          transition: "all 0.2s ease"
+          // transition: "all 0.2s ease"
         }}
         onMouseDown={(e) => handleMouseDown(e, 'loop')}
+        onClick={(e) => { e.stopPropagation(); dispatch(toggleLoopEnabled()); }}
       >
         {/* Loop Start Handle */}
         <div

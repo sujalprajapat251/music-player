@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import * as Tone from 'tone';
 import Soundfont from 'soundfont-player';
+import { RxCursorArrow } from "react-icons/rx";
+import { BsPencil } from "react-icons/bs";
+import { RiDeleteBin6Line } from "react-icons/ri";
 import { PitchDetector } from 'pitchy';
 import { Rnd } from 'react-rnd';
 import 'react-resizable/css/styles.css';
@@ -96,6 +99,319 @@ const PianoRolls = () => {
 
     // Bottom toolbar active tool state
     const [activeTool, setActiveTool] = useState('pencil');
+    const [selectedNotes, setSelectedNotes] = useState(new Set()); // Track selected notes for multi-selection
+    
+    // Volume bar state
+    const [volumeBarVisible, setVolumeBarVisible] = useState(false);
+    const [draggingVolume, setDraggingVolume] = useState(false);
+    const [volumeDragNoteIndex, setVolumeDragNoteIndex] = useState(null);
+
+    // Tool functionality handlers
+    const handleToolChange = (tool) => {
+        setActiveTool(tool);
+        
+        // Clear selections when switching tools
+        if (tool !== 'v') {
+            setSelectedNotes(new Set());
+            setSelectedNoteIndex(null);
+        }
+    };
+
+    // Handle volume bar visibility when V tool is selected
+    useEffect(() => {
+        setVolumeBarVisible(activeTool === 'v');
+    }, [activeTool]);
+
+    // Handle volume bar drag
+    // Handle volume bar drag
+    const handleVolumeDrag = (noteIndex, e) => {
+        if (activeTool !== 'v') return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        setDraggingVolume(true);
+        setVolumeDragNoteIndex(noteIndex);
+        
+        const handleMouseMove = (e) => {
+            if (!draggingVolume) return;
+            
+            // Get the note element to calculate relative position
+            const noteElement = e.target.closest('.note-box');
+            if (!noteElement) return;
+            
+            const noteRect = noteElement.getBoundingClientRect();
+            const y = e.clientY - noteRect.top;
+            const noteHeight = noteRect.height;
+            
+            // Calculate volume based on vertical position (0 = bottom, 1 = top)
+            const volumePercent = Math.max(0, Math.min(1, 1 - (y / noteHeight)));
+            
+            // Update note velocity based on volume bar position
+            const newVelocity = volumePercent;
+            updateNote(noteIndex, { velocity: newVelocity }, { syncRedux: true });
+        };
+        
+        const handleMouseUp = () => {
+            setDraggingVolume(false);
+            setVolumeDragNoteIndex(null);
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+        
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    };
+
+    // Multi-note velocity drag in V mode (drag anywhere on the note)
+    const velocityDragStateRef = useRef(null);
+    const handleVelocityDragStart = (noteIndex, e) => {
+        if (activeTool !== 'v') return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Which notes are affected: all selected, or just clicked note
+        const affected = (selectedNotes && selectedNotes.size > 0)
+            ? Array.from(selectedNotes)
+            : [noteIndex];
+
+        // Snapshot initial velocities
+        const initial = {};
+        affected.forEach(idx => {
+            const v = Math.max(0, Math.min(1, (notes[idx]?.velocity ?? 0.8)));
+            initial[idx] = v;
+        });
+
+        // Use note height for natural scaling (full note height ≈ full 0..1 change)
+        const noteElement = e.target.closest('.note-box');
+        const noteRect = noteElement?.getBoundingClientRect?.() || null;
+        const noteHeight = Math.max(1, noteRect?.height || 24); // guard
+        const startY = e.clientY;
+
+        velocityDragStateRef.current = { affected, initial, startY, noteHeight };
+
+        const onMove = (ev) => {
+            const st = velocityDragStateRef.current;
+            if (!st) return;
+            const dy = st.startY - ev.clientY; // up = positive
+            const delta = dy / st.noteHeight;  // proportion of note height
+
+            // Apply to all affected notes
+            const updated = [...notes];
+            st.affected.forEach(idx => {
+                const base = st.initial[idx] ?? 0.8;
+                const next = Math.max(0, Math.min(1, base + delta));
+                updated[idx] = { ...updated[idx], velocity: next };
+            });
+            // Sync so volume bars and Redux reflect live
+            setNotes(updated);
+            syncNotesToRedux(updated);
+        };
+
+        const onUp = () => {
+            velocityDragStateRef.current = null;
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+        };
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    };
+
+    // Cursor tool - allows clicking and dragging notes without creating new ones
+    const handleCursorToolClick = (e) => {
+        if (activeTool !== 'cursor') return;
+        
+        // Check if preventDefault exists before calling it
+        if (e && typeof e.preventDefault === 'function') {
+            e.preventDefault();
+        }
+        if (e && typeof e.stopPropagation === 'function') {
+            e.stopPropagation();
+        }
+        
+        // Just move playhead to clicked position
+        const rect = wrapperRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left + wrapperRef.current.scrollLeft;
+        const rawTime = x / timelineWidthPerSecond;
+        const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
+        const snappedTime = Math.max(0, Math.min(audioDuration, Math.round(rawTime / gridSpacing) * gridSpacing));
+        
+        dispatch(setStudioCurrentTime(snappedTime));
+        try { Tone.Transport.seconds = snappedTime; } catch {}
+        setLocalPlayheadTime(snappedTime);
+    };
+
+    // Pencil tool - creates new notes (default behavior)
+    const handlePencilToolClick = (e) => {
+        if (activeTool !== 'pencil') return;
+        handleGridClick(e);
+    };
+
+    // Select tool (V) - allows multi-selection of notes
+    const handleSelectToolClick = (e) => {
+        if (activeTool !== 'v') return;
+        
+        // If clicking on empty space, clear selection
+        if (!e.target.closest('.note-box')) {
+            setSelectedNotes(new Set());
+            setSelectedNoteIndex(null);
+            return;
+        }
+    };
+
+    // Trash tool - deletes notes on click
+    const handleTrashToolClick = (e) => {
+        if (activeTool !== 'trash') return;
+        
+        // Find the note that was clicked
+        const noteElement = e.target.closest('.note-box');
+        if (noteElement) {
+            // Find the note index from the Rnd component
+            const rndElement = noteElement.closest('[data-note-index]');
+            if (rndElement) {
+                const noteIndex = parseInt(rndElement.getAttribute('data-note-index'));
+                if (!isNaN(noteIndex)) {
+                    handleDeleteNote(noteIndex);
+                }
+            }
+        }
+    };
+
+    // Enhanced delete function
+    const handleDeleteNote = (noteIndex) => {
+        if (noteIndex === null || noteIndex === undefined) return;
+        
+        const updatedNotes = notes.filter((_, idx) => idx !== noteIndex);
+        setNotes(updatedNotes);
+        syncNotesToRedux(updatedNotes);
+        
+        // Clear selection
+        setSelectedNoteIndex(null);
+        setSelectedNotes(new Set());
+    };
+
+    // Multi-select functionality
+    const handleNoteSelection = (noteIndex, isMultiSelect = false) => {
+        if (activeTool !== 'v') return;
+        
+        if (isMultiSelect) {
+            setSelectedNotes(prev => {
+                const newSelection = new Set(prev);
+                if (newSelection.has(noteIndex)) {
+                    newSelection.delete(noteIndex);
+                } else {
+                    newSelection.add(noteIndex);
+                }
+                return newSelection;
+            });
+        } else {
+            setSelectedNotes(new Set([noteIndex]));
+            setSelectedNoteIndex(noteIndex);
+        }
+    };
+
+    // Delete selected notes
+    const handleDeleteSelected = () => {
+        if (selectedNotes.size === 0) return;
+        
+        const updatedNotes = notes.filter((_, idx) => !selectedNotes.has(idx));
+        setNotes(updatedNotes);
+        syncNotesToRedux(updatedNotes);
+        
+        setSelectedNotes(new Set());
+        setSelectedNoteIndex(null);
+    };
+
+    // Keyboard shortcuts for tools
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            // Only handle keyboard shortcuts when not in input fields
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            
+            // Tool shortcuts
+            if (e.ctrlKey || e.metaKey) {
+                switch (e.key) {
+                    case '1':
+                        e.preventDefault();
+                        handleToolChange('cursor');
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        handleToolChange('pencil');
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        handleToolChange('v');
+                        break;
+                    case '4':
+                        e.preventDefault();
+                        handleToolChange('trash');
+                        break;
+                }
+            }
+            
+            // Delete key for selected notes
+            if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNotes.size > 0) {
+                e.preventDefault();
+                handleDeleteSelected();
+            }
+            
+            // Existing keyboard shortcuts
+            switch (e.key) {
+                case 'Delete':
+                case 'Backspace':
+                    if (selectedNoteIndex !== null) {
+                        e.preventDefault();
+                        handleDelete();
+                    }
+                    break;
+                case 'c':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        if (selectedNoteIndex !== null) {
+                            handleCopy();
+                        }
+                    }
+                    break;
+                case 'v':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        if (clipboardNote) {
+                            handlePaste();
+                        }
+                    }
+                    break;
+                case 'x':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        if (selectedNoteIndex !== null) {
+                            handleCut();
+                        }
+                    }
+                    break;
+                case 'z':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        // TODO: Implement undo functionality
+                    }
+                    break;
+                case 'a':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        // Select all notes
+                        if (activeTool === 'v') {
+                            setSelectedNotes(new Set(notes.map((_, idx) => idx)));
+                        }
+                    }
+                    break;
+            }
+        };
+        
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [selectedNoteIndex, clipboardNote, selectedNotes, activeTool, notes]);
 
         // Determine instrument by selected track
         const isDrumTrack = useMemo(() => {
@@ -617,6 +933,24 @@ const PianoRolls = () => {
         if (pasteMenu) return;
         // Only respond to clicks on the grid background, not on notes
         if (e.target.closest && e.target.closest('.note-box')) return;
+
+        // Tool-specific behavior
+        switch (activeTool) {
+            case 'cursor':
+                handleCursorToolClick(e);
+                return;
+            case 'pencil':
+                // Continue with existing note creation logic
+                break;
+            case 'v':
+                handleSelectToolClick(e);
+                return;
+            case 'trash':
+                handleTrashToolClick(e);
+                return;
+            default:
+                break;
+        }
 
         const currentTime = Date.now();
         if (currentTime - lastInteractionTimeRef.current < 300) {
@@ -1593,6 +1927,7 @@ const PianoRolls = () => {
 
     return (
         <>
+        <div className='relative'>
             <div className={`relative w-full h-[490px] bg-[#1e1e1e] text-white ${selectedNoteIndex || pasteMenu ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'}  pb-12`} onWheel={handleWheel}>
                 <div
                     ref={timelineContainerRef}
@@ -1764,13 +2099,24 @@ const PianoRolls = () => {
                             return null;
                         }
                         
+                        const isSelected = selectedNotes.has(i) || selectedNoteIndex === i;
                         return (
                             <Rnd
                                 key={i}
+                                data-note-index={i}
                                 size={{ width: n.duration * timelineWidthPerSecond > 15 ? n.duration * timelineWidthPerSecond : 15, height: 24 }}
                                 position={{ x: n.start * timelineWidthPerSecond, y: getYFromNote(n.note) }}
                                 bounds="parent"
-                                enableResizing={{ 
+                                enableResizing={activeTool === 'v' ? { 
+                                    right: false,
+                                    left: false,
+                                    top: false,
+                                    bottom: false,
+                                    topRight: false,
+                                    bottomRight: false,
+                                    bottomLeft: false,
+                                    topLeft: false
+                                } : { 
                                     right: true,
                                     left: false,
                                     top: false,
@@ -1782,6 +2128,7 @@ const PianoRolls = () => {
                                 }}
                                 dragAxis="both"
                                 dragGrid={[1, 30]}
+                                disableDragging={activeTool === 'v' || activeTool === "trash"}
                                 style={{ willChange: 'transform', zIndex: 3 }}
                                 onDragStart={() => { isDraggingRef.current = true; }}
                                 onDrag={(e, d) => {
@@ -1871,11 +2218,22 @@ const PianoRolls = () => {
                                     }
                                 }}
                             >
-                                <div
-                                    className={`note-box bg-red-500 rounded w-full h-full relative z-1 ${selectedNoteIndex === i ? 'border-[2px] border-yellow-400' : 'border'} transition-colors duration-75 hover:bg-red-400 cursor-grab active:cursor-grabbing`}
+                            <div className={`note-box bg-red-500 rounded w-full h-full relative z-1 ${ isSelected ? 'border-[2px] border-white' : 'border' } transition-colors duration-75 hover:bg-red-400 cursor-grab active:cursor-grabbing`}
+                                    onMouseDown={(e) => {
+                                        // In V mode, dragging up/down anywhere on the note adjusts velocity
+                                        if (activeTool === 'v') {
+                                            handleVelocityDragStart(i, e);
+                                        }
+                                    }}
                                     onClick={(e) => {
                                         e.stopPropagation();
+                                        if (activeTool === 'v') {
+                                            handleNoteSelection(i, e.ctrlKey || e.metaKey);
+                                        } else if (activeTool === 'trash') {
+                                            handleDeleteNote(i);
+                                        } else {
                                         playNoteForTrack(n.note, Math.max(0.1, n.duration || 0.2));
+                                        }
                                     }}
                                     onContextMenu={(e) => {
                                         e.preventDefault();
@@ -1889,6 +2247,26 @@ const PianoRolls = () => {
                                         });
                                     }}
                                 >
+                                    {/* Volume bar - only show when V tool is active */}
+                                    {volumeBarVisible && (
+                                        <div 
+                                            className="absolute bottom-0 left-0 h-1 bg-white rounded-b cursor-pointer"
+                                            style={{ 
+                                                width: `${(n.velocity || 0.8) * 100}%`,
+                                                minWidth: '2px'
+                                            }}
+                                            onMouseDown={(e) => handleVolumeDrag(i, e)}
+                                            title={`Velocity: ${Math.round((n.velocity || 0.8) * 100)}%`}
+                                        />
+                                    )}
+                                    
+                                    {/* Volume percentage text - only show when V tool is active and note is selected */}
+                                    {volumeBarVisible && isSelected && (
+                                        <div className="absolute top-0 right-0 text-xs text-white bg-black bg-opacity-50 px-1 rounded">
+                                            {Math.round((n.velocity || 0.8) * 100)}%
+                                        </div>
+                                    )}
+                                    
                                     {(menuVisible && selectedNoteIndex === i) ? (
                                         <ul className="absolute bg-[#1F1F1F] text-black border border-[#1F1F1F] shadow rounded flex" style={{ top: '100%', right: 0, zIndex: 1000, listStyle: 'none', padding: '0px   ',}}>
                                             <li className="hover:bg-gray-200 hover:text-[#1F1F1F] cursor-pointer text-sm p-3 text-white" onClick={() => { handleCut() }}><IoCutOutline className='text-[16px]' /></li>
@@ -1915,52 +2293,30 @@ const PianoRolls = () => {
                         </span>
                     ) : null}
                 </div>
+            </div>
 
-                {/* Bottom-centered toolbar */}
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 transform z-[10000]">
-                    <div className="flex items-center gap-2 bg-[#1F1F1F] text-white px-2 py-1 rounded-full shadow-md">
-                        {/* Cursor */}
-                        <button
-                            className={`p-2 rounded hover:bg-gray-700 transition ${activeTool === 'cursor' ? 'bg-gray-600' : ''}`}
-                            onClick={() => setActiveTool('cursor')}
-                            title="Cursor"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 4l12 8-12 8V4z" />
-                            </svg>
-                        </button>
-                        {/* Pencil */}
-                        <button
-                            className={`p-2 rounded hover:bg-gray-700 transition ${activeTool === 'pencil' ? 'bg-gray-600' : ''}`}
-                            onClick={() => setActiveTool('pencil')}
-                            title="Pencil"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536M9 13l6-6 3 3-6 6H9v-3z" />
-                            </svg>
-                        </button>
-                        {/* V letter */}
-                        <button
-                            className={`p-2 rounded hover:bg-gray-700 transition font-bold ${activeTool === 'v' ? 'bg-gray-600' : ''}`}
-                            onClick={() => setActiveTool('v')}
-                            title="Select (V)"
-                        >
-                            V
-                        </button>
-                        {/* Trash */}
-                        <button
-                            className={`p-2 rounded hover:bg-gray-700 transition ${activeTool === 'trash' ? 'bg-gray-600' : ''}`}
-                            onClick={() => setActiveTool('trash')}
-                            title="Delete"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3m-4 0h14" />
-                            </svg>
-                        </button>
-                    </div>
+            {/* Bottom-centered toolbar */}
+            <div className="absolute bottom-[100px] left-1/2 -translate-x-1/2 transform z-[10000]">
+                <div className="flex items-center gap-2 bg-[#1F1F1F] text-white px-2 py-1 rounded-full shadow-md">
+                    {/* Cursor */}
+                    <button className={`p-2 rounded hover:bg-gray-700 transition ${activeTool === 'cursor' ? 'bg-gray-600' : ''}`} onClick={() => handleToolChange('cursor')} title="Cursor (Ctrl+1)">
+                        <RxCursorArrow />
+                    </button>
+                    {/* Pencil */}
+                    <button className={`p-2 rounded hover:bg-gray-700 transition ${activeTool === 'pencil' ? 'bg-gray-600' : ''}`} onClick={() => handleToolChange('pencil')} title="Pencil (Ctrl+2)">
+                        <BsPencil />
+                    </button>
+                    {/* V letter */}
+                    <button className={`p-2 rounded hover:bg-gray-700 transition font-bold ${activeTool === 'v' ? 'bg-gray-600' : ''}`} onClick={() => handleToolChange('v')} title="Select (Ctrl+3)">
+                        V
+                    </button>
+                    {/* Trash */}
+                    <button className={`p-2 rounded hover:bg-gray-700 transition ${activeTool === 'trash' ? 'bg-gray-600' : ''}`} onClick={() => handleToolChange('trash')} title="Delete (Ctrl+4)">
+                        <RiDeleteBin6Line />
+                    </button>
                 </div>
-            </div >
-
+            </div>
+        </div>
         </>
     );
 };
