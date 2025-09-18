@@ -252,6 +252,7 @@ const Home2 = () => {
     const [musicCurrentTimes, setMusicCurrentTimes] = useState({});
     const [musicProgress, setMusicProgress] = useState({});
     const [musicAudioLoaded, setMusicAudioLoaded] = useState({});
+    const [openDropdownId, setOpenDropdownId] = useState(null);
 
 
     const getItemFolderId = (m) =>
@@ -535,12 +536,13 @@ const Home2 = () => {
     }, [sortedAndFilteredMusic, drawWaveform, musicProgress]);
 
     const buttonRef = useRef(null);
+
     const {
         refs,
         floatingStyles,
         update,
     } = useFloating({
-        placement: "bottom-end",
+        placement: "right-start",
         middleware: [offset(4), flip(), shift()],
     });
 
@@ -949,7 +951,7 @@ const handleSaveCoverImage = async () => {
                       <AdaptiveMenu button={<BsThreeDotsVertical className='text-white text-[12px] sm:text-[14px]  xl:text-[18px] 3xl:text-[20px]' />} widthClass="w-36 sm:w-48 xl:w-52 2xl:w-64">
                           <div className="">
                               <MenuItem >
-                                <p className="block  px-3 sm:px-4 md600:px-5  lg:px-6 py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" onClick={() => navigate('/recently-deleted')}>
+                                <p className="block  px-3 sm:px-4 md600:px-5  lg:px-6 py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3 hover:bg-gray-800 cursor-pointer" onClick={() => navigate('/recently-deleted')}>
                                     <div className="flex items-center" >
                                         <DeleteIcon className='w-3 h-3 sm:w-3 sm:h-3 lg:w-4 lg:h-4 2xl:w-6 2xl:h-6 text-white' />
                                         <p className="text-white ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] sm:text-[14px] 2xl:text-[16px]">Recently Deleted</p>
@@ -1009,7 +1011,6 @@ const handleSaveCoverImage = async () => {
               const audioUrl = ele.url ? (ele.url.startsWith('http') ? ele.url : `${IMAGE_URL}${ele.url}`) : null;
 
               const coverUrl = getCoverUrl(ele);
-              
               return (
                   <div className="w-full mx-auto" key={ele._id}>
                       <div className="flex items-center gap-4 p-4 rounded-xl shadow-sm">
@@ -1058,7 +1059,7 @@ const handleSaveCoverImage = async () => {
                                     ) : (
                                         <Play size={20} fill="white" className="ml-0.5" />
                                     )}
-                                </button>
+                                </button>   
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
@@ -1079,17 +1080,17 @@ const handleSaveCoverImage = async () => {
                               </div>
                           </div>
                           <div className="flex items-center gap-3 text-xs">
-                              <div className="flex items-center gap-2">
-                                  <div className="text-md font-mono">{duration}</div>
-                              </div>
-                              <Menu as="div" className="relative inline-block text-left">
+                              {/* <div className="flex items-center gap-2"> */}
+                                <div className="text-md font-mono">{duration}</div>
+                              {/* </div> */}
+                              <Menu as="div" className="relative inline-block text-left" key={ele._id}>
                                   <div>
                                       <MenuButton ref={refs.setReference} className="outline-none">
                                           <BsThreeDotsVertical size={16} className="cursor-pointer transition-colors" />
                                       </MenuButton>
                                   </div>
 
-                                  <MenuItems ref={refs.setFloating} style={floatingStyles} className="w-56 rounded-md bg-[#1f1f1f] shadow-lg ring-1 ring-black ring-opacity-5 outline-none z-30">
+                                  <MenuItems ref={refs.setFloating} style={floatingStyles} className="absolute z-50 right-0 top-full mt-2 w-56 rounded-md bg-[#1f1f1f] shadow-lg ring-1 ring-black ring-opacity-5 outline-none">
                                       <div className="py-1">
                                           <MenuItem>
                                               {({ active }) => (
@@ -1097,9 +1098,9 @@ const handleSaveCoverImage = async () => {
                                                       <span className="font-medium">A</span>
                                                       Rename
                                                   </button>
-                                              )}
+                                              )}    
                                           </MenuItem>
-
+ 
                                           <MenuItem>
                                               {({ active }) => (
                                                   <button type="button" onClick={() => { setSelectedMusicId(ele._id); setImage(coverUrl || null); setOpen(true);}} className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
