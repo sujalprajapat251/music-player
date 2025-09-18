@@ -534,7 +534,7 @@ const TimelineTrack = ({
   const drumRecordedData = useSelector((state) => selectStudioState(state).drumRecordedData);
   const drumRecordingClip = useSelector((state) => selectStudioState(state).drumRecordingClip);
   const tracks = useSelector((state) => selectStudioState(state).tracks || []);
-  console.log("tracks-------------------------", tracks)
+  // console.log("tracks-------------------------", tracks)
 
 
   const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);

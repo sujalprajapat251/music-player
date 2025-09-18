@@ -51,6 +51,7 @@ import { setSelectedTrackId } from '../Redux/Slice/effects.slice';
 import { motion, AnimatePresence } from "framer-motion";
 import { io } from 'socket.io-client';
 import { BASE_URL } from '../Utils/baseUrl';
+import VoiceAndMic from "./VoiceAndMic";
 
 const Timeline = () => {
 
@@ -78,6 +79,7 @@ const Timeline = () => {
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
   const [showPiano, setShowPiano] = useState(false);
   const [showDrum, setShowDrum] = useState(false);
+  const [showMicVoice, setShowMicVoice] = useState(false);
   const [showGuitar, setShowGuitar] = useState(false);
   const [showOrchestral, setShowOrchestral] = useState(false);
   const [renameSectionId, setRenameSectionId] = useState(null);
@@ -4063,6 +4065,10 @@ if (json && json.data) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {(showMicVoice || getTrackType === "Voice & Mic") && (
+        <VoiceAndMic onClose={() => { setShowMicVoice(false); dispatch(setTrackType(null)); }} />
+      )}
 
       {/* Rename Section Modal */}
       <Dialog open={renameModal} onClose={() => setRenameModal(false)} className="relative z-10">

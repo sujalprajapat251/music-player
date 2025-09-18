@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Volume2, ChevronDown, Plus, Mic } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { setGlobalReverb, setGlobalPan, setGlobalVolume, setGlobalDrumTypeIndex } from '../Redux/Slice/audioSettings.slice';
-import { setDrumRecordedData, addAudioClipToTrack, setDrumRecordingClip, removeAudioClip } from '../Redux/Slice/studio.slice';
+import { setDrumRecordedData, addAudioClipToTrack, setDrumRecordingClip, removeAudioClip, togglePlayPause, setCurrentTime } from '../Redux/Slice/studio.slice';
 import { selectStudioState } from '../Redux/rootReducer';
 import {
   drumMachineTypes,
@@ -12,6 +12,7 @@ import {
 } from '../Utils/drumMachineUtils';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { GiPianoKeys } from 'react-icons/gi';
+import { toggleLoopEnabled } from '../Redux/Slice/loop.slice';
 // import { handleBeatToggleSync } from '../Utils/patternTimelineBridge';
 
 function polarToCartesian(cx, cy, r, angle) {
@@ -178,8 +179,7 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
 }
 
 const Pattern = () => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentBeat, setCurrentBeat] = useState(0);
+  const isPlaying = useSelector((state) => selectStudioState(state)?.isPlaying || false);
   const [bpm, setBpm] = useState(120);
   const [patternLength, setPatternLength] = useState(48);
   const [currentDrumMachine, setCurrentDrumMachine] = useState(0);
@@ -188,7 +188,7 @@ const Pattern = () => {
     { id: 'snare', name: 'Snare', pattern: new Array(48).fill(false), padId: 'W' },
     { id: 'hihat', name: 'Hihat', pattern: new Array(48).fill(false), padId: 'E' },
   ]);
-  const [followBeat, setFollowBeat] = useState(true);
+  const [followBeat, setFollowBeat] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [nextTrackId, setNextTrackId] = useState(4);
   const [isRecordingPattern, setIsRecordingPattern] = useState(false);
@@ -205,10 +205,46 @@ const Pattern = () => {
 
   const audioContextRef = useRef(null);
   const dropdownRef = useRef(null);
+  // Follow Beat: container and beat element refs
+  const scrollContainerRef = useRef(null);
+  const beatRefs = useRef({});
   const dispatch = useDispatch();
   const selectedTrackId = useSelector((state) => selectStudioState(state)?.currentTrackId);
+  const currentTime = useSelector((state) => selectStudioState(state)?.currentTime || 0);
+
+  const { loopStart, loopEnd, isLoopEnabled } = useSelector((state) => state.loop);
 
   const currentTypeData = drumMachineTypes[currentType];
+
+  // Calculate current beat based on timeline time
+  const calculateCurrentBeat = useCallback((timeInSeconds) => {
+    // Convert time to beat position
+    // 16 beats per second = 1 beat every 0.0625 seconds
+    const beatsPerSecond = 16;
+    const beatPosition = Math.floor(timeInSeconds * beatsPerSecond);
+    return Math.min(beatPosition, patternLength - 1);
+  }, [patternLength]);
+
+  // Sync currentBeat with timeline time
+  const currentBeat = calculateCurrentBeat(currentTime);
+
+  // Add a more frequent update for pattern highlighting during playback
+  const [localTime, setLocalTime] = useState(currentTime);
+  
+  useEffect(() => {
+    if (isPlaying) {
+      const interval = setInterval(() => {
+        setLocalTime(prev => prev + 0.0625); // Update every 1/16th second (every beat)
+      }, 62.5); // 62.5ms = 1/16th second
+      
+      return () => clearInterval(interval);
+    } else {
+      setLocalTime(currentTime);
+    }
+  }, [isPlaying, currentTime]);
+
+  // Use local time for more frequent updates during playback
+  const displayBeat = isPlaying ? calculateCurrentBeat(localTime) : currentBeat;
 
   // Keep local state synced when another page changes globals
   useEffect(() => { setVolume(globalVolume); }, [globalVolume]);
@@ -233,7 +269,6 @@ const Pattern = () => {
   const drumRecordingClip = useSelector((state) => selectStudioState(state)?.drumRecordingClip || null);
   // console.log("drumRecordingClip0", drumRecordingClip);
   // console.log("drumRecordedData", drumRecordedData);
-  const currentTime = useSelector((state) => selectStudioState(state)?.currentTime || 0);
   const currentTrackId = useSelector((state) => selectStudioState(state)?.currentTrackId || null);
   const isRecording = useSelector((state) => selectStudioState(state)?.isRecording || false);
 
@@ -502,45 +537,56 @@ const Pattern = () => {
 
   // Playback logic
   useEffect(() => {
-    let intervalId = null;
-
     if (isPlaying) {
-      const beatDuration = (60 / bpm / 4) * 1000;
+      // Play sounds for the current beat position based on timeline time
+      tracks.forEach(track => {
+        if (track.pattern[displayBeat]) {
+          playDrumSound(track);
+        }
+      });
+    }
+  }, [isPlaying, displayBeat, tracks, playDrumSound]);
 
-      intervalId = setInterval(() => {
-        setCurrentBeat(prev => {
-          const nextBeat = (prev + 1) % patternLength;
+  // Follow Beat auto-scroll
+  useEffect(() => {
+    if (!followBeat) return;
+    const container = scrollContainerRef.current;
+    if (!container) return;
 
-          tracks.forEach(track => {
-            if (track.pattern[nextBeat]) {
-              playDrumSound(track);
-            }
-          });
+    const el = beatRefs.current[displayBeat];
+    if (!el) return;
 
-          return nextBeat;
-        });
-      }, beatDuration);
+    const elRect = el.getBoundingClientRect();
+    const parentRect = container.getBoundingClientRect();
+
+    const isVisible = elRect.left >= parentRect.left && elRect.right <= parentRect.right;
+
+    if (!isVisible) {
+      // Center the current beat horizontally
+      const targetScrollLeft = el.offsetLeft - parentRect.width / 2 + el.offsetWidth / 2;
+      container.scrollTo({ left: Math.max(0, targetScrollLeft), behavior: 'smooth' });
     }
 
-    // Cleanup function - this will run when component unmounts or dependencies change
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [isPlaying, bpm, tracks, patternLength, playDrumSound]);
+    // Handle loop: when playhead wraps, ensure container resets appropriately
+    if (displayBeat === 0) {
+      container.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  }, [displayBeat, followBeat]);
 
   const togglePlay = () => {
     if (audioContextRef.current?.state === 'suspended') {
       audioContextRef.current.resume();
     }
-    setIsPlaying(!isPlaying);
+    dispatch(togglePlayPause());
   };
 
   // Update stopAndReset function
   const stopAndReset = () => {
-    setIsPlaying(false);
-    setCurrentBeat(0);
+    if (isPlaying) {
+      dispatch(togglePlayPause());
+    }
+    // Reset timeline to beginning
+    dispatch(setCurrentTime(0));
   };
 
   const toggleBeat = useCallback((trackId, beatIndex) => {
@@ -823,24 +869,21 @@ const Pattern = () => {
               </button>
             </div>
 
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setFollowBeat(!followBeat)}
-                className={`p-2 rounded-lg transition-colors flex items-center gap-2 ${followBeat ? 'bg-[#474747]' : 'bg-[#1F1F1F]'
-                  }`}
-              >
-                <RotateCcw size={16} />
-                Cycle
-              </button>
+            <div className="flex items-center gap-6">
+              <div onClick={() => dispatch(toggleLoopEnabled())} className="flex items-center gap-1 cursor-pointer">
+                <div className={`border rounded-full p-2 ${isLoopEnabled ? 'bg-[#FF8014]' : 'hover:bg-[#1F1F1F]'}`}>
+                  <RotateCcw size={16} />
+                </div>
+                <button className={`p-2 rounded-lg transition-colors flex items-center gap-2`}>Cycle</button>
+              </div>
 
-              <button
-                onClick={() => setFollowBeat(!followBeat)}
-                className={`p-2 rounded-lg transition-colors flex items-center gap-2 ${followBeat ? 'bg-[#474747]' : 'bg-[#1F1F1F]'
-                  }`}
-              >
-                <Volume2 size={16} />
-                Follow beat
-              </button>
+              <div onClick={() => setFollowBeat(!followBeat)} className="flex items-center gap-1 cursor-pointer">
+                <div className={`border rounded-full p-2 ${followBeat ? 'bg-[#FF8014]' : 'bg-[#1F1F1F]'}`}>
+                  <Volume2 size={16} />
+                </div>
+                <button 
+                  className={`p-2 rounded-lg transition-colors flex items-center gap-2`}>Follow beat</button>
+              </div>
             </div>
           </div>
 
@@ -914,7 +957,7 @@ const Pattern = () => {
               </div>
 
               {/* Scrollable Content */}
-              <div className="space-y-3 overflow-y-auto flex-1">
+              <div ref={scrollContainerRef} className="space-y-3 overflow-y-auto flex-1">
                 <div className="min-w-max">
                   {/* Beat Indicator Dots */}
                   <div className="flex items-center gap-2 h-3 mb-2">
@@ -928,11 +971,12 @@ const Pattern = () => {
                             return (
                               <div
                                 key={beatIndex}
+                                ref={(el) => { if (el) beatRefs.current[beatIndex] = el; }}
                                 className={`w-8 h-3 flex items-center justify-center flex-shrink-0`}
                               >
                                 <div className={`
                 w-2 h-2 rounded-full transition-all duration-150
-                ${currentBeat === beatIndex && isPlaying
+                ${displayBeat === beatIndex && isPlaying
                                     ? 'bg-yellow-400 ring-2 ring-yellow-300 ring-opacity-50 scale-125'
                                     : 'bg-[#474747]'
                                   }
@@ -972,6 +1016,7 @@ const Pattern = () => {
                                 return (
                                   <button
                                     key={beatIndex}
+                                    ref={(el) => { if (el) beatRefs.current[beatIndex] = el; }}
                                     onClick={() => toggleBeat(track.id, beatIndex)}
                                     className={`
                     w-8 h-8 border border-[#949292] rounded transition-all flex-shrink-0
@@ -979,7 +1024,7 @@ const Pattern = () => {
                                         ? 'bg-[#ffffff] border-purple-300'
                                         : 'bg-[#1F1F1F] hover:bg-[#474747]'
                                       }
-                    ${currentBeat === beatIndex && isPlaying
+                    ${displayBeat === beatIndex && isPlaying
                                         ? 'ring-2 ring-yellow-400 ring-opacity-70'
                                         : ''
                                       }
