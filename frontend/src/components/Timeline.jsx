@@ -3582,6 +3582,14 @@ const Timeline = () => {
 
             </div>
 
+            {/* Loop Start vertical line */}
+            <div style={{ position: "absolute", top: 0, left: 0, height: "100%", width: "2px", pointerEvents: "none", zIndex: 12, transform: `translateX(${(loopStart || 0) * timelineWidthPerSecond}px)`}}>
+              <div style={{ position: "absolute", top: "78px", left: 0, bottom: 0, width: "2px", background: isLoopEnabled ? "#FF8C00" : "rgba(255,140,0,0.5)"}}/>
+            </div>
+            {/* Loop End vertical line (behind LoopBar) */}
+            <div style={{ position: "absolute", top: 0, left: 0, height: "100%", width: "2px", pointerEvents: "none", zIndex: 8, transform: `translateX(${(loopEnd || 0) * timelineWidthPerSecond}px)`}}>
+              <div style={{ position: "absolute", top: "78px", left: 0, bottom: 0, width: "2px", background: isLoopEnabled ? "#FF8C00" : "rgba(255,140,0,0.5)"}}/>
+            </div>
             {/* Grid lines - only show when there are tracks */}
             {tracks.length > 0 && (
               <div style={{ position: "absolute", top: `${140 - sidebarScrollOffset}px`, left: 0, width: "100%", height: `${trackHeight * tracks.length}px`, pointerEvents: "none", }}>{renderGridLines}</div>
@@ -3598,7 +3606,13 @@ const Timeline = () => {
                 ? 'bg-[#A6A3AC]'
                 : 'hover:bg-[#1F1F1F]'
                 }`}
-              onClick={() => setIsMagnetEnabled(prev => !prev)}
+              onClick={() => {
+                const next = !isMagnetEnabled;
+                setIsMagnetEnabled(next);
+                if (next && !isLoopEnabled) {
+                  dispatch(toggleLoopEnabled());
+                }
+              }}
               title={isMagnetEnabled ? "Magnet: ON" : "Magnet: OFF"}
             >
               <img src={magnetIcon} alt="Magnet" />
