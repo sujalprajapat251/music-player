@@ -1,5 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { X, Copy, Check, Share2 } from 'lucide-react';
+import { useTheme } from '../Utils/ThemeContext';
+const getModalColors = (isDark) => ({
+  overlayBg: 'bg-black bg-opacity-50',
+
+  modalBg: isDark ? '#1F1F1F' : '#ffffff',
+  modalText: isDark ? '#ffffff' : '#141414',
+  modalSubText: isDark ? '#cccccc' : '#444444',
+
+  inputBg: isDark ? '#1F1F1F' : '#f9f9f9',
+  inputText: isDark ? '#ffffff' : '#141414',
+  inputBorder: isDark ? '#7f7b87' : '#cdcdcd',
+  inputPlaceholder: isDark ? '#a1a1a1' : '#888888',
+
+  divider: isDark ? '#7f7b87' : '#cdcdcd',
+
+  buttonBorder: isDark ? '#7f7b87' : '#cdcdcd',
+  buttonBg: isDark ? '#1F1F1F' : '#f9f9f9',
+  buttonText: isDark ? '#ffffff' : '#141414',
+  buttonHoverBg: isDark ? '#2A2A2A' : '#efefef',
+
+  successBg: '#16a34a', // green-600
+  warningText: '#facc15', // yellow-400
+});
 
 const ShareModal = ({ isOpen, onClose, projectId }) => {
   const [shareLink, setShareLink] = useState('');
@@ -7,6 +30,8 @@ const ShareModal = ({ isOpen, onClose, projectId }) => {
   const [shared, setShared] = useState(false);
   const [invited, setInvited] = useState(false);
 
+  const { isDark } = useTheme();
+  const colors = getModalColors(isDark);
   useEffect(() => {
     const origin = window?.location?.origin || '';
     const dynamic = projectId ? `${origin}/sidebar/timeline/${projectId}` : window?.location?.href || origin;
@@ -63,77 +88,123 @@ const ShareModal = ({ isOpen, onClose, projectId }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99]">
-      <div className="rounded-lg p-6 w-full max-w-md mx-4 shadow-2xl bg-[#1F1F1F]">
-        {/* Header with close button */}
-        <div className="flex justify-end mb-4">
-          <button onClick={onClose} className="text-white hover:text-gray-300 transition-colors">
-            <X size={24} />
+    <div className={`fixed inset-0 ${colors.overlayBg} flex items-center justify-center z-[99]`}>
+    <div
+      className="rounded-lg p-6 w-full max-w-md mx-4 shadow-2xl"
+      style={{ background: colors.modalBg }}
+    >
+      {/* Header with close button */}
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={onClose}
+          className="transition-colors"
+          style={{ color: colors.modalText }}
+        >
+          <X size={24} />
+        </button>
+      </div>
+
+      {/* Share via link */}
+      <div className="mb-6">
+        <h3
+          className="text-lg font-semibold mb-3"
+          style={{ color: colors.modalText }}
+        >
+          Share via link
+        </h3>
+
+        <div className="flex gap-2 mb-2">
+          <input
+            type="text"
+            value={shareLink}
+            readOnly
+            className="flex-1 px-3 py-2 rounded-[2px] focus:outline-none"
+            style={{
+              background: colors.inputBg,
+              color: colors.inputText,
+              border: `1px solid ${colors.inputBorder}`,
+            }}
+          />
+          <button
+            onClick={handleNativeShare}
+            className="px-4 py-2 rounded-[25px] flex items-center gap-2 transition-colors border"
+            style={{
+              borderColor: colors.buttonBorder,
+              background: shared ? colors.successBg : colors.buttonBg,
+              color: colors.buttonText,
+            }}
+          >
+            {shared ? <Check size={16} /> : <Share2 size={16} />}
+            {shared ? 'Shared!' : 'Share'}
           </button>
         </div>
 
-        {/* Share via link section */}
-        <div className="mb-6">
-          <h3 className="text-white text-lg font-semibold mb-3">Share via link</h3>
-          <div className="flex gap-2 mb-2">
-            <input 
-              type="text" 
-              value={shareLink} 
-              readOnly 
-              className="flex-1 text-white px-3 py-2 rounded-[2px] border border-[#7f7b87] focus:outline-none bg-[#1F1F1F]"
+        <p style={{ color: colors.modalSubText }} className="text-sm">
+          People with this link can directly join and make changes to your project.
+        </p>
+        {!projectId && (
+          <p style={{ color: colors.warningText }} className="text-xs mt-1">
+            ⚠️ No project ID available. Please save your project first.
+          </p>
+        )}
+      </div>
+
+      {/* Divider */}
+      <div className="mb-6" style={{ borderTop: `1px solid ${colors.divider}` }}></div>
+
+      {/* Add people */}
+      <div>
+        <h3
+          className="text-lg font-semibold mb-3"
+          style={{ color: colors.modalText }}
+        >
+          Add people
+        </h3>
+
+        <div className="mb-2">
+          <label
+            className="text-sm block mb-2"
+            style={{ color: colors.modalText }}
+          >
+            Enter names or emails
+          </label>
+
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Enter names or emails"
+              className="flex-1 px-3 py-2 rounded-[2px] focus:outline-none"
+              style={{
+                background: colors.inputBg,
+                color: colors.inputText,
+                border: `1px solid ${colors.inputBorder}`,
+                '::placeholder': { color: colors.inputPlaceholder },
+              }}
             />
             <button
-              onClick={handleNativeShare}
-              className={`px-4 py-2 rounded-md flex items-center gap-2 transition-colors rounded-[25px] border border-[#7f7b87] ${
-                shared
-                  ? 'bg-green-600 text-white'
-                  : 'bg-[#1F1F1F] text-white hover:bg-gray-800'
-              }`}
+              onClick={handleInvite}
+              className="px-4 py-2 rounded-[25px] flex items-center gap-2 transition-colors border"
+              style={{
+                borderColor: colors.buttonBorder,
+                background: invited ? colors.successBg : colors.buttonBg,
+                color: colors.buttonText,
+              }}
             >
-              {shared ? <Check size={16} /> : <Share2 size={16} />}
-              {shared ? 'Shared!' : 'Share'}
+              <Check size={16} />
+              {invited ? 'Invited!' : 'Invite'}
             </button>
           </div>
-          <p className="text-gray-300 text-sm">People with this link can directly join and make changes to your project.</p>
-          {!projectId && (
-            <p className="text-yellow-400 text-xs mt-1">⚠️ No project ID available. Please save your project first.</p>
-          )}
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-[#7f7b87] mb-6"></div>
-
-        {/* Add people section */}
-        <div>
-          <h3 className="text-white text-lg font-semibold mb-3">Add people</h3>
-          <div className="mb-2">
-            <label className="text-white text-sm block mb-2">Enter names or emails</label>
-            <div className="flex gap-2">
-              <input 
-                type="text" 
-                value={emailInput} 
-                onChange={(e) => setEmailInput(e.target.value)} 
-                onKeyPress={handleKeyPress} 
-                placeholder="Enter names or emails"
-                className="flex-1 text-white px-3 py-2 rounded-[2px] border border-[#7f7b87] focus:outline-none placeholder-gray-400 bg-[#1F1F1F]"
-              />
-              <button
-                onClick={handleInvite}
-                className={`px-4 py-2 rounded-md flex items-center gap-2 transition-colors rounded-[25px] border border-[#7f7b87] ${
-                  invited
-                    ? 'bg-green-600 text-white'
-                    : 'bg-[#1F1F1F] text-white hover:bg-gray-800'
-                }`}
-              >
-                <Check size={16} />
-                {invited ? 'Invited!' : 'Invite'}
-              </button>
-            </div>
-          </div>
-          <p className="text-gray-300 text-sm">These people can join and make changes to your project.</p>
-        </div>
+        <p style={{ color: colors.modalSubText }} className="text-sm">
+          These people can join and make changes to your project.
+        </p>
       </div>
     </div>
+  </div>
   );
 };
 

@@ -28,6 +28,31 @@ import Drum from "./Drum";
 import NewProject from "./NewProjectModel";
 import { setShowLoopLibrary } from "../Redux/Slice/ui.slice";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "../Utils/ThemeContext";
+
+const getSidebarColors = (isDark) => ({
+  background: isDark ? '#141414' : '#ffffff',
+  panelBorder: isDark ? '#FFFFFF1A' : '#1414141A',
+
+  rowBackground: isDark ? '#232323' : '#f7f7f7',
+  rowHover: isDark ? '#2A2A2A' : '#efefef',
+  rowDivider: isDark ? '#FFFFFF1A' : '#1414141A',
+
+  textPrimary: isDark ? '#ffffff' : '#141414',
+  frozenText: isDark ? '#4CAF50' : '#2d7a33',
+
+  iconBgDefault: isDark ? '#000000' : '#e5e5e5',
+  iconBgFrozen: isDark ? '#7F7B87' : '#c9c7cf',
+
+  recordBg: isDark ? '#444444' : '#d9d9d9',
+  recordBgActive: '#FF006B',
+
+  soloActiveBg: isDark ? '#A6A3AC' : '#b9b6bf',
+  muteActiveBg: isDark ? '#A6A3AC' : '#b9b6bf',
+
+  addRowBorder: isDark ? '#7b7b7b8c' : '#cdcdcd',
+  addRowText: isDark ? '#ffffff' : '#141414',
+});
 
 const Sidebar2 = () => {
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
@@ -37,6 +62,8 @@ const Sidebar2 = () => {
   // Use Redux for open instrument; avoid local UI duplication
   const tracks = useSelector((state) => selectStudioState(state).tracks);
   // console.log("tracks ::::: > ", tracks)
+  const { isDark } = useTheme();
+  const colors = getSidebarColors(isDark);
  
   const trackHeight = useSelector((state) => selectStudioState(state).trackHeight);
   const dispatch = useDispatch();
@@ -194,8 +221,11 @@ const Sidebar2 = () => {
       <div style={{ pointerEvents: showNewProject ? 'none' : 'auto' }}>
       <TopHeader />
       <div className="flex h-[calc(100vh-82px)] sm:h-[calc(100vh-66px)] md:h-[calc(100vh-96px)] relative">
-      <div className="border-r border-[#1414141A] dark:border-[#b463631a] w-[20%] sm:w-[23%] md:w-[22%] lg:w-[20%] xl:w-[17%] 2xl:w-[15%] bg-primary-light dark:bg-primary-dark">
-          <div className="h-[100px] border-b border-[#1414141A] dark:border-[#FFFFFF1A] flex items-end pb-2"></div>
+      <div
+        className="border-r border-[#1414141A] dark:border-[#b463631a] w-[20%] sm:w-[23%] md:w-[22%] lg:w-[20%] xl:w-[17%] 2xl:w-[15%] bg-primary-light dark:bg-primary-dark"
+        style={{ backgroundColor: colors.background, borderRightColor: colors.panelBorder }}
+      >
+          <div className="h-[100px] border-b border-[#1414141A] dark:border-[#FFFFFF1A] flex items-end pb-2" style={{ borderBottomColor: colors.panelBorder }}></div>
 
           <div style={{
             maxHeight: 'calc(100vh - 240px)',
@@ -223,13 +253,17 @@ const Sidebar2 = () => {
 
               return (
                 <div
-                  key={track.id}
-                  className={`flex items-center justify-between px-3 border-l-4 border-b border-b-[#1414141A] dark:border-b-[#FFFFFF1A] bg-[#232323] cursor-pointer hover:bg-[#2A2A2A] transition-colors duration-200`}
-                  style={{
-                    height: `${trackHeight + 1}px`, 
-                    minHeight: `${trackHeight + 1}px`,
-                    borderLeftColor: track.id === currentTrackId && borderColor ? borderColor : '#232323',
-                  }}
+                key={track.id}
+                className={`flex items-center justify-between px-3 border-l-4 border-b cursor-pointer transition-colors duration-200`}
+                style={{
+                  height: `${trackHeight + 1}px`,
+                  minHeight: `${trackHeight + 1}px`,
+                  borderLeftColor: track.id === currentTrackId && borderColor ? borderColor : colors.rowBackground,
+                  borderBottomColor: colors.rowDivider,
+                  backgroundColor: colors.rowBackground
+                }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.rowHover; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = colors.rowBackground; }}
                   onClick={() => handleChangeTrack(track.id)}
                   draggable
                   onDragStart={() => setDragIndex(idx)}
@@ -242,8 +276,16 @@ const Sidebar2 = () => {
                   }}
                   onDragEnd={() => setDragIndex(null)}
                 >
-                  <div className="flex items-center w-16 justify-center">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${track.frozen ? 'bg-[#7F7B87]' : 'bg-black'}`} style={{ backgroundColor: isComponentOpen ? borderColor : (track.frozen ? '#7F7B87' : '#000000') }} onClick={(e) => handleIconToggle(e, track)}>
+                    <div className="flex items-center w-16 justify-center">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center ${track.frozen ? '' : ''}`}
+                      style={{
+                        backgroundColor: isComponentOpen
+                          ? borderColor
+                          : (track.frozen ? colors.iconBgFrozen : colors.iconBgDefault)
+                      }}
+                      onClick={(e) => handleIconToggle(e, track)}
+                    >
                       {track.name === 'Voice & Mic' && <Track1 className="w-6 h-6" />}
                       {track.name === 'Keys' && <Track2 className="w-6 h-6" />}
                       {track.name === 'Bass & 808' && <Track3 className="w-6 h-6" />}
@@ -256,12 +298,13 @@ const Sidebar2 = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col border-e-[0.5px] border-[#FFFFFF1A] pe-2 flex-1">
+                  <div className="flex flex-col border-e-[0.5px] pe-2 flex-1"
+                       style={{ borderRightColor: colors.rowDivider }}>
                     <div className="flex items-center gap-2">
                       {editingTrackId === track.id ? (
                         <input
                         type="text"
-                        className="font-bold text-white text-sm truncate bg-[#232323] border border-[#AD00FF] rounded px-1 py-0.5 outline-none"
+                        className="font-bold text-sm truncate border rounded px-1 py-0.5 outline-none"
                         value={editingName}
                         autoFocus
                         onChange={e => setEditingName(e.target.value)}
@@ -282,18 +325,34 @@ const Sidebar2 = () => {
                               setEditingTrackId(null);
                             }
                           }}
+                          style={{
+                            backgroundColor: colors.rowBackground,
+                            color: colors.textPrimary,
+                            borderColor: colors.panelBorder
+                          }}
                         />
                       ) : (
-                        <span className={`font-bold text-sm truncate flex-[0_0_auto] overflow-hidden whitespace-normal break-all w-[120px] [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical] ${track.frozen ? 'text-[#4CAF50]' : 'text-white'}`}>
-                          { track.nametype || track.name || `Track ${idx + 1}` }
-                        </span>
-                      )}
+                        <span
+                        className={`font-bold text-sm truncate flex-[0_0_auto] overflow-hidden whitespace-normal break-all w-[120px] [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical]`}
+                        style={{ color: track.frozen ? colors.frozenText : colors.textPrimary }}
+                      >
+                        { track.nametype || track.name || `Track ${idx + 1}` }
+                      </span>
+                    )}
                       {track.frozen && (
-                        <img src={FreezeIcon} alt="Frozen" className="w-4 h-4 opacity-80" style={{ filter: "invert(1) brightness(1.5)" }}/>
+                        <img src={FreezeIcon} alt="Frozen" className="w-4 h-4 opacity-80" style={{ filter: isDark ? "invert(1) brightness(1.5)" : "none" }}/>
                       )}
                     </div>
                     <div className="flex flex-row items-center justify-around gap-x-2 mt-1">
-                      <span className={`w-6 h-6 rounded text-xs font-bold flex items-center justify-center ${(currentTrackId === track.id) ? 'bg-[#FF006B]' : 'bg-[#444]'} text-white`}>R</span>
+                    <span
+                        className={`w-6 h-6 rounded text-xs font-bold flex items-center justify-center`}
+                        style={{
+                          backgroundColor: (currentTrackId === track.id) ? colors.recordBgActive : colors.recordBg,
+                          color: colors.textPrimary
+                        }}
+                      >
+                        R
+                      </span>
                       <span className="w-8 h-8 rounded-full bg-transparent">
                         <img src={tk} alt="" className={`w-full h-full opacity-60`} />
                       </span>
@@ -315,7 +374,7 @@ const Sidebar2 = () => {
                     <div className="flex items-center justify-center gap-x-2 w-full pb-4">
                       <img src={headphone} alt="Headphone" 
                         className="rounded-[20px] p-1"
-                        style={soloTrackId === track.id ? { backgroundColor: '#A6A3AC' } : {}}
+                        style={soloTrackId === track.id ? { backgroundColor: colors.soloActiveBg } : {}}
                         onClick={e => {
                           e.stopPropagation();
                           handleSoloTrack(track.id);
@@ -323,7 +382,7 @@ const Sidebar2 = () => {
                       />
                       <img src={mute} alt="Mute" 
                         className="rounded-[20px] p-1"
-                        style={isMuted ? { backgroundColor: '#A6A3AC' } : {}}
+                        style={isMuted ? { backgroundColor: colors.muteActiveBg } : {}}
                         onClick={e => {
                           e.stopPropagation();
                           handleMuteTrack(track.id);
@@ -336,7 +395,11 @@ const Sidebar2 = () => {
             })}
 
             {/* Add New Track Button */}
-            <div className="flex items-center justify-center gap-2 py-3 px-4 text-secondary-light dark:text-secondary-dark cursor-pointer border-t-[1px] border-b-[1px] border-[#7b7b7b8c]" onClick={() => setShowAddTrackModal(true)} style={{ height: `${trackHeight + 8}px` }}>
+            <div
+              className="flex items-center justify-center gap-2 py-3 px-4 text-secondary-light dark:text-secondary-dark cursor-pointer border-t-[1px] border-b-[1px]"
+              onClick={() => setShowAddTrackModal(true)}
+              style={{ height: `${trackHeight + 8}px`, borderTopColor: colors.addRowBorder, borderBottomColor: colors.addRowBorder, color: colors.addRowText }}
+            >
               <span className="text-xl font-bold">+</span>
               <span>Add New Track</span>
             </div>
