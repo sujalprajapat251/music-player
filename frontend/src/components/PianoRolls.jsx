@@ -1368,51 +1368,6 @@ const PianoRolls = () => {
         } catch {}
         // do nothing for clip sizing here
     }, [dispatch, noteNameToMidi, currentTrackId, pianoNotes, isDrumTrack, selectedDrumMachine, drumRecordedData]);
-    
-    // Clear local notes when track changes to prevent cross-contamination
-    // useEffect(() => {
-    //     setNotes([]);
-    // }, [currentTrackId]);
-    
-    // Load/refresh local notes whenever Redux notes for this track change 
-    // miss some notes (uncomment to solve)
-
-    // useEffect(() => {
-    //     if (!Array.isArray(pianoNotes) || !currentTrackId) return;
-        
-    //     // Only load notes that belong to the current track
-    //     const trackNotes = pianoNotes.filter(note => (note.trackId ?? null) === (currentTrackId ?? null));
-        
-    //     const localNotes = trackNotes.map(note => ({
-    //         note: note.note,
-    //         start: note.startTime,
-    //         duration: note.duration,
-    //         velocity: note.velocity || 0.8,
-    //         id: note.id,
-    //         trackId: note.trackId,
-    //         timestamp: Date.now()
-    //     }));
-        
-    //     // Only update if the notes are actually different to avoid unnecessary re-renders
-    //     setNotes(prevNotes => {
-    //         if (prevNotes.length !== localNotes.length) return localNotes;
-            
-    //         // Check if any note has changed
-    //         const hasChanged = prevNotes.some((prevNote, index) => {
-    //             const localNote = localNotes[index];
-    //             return !localNote || 
-    //                    prevNote.id !== localNote.id || 
-    //                    prevNote.start !== localNote.start || 
-    //                    prevNote.duration !== localNote.duration ||
-    //                    prevNote.note !== localNote.note;
-    //         });
-            
-    //         return hasChanged ? localNotes : prevNotes;
-    //     });
-    // }, [pianoNotes, currentTrackId]);
-    
-    // piano key handling over
-
 
     // playing time line
     const synthRef = useRef(null);

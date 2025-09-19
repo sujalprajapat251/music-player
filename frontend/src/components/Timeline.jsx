@@ -52,6 +52,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { io } from 'socket.io-client';
 import { BASE_URL } from '../Utils/baseUrl';
 import VoiceAndMic from "./VoiceAndMic";
+import AccessPopup from "./AccessPopup";
+import { setAlert } from "../Redux/Slice/alert.slice";
 
 const Timeline = () => {
   
@@ -77,6 +79,9 @@ const Timeline = () => {
   const [selectedClipId, setSelectedClipId] = useState(null);
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
   const [showPiano, setShowPiano] = useState(false);
+  const [showAccessPopup, setShowAccessPopup] = useState(false);
+  const [micStream, setMicStream] = useState(null);
+  const [micAccessDenied, setMicAccessDenied] = useState(false);
   const [showDrum, setShowDrum] = useState(false);
   const [showMicVoice, setShowMicVoice] = useState(false);
   const [showGuitar, setShowGuitar] = useState(false);
@@ -258,7 +263,7 @@ const Timeline = () => {
   useEffect(() => {
     if (trackDeleted && trackDeleted.trackId) {
       console.log('Track deleted, stopping audio for track:', trackDeleted.trackId);
-
+      dispatch(setAlert({ text: 'Track Deleted.', color: 'success' }));
       // Stop all players for this track
       const playersToStop = players.filter(playerObj =>
         playerObj.trackId === trackDeleted.trackId
@@ -589,6 +594,37 @@ const Timeline = () => {
   };
 
   const getTrackType = useSelector((state) => selectStudioState(state).newtrackType);
+
+  // Check microphone access
+  const checkMicrophoneAccess = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMicStream(stream);
+      setMicAccessDenied(false);
+      return true;
+    } catch (error) {
+      console.error('Microphone access denied:', error);
+      setMicStream(null);
+      setMicAccessDenied(true);
+      return false;
+    }
+  };
+
+  // Check microphone access when Voice & Mic is selected
+  useEffect(() => {
+    if (getTrackType === "Voice & Mic" || showMicVoice) {
+      checkMicrophoneAccess();
+    }
+  }, [getTrackType, showMicVoice]);
+
+  // Cleanup microphone stream when component unmounts or Voice & Mic is closed
+  useEffect(() => {
+    return () => {
+      if (micStream) {
+        micStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [micStream]);
 
   // Mute functionality
   useEffect(() => {
@@ -3584,11 +3620,11 @@ const Timeline = () => {
 
             {/* Loop Start vertical line */}
             <div style={{ position: "absolute", top: 0, left: 0, height: "100%", width: "2px", pointerEvents: "none", zIndex: 12, transform: `translateX(${(loopStart || 0) * timelineWidthPerSecond}px)`}}>
-              <div style={{ position: "absolute", top: "78px", left: 0, bottom: 0, width: "2px", background: isLoopEnabled ? "#FF8C00" : "rgba(255,140,0,0.5)"}}/>
+              <div style={{ position: "absolute", top: "90px", left: 0, bottom: 0, width: "2px", background: "#FF8C00", display: isLoopEnabled ? "block" : "none"}}/>
             </div>
             {/* Loop End vertical line (behind LoopBar) */}
-            <div style={{ position: "absolute", top: 0, left: 0, height: "100%", width: "2px", pointerEvents: "none", zIndex: 8, transform: `translateX(${(loopEnd || 0) * timelineWidthPerSecond}px)`}}>
-              <div style={{ position: "absolute", top: "78px", left: 0, bottom: 0, width: "2px", background: isLoopEnabled ? "#FF8C00" : "rgba(255,140,0,0.5)"}}/>
+            <div style={{ position: "absolute", top: 0, left: 0, height: "100%", width: "2px", pointerEvents: "none", zIndex: 12, transform: `translateX(${(loopEnd || 0) * timelineWidthPerSecond}px)`}}>
+              <div style={{ position: "absolute", top: "90px", left: 0, bottom: 0, width: "2px", background: "#FF8C00", display: isLoopEnabled ? "block" : "none"}}/>
             </div>
             {/* Grid lines - only show when there are tracks */}
             {tracks.length > 0 && (
@@ -3619,7 +3655,7 @@ const Timeline = () => {
             </div>
           </div>
 
-          <div ref={gridSettingRef} className="hover:bg-[#1F1F1F] w-[30px] h-[30px] z-30 flex items-center justify-center rounded-full" onClick={() => setShowGridSetting((prev) => !prev)}>
+          <div ref={gridSettingRef} className="hover:bg-[#1F1F1F] w-[30px] h-[30px] z-30 flex items-center justify-center rounded-full cursor-pointer" onClick={() => setShowGridSetting((prev) => !prev)}>
             <img src={settingIcon} alt="Settings" />
             {showGridSetting && (
               <div className="absolute top-full right-0 z-30">
@@ -3636,7 +3672,7 @@ const Timeline = () => {
             )}
           </div>
 
-          <div className={`w-[30px] h-[30px] flex items-center justify-center rounded-full ${isLoopEnabled ? 'bg-[#FF8014]' : 'hover:bg-[#1F1F1F]'}`} onClick={() => dispatch(toggleLoopEnabled())}>
+          <div className={`w-[30px] h-[30px] flex items-center justify-center rounded-full cursor-pointer  ${isLoopEnabled ? 'bg-[#FF8014]' : 'hover:bg-[#1F1F1F]'}`} onClick={() => dispatch(toggleLoopEnabled())}>
             <img src={reverceIcon} alt="Reverse" />
           </div>
         </div>
@@ -3841,7 +3877,17 @@ const Timeline = () => {
       </AnimatePresence>
 
       {(showMicVoice || getTrackType === "Voice & Mic") && (
-        <VoiceAndMic onClose={() => { setShowMicVoice(false); dispatch(setTrackType(null)); }} />
+        <VoiceAndMic onClose={() => { setShowMicVoice(false); dispatch(setTrackType(null));
+          if (micStream) {
+            micStream.getTracks().forEach(track => track.stop());
+            setMicStream(null);
+          }
+          setMicAccessDenied(false);
+        }} />
+      )}
+
+      {((showMicVoice || getTrackType === "Voice & Mic") && micAccessDenied) && (
+        <AccessPopup onClose={() => { setShowAccessPopup(false); setMicAccessDenied(false); }} />
       )}
 
       {/* Rename Section Modal */}

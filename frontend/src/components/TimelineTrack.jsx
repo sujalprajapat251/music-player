@@ -1573,7 +1573,7 @@ const TimelineTrack = ({
 
         // tracks.map((track) => {
           // console.log("track z::: > =========================", track)
-          if (track?.type === 'audio') {
+          if (track?.type === 'audio' || track?.type === 'Voice & Mic') {
             return (
               <AudioClip
                   key={clip.id}

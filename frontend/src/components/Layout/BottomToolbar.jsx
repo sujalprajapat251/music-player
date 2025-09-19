@@ -33,6 +33,7 @@ import {
 import { zoomIn, zoomOut, selectGridSettings, resetZoom } from '../../Redux/Slice/grid.slice';
 import { selectStudioState } from '../../Redux/rootReducer';
 import { setAlert } from '../../Redux/Slice/alert.slice';
+import AccessPopup from '../AccessPopup';
 
 const BottomToolbar = () => {
     const [volume1, setVolume1] = useState(50);
@@ -55,6 +56,7 @@ const BottomToolbar = () => {
     const [countInNumber, setCountInNumber] = useState(null);
     const [isIconActive, setIsIconActive] = useState(false);
     const [isZooming, setIsZooming] = useState(false);
+    const [showAccessPopup, setShowAccessPopup] = useState(false);
 
     const dispatch = useDispatch();
 
@@ -69,6 +71,8 @@ const BottomToolbar = () => {
     const recordedData = useSelector((state) => selectStudioState(state)?.recordedData || []);
     const drumRecordedData = useSelector((state) => selectStudioState(state)?.drumRecordedData || []);
     const pianoRecord = useSelector((state) => selectStudioState(state)?.pianoRecord || []);
+
+    const getTrackType = useSelector((state) => selectStudioState(state)?.newtrackType);
 
     // Get key and scale selection from Redux
     const reduxSelectedKey = useSelector((state) => selectStudioState(state)?.selectedKey || null);
@@ -413,16 +417,23 @@ const BottomToolbar = () => {
     const tickIntervalRef = useRef(null);
 
     // Start recording
-    const handleStartRecord = () => {
+    const handleStartRecord = async () => {
+        try {
+            // Gate microphone permission only for 'Voice & Mic'
+            if (getTrackType === 'Voice & Mic') {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    // Immediately release the stream; actual recording is handled elsewhere
+                    stream.getTracks().forEach(track => track.stop());
+                } catch (err) {
+                    setShowAccessPopup(true);
+                    return; // Do not start recording
+                }
+            }
 
         if (selectedCountIn === "Off") {
-            // console.log("botoooooooooooooooooooooooooooo9")
             dispatch(setRecording(true));
-            dispatch(setRecordedData([])); // Clear timeline 
-
-            // Instead of clearing drum data, we'll let the Drum component handle it
-            // This allows for appending new recordings to existing ones
-            // dispatch(setDrumRecordedData([])); // Remove this line
+            dispatch(setRecordedData([]));
 
             setRecordingStartTime(Date.now());
             handlePlayPause();
@@ -431,6 +442,9 @@ const BottomToolbar = () => {
             }, 600);
         } else {
             startCountIn();
+            }
+        } catch (_) {
+            // No-op: safety catch
         }
     };
 
@@ -893,6 +907,9 @@ const handleMoveBackwardSmall = () => {
                 }
             `}</style>
             </div>
+            {showAccessPopup && getTrackType === 'Voice & Mic' && (
+                <AccessPopup onClose={() => setShowAccessPopup(false)} />
+            )}
         </>
     )
 }

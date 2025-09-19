@@ -2,12 +2,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Mic, Play, Pause, Square } from 'lucide-react';
 import { IoClose } from 'react-icons/io5';
 import { useDispatch, useSelector } from 'react-redux';
-import { setRecordingAudio } from '../Redux/Slice/studio.slice';
+import { setRecordingAudio, addAudioClipToTrack, updateAudioClip } from '../Redux/Slice/studio.slice';
+import AccessPopup from './AccessPopup';
+import { selectStudioState } from '../Redux/rootReducer';
+import { BASE_URL } from '../Utils/baseUrl';
 
 const VoiceAndMic = ({ onClose, onRecorded }) => {
 
     const dispatch = useDispatch();
-
     const [showOffcanvas1, setShowOffcanvas1] = useState(true);
     const [isRecording, setIsRecording] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -15,8 +17,12 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
     const [recordingTime, setRecordingTime] = useState(0);
     const [selectedInput, setSelectedInput] = useState('No Input selected');
     const [activeTab, setActiveTab] = useState('Audio');
+    const [showAccessPopup, setShowAccessPopup] = useState(false);
 
-    const getTrackType = useSelector((state) => state.studio.newtrackType);
+    const getTrackType = useSelector((state) => selectStudioState(state).newtrackType);
+    const getIsRecording = useSelector((state) => selectStudioState(state).isRecording);
+    const currentTime = useSelector((state) => selectStudioState(state).currentTime || 0);
+    const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
 
     const mediaRecorderRef = useRef(null);
     const audioContextRef = useRef(null);
@@ -86,12 +92,80 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                 }
             };
 
-            mediaRecorder.onstop = () => {
+            mediaRecorder.onstop = async () => {
                 const blobType = options.mimeType || 'audio/webm';
                 const blob = new Blob(chunks, { type: blobType });
                 const url = URL.createObjectURL(blob);
-                console.log("ulr ::: > ", url)
+
                 dispatch(setRecordingAudio(url));
+
+                // Append recorded blob as an audio clip on the current track
+                try {
+                    // Compute accurate duration from the blob
+                    let durationSec = 0;
+                    try {
+                        const arrayBuffer = await blob.arrayBuffer();
+                        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                        durationSec = audioBuffer.duration;
+                        audioCtx.close();
+                    } catch (e) {
+                        durationSec = Number(recordingTime) || 0;
+                    }
+                    // Fallback safeguard
+                    if (!Number.isFinite(durationSec) || durationSec <= 0) {
+                        durationSec = Number(recordingTime) || 0;
+                    }
+
+                    const startTime = Math.max(0, (Number(currentTime) || 0) - (Number(durationSec) || 0));
+                    if (currentTrackId) {
+                        // Create a stable clip id so we can update URL after upload
+                        const clipId = Date.now() + Math.random();
+
+                        dispatch(addAudioClipToTrack({
+                            trackId: currentTrackId,
+                            audioClip: {
+                                id: clipId,
+                                url,
+                                name: 'Mic Recording',
+                                duration: durationSec,
+                                trimStart: 0,
+                                trimEnd: durationSec,
+                                startTime,
+                                fromRecording: true,
+                                type: 'audio'
+                            }
+                        }));
+
+                        // Upload blob to backend to obtain HTTP URL, then update the clip
+                        try {
+                            const formData = new FormData();
+                            formData.append('audio', blob, `mic_recording_${Date.now()}.webm`);
+                            const resp = await fetch(`${BASE_URL}/upload-audio`, {
+                                method: 'POST',
+                                body: formData,
+                                credentials: 'include'
+                            });
+                            if (resp.ok) {
+                                const data = await resp.json();
+                                const httpUrl = data?.url;
+                                if (httpUrl) {
+                                    dispatch(updateAudioClip({
+                                        trackId: currentTrackId,
+                                        clipId,
+                                        updates: { url: httpUrl }
+                                    }));
+                                }
+                            }
+                        } catch (uploadErr) {
+                            // Silently ignore upload errors; clip will keep blob URL
+                        }
+                    } else {
+                        console.warn('No currentTrackId set; cannot append recording to timeline.');
+                    }
+                } catch (e) {
+                    console.warn('Failed to append recording to track:', e);
+                }
 
                 if (onRecorded) {
                     onRecorded({ url, duration: recordingTime, blob, type: blobType });
@@ -108,8 +182,7 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
             }, 1000);
         } catch (error) {
             console.error('Failed to start recording:', error);
-            // Optional: surface a friendly message; adjust to your UI needs
-            alert(error?.message || 'Unable to start recording.');
+            setShowAccessPopup(true);
         }
     };
 
@@ -166,11 +239,27 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
         };
     }, []);
 
+    // Start/stop mic based on global recording flag from BottomToolbar
+    useEffect(() => {
+        try {
+            if (getTrackType === 'Voice & Mic') {
+                if (getIsRecording && !isRecording) {
+                    startRecording();
+                } else if (!getIsRecording && isRecording) {
+                    stopRecording();
+                }
+            }
+        } catch (_) {
+            // no-op
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [getIsRecording, getTrackType]);
+
     return (
         <>
             {showOffcanvas1 === true && (
                 <>
-                    <div className="fixed z-[10] w-full h-full transition-transform left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px] lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[516px]">
+                    <div className="fixed z-[12] w-full h-full transition-transform left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px] lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[516px]">
                         <div className="border-b border-[#FFFFFF1A] h-full">
                             <div className=" bg-[#1F1F1F] flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                                 <div>
@@ -277,6 +366,11 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                         </div>
                     </div>
                 </>
+            )}
+
+            {/* AccessPopup for microphone permission */}
+            {showAccessPopup && (
+                <AccessPopup onClose={() => setShowAccessPopup(false)} />
             )}
         </>
     );
