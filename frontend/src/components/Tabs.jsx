@@ -14,7 +14,7 @@ export default function Tabs({ tabs }) {
           ))}
         </div>
       </div>
-      <div className="flex justify-center mt-6">
+      <div className="flex justify-center mt-5">
         <div className="w-full p-6">
           {tabs[activeTab].content}
         </div>
