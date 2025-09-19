@@ -875,6 +875,8 @@ const Guitar = ({ onClose }) => {
             };
         }, []);
 
+        const musicalTypingEnabled = useSelector((state) => state.ui?.musicalTypingEnabled !== false);
+
         return (
             <div
                 className="relative h-[93%] overscroll-none"
@@ -889,6 +891,14 @@ const Guitar = ({ onClose }) => {
                 style={{ userSelect: 'none', touchAction: 'none' }}
             >
                 <Piano noteRange={noteRange} playNote={playNote} stopNote={stopNote} keyboardShortcuts={keyboardShortcuts} />
+                {!musicalTypingEnabled && (
+                    <style jsx>{`
+                        .ReactPiano__NoteLabel--natural,
+                        .ReactPiano__NoteLabel--accidental {
+                            display: none !important;
+                        }
+                    `}</style>
+                )}
                 <style jsx>{`
                     .ReactPiano__Keyboard{
                       background-color: #c7c7c7;

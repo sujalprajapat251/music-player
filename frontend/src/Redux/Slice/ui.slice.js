@@ -3,6 +3,7 @@ import { createSlice } from '@reduxjs/toolkit';
 const initialState = {
   isSongSection: false, 
   showLoopLibrary: false,
+  musicalTypingEnabled: true,
 };
 
 const uiSlice = createSlice({
@@ -15,8 +16,11 @@ const uiSlice = createSlice({
     setShowLoopLibrary: (state, action) => {
       state.showLoopLibrary = Boolean(action.payload);
     },
+    setMusicalTypingEnabled: (state, action) => {
+      state.musicalTypingEnabled = Boolean(action.payload);
+    },
   },
 });
 
-export const { setIsSongSection, setShowLoopLibrary } = uiSlice.actions;
+export const { setIsSongSection, setShowLoopLibrary, setMusicalTypingEnabled } = uiSlice.actions;
 export default uiSlice.reducer;

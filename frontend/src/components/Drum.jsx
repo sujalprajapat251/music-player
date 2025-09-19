@@ -1244,6 +1244,12 @@ const DrumPadMachine = ({ onClose }) => {
 
   return (
     <>
+      {useSelector((state) => state.ui?.musicalTypingEnabled !== false) === false && (
+        <style jsx>{`
+          .mv_drum_key_none { color: transparent !important;
+          background-color: transparent !important; }
+        `}</style>
+      )}
       {showOffcanvas3 === true && (
         <>
           <div className="fixed z-[26] w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[390px] sm:bottom-[390px] md600:bottom-[450px]  lg:bottom-[530px] xl:bottom-[545px] 2xl:bottom-[563px] 3xl:bottom-[610px]"
@@ -1426,7 +1432,7 @@ const DrumPadMachine = ({ onClose }) => {
                                 style={pressedKeys.has('Q') ? styles.pressedRings : {}}
                               ></div>
                               <div
-                                className="relative w-4 h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95"
+                                className="relative w-4 h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95 mv_drum_key_none"
                                 style={pressedKeys.has('Q') ? styles.pressedButton : {}}
                               >
                                 Q
@@ -1445,7 +1451,7 @@ const DrumPadMachine = ({ onClose }) => {
                               <div className="absolute w-24 h-24 md600:w-28 md600:h-28 lg:w-32 lg:h-32 3xl:w-40 3xl:h-40 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70 bg-[#3D3B3A]" style={pressedKeys.has('W') ? styles.pressedButton : {}} ></div>
                               <div className="absolute w-20 h-20 md600:w-24 md600:h-24 lg:w-28 lg:h-28 3xl:w-36 3xl:h-36 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('W') ? styles.pressedButton : {}} ></div>
                               <div className="absolute w-10 h-10 md600:w-12 md600:h-12 lg:w-16 lg:h-16 3xl:w-20 3xl:h-20 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('W') ? styles.pressedButton : {}} ></div>
-                              <div className="relative w-4 h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('W') ? styles.pressedButton : {}} >
+                              <div className="relative w-4 h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95 mv_drum_key_none" style={pressedKeys.has('W') ? styles.pressedButton : {}} >
                                 W
                               </div>
                             </div>
@@ -1461,8 +1467,10 @@ const DrumPadMachine = ({ onClose }) => {
                               <div className="absolute w-24 h-24 md600:w-28 md600:h-28 lg:w-32 lg:h-32 3xl:w-40 3xl:h-40 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70 bg-[#3D3B3A]" style={pressedKeys.has('E') ? styles.pressedButton : {}} ></div>
                               <div className="absolute w-20 h-20 md600:w-24 md600:h-24 lg:w-28 lg:h-28 3xl:w-36 3xl:h-36 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('E') ? styles.pressedButton : {}} ></div>
                               <div className="absolute w-10 h-10 md600:w-12 md600:h-12 lg:w-16 lg:h-16 3xl:w-16 3xl:h-16 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('E') ? styles.pressedButton : {}} ></div>
-                              <div className="relative w-4 h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('E') ? styles.pressedButton : {}} >
-                                E
+                              <div className="relative w-4 h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95 mv_drum_key_none" style={pressedKeys.has('E') ? styles.pressedButton : {}} >
+                                <div>
+                                  E
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -1476,7 +1484,7 @@ const DrumPadMachine = ({ onClose }) => {
                             <div className="relative  flex items-center justify-center group">
                               <div className="absolute w-40 h-40 md600:w-44 md600:h-44 lg:w-48 lg:h-48 3xl:w-52 3xl:h-52 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70 bg-[#3D3B3A]" style={pressedKeys.has('R') ? styles.pressedButton : {}}></div>
                               <div className="absolute w-16 h-16 md600:w-20 md600:h-20 lg:w-24 lg:h-24 3xl:w-28 3xl:h-28 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('R') ? styles.pressedButton : {}}></div>
-                              <div className="relative w-4 h-4 lg:w-8 lg:h-8 3xl:w-8 3xl:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('R') ? styles.pressedButton : {}}>
+                              <div className="relative w-4 h-4 lg:w-8 lg:h-8 3xl:w-8 3xl:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95 mv_drum_key_none" style={pressedKeys.has('R') ? styles.pressedButton : {}}>
                                 R
                               </div>
                             </div>
@@ -1491,7 +1499,7 @@ const DrumPadMachine = ({ onClose }) => {
                               <div className="absolute w-28 h-28 md600:w-32 md600:h-32 lg:w-36 lg:h-36 3xl:w-40 3xl:h-40 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('A') ? styles.pressedButton : {}}></div>
                               <div className="absolute w-20 h-20 md600:w-24 md600:h-24 lg:w-28 lg:h-28 3xl:w-32 3xl:h-32 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/65 group-active:border-gray-400/85 bg-[#3D3B3A]" style={pressedKeys.has('A') ? styles.pressedButton : {}}></div>
                               <div className="absolute w-12 h-12 md600:w-16 md600:h-16 lg:w-20 lg:h-20 3xl:w-20 3xl:h-20 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/70 group-active:border-gray-400/90 bg-[#3D3B3A]" style={pressedKeys.has('A') ? styles.pressedButton : {}}></div>
-                              <div className="relative w-4 h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('A') ? styles.pressedButton : {}}>
+                              <div className="relative w-4 h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95 mv_drum_key_none" style={pressedKeys.has('A') ? styles.pressedButton : {}}>
                                 A
                               </div>
                             </div>
@@ -1506,7 +1514,7 @@ const DrumPadMachine = ({ onClose }) => {
                               <div className="absolute w-32 h-32 md600:w-36 md600:h-36 lg:w-44 lg:h-44 3xl:w-48 3xl:h-48 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70 bg-[#3D3B3A]" style={pressedKeys.has('S') ? styles.pressedButton : {}}></div>
                               <div className="absolute w-28 h-28 md600:w-32 md600:h-32 lg:w-40 lg:h-40 3xl:w-44 3xl:h-44 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('S') ? styles.pressedButton : {}}></div>
                               <div className="absolute w-10 h-10 md600:w-12 md600:h-12 lg:w-16 lg:h-16 3xl:w-20 3xl:h-20 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('S') ? styles.pressedButton : {}}></div>
-                              <div className="relative w-4 h-4 lg:w-8 lg:h-8 3xl:w-8 3xl:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('S') ? styles.pressedButton : {}}>
+                              <div className="relative w-4 h-4 lg:w-8 lg:h-8 3xl:w-8 3xl:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95 mv_drum_key_none" style={pressedKeys.has('S') ? styles.pressedButton : {}}>
                                 S
                               </div>
                             </div>
@@ -1521,7 +1529,7 @@ const DrumPadMachine = ({ onClose }) => {
                               <div className="absolute w-32 h-32 md600:w-36 md600:h-36 lg:w-44 lg:h-44 3xl:w-48 3xl:h-48 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70 bg-[#3D3B3A]" style={pressedKeys.has('F') ? styles.pressedButton : {}}></div>
                               <div className="absolute w-28 h-28 md600:w-32 md600:h-32 lg:w-40 lg:h-40 3xl:w-44 3xl:h-44 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('F') ? styles.pressedButton : {}}></div>
                               <div className="absolute w-10 h-10 md600:w-12 md600:h-12 lg:w-16 lg:h-16 3xl:w-20 3xl:h-20 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('F') ? styles.pressedButton : {}}></div>
-                              <div className="relative w-4 h-4 lg:w-8 lg:h-8  bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('F') ? styles.pressedButton : {}}>
+                              <div className="relative w-4 h-4 lg:w-8 lg:h-8  bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95 mv_drum_key_none" style={pressedKeys.has('F') ? styles.pressedButton : {}}>
                                 F
                               </div>
                             </div>
@@ -1536,7 +1544,7 @@ const DrumPadMachine = ({ onClose }) => {
                               <div className="absolute w-24 h-24 md600:w-28 md600:h-28 lg:w-32 lg:h-32 3xl:w-40 3xl:h-40 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/50 group-active:border-gray-400/70 bg-[#3D3B3A]" style={pressedKeys.has('Z') ? styles.pressedButton : {}}></div>
                               <div className="absolute w-16 h-16 md600:w-20 md600:h-20 lg:w-24 lg:h-24 3xl:w-32 3xl:h-32 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('Z') ? styles.pressedButton : {}}></div>
                               <div className="absolute w-10 h-10 md600:w-12 md600:h-12 lg:w-16 lg:h-16 3xl:w-16 3xl:h-16 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('Z') ? styles.pressedButton : {}}></div>
-                              <div className="relative w-4 h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('Z') ? styles.pressedButton : {}}>
+                              <div className="relative w-4 h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95 mv_drum_key_none" style={pressedKeys.has('Z') ? styles.pressedButton : {}}>
                                 Z
                               </div>
                             </div>
@@ -1550,7 +1558,7 @@ const DrumPadMachine = ({ onClose }) => {
                             <div className="relative  flex items-center justify-center group">
                               <div className="absolute md600:w-20 md600:h-20 lg:w-24 lg:h-24  rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('X') ? styles.pressedButton : {}}></div>
                               <div className="absolute md600:w-12 md600:h-12 lg:w-16 lg:h-16  rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('X') ? styles.pressedButton : {}}></div>
-                              <div className="relative md600:w-4 md600:h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('X') ? styles.pressedButton : {}}>
+                              <div className="relative md600:w-4 md600:h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95 mv_drum_key_none" style={pressedKeys.has('X') ? styles.pressedButton : {}}>
                                 X
                               </div>
                             </div>
@@ -1564,7 +1572,7 @@ const DrumPadMachine = ({ onClose }) => {
                             <div className="relative  flex items-center justify-center group">
                               <div className="absolute md600:w-20 md600:h-20 lg:w-24 lg:h-24 rounded-full border  border-[#606060] transition-all duration-300 group-hover:border-gray-500/55 group-active:border-gray-400/75 bg-[#3D3B3A]" style={pressedKeys.has('C') ? styles.pressedButton : {}}></div>
                               <div className="absolute md600:w-12 md600:h-12 lg:w-16 lg:h-16 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('C') ? styles.pressedButton : {}}></div>
-                              <div className="relative md600:w-4 md600:h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('C') ? styles.pressedButton : {}}>
+                              <div className="relative md600:w-4 md600:h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95 mv_drum_key_none" style={pressedKeys.has('C') ? styles.pressedButton : {}}>
                                 C
                               </div>
                             </div>
@@ -1579,7 +1587,7 @@ const DrumPadMachine = ({ onClose }) => {
                               <div className="absolute w-28 h-28 md600:w-32 md600:h-32 lg:w-36 lg:h-36 3xl:w-40 3xl:h-40 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/60 group-active:border-gray-400/80 bg-[#3D3B3A]" style={pressedKeys.has('D') ? styles.pressedButton : {}}></div>
                               <div className="absolute w-20 h-20 md600:w-24 md600:h-24 lg:w-28 lg:h-28 3xl:w-32 3xl:h-32 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/65 group-active:border-gray-400/85 bg-[#3D3B3A]" style={pressedKeys.has('D') ? styles.pressedButton : {}}></div>
                               <div className="absolute w-12 h-12 md600:w-16 md600:h-16 lg:w-20 lg:h-20 3xl:w-24 3xl:h-24 rounded-full border border-[#606060] transition-all duration-300 group-hover:border-gray-500/70 group-active:border-gray-400/90 bg-[#3D3B3A]" style={pressedKeys.has('D') ? styles.pressedButton : {}}></div>
-                              <div className="relative w-4 h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95" style={pressedKeys.has('D') ? styles.pressedButton : {}}>
+                              <div className="relative w-4 h-4 lg:w-8 lg:h-8 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/20 group-active:scale-95 mv_drum_key_none" style={pressedKeys.has('D') ? styles.pressedButton : {}}>
                                 D
                               </div>
                             </div>
