@@ -3,12 +3,57 @@ import { useDispatch, useSelector } from "react-redux";
 import { getAllMusic } from "../Redux/Slice/music.slice";
 import { IMAGE_URL } from "../Utils/baseUrl"; 
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../Utils/ThemeContext";
+
+// Theme-aware color system for OpenProjectModal
+const getOpenProjectColors = (isDark) => ({
+  // Overlay and modal
+  overlayBg: isDark ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0.3)",
+  modalBg: isDark ? "#181818" : "#ffffff",
+  modalBorder: isDark ? "#2a2a2a" : "#e6e6e6",
+
+  // Text
+  textPrimary: isDark ? "#ffffff" : "#141414",
+  textSecondary: isDark ? "#cfcfcf" : "#404040",
+
+  // Inputs
+  inputBg: isDark ? "#232323" : "#f5f5f5",
+  inputBorder: isDark ? "#333333" : "#d0d0d0",
+  placeholder: isDark ? "#9ca3af" : "#6b7280",
+
+  // List rows
+  rowHover: isDark ? "#232323" : "#f5f5f5",
+  rowSelected: isDark ? "#232323" : "#eaeaea",
+  divider: isDark ? "#232323" : "#e6e6e6",
+
+  // Buttons
+  buttonBg: isDark ? "#232323" : "#f5f5f5",
+  buttonText: isDark ? "#e5e5e5" : "#141414",
+  buttonHoverBg: isDark ? "#2c2c2c" : "#ebebeb",
+  buttonBorder: isDark ? "#4b5563" : "#d1d5db",
+
+  // Primary action
+  primaryBg: isDark ? "#6c2bd7" : "#5b21b6",
+  primaryHoverBg: isDark ? "#4b1fa3" : "#4c1d95",
+  primaryText: "#ffffff",
+
+  // Playback button
+  pillBg: isDark ? "#2a2a2a" : "#efefef",
+  pillText: isDark ? "#d1d5db" : "#374151",
+
+  // Waveform
+  waveformProgress: isDark ? "#6c2bd7" : "#5b21b6",
+  waveformBase: isDark ? "#444444" : "#bdbdbd",
+});
 
 const OpenProjectModal = ({ open, onClose, onSelect }) => {
 
   const dispatch = useDispatch();
   const { allmusic, loading } = useSelector((state) => state.music);
   const navigate = useNavigate();
+
+  const { isDark } = useTheme();
+  const colors = getOpenProjectColors(isDark);
 
   const [search, setSearch] = useState("");
   const [excludeUntitled, setExcludeUntitled] = useState(false);
@@ -23,7 +68,7 @@ const OpenProjectModal = ({ open, onClose, onSelect }) => {
 
   const handlePlayPause = (project, idx) => {
     const audioRef = musicAudioRefs.current[idx];
-    if (!audioRef) return;
+    if (!audioRef) return;  
 
     setSelectedProject(idx); // Enable Open button when play is clicked
 
@@ -110,10 +155,10 @@ const drawWaveform = useCallback((musicId, idx) => {
     const x = i * (barWidth + spacing);
     const y = (height - barHeight) / 2;
     const progressPoint = progress * barCount;
-    ctx.fillStyle = i < progressPoint ? "#6c2bd7" : "#444";
+    ctx.fillStyle = i < progressPoint ? colors.waveformProgress : colors.waveformBase;
     ctx.fillRect(x, y, barWidth, barHeight);
   }
-}, [musicProgress]);
+}, [musicProgress, colors]);
 
   useEffect(() => {
     if (open) {
@@ -214,15 +259,18 @@ const drawWaveform = useCallback((musicId, idx) => {
     <div>
       {open && (
         <div
-          className="fixed inset-0 z-[999] flex items-center justify-center bg-black bg-opacity-70"
+          className="fixed inset-0 z-[999] flex items-center justify-center"
+          style={{ backgroundColor: colors.overlayBg }}
           onClick={onClose}
         >
           <div
-            className="bg-[#181818] rounded-xl shadow-2xl w-full max-w-2xl p-6 relative"
+            className="rounded-xl shadow-2xl w-full max-w-2xl p-6 relative"
+            style={{ backgroundColor: colors.modalBg, border: `1px solid ${colors.modalBorder}` }}
             onClick={(e) => e.stopPropagation()}
           >
             <button
-              className="absolute top-3 right-5 text-gray-400 text-2xl font-bold hover:text-gray-200"
+              className="absolute top-3 right-5 text-2xl font-bold"
+              style={{ color: colors.textSecondary }}
               onClick={onClose}
             >
               &times;
@@ -230,7 +278,7 @@ const drawWaveform = useCallback((musicId, idx) => {
 
             {/* Header */}
             <div className="flex items-center justify-between mt-2 mb-4">
-              <h2 className="font-bold text-2xl text-white mb-1 ml-10">
+              <h2 className="font-bold text-2xl mb-1 ml-10" style={{ color: colors.textPrimary }}>
                 Open project
               </h2>
               <input
@@ -238,13 +286,14 @@ const drawWaveform = useCallback((musicId, idx) => {
                 placeholder="Search projects"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="bg-[#232323] text-white px-4 py-2 w-56 mr-8 rounded border border-[#333] focus:outline-none placeholder:text-gray-400"
+                className="px-4 py-2 w-56 mr-8 rounded border focus:outline-none"
+                style={{ backgroundColor: colors.inputBg, color: colors.textPrimary, borderColor: colors.inputBorder }}
               />
             </div>
 
             {/* Exclude toggle */}
             <div className="flex items-center gap-2 mb-3">
-              <label className="flex items-center gap-3 text-gray-300 text-sm ml-10">
+              <label className="flex items-center gap-3 text-sm ml-10" style={{ color: colors.textSecondary }}>
                 <span className="relative inline-block w-10 h-5">
                   <input
                     type="checkbox"
@@ -255,7 +304,7 @@ const drawWaveform = useCallback((musicId, idx) => {
                     }}
                     className="sr-only peer"
                   />
-                  <span className="absolute w-10 h-5 bg-[#232323] rounded-full peer-checked:bg-[#6c2bd7] transition-colors"></span>
+                  <span className="absolute w-10 h-5 rounded-full transition-colors" style={{ backgroundColor: colors.inputBg }}></span>
                   <span
                     className={`absolute left-1 top-1 w-3 h-3 rounded-full bg-gray-400 peer-checked:bg-white transition-transform duration-200 ${
                       excludeUntitled ? "translate-x-5" : ""
@@ -266,14 +315,15 @@ const drawWaveform = useCallback((musicId, idx) => {
               </label>
             </div>
 
-            <hr className="my-1 border-gray-700" />
+            <hr className="my-1" style={{ borderColor: colors.divider }} />
 
             {/* Table Header */}
             <div className="flex justify-between px-6 py-1">
-              <span className="text-gray-400 text-md ml-36">Project</span>
+              <span className="text-md ml-36" style={{ color: colors.textSecondary }}>Project</span>
               <button
                 type="button"
-                className="text-gray-400 text-md focus:outline-none hover:text-white"
+                className="text-md focus:outline-none"
+                style={{ color: colors.textSecondary }}
                 onClick={() =>
                   setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))
                 }
@@ -282,14 +332,14 @@ const drawWaveform = useCallback((musicId, idx) => {
               </button>
             </div>
 
-            <hr className="my-1 border-gray-700" />
+            <hr className="my-1" style={{ borderColor: colors.divider }} />
 
             {/* Projects list */}
             <div className="overflow-y-auto h-[320px]">
               {loading ? (
-                <div className="text-center text-gray-400 py-8">Loading...</div>
+                <div className="text-center py-8" style={{ color: colors.textSecondary }}>Loading...</div>
               ) : filteredProjects.length === 0 ? (
-                <div className="px-6 py-8 text-gray-500 text-center">
+                <div className="px-6 py-8 text-center" style={{ color: colors.textSecondary }}>
                   No projects found.
                 </div>
               ) : (
@@ -306,11 +356,14 @@ const drawWaveform = useCallback((musicId, idx) => {
                   const absIdx = indexOfFirst + idx;
 
                   return (
-                     <div
+                    <div
                       key={project._id}
-                      className={`flex justify-between items-center px-6 py-4   border-b border-[#232323] cursor-pointer ${
-                        selectedProject === absIdx ? "bg-[#232323]" : ""
-                      }`}
+                      className={`flex justify-between items-center px-6 py-4 border-b cursor-pointer`}
+                      style={{ 
+                        borderColor: colors.divider,
+                        backgroundColor: selectedProject === absIdx ? colors.rowSelected : "transparent",
+                        color: colors.textSecondary
+                      }}
                       onClick={() => setSelectedProject(absIdx)}
                     >
                       {/* Left */}
@@ -339,21 +392,22 @@ const drawWaveform = useCallback((musicId, idx) => {
                         )}
 
                         <button
-                          className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center"
+                          className="w-10 h-10 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: colors.pillBg }}
                           onClick={(e) => {
                             e.stopPropagation();
                             handlePlayPause(project, absIdx);
                           }}
                         >
-                          <span className="text-gray-300 text-lg">
+                          <span className="text-lg" style={{ color: colors.pillText }}>
                             {playingMusicId === project._id ? "⏸" : "▶"}
                           </span>
                         </button>
                         <div>
-                          <span className="text-white text-sm">
+                          <span className="text-sm" style={{ color: colors.textPrimary }}>
                             {project.name}
                           </span>
-                          <span className="text-gray-400 text-xs block">
+                          <span className="text-xs block" style={{ color: colors.textSecondary }}>
                             {project.fileName}
                           </span>
                           <canvas
@@ -367,7 +421,7 @@ const drawWaveform = useCallback((musicId, idx) => {
                       </div>
 
                       {/* Right: Date */}
-                      <span className="text-gray-300 text-sm">
+                      <span className="text-sm" style={{ color: colors.textSecondary }}>
                         {new Date(project.updatedAt).toLocaleString()}
                       </span>
                     </div>
@@ -376,7 +430,7 @@ const drawWaveform = useCallback((musicId, idx) => {
               )}
             </div>
 
-            <hr className="my-1 border-gray-700" />
+            <hr className="my-1" style={{ borderColor: colors.divider }} />
 
             {/* Footer */}
             <div className="flex items-center justify-between mt-8 mb-1">
@@ -384,21 +438,23 @@ const drawWaveform = useCallback((musicId, idx) => {
                 Projects 1 - {filteredProjects.length} of{" "}
                 {filteredProjects.length}
               </span> */}
-              <span className="text-gray-400 text-sm ml-6">
+              <span className="text-sm ml-6" style={{ color: colors.textSecondary }}>
                 Project {currentPage} - {Math.min(indexOfLast, filteredProjects.length)} of {filteredProjects.length}
               </span>
 
 
               <div className="flex gap-2 mr-32">
                 <button 
-                  className="w-8 h-8 rounded bg-[#232323] text-gray-200 flex items-center justify-center"
+                  className="w-8 h-8 rounded flex items-center justify-center"
+                  style={{ backgroundColor: colors.buttonBg, color: colors.buttonText, border: `1px solid ${colors.buttonBorder}` }}
                   onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
                 >
                   &#60;
                 </button>
                 <button 
-                  className="w-8 h-8 rounded bg-[#232323] text-gray-200 flex items-center justify-center"
+                  className="w-8 h-8 rounded flex items-center justify-center"
+                  style={{ backgroundColor: colors.buttonBg, color: colors.buttonText, border: `1px solid ${colors.buttonBorder}` }}
                   onClick={() =>
                     setCurrentPage((prev) =>
                       prev < Math.ceil(filteredProjects.length / itemsPerPage)
@@ -414,18 +470,16 @@ const drawWaveform = useCallback((musicId, idx) => {
 
               <div className="flex gap-4">
                 <button
-                  className="px-6 py-1 rounded-full bg-[#232323] border border-gray-600 text-gray-300 hover:bg-[#2c2c2c]"
+                  className="px-6 py-1 rounded-full"
+                  style={{ backgroundColor: colors.buttonBg, color: colors.buttonText, border: `1px solid ${colors.buttonBorder}` }}
                   onClick={onClose}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleOpen}
-                  className={`px-6 py-1 rounded-full bg-[#6c2bd7] text-white ${
-                    isOpenDisabled
-                      ? "opacity-50"
-                      : "hover:bg-[#4b1fa3]"
-                  }`}
+                  className={`px-6 py-1 rounded-full text-white ${isOpenDisabled ? "opacity-50" : ""}`}
+                  style={{ backgroundColor: isOpenDisabled ? colors.primaryBg : colors.primaryBg }}
                   disabled={isOpenDisabled}
                 >
                   Open

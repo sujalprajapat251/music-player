@@ -56,11 +56,71 @@ import ShareModal from '../Sharemodal';
 import PricingModel from '../PricingModel';
 import { setCurrentMusic } from '../../Redux/Slice/music.slice';
 
+const getTopHeaderColors = (isDark) => ({
+  // Background colors
+  background: isDark ? '#141414' : '#ffffff',
+  backgroundHover: isDark ? '#262529' : '#f5f5f5',
+  backgroundActive: isDark ? '#1a1a1a' : '#e8e8e8',
+  
+  // Border colors
+  border: isDark ? '#FFFFFF1A' : '#1414141A',
+  borderHover: isDark ? '#FFFFFF4D' : '#1414144D',
+  borderStrong: isDark ? '#333333' : '#d0d0d0',
+  
+  // Text colors
+  textPrimary: isDark ? '#ffffff' : '#141414',
+  textSecondary: isDark ? '#ffffff' : '#141414',
+  textMuted: isDark ? '#ffffff99' : '#14141499',
+  textAccent: isDark ? '#357935' : '#2d5a2d',
+  
+  // Icon colors
+  iconPrimary: isDark ? '#ffffff' : '#141414',
+  iconSecondary: isDark ? '#ffffff' : '#141414',
+  iconMuted: isDark ? '#ffffff99' : '#14141499',
+  
+  // Button colors
+  buttonPrimary: isDark ? '#ffffff' : '#141414',
+  buttonSecondary: isDark ? '#141414' : '#ffffff',
+  buttonHover: isDark ? '#f0f0f0' : '#2a2a2a',
+  buttonDisabled: isDark ? '#2a2a2a' : '#e0e0e0',
+  
+  // Menu colors
+  menuBackground: isDark ? '#141414' : '#ffffff',
+  menuItemHover: isDark ? '#262529' : '#f5f5f5',
+  menuBorder: isDark ? '#FFFFFF1A' : '#1414141A',
+  
+  // Theme toggle colors
+  toggleBackground: isDark ? '#1F1F1F' : '#f0f0f0',
+  toggleSlider: isDark ? '#1F1F1F' : '#ffffff',
+  toggleIcon: isDark ? '#ffffff' : '#141414',
+  toggleBorder: isDark ? '#333333' : '#d0d0d0',
+  
+  // Status colors
+  success: '#357935',
+  error: '#FF0000',
+  warning: '#FFA500',
+  
+  // Special colors
+  accent: isDark ? '#AD00FF' : '#8B00CC',
+  accentHover: isDark ? '#CC00FF' : '#9900DD',
+  
+  // Upgrade button colors
+  upgradeBackground: isDark ? '#141414' : '#ffffff',
+  upgradeText: isDark ? '#ffffff' : '#141414',
+  
+  // Share button colors
+  shareBackground: isDark ? '#141414' : '#ffffff',
+  shareText: isDark ? '#ffffff' : '#141414',
+});
+
 const TopHeader = () => {
     const dispatch = useDispatch();
     const isSongSection = useSelector((state) => state.ui.isSongSection);
     const currentSoundQuality = useSelector((state) => state.audioSettings?.soundQuality || 'High');
 
+    // Get theme colors
+    const { isDark } = useTheme();
+    const colors = getTopHeaderColors(isDark);
     // Undo/Redo functionality
     const { undo: originalUndo, redo: originalRedo, canUndo, canRedo, historyLength, futureLength } = useUndoRedo();
 
@@ -222,7 +282,7 @@ const TopHeader = () => {
         }, 10);
     };
 
-    const { isDark, setIsDark } = useTheme();
+    const { setIsDark } = useTheme();
     const [selectedtheme, setSelectedtheme] = useState('Dark Theme');
 
     // Define sound quality options
@@ -583,45 +643,74 @@ const TopHeader = () => {
             <NewProject open={newProjectOpen} setOpen={setNewProjectOpen} />
             {/* OpenProjectModal integration */}
             <OpenProjectModal open={openProjectModal} onClose={() => setOpenProjectModal(false)} />
-            <div className="flex justify-between bg-primary-light dark:bg-primary-dark border-b border-[#1414141A] dark:border-[#FFFFFF1A] px-2 py-2 sm:px-3 sm:py-1 md:px-5 md:py-2 xl:px-7">
+            <div className="flex justify-between border-b px-2 py-2 sm:px-3 sm:py-1 md:px-5 md:py-2 xl:px-7"style={{ backgroundColor: colors.background, borderColor: colors.border}}>
                 <div className="flex gap-1 sm:gap-2 md:gap-3 lg:gap-5 xl:gap-7 items-center">
-                    <p className="text-secondary-light dark:text-secondary-dark text-[12px] md:text-[14px] lg:text-[16px] xl:text-[18px]">LOGO</p>
+                    <p className="text-[12px] md:text-[14px] lg:text-[16px] xl:text-[18px]"style={{ color: colors.textSecondary }}>LOGO</p>
                     <Menu as="div" className="relative inline-block text-left">
                         <div>
                             <MenuButton className="outline-none" >
-                                <p className='text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] lg:text-[14px]'> File </p>
+                                <p className='text-[10px] md:text-[12px] lg:text-[14px]'style={{ color: colors.textSecondary }}> File </p>
                             </MenuButton>
                         </div>
 
-                        <Menu.Items className="absolute left-[-20px] sm:left-0 z-[99] mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60   origin-top-right bg-primary-light dark:bg-primary-dark shadow-lg outline-none">
+                        <Menu.Items className="absolute left-[-20px] sm:left-0 z-[99] mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60 origin-top-right shadow-lg outline-none"style={{ backgroundColor: colors.menuBackground }}>
                             <div className="">
                                 {/* First item: Print */}
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md600:py-2 flex md600:gap-3  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`} onClick={() => setNewProjectOpen(true)}>
-                                            <NewFolderIcon className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>New...</span>
+                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md600:py-2 flex md600:gap-3 outline-none transition-colors`}style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }}onClick={() => setNewProjectOpen(true)}>
+                                            <NewFolderIcon className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }}/>  
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>New...</span>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`} onClick={() => setOpenProjectModal(true)}>
-                                            <OpenFolderIcon className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Open...</span>
+                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3 outline-none transition-colors`} style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }} onClick={() => setOpenProjectModal(true)}>
+                                            <OpenFolderIcon className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }}/>  
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Open...</span>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <div className="relative " onMouseEnter={() => handleSubmenuToggle('openrecentfolder', true)} onMouseLeave={() => handleSubmenuToggle('openrecentfolder', false)}>
-                                    <div className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
-                                        <OpenFolderIcon className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Open Recent</span>
-                                        <MdOutlineKeyboardArrowRight className="text-secondary-light dark:text-secondary-dark text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
+                                    <div 
+                                        className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer transition-colors"
+                                        style={{ backgroundColor: 'transparent',color: colors.textSecondary}}
+                                        onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                    >
+                                        <OpenFolderIcon 
+                                            className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
+                                            style={{ color: colors.iconSecondary }}
+                                        />
+                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Open Recent</span>
+                                        <MdOutlineKeyboardArrowRight 
+                                            className="text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" 
+                                            style={{ color: colors.iconSecondary }}
+                                        />
                                     </div>
 
                                     {showSubmenu.openrecentfolder && (
-                                        <div className="absolute left-full top-0 z-50 w-36 md600:w-40 lg:mt-0 bg-primary-light dark:bg-primary-dark shadow-lg outline-none text-nowrap">
-                                            <p className="block px-2 py-1   md600:px-3 lg:px-4 md:py-2 text-secondary-light dark:text-secondary-dark cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529] text-[10px] md600:text-[12px] lg:text-[14px]" onClick={handleNestedOptionClick}>
+                                        <div 
+                                            className="absolute left-full top-0 z-50 w-36 md600:w-40 lg:mt-0 shadow-lg outline-none text-nowrap"
+                                            style={{ backgroundColor: colors.menuBackground }}
+                                        >
+                                            <p 
+                                                className="block px-2 py-1 md600:px-3 lg:px-4 md:py-2 cursor-pointer transition-colors text-[10px] md600:text-[12px] lg:text-[14px]" 
+                                                style={{ color: colors.textSecondary }}
+                                                onClick={handleNestedOptionClick}
+                                                onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                            >
                                                 Page navigator
                                             </p>
-                                            <p className="block px-2 py-1 md600:px-3  lg:px-4 md:py-2 text-secondary-light dark:text-secondary-dark cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529] text-[10px] md600:text-[12px] lg:text-[14px]" onClick={handleNestedOptionClick}>
+                                            <p 
+                                                className="block px-2 py-1 md600:px-3 lg:px-4 md:py-2 cursor-pointer transition-colors text-[10px] md600:text-[12px] lg:text-[14px]" 
+                                                style={{ color: colors.textSecondary }}
+                                                onClick={handleNestedOptionClick}
+                                                onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                            >
                                                 Bookmark
                                             </p>
                                         </div>
@@ -629,50 +718,111 @@ const TopHeader = () => {
                                 </div>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 pt-1 pb-2 gap-2 md600:px-4 lg:px-6 md600:pt-2 md600:pb-3 lg:pb-4 flex md600:gap-3 outline-none border-b border-[#1414141A] dark:border-[#FFFFFF1A] hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
-                                            <Previous className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Previous versions</span>
+                                        <p className={`px-3 pt-1 pb-2 gap-2 md600:px-4 lg:px-6 md600:pt-2 md600:pb-3 lg:pb-4 flex md600:gap-3 outline-none transition-colors`}style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary,borderBottom: `1px solid ${colors.menuBorder}`}}>
+                                            <Previous className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }}/>  
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Previous versions</span>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 pb-2 pt-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
-                                            <span className='ps-5 md600:ps-7 lg:ps-8 text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Save as...</span>
+                                        <p className={`px-3 pb-2 pt-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 outline-none transition-colors`} style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }}>
+                                            <span className='ps-5 md600:ps-7 lg:ps-8 text-[10px] md600:text-[12px] lg:text-[14px]'>Save as...</span>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 md600:px-4 lg:px-6 md600:py-2 flex gap-2 md600:gap-3 outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
-                                            <Exports className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /> <span className=' text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Export</span>
+                                        <p className={`px-3 py-1 md600:px-4 lg:px-6 md600:py-2 flex gap-2 md600:gap-3 outline-none transition-colors`} style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }}>
+                                            <Exports className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }}/> 
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Export</span>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 {/* Changed: Import submenu with individual tracking */}
                                 <div className="relative" onMouseEnter={() => handleSubmenuToggle('import', true)} onMouseLeave={() => handleSubmenuToggle('import', false)}>
-                                    <div className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md600:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
-                                        <Imports className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Import</span>
-                                        <MdOutlineKeyboardArrowRight className="text-secondary-light dark:text-secondary-dark text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
+                                    <div 
+                                        className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md600:py-2 cursor-pointer transition-colors"
+                                        style={{ 
+                                            backgroundColor: 'transparent',
+                                            color: colors.textSecondary
+                                        }}
+                                        onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                    >
+                                        <Imports 
+                                            className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
+                                            style={{ color: colors.iconSecondary }}
+                                        />
+                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Import</span>
+                                        <MdOutlineKeyboardArrowRight 
+                                            className="text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" 
+                                            style={{ color: colors.iconSecondary }}
+                                        />
                                     </div>
 
                                     {showSubmenu.import && (
-                                        <div className="absolute left-full top-0 z-50 w-36  md600:w-48 lg:w-56 lg:mt-0 bg-primary-light dark:bg-primary-dark shadow-lg outline-none">
-                                            <p className=" flex gap-2 md600:gap-3 px-3 py-1 lg:px-4 md600:py-2 text-secondary-light dark:text-secondary-dark cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]" onClick={handleNestedOptionClick}>
-                                                <Audiotrack className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Import to Audio track</span>
+                                        <div 
+                                            className="absolute left-full top-0 z-50 w-36 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none"
+                                            style={{ backgroundColor: colors.menuBackground }}
+                                        >
+                                            <p 
+                                                className="flex gap-2 md600:gap-3 px-3 py-1 lg:px-4 md600:py-2 cursor-pointer transition-colors" 
+                                                style={{ color: colors.textSecondary }}
+                                                onClick={handleNestedOptionClick}
+                                                onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                            >
+                                                <Audiotrack 
+                                                    className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
+                                                    style={{ color: colors.iconSecondary }}
+                                                />  
+                                                <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Import to Audio track</span>
                                             </p>
-                                            <p className="flex gap-2 md600:gap-3 px-3 py-1 lg:px-4 md600:py-2 text-secondary-light dark:text-secondary-dark cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]" onClick={handleNestedOptionClick}>
-                                                <Mic className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Import to Audio track</span>
+                                            <p 
+                                                className="flex gap-2 md600:gap-3 px-3 py-1 lg:px-4 md600:py-2 cursor-pointer transition-colors" 
+                                                style={{ color: colors.textSecondary }}
+                                                onClick={handleNestedOptionClick}
+                                                onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                            >
+                                                <Mic 
+                                                    className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
+                                                    style={{ color: colors.iconSecondary }}
+                                                />  
+                                                <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Import to Audio track</span>
                                             </p>
-                                            <p className="flex gap-2 md600:gap-3 px-3 py-1 lg:px-4 md600:py-2 text-secondary-light dark:text-secondary-dark cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]" onClick={handleNestedOptionClick}>
-                                                <Audiotrack className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Open in sampler</span>
+                                            <p 
+                                                className="flex gap-2 md600:gap-3 px-3 py-1 lg:px-4 md600:py-2 cursor-pointer transition-colors" 
+                                                style={{ color: colors.textSecondary }}
+                                                onClick={handleNestedOptionClick}
+                                                onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                            >
+                                                <Audiotrack 
+                                                    className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
+                                                    style={{ color: colors.iconSecondary }}
+                                                />  
+                                                <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Open in sampler</span>
                                             </p>
                                         </div>
                                     )}
                                 </div>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 md600:px-4 lg:px-6 md:py-2 flex gap-2 md600:gap-3 border-b border-[#1414141A] dark:border-[#FFFFFF1A]  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
-                                            <Shareproject className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Share Project</span>
+                                        <p 
+                                            className={`px-3 py-1 md600:px-4 lg:px-6 md:py-2 flex gap-2 md600:gap-3 border-b outline-none transition-colors`}
+                                            style={{ 
+                                                backgroundColor: active ? colors.menuItemHover : 'transparent',
+                                                color: colors.textSecondary,
+                                                borderBottom: `1px solid ${colors.menuBorder}`
+                                            }}
+                                        >
+                                            <Shareproject 
+                                                className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
+                                                style={{ color: colors.iconSecondary }}
+                                            />  
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Share Project</span>
                                         </p>
                                     )}
                                 </Menu.Item>
@@ -680,8 +830,19 @@ const TopHeader = () => {
                                 <Menu.Item>
                                     {({ active }) => (
                                         <Link to='/profile'>
-                                            <p className={`px-3 pt-2 pb-2 md600:px-4 lg:px-6 md600:pt-3 lg:pt-4 md600:pb-2 flex gap-2 md600:gap-3 border-[#FFFFFF1A]  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
-                                                <Gotoprofile className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Go to profile</span>
+                                            <p 
+                                                className={`px-3 pt-2 pb-2 md600:px-4 lg:px-6 md600:pt-3 lg:pt-4 md600:pb-2 flex gap-2 md600:gap-3 border-[#FFFFFF1A] outline-none transition-colors`}
+                                                style={{ 
+                                                    backgroundColor: active ? colors.menuItemHover : 'transparent',
+                                                    color: colors.textSecondary,
+                                                    borderBottom: `1px solid ${colors.menuBorder}`
+                                                }}
+                                            >
+                                                <Gotoprofile 
+                                                    className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
+                                                    style={{ color: colors.iconSecondary }}
+                                                />  
+                                                <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Go to profile</span>
                                             </p>
                                         </Link>
                                     )}
@@ -694,76 +855,164 @@ const TopHeader = () => {
                     <Menu as="div" className="relative inline-block text-left">
                         <div>
                             <MenuButton className="outline-none" >
-                                <p className='text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] lg:text-[14px]'> Edit </p>
+                                <p 
+                                    className='text-[10px] md:text-[12px] lg:text-[14px]'
+                                    style={{ color: colors.textSecondary }}
+                                > 
+                                    Edit 
+                                </p>
                             </MenuButton>
                         </div>
 
-                        <Menu.Items className="absolute left-0 z-[99] mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60   origin-top-right bg-primary-light dark:bg-primary-dark shadow-lg outline-none">
+                        <Menu.Items 
+                            className="absolute left-0 z-[99] mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60 origin-top-right shadow-lg outline-none"
+                            style={{ backgroundColor: colors.menuBackground }}
+                        >
                             <div className="">
                                 {/* First item: Print */}
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
-                                            <Undo className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Undo</span>
-                                            <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] ms-auto">Ctrl+Z</p>
+                                        <p 
+                                            className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer transition-colors"
+                                            style={{ 
+                                                backgroundColor: active ? colors.menuItemHover : 'transparent',
+                                                color: colors.textSecondary
+                                            }}
+                                        >
+                                            <Undo 
+                                                className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
+                                                style={{ color: colors.iconSecondary }}
+                                            />
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Undo</span>
+                                            <p 
+                                                className="text-[10px] md:text-[12px] ms-auto"
+                                                style={{ color: colors.textMuted }}
+                                            >
+                                                Ctrl+Z
+                                            </p>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className="flex gap-2 pb-3 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer  hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
-                                            <Redo className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Redo</span>
-                                            <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] ms-auto">Shift+Ctrl+Z</p>
+                                        <p className="flex gap-2 pb-3 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer transition-colors"
+                                            style={{ 
+                                                backgroundColor: active ? colors.menuItemHover : 'transparent',
+                                                color: colors.textSecondary
+                                            }}
+                                        >
+                                            <Redo 
+                                                className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
+                                                style={{ color: colors.iconSecondary }}
+                                            />
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Redo</span>
+                                            <p 
+                                                className="text-[10px] md:text-[12px] ms-auto"
+                                                style={{ color: colors.textMuted }}
+                                            >
+                                                Shift+Ctrl+Z
+                                            </p>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`mt-1 px-3 pb-2 pt-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 border-t border-[#1414141A] dark:border-[#FFFFFF1A] outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
-                                            <span className='ps-5 md600:ps-7 lg:ps-8 text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Cut</span>
-                                            <p className=" text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] ms-auto">Ctrl+X</p>
+                                        <p 
+                                            className={`mt-1 px-3 pb-2 pt-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 border-t outline-none transition-colors`}
+                                            style={{ 
+                                                backgroundColor: active ? colors.menuItemHover : 'transparent',
+                                                borderTopColor: colors.menuBorder,
+                                                color: colors.textSecondary
+                                            }}
+                                        >
+                                            <span className='ps-5 md600:ps-7 lg:ps-8 text-[10px] md600:text-[12px] lg:text-[14px]'>Cut</span>
+                                            <p className="text-[10px] md:text-[12px] ms-auto">Ctrl+X</p>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
-                                            <Copy className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Copy</span>
-                                            <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] ms-auto">Ctrl+C</p>
+                                        <p 
+                                            className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer transition-colors"
+                                            style={{ 
+                                                backgroundColor: active ? colors.menuItemHover : 'transparent',
+                                                color: colors.textSecondary
+                                            }}
+                                        >
+                                            <Copy className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Copy</span>
+                                            <p className="text-[10px] md:text-[12px] ms-auto">Ctrl+C</p>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
-                                            <Paste className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Paste</span>
-                                            <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] ms-auto">Ctrl+V</p>
+                                        <p 
+                                            className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer transition-colors"
+                                            style={{ 
+                                                backgroundColor: active ? colors.menuItemHover : 'transparent',
+                                                color: colors.textSecondary
+                                            }}
+                                        >
+                                            <Paste className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Paste</span>
+                                            <p className="text-[10px] md:text-[12px] ms-auto">Ctrl+V</p>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className="flex gap-2 mb-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
-                                            <Delete className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Delete</span>
-                                            <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] ms-auto">Backspace</p>
+                                        <p 
+                                            className="flex gap-2 mb-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer transition-colors"
+                                            style={{ 
+                                                backgroundColor: active ? colors.menuItemHover : 'transparent',
+                                                color: colors.textSecondary
+                                            }}
+                                        >
+                                            <Delete className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Delete</span>
+                                            <p className="text-[10px] md:text-[12px] ms-auto">Backspace</p>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
                                         <div className="relative" onMouseEnter={() => handleSubmenuToggle('effects', true)} onMouseLeave={() => handleSubmenuToggle('effects', false)}>
-                                            <p className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 border-t border-[#1414141A] dark:border-[#FFFFFF1A] cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
-                                                <Effect className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
-                                                <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Effects</span>
-                                                <MdOutlineKeyboardArrowRight className="text-secondary-light dark:text-secondary-dark text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
+                                            <p 
+                                                className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 border-t cursor-pointer transition-colors"
+                                                style={{ 
+                                                    borderTopColor: colors.menuBorder,
+                                                    color: colors.textSecondary
+                                                }}
+                                                onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                            >
+                                                <Effect className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
+                                                <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Effects</span>
+                                                <MdOutlineKeyboardArrowRight className="text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" style={{ color: colors.iconSecondary }} />
                                             </p>
 
                                             {showSubmenu.effects && (
-                                                <div className="absolute flex left-full px-2 py-2 gap-2 md600:px-3 lg:px-4 md:py-2 top-0 z-50 w-40 md600:w-48 lg:w-56 lg:mt-0 bg-primary-light dark:bg-primary-dark shadow-lg outline-none text-nowrap">
-                                                    <Link to="/sidebar/voice-transform" className="block text-secondary-light dark:text-secondary-dark cursor-pointer text-[10px] md600:text-[12px] lg:text-[14px] hover:bg-[#E5E5E5] dark:hover:bg-[#262529] px-2 py-1 rounded">
+                                                <div 
+                                                    className="absolute flex left-full px-2 py-2 gap-2 md600:px-3 lg:px-4 md:py-2 top-0 z-50 w-40 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none text-nowrap"
+                                                    style={{ backgroundColor: colors.menuBackground }}
+                                                >
+                                                    <Link 
+                                                        to="/sidebar/voice-transform" 
+                                                        className="block cursor-pointer text-[10px] md600:text-[12px] lg:text-[14px] px-2 py-1 rounded transition-colors"
+                                                        style={{ color: colors.textSecondary }}
+                                                        onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                                    >
                                                         Voice Transform
                                                     </Link>
-                                                    <Link to="/sidebar/advanced-voice-transform" className="block text-secondary-light dark:text-secondary-dark cursor-pointer text-[10px] md600:text-[12px] lg:text-[14px] hover:bg-[#E5E5E5] dark:hover:bg-[#262529] px-2 py-1 rounded">
+                                                    <Link 
+                                                        to="/sidebar/advanced-voice-transform" 
+                                                        className="block cursor-pointer text-[10px] md600:text-[12px] lg:text-[14px] px-2 py-1 rounded transition-colors"
+                                                        style={{ color: colors.textSecondary }}
+                                                        onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                                    >
                                                         Advanced Voice Transform
                                                     </Link>
                                                 </div>
@@ -773,8 +1022,15 @@ const TopHeader = () => {
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className="flex gap-2  md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
-                                            <Region className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Create region</span>
+                                        <p 
+                                            className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer transition-colors"
+                                            style={{ 
+                                                backgroundColor: active ? colors.menuItemHover : 'transparent',
+                                                color: colors.textSecondary
+                                            }}
+                                        >
+                                            <Region className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Create region</span>
                                         </p>
                                     )}
                                 </Menu.Item>
@@ -786,7 +1042,12 @@ const TopHeader = () => {
                     <Menu as="div" className="relative inline-block text-left">
                         <div >
                             <MenuButton className="outline-none" >
-                                <p className='text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px] lg:text-[14px]'> Setting </p>
+                                <p 
+                                    className='text-[10px] md:text-[12px] lg:text-[14px]'
+                                    style={{ color: colors.textSecondary }}
+                                > 
+                                    Setting 
+                                </p>
                             </MenuButton>
                         </div>
 
@@ -794,27 +1055,60 @@ const TopHeader = () => {
                             <div className="">
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md600:py-2 flex md600:gap-3  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`} onClick={() => setMidiKeyboardModel(true)}>
-                                            <Midisetting className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>MIDI Settings...</span>
+                                        <p 
+                                            className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md600:py-2 flex md600:gap-3 outline-none transition-colors`} 
+                                            style={{ 
+                                                backgroundColor: active ? colors.menuItemHover : 'transparent',
+                                                color: colors.textSecondary
+                                            }}
+                                            onClick={() => setMidiKeyboardModel(true)}
+                                        >
+                                            <Midisetting className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />  
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>MIDI Settings...</span>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
-                                            <Tuner className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />  <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Tuner</span>
+                                        <p 
+                                            className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3 outline-none transition-colors`}
+                                            style={{ 
+                                                backgroundColor: active ? colors.menuItemHover : 'transparent',
+                                                color: colors.textSecondary
+                                            }}
+                                        >
+                                            <Tuner className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />  
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Tuner</span>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <div className="relative " onMouseEnter={() => handleSubmenuToggle('keyboard', true)} onMouseLeave={() => handleSubmenuToggle('keyboard', false)}>
-                                    <div className="px-3 pt-2 pb-2 gap-2 md600:px-4 lg:px-6 md600:pt-2 md600:pb-3 lg:pb-4 items-center flex md600:gap-3 outline-none border-b border-[#FFFFFF1A] hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
-                                        <Keyboard className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Keyboard</span>
-                                        <MdOutlineKeyboardArrowRight className="text-secondary-light dark:text-secondary-dark text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
+                                    <div 
+                                        className="px-3 pt-2 pb-2 gap-2 md600:px-4 lg:px-6 md600:pt-2 md600:pb-3 lg:pb-4 items-center flex md600:gap-3 outline-none border-b transition-colors"
+                                        style={{ 
+                                            borderBottomColor: colors.menuBorder,
+                                            color: colors.textSecondary
+                                        }}
+                                        onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                    >
+                                        <Keyboard className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
+                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Keyboard</span>
+                                        <MdOutlineKeyboardArrowRight className="text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" style={{ color: colors.iconSecondary }} />
                                     </div>
 
                                     {showSubmenu.keyboard && (
-                                        <div className="absolute flex left-full px-2 py-2 gap-2  md600:px-3 lg:px-4 md:py-2 top-0 z-50 w-32 md600:w-48 lg:w-56 lg:mt-0 bg-primary-light dark:bg-primary-dark hover:bg-[#E5E5E5] dark:hover:bg-[#262529] shadow-lg outline-none text-nowrap">
-                                            <p className="block  text-secondary-light dark:text-secondary-dark cursor-pointer  text-[10px] md600:text-[12px] lg:text-[14px]" onClick={handleNestedOptionClick}>
+                                        <div 
+                                            className="absolute flex left-full px-2 py-2 gap-2 md600:px-3 lg:px-4 md:py-2 top-0 z-50 w-32 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none text-nowrap"
+                                            style={{ backgroundColor: colors.menuBackground }}
+                                        >
+                                            <p 
+                                                className="block cursor-pointer text-[10px] md600:text-[12px] lg:text-[14px] transition-colors" 
+                                                style={{ color: colors.textSecondary }}
+                                                onClick={handleNestedOptionClick}
+                                                onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                            >
                                                 Musical Typing
                                             </p>
                                             <div className='ms-auto '>
@@ -829,8 +1123,15 @@ const TopHeader = () => {
 
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 pb-2 pt-2 gap-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
-                                            <Lowlatancy className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Low latency... </span>
+                                        <p 
+                                            className={`px-3 pb-2 pt-2 gap-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 outline-none transition-colors`}
+                                            style={{ 
+                                                backgroundColor: active ? colors.menuItemHover : 'transparent',
+                                                color: colors.textSecondary
+                                            }}
+                                        >
+                                            <Lowlatancy className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Low latency... </span>
                                             <div className='ms-auto '>
                                                 <label className="inline-flex cursor-pointer" onClick={e => e.stopPropagation()}>
                                                     <input type="checkbox" className="sr-only peer" checked={isLowLatency}
@@ -850,27 +1151,40 @@ const TopHeader = () => {
                                 </Menu.Item>
 
                                 <div className="relative" onMouseEnter={() => handleSubmenuToggle('soundquality', true)} onMouseLeave={() => handleSubmenuToggle('soundquality', false)}>
-                                    <div className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md600:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
-                                        <Soundquality className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
-                                        <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Sound quality</span>
-                                        <MdOutlineKeyboardArrowRight className="text-secondary-light dark:text-secondary-dark text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
+                                    <div 
+                                        className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md600:py-2 cursor-pointer transition-colors"
+                                        style={{ color: colors.textSecondary }}
+                                        onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                    >
+                                        <Soundquality className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
+                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Sound quality</span>
+                                        <MdOutlineKeyboardArrowRight className="text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" style={{ color: colors.iconSecondary }} />
                                     </div>
 
                                     {showSubmenu.soundquality && (
-                                        <div className="absolute left-full top-0 z-50 w-28 md600:w-48 lg:w-56 lg:mt-0 bg-primary-light dark:bg-primary-dark shadow-lg outline-none">
+                                        <div 
+                                            className="absolute left-full top-0 z-50 w-28 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none"
+                                            style={{ backgroundColor: colors.menuBackground }}
+                                        >
                                             {soundQualityOptions.map((option) => (
-                                                <div key={option.id} className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-2 text-white cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"
+                                                <div 
+                                                    key={option.id} 
+                                                    className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-2 cursor-pointer transition-colors"
+                                                    style={{ color: colors.textSecondary }}
                                                     onClick={() => handleSoundQualitySelect(option.id, option.label)}
+                                                    onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                                                 >
                                                     <div className="flex items-center gap-2 md600:gap-3">
                                                         {/* Show tick only for selected option */}
                                                         <div className="w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 flex items-center justify-center">
                                                             {selectedSoundQuality === option.label && (
-                                                                <Tick className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
+                                                                <Tick className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
                                                             )}
                                                         </div>
                                                         <div className="flex flex-col">
-                                                            <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>{option.label}</span>
+                                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{option.label}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -880,8 +1194,17 @@ const TopHeader = () => {
                                 </div>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 mt-2 md600:px-4 lg:px-6 md:py-3 lg:py-4 flex gap-2 md600:gap-3 border-t border-b border-[#FFFFFF1A]  outline-none hover:bg-[#E5E5E5] dark:hover:bg-[#262529]`}>
-                                            <Songsections className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' /><span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Song Sections</span>
+                                        <p 
+                                            className={`px-3 py-1 mt-2 md600:px-4 lg:px-6 md:py-3 lg:py-4 flex gap-2 md600:gap-3 border-t border-b outline-none transition-colors`}
+                                            style={{ 
+                                                backgroundColor: active ? colors.menuItemHover : 'transparent',
+                                                borderTopColor: colors.menuBorder,
+                                                borderBottomColor: colors.menuBorder,
+                                                color: colors.textSecondary
+                                            }}
+                                        >
+                                            <Songsections className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Song Sections</span>
                                             <div className='ms-auto '>
                                                 <label className="inline-flex cursor-pointer" onClick={e => e.stopPropagation()}>
                                                     <input type="checkbox" className="sr-only peer" checked={isSongSection} onChange={() => dispatch(setIsSongSection(!isSongSection))} />
@@ -893,27 +1216,40 @@ const TopHeader = () => {
                                 </Menu.Item>
 
                                 <div className="relative" onMouseEnter={() => handleSubmenuToggle('language', true)} onMouseLeave={() => handleSubmenuToggle('language', false)}>
-                                    <div className="flex gap-2 mt-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md600:py-2 cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
-                                        <Language className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
-                                        <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Language</span>
-                                        <MdOutlineKeyboardArrowRight className="text-secondary-light dark:text-secondary-dark text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
+                                    <div 
+                                        className="flex gap-2 mt-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md600:py-2 cursor-pointer transition-colors"
+                                        style={{ color: colors.textSecondary }}
+                                        onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                    >
+                                        <Language className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
+                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Language</span>
+                                        <MdOutlineKeyboardArrowRight className="text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" style={{ color: colors.iconSecondary }} />
                                     </div>
 
                                     {showSubmenu.language && (
-                                        <div className="absolute left-full top-0 z-50 w-32 md600:w-48 lg:w-56 lg:mt-0 bg-primary-light dark:bg-primary-dark  shadow-lg outline-none ">
+                                        <div 
+                                            className="absolute left-full top-0 z-50 w-32 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none"
+                                            style={{ backgroundColor: colors.menuBackground }}
+                                        >
                                             {languageOptions.map((lang) => (
-                                                <div key={lang.id} className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-1 text-white cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"
+                                                <div 
+                                                    key={lang.id} 
+                                                    className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-1 cursor-pointer transition-colors"
+                                                    style={{ color: colors.textSecondary }}
                                                     onClick={() => handleLanguage(lang.id, lang.label)}
+                                                    onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                                                 >
                                                     <div className="flex items-center gap-2 md600:gap-3">
                                                         {/* Show tick only for selected lang */}
                                                         <div className="w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 flex items-center justify-center">
                                                             {selectedLanguage === lang.label && (
-                                                                <Tick className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
+                                                                <Tick className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
                                                             )}
                                                         </div>
                                                         <div className="flex flex-col">
-                                                            <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>{lang.label}</span>
+                                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{lang.label}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -922,29 +1258,43 @@ const TopHeader = () => {
                                     )}
                                 </div>
                                 <div className="relative" onMouseEnter={() => handleSubmenuToggle('theme', true)} onMouseLeave={() => handleSubmenuToggle('theme', false)}>
-                                    <div className="flex gap-2 md600:gap-3 mt-2 w-full items-center px-3 py-2 md600:px-4 lg:px-6 md600:py-3 cursor-pointer border-t  border-[#FFFFFF1A] hover:bg-[#E5E5E5] dark:hover:bg-[#262529]">
-                                        <Theme className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
-                                        <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>Themes</span>
-                                        <MdOutlineKeyboardArrowRight className="text-secondary-light dark:text-secondary-dark text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" />
+                                    <div 
+                                        className="flex gap-2 md600:gap-3 mt-2 w-full items-center px-3 py-2 md600:px-4 lg:px-6 md600:py-3 cursor-pointer border-t transition-colors"
+                                        style={{ 
+                                            borderTopColor: colors.menuBorder,
+                                            color: colors.textSecondary
+                                        }}
+                                        onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                    >
+                                        <Theme className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
+                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Themes</span>
+                                        <MdOutlineKeyboardArrowRight className="text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" style={{ color: colors.iconSecondary }} />
                                     </div>
 
                                     {showSubmenu.theme && (
-                                        <div className="absolute left-full top-0 z-50 w-28 md600:w-48 lg:w-56 lg:mt-0 bg-primary-light dark:bg-primary-dark shadow-lg outline-none " >
+                                        <div 
+                                            className="absolute left-full top-0 z-50 w-28 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none"
+                                            style={{ backgroundColor: colors.menuBackground }}
+                                        >
                                             {themesOptions.map((option) => (
                                                 <div
                                                     key={option.id}
-                                                    className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-2 text-secondary-light dark:text-secondary-dark cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"
+                                                    className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-2 cursor-pointer transition-colors"
+                                                    style={{ color: colors.textSecondary }}
                                                     onClick={() => handlethemesSelect(option.id, option.label)}
+                                                    onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                                                 >
-                                                    <div className="flex items-center gap-2 md600:gap-3 ">
+                                                    <div className="flex items-center gap-2 md600:gap-3">
                                                         {/* Show tick only for selected option */}
                                                         <div className="w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 flex items-center justify-center">
                                                             {selectedtheme === option.label && (
-                                                                <Tick className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
+                                                                <Tick className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
                                                             )}
                                                         </div>
                                                         <div className="flex flex-col">
-                                                            <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>{option.label}</span>
+                                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{option.label}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -959,15 +1309,18 @@ const TopHeader = () => {
                     <button
                         onClick={handleUndo}
                         disabled={!canUndo}
-                        className={`transition-all duration-200 hidden md600:block relative ${canUndo
-                                ? 'text-[#5a5a5a] hover:text-[#ffffff] cursor-pointer'
-                                : 'text-[#2a2a2a] cursor-not-allowed'
-                            }`}
+                        className={`transition-all duration-200 hidden md600:block relative hover:opacity-80 ${canUndo ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                        style={{ 
+                            color: canUndo ? colors.iconMuted : colors.buttonDisabled 
+                        }}
                         title={canUndo ? `Undo (Ctrl+Z) - ${historyLength} steps available` : 'Nothing to undo'}
                     >
                         <PiArrowBendUpLeftBold className="md:text-[16px] lg:text-[20px] xl:text-[26px]" />
                         {canUndo && historyLength > 0 && (
-                            <span className="absolute -top-2 -right-2 bg-[#AD00FF] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                            <span 
+                                className="absolute -top-2 -right-2 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                                style={{ backgroundColor: colors.accent }}
+                            >
                                 {historyLength > 9 ? '9+' : historyLength}
                             </span>
                         )}
@@ -975,15 +1328,18 @@ const TopHeader = () => {
                     <button
                         onClick={handleRedo}
                         disabled={!canRedo}
-                        className={`transition-all duration-200 hidden md600:block relative ${canRedo
-                                ? 'text-[#5a5a5a] hover:text-[#ffffff] cursor-pointer'
-                                : 'text-[#2a2a2a] cursor-not-allowed'
-                            }`}
+                        className={`transition-all duration-200 hidden md600:block relative hover:opacity-80 ${canRedo ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                        style={{ 
+                            color: canRedo ? colors.iconMuted : colors.buttonDisabled 
+                        }}
                         title={canRedo ? `Redo (Ctrl+Y) - ${futureLength} steps available` : 'Nothing to redo'}
                     >
                         <PiArrowBendUpRightBold className="md:text-[16px] lg:text-[20px] xl:text-[26px]" />
                         {canRedo && futureLength > 0 && (
-                            <span className="absolute -top-2 -right-2 bg-[#AD00FF] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                            <span 
+                                className="absolute -top-2 -right-2 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                                style={{ backgroundColor: colors.accent }}
+                            >
                                 {futureLength > 9 ? '9+' : futureLength}
                             </span>
                         )}
@@ -993,7 +1349,12 @@ const TopHeader = () => {
                 <div className="flex gap-2 md:gap-3 lg:gap-5 xl:gap-7 items-center" >
                     <div className="flex gap-2 items-center cursor-pointer" onClick={handleSaved}>
                         <img src={saveStatus === 'saved' ? greenSave : graySave} alt="" className='w-[16px] h-[16px] md:h-full' />
-                        <p className={`${saveStatus === 'saved' ? 'text-[#357935]' : 'text-[#ffffff]'} text-[16px] hidden md600:block`}>
+                        <p 
+                            className="text-[16px] hidden md600:block"
+                            style={{ 
+                                color: saveStatus === 'saved' ? colors.success : colors.textSecondary 
+                            }}
+                        >
                             {saveStatus === 'saved' ? 'Saved!' : 'Saved!'}
                         </p>
                     </div>
@@ -1004,13 +1365,23 @@ const TopHeader = () => {
                             onChange={handleSongNameChange}
                             onBlur={handleSongNameSave}
                             onKeyDown={handleSongNameKeyPress}
-                            className='text-secondary-light dark:text-secondary-dark text-[12px] md:text-[14px] bg-transparent border border-[#357935] rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-[#357935]'
+                            className='text-[12px] md:text-[14px] bg-transparent border rounded px-1 py-0.5 focus:outline-none focus:ring-1'
+                            style={{ 
+                                color: colors.textSecondary,
+                                borderColor: colors.success,
+                                focusRingColor: colors.success
+                            }}
                             autoFocus
                         />
                     ) : (
                         <p 
-                            className='text-secondary-light dark:text-secondary-dark text-[12px] md:text-[14px] cursor-pointer hover:text-[#357935] transition-colors'
+                            className='text-[12px] md:text-[14px] cursor-pointer transition-colors'
+                            style={{ 
+                                color: colors.textSecondary
+                            }}
                             onClick={handleSongNameClick}
+                            onMouseEnter={(e) => e.target.style.color = colors.success}
+                            onMouseLeave={(e) => e.target.style.color = colors.textSecondary}
                         >
                             {songName}
                         </p>
@@ -1018,45 +1389,98 @@ const TopHeader = () => {
                 </div>
 
                 <div className="flex gap-2 md:gap-3 lg:gap-5 xl:gap-7">
-                    <button onClick={toggleTheme} className="relative w-[60px] h-[30px] rounded-full p-1 transition-colors duration-300 outline-none focus:outline-none d_customborder hidden md:block">
+                    <button 
+                        onClick={toggleTheme} 
+                        className="relative w-[60px] h-[30px] rounded-full p-1 transition-colors duration-300 outline-none focus:outline-none hidden md:block"
+                        style={{ border: `1px solid ${colors.toggleBorder}` }}
+                    >
                         {/* Background slider */}
-                        <div className={`absolute top-0 left-0 w-[26px] h-[28px] bg-[#1F1F1F] rounded-full transition-transform duration-300 ${isDark ? 'translate-x-8' : 'translate-x-0'}`} />
+                        <div 
+                            className={`absolute top-0 left-0 w-[26px] h-[28px] rounded-full transition-transform duration-300 ${isDark ? 'translate-x-8' : 'translate-x-0'}`}
+                            style={{ backgroundColor: colors.toggleSlider }}
+                        />
 
                         {/* Sun icon */}
                         <div className={`absolute top-0 left-0 w-[26px] h-[28px] flex items-center justify-center transition-opacity duration-300 ${isDark ? 'opacity-100' : 'opacity-50'}`}>
-                            <GoSun className={`${isDark ? ' dark:text-secondary-dark' : "text-secondary-dark"} text-[16px]`} />
-
+                            <GoSun 
+                                className="text-[16px]" 
+                                style={{ color: colors.toggleIcon }}
+                            />
                         </div>
 
                         {/* Moon icon */}
                         <div className={`absolute top-0 right-0 w-[26px] h-[28px] flex items-center justify-center transition-opacity duration-300 ${isDark ? 'opacity-50' : 'opacity-100'}`}>
-                            <IoMoonOutline className={`${isDark ? 'dark:text-secondary-dark' : "text-secondary-light "} text-[16px]`} />
+                            <IoMoonOutline 
+                                className="text-[16px]" 
+                                style={{ color: colors.toggleIcon }}
+                            />
                         </div>
                     </button>
-                    <div onClick={handleExportModal} className="flex xl:gap-2 md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full d_customborder cursor-pointer items-center">
-                        <HiDownload className="text-secondary-light dark:text-secondary-dark xl:text-[18px]" />
-                        <p className="text-secondary-light dark:text-secondary-dark text-[12px] hidden xl:block"> Export</p>
+                    <div 
+                        onClick={handleExportModal} 
+                        className="flex xl:gap-2 md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full cursor-pointer items-center transition-colors duration-200 hover:opacity-80"
+                        style={{ 
+                            border: `1px solid ${colors.borderStrong}`,
+                            backgroundColor: colors.background
+                        }}
+                    >
+                        <HiDownload 
+                            className="xl:text-[18px]" 
+                            style={{ color: colors.iconSecondary }}
+                        />
+                        <p 
+                            className="text-[12px] hidden xl:block"
+                            style={{ color: colors.textSecondary }}
+                        > 
+                            Export
+                        </p>
                     </div>
 
                     <div 
-                        className="flex xl:gap-2 bg-primary-dark dark:bg-primary-light justify-center  items-center md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full cursor-pointer hover:bg-opacity-80 transition-all"
+                        className="flex xl:gap-2 justify-center items-center md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full cursor-pointer hover:opacity-80 transition-all"
+                        style={{ backgroundColor: colors.upgradeBackground }}
                         onClick={() => setPricingModalOpen(true)}
                     >
                         <img src={subscription} alt="" className='h-[18px] w-[18px]' />
-                        <p className="text-secondary-dark dark:text-secondary-light text-[12px]  font-semibold hidden xl:block">Upgrade Now</p>
+                        <p 
+                            className="text-[12px] font-semibold hidden xl:block"
+                            style={{ color: colors.upgradeText }}
+                        >
+                            Upgrade Now
+                        </p>
                     </div>
 
                     <div 
-                        className="flex md:gap-2 bg-primary-dark dark:bg-primary-light  md:px-2 xl:px-3 md:py-1 rounded-full d_customborder cursor-pointer hover:bg-opacity-80 transition-all"
+                        className="flex md:gap-2 md:px-2 xl:px-3 md:py-1 rounded-full cursor-pointer hover:opacity-80 transition-all"
+                        style={{ 
+                            backgroundColor: colors.shareBackground,
+                            border: `1px solid ${colors.borderStrong}`
+                        }}
                         onClick={() => setShareModalOpen(true)}
                     >
-                        <IoIosShareAlt className="text-secondary-dark dark:text-secondary-light xl:text-[18px]" />
-                        <p className="text-secondary-dark dark:text-secondary-light text-[12px] hidden md:block">Share</p>
+                        <IoIosShareAlt 
+                            className="xl:text-[18px]" 
+                            style={{ color: colors.shareText }}
+                        />
+                        <p 
+                            className="text-[12px] hidden md:block"
+                            style={{ color: colors.shareText }}
+                        >
+                            Share
+                        </p>
                     </div>
 
                     <Link to='/project' className="text-center hidden xl:block">
-                        <RxExit className='text-secondary-light dark:text-secondary-dark xl:text-[14px]' />
-                        <p className="text-secondary-light dark:text-secondary-dark text-[10px]">Exit</p>
+                        <RxExit 
+                            className='xl:text-[14px]' 
+                            style={{ color: colors.iconSecondary }}
+                        />
+                        <p 
+                            className="text-[10px]"
+                            style={{ color: colors.textSecondary }}
+                        >
+                            Exit
+                        </p>
                     </Link>
                 </div>
             </div>
@@ -1130,10 +1554,26 @@ const TopHeader = () => {
 
             {/* Undo/Redo Toast Notification */}
             {showUndoRedoToast && (
-                <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-[#1F1F1F] border border-[#444] rounded-lg px-4 py-3 shadow-lg animate-fade-in">
-                    <div className="text-white text-center">
-                        <div className="text-sm opacity-80">{toastMessage}</div>
-                        <div className="text-xs opacity-60 mt-1">Action completed</div>
+                <div 
+                    className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 border rounded-lg px-4 py-3 shadow-lg animate-fade-in"
+                    style={{ 
+                        backgroundColor: colors.background,
+                        borderColor: colors.borderStrong
+                    }}
+                >
+                    <div className="text-center">
+                        <div 
+                            className="text-sm opacity-80"
+                            style={{ color: colors.textPrimary }}
+                        >
+                            {toastMessage}
+                        </div>
+                        <div 
+                            className="text-xs opacity-60 mt-1"
+                            style={{ color: colors.textMuted }}
+                        >
+                            Action completed
+                        </div>
                     </div>
                 </div>
             )}
