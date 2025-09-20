@@ -2,11 +2,13 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getAllMusic } from "../Redux/Slice/music.slice";
 import { IMAGE_URL } from "../Utils/baseUrl"; 
+import { useNavigate } from "react-router-dom";
 
 const OpenProjectModal = ({ open, onClose, onSelect }) => {
 
   const dispatch = useDispatch();
   const { allmusic, loading } = useSelector((state) => state.music);
+  const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
   const [excludeUntitled, setExcludeUntitled] = useState(false);
@@ -201,8 +203,10 @@ const drawWaveform = useCallback((musicId, idx) => {
   // Handle Open button click
   const handleOpen = () => {
     if (selectedProject !== null && filteredProjects[selectedProject]) {
-      onSelect?.(filteredProjects[selectedProject]); // 🔑 parent ne data pass karo
+      const project = filteredProjects[selectedProject];
+      onSelect?.(project);
       onClose();
+      navigate(`/sidebar/timeline/${project._id}`);
     }
   };
 

@@ -3645,9 +3645,6 @@ const Timeline = () => {
               onClick={() => {
                 const next = !isMagnetEnabled;
                 setIsMagnetEnabled(next);
-                if (next && !isLoopEnabled) {
-                  dispatch(toggleLoopEnabled());
-                }
               }}
               title={isMagnetEnabled ? "Magnet: ON" : "Magnet: OFF"}
             >

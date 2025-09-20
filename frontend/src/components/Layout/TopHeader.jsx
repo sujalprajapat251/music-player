@@ -42,7 +42,7 @@ import { ReactComponent as Close } from '../../Images/closeicon.svg';
 import midi from '../../Images/midi.svg';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { setIsSongSection } from '../../Redux/Slice/ui.slice';
+import { setIsSongSection, setMusicalTypingEnabled } from '../../Redux/Slice/ui.slice';
 import { setSoundQuality } from '../../Redux/Slice/audioSettings.slice';
 import audioQualityManager from '../../Utils/audioQualityManager';
 import ExportPopup from '../ExportProjectModel';
@@ -85,7 +85,7 @@ const TopHeader = () => {
 
     const [isActiveMenu, setIsActiveMenu] = useState("");
     const [isLowLatency, setIsLowLatency] = useState(false);
-    const [isLowLatency2, setIsLowLatency2] = useState(false);
+    const [isLowLatency2, setIsLowLatency2] = useState(true);
     const [lowlatencyomodal, setLowLatencyModel] = useState(false);
     const [midikeyboardmodal, setMidiKeyboardModel] = useState(false);
     const [exportProjectModal, setExportProjectModal] = useState(false);
@@ -819,7 +819,7 @@ const TopHeader = () => {
                                             </p>
                                             <div className='ms-auto '>
                                                 <label className="inline-flex cursor-pointer" onClick={e => e.stopPropagation()}>
-                                                    <input type="checkbox" className="sr-only peer" checked={isLowLatency2} onChange={() => setIsLowLatency2(prev => !prev)} />
+                                                    <input type="checkbox" className="sr-only peer" checked={isLowLatency2} onChange={() => { const next = !isLowLatency2; setIsLowLatency2(next); dispatch(setMusicalTypingEnabled(next)); }} />
                                                     <div className="relative w-8 md600:w-9 h-4 bg-gray-400 peer-focus:outline-none rounded-full peer dark:bg-[#353535] peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-[#357935] peer-checked:bg-[#357935] dark:peer-checked:bg-[#357935]"></div>
                                                 </label>
                                             </div>
