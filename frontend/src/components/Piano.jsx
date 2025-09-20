@@ -24,6 +24,7 @@ import * as Tone from "tone";
 import Effects2 from './Effects2';
 import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsTwo } from '../Redux/Slice/effects.slice';
 import { selectStudioState } from '../Redux/rootReducer';
+import PricingModel from './PricingModel';
 
 function polarToCartesian(cx, cy, r, angle) {
   const a = (angle - 90) * Math.PI / 180.0;
@@ -283,6 +284,7 @@ const Pianodemo = ({ onClose }) => {
   const [reverb, setReverb] = useState(-90);
   const [pan, setPan] = useState(0);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [pricingModalOpen, setPricingModalOpen] = useState(false);
   const pianoSectionsRef = useRef(null);
 
   // Get the selected instrument from Redux
@@ -2071,12 +2073,15 @@ const Pianodemo = ({ onClose }) => {
                             </button>
                           </div>
                           <div className='border rounded-lg border-[#FFFFFF1A] ms-auto me-1 md600:me-2 lg:me-3'>
-                            <p className="text-[#FFFFFF] text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
+                            <p className="text-[#FFFFFF] text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Auto-Chords</p>
                           </div>
                         </div>
-                        <div className='border rounded-lg border-[#FFFFFF1A] ms-auto me-1 md600:me-2 lg:me-3'>
+                        <button 
+                          onClick={() => setPricingModalOpen(true)}
+                          className='border rounded-lg border-[#FFFFFF1A] ms-auto me-1 md600:me-2 lg:me-3 hover:border-white hover:bg-white/10 transition-colors duration-200'
+                        >
                           <p className="text-[#FFFFFF] text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
-                        </div>
+                        </button>
                       </div>
 
                       <div className="flex gap-1 md600:gap-2 lg:gap-3 bg-[#141414]">
@@ -2358,6 +2363,12 @@ const Pianodemo = ({ onClose }) => {
           </div>
         </>
       )}
+      
+      {/* Pricing Modal */}
+      <PricingModel 
+        pricingModalOpen={pricingModalOpen} 
+        setPricingModalOpen={setPricingModalOpen} 
+      />
     </>
   )
 }
