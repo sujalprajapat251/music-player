@@ -15,14 +15,12 @@ import E from "../Images/e.svg";
 import F from "../Images/f.svg";
 import G from "../Images/g.svg";
 import Am7 from "../Images/am7.svg";
-import { FaPlus, FaStop } from "react-icons/fa6";
+import { FaPlus } from "react-icons/fa6";
 import music from "../Images/playingsounds.svg";
-import BottomToolbar from './Layout/BottomToolbar';
-import { addPianoNote, setRecordingAudio, setPianoNotes, setPianoRecordingClip, setSelectedInstrument } from '../Redux/Slice/studio.slice';
+import { setRecordingAudio, setPianoNotes, setPianoRecordingClip, setSelectedInstrument, updateTrack } from '../Redux/Slice/studio.slice';
 import PianoRolls from './PianoRolls';
 import * as Tone from "tone";
-import Effects2 from './Effects2';
-import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsTwo } from '../Redux/Slice/effects.slice';
+import { setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
 import { selectStudioState } from '../Redux/rootReducer';
 import subscription from "../Images/subscriptionIcon.svg";
 
@@ -94,7 +92,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
         }
     }, [defaultAngle]);
 
-
     const radius = (size - stroke) / 2;
     const center = size / 2;
     const onMouseDown = (e) => {
@@ -115,7 +112,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
             if (onChange) {
                 onChange(next);
             }
-
             return next;
         });
     };
@@ -209,65 +205,27 @@ const RangeSlider = ({ min = 0, max = 100, step = 1, initialValue = 0, label = "
 
 
 const INSTRUMENTS = [
-    { id: 'acoustic_guitar_nylon', name: 'Acoustic Guitar (Nylon)', category: 'Guitar' },
-    { id: 'acoustic_guitar_steel', name: 'Acoustic Guitar (Steel)', category: 'Guitar' },
-    { id: 'electric_guitar_clean', name: 'Electric Guitar (Clean)', category: 'Guitar' },
-    { id: 'electric_guitar_jazz', name: 'Electric Guitar (Jazz)', category: 'Guitar' },
-    { id: 'electric_guitar_muted', name: 'Electric Guitar (Muted)', category: 'Guitar' },
-    { id: 'overdriven_guitar', name: 'Overdriven Guitar', category: 'Guitar' },
-    { id: 'distortion_guitar', name: 'Distortion Guitar', category: 'Guitar' },
-    { id: 'guitar_harmonics', name: 'Guitar Harmonics', category: 'Guitar' },
-    { id: 'banjo', name: 'Banjo', category: 'Plucked Strings' },
-    { id: 'shamisen', name: 'Shamisen', category: 'Plucked Strings' },
-    { id: 'sitar', name: 'Sitar', category: 'Plucked Strings' },
+    { id: 'acoustic_grand_piano', name: 'Piano', category: 'Jazz Chord Memos' },
+    { id: 'whistle', name: 'Whistle', category: 'Effects' },
+    { id: 'fx_1_rain', name: 'Rain', category: 'Atmospheric' },
+    { id: 'fx_3_crystal', name: 'Crystal', category: 'Ambient' },
+    { id: 'fx_4_atmosphere', name: 'Atmosphere', category: 'Ambient' },
+    { id: 'fx_5_brightness', name: 'Brightness', category: 'Effects' },
+    { id: 'fx_6_goblins', name: 'Goblins', category: 'Fantasy' },
+    { id: 'fx_7_echoes', name: 'Echoes', category: 'Reverb' },
+    { id: 'fx_8_scifi', name: 'Sci-Fi', category: 'Futuristic' },
+    { id: 'glockenspiel', name: 'Glockenspiel', category: 'Percussion' },
+    { id: 'guitar_fret_noise', name: 'Guitar Fret', category: 'String' },
+    { id: 'guitar_harmonics', name: 'Guitar Harmonics', category: 'String' },
+    { id: 'gunshot', name: 'Gunshot', category: 'Effects' },
+    { id: 'harmonica', name: 'Harmonica', category: 'Wind' },
+    { id: 'harpsichord', name: 'Harpsichord', category: 'Baroque' },
+    { id: 'honkytonk_piano', name: 'Honky Tonk', category: 'Piano' },
+    { id: 'kalimba', name: 'Kalimba', category: 'African' },
+    { id: 'koto', name: 'Koto', category: 'Japanese' }
 ];
 
-const BasicData = [
-    { name: "Am", image: Am },
-    { name: "Bdmi", image: Bdmi },
-    { name: "C", image: C },
-    { name: "Dm", image: Dm },
-    { name: "E", image: E },
-    { name: "F", image: F },
-    { name: "G", image: G },
-    { name: "Am7", image: Am7 }
-];
-
-const BasicData1 = [
-    { name: "Full Chord" },
-    { name: "On One" },
-];
-
-const Stabs = [
-    { name: "On Air" },
-    { name: "Eight's" },
-    { name: "Soul Stabs" },
-    { name: "One and Three" },
-    { name: "Simple Stabs" },
-    { name: "Latinesque" },
-    { name: "All Four" },
-    { name: "Moderate Stabs" },
-]
-
-const Arpeggiated = [
-    { name: "Layout" },
-    { name: "Storytime" },
-    { name: "Rising Arp" },
-    { name: "Dreamer" },
-    { name: "Moving Arp" },
-    { name: "Quick Arp" },
-    { name: "Simple Stride" },
-    { name: "Simple Rain" }
-]
-
-const other = [
-    { name: "Simple Slide" },
-    { name: "Simple Player" },
-    { name: "Alternating Stride" }
-];
-
-
-const Guitar = ({ onClose }) => {
+const NewSynth = ({ onClose }) => {
     const dispatch = useDispatch();
     const [showOffcanvas1, setShowOffcanvas1] = useState(true);
     const [autoChords, setAutoChords] = useState(false);
@@ -282,15 +240,14 @@ const Guitar = ({ onClose }) => {
     const [isDragOver, setIsDragOver] = useState(false);
     const pianoSectionsRef = useRef(null);
 
-    // Get the selected instrument from Redux
+    // Get the selected instrument from Redux  
     const selectedInstrumentFromRedux = useSelector((state) => selectStudioState(state)?.selectedInstrument || 'acoustic_grand_piano');
-
     useEffect(() => {
         const index = INSTRUMENTS.findIndex(inst => inst.id === selectedInstrumentFromRedux);
         if (index !== -1) {
             setCurrentInstrumentIndex(index);
         }
-    }, [selectedInstrumentFromRedux]);
+    }, []);
 
     useEffect(() => {
         const containerEl = pianoSectionsRef.current;
@@ -329,6 +286,8 @@ const Guitar = ({ onClose }) => {
     const convolverNodeRef = useRef(null);
     const activeAudioNodes = useRef({});
     const recordAnchorRef = useRef({ systemMs: 0, playheadSec: 0 });
+    // Lock instrument for the duration of a recording session
+    const recordingInstrumentRef = useRef(null);
     const selectedInstrument = INSTRUMENTS[currentInstrumentIndex].id;
 
     // Update Redux when local instrument changes
@@ -340,12 +299,23 @@ const Guitar = ({ onClose }) => {
 
     const getIsRecording = useSelector((state) => selectStudioState(state).isRecording);
     const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
+    const currentTrack = useSelector((state) => (selectStudioState(state).tracks || []).find(t => t.id === currentTrackId));
     const studioCurrentTime = useSelector((state) => selectStudioState(state).currentTime || 0);
     const existingPianoNotes = useSelector((state) => selectStudioState(state).pianoNotes || []);
     const tracks = useSelector((state) => selectStudioState(state).tracks || []);
 
 
     const getActiveTabs = useSelector((state) => state.effects.activeTabs);
+
+    // Sync the track's nametype with the selected instrument's display name unless user renamed (locked)
+    useEffect(() => {
+        // For Synth tracks, keep the track type as "Synth" instead of changing to instrument name
+        const instrumentName = INSTRUMENTS.find(inst => inst.id === selectedInstrument)?.name || 'Synth';
+        const trackName = currentTrack?.name === 'Synth' ? 'Synth' : instrumentName;
+        if (currentTrackId && !currentTrack?.nametypeLocked) {
+            dispatch(updateTrack({ id: currentTrackId, updates: { nametype: trackName } }));
+        }
+    }, [selectedInstrument, currentTrack?.nametypeLocked, currentTrack?.name, dispatch]);
 
     useEffect(() => {
         if (getActiveTabs) {
@@ -373,9 +343,12 @@ const Guitar = ({ onClose }) => {
     useEffect(() => {
         if (getIsRecording) {
             recordAnchorRef.current = { systemMs: Date.now(), playheadSec: studioCurrentTime };
+            // Capture the instrument at recording start so the whole take uses one instrument
+            recordingInstrumentRef.current = selectedInstrument;
             hendleRecord();
         } else {
             hendleStopRecord();
+            recordingInstrumentRef.current = null;
         }
     }, [getIsRecording, studioCurrentTime]);
 
@@ -488,7 +461,6 @@ const Guitar = ({ onClose }) => {
             destination: gainNode,
         }).then((piano) => {
             pianoRef.current = piano;
-            console.log("Guitar instrument loaded successfully");
         }).catch((error) => {
             console.error("Error loading piano instrument:", error);
         });
@@ -515,8 +487,6 @@ const Guitar = ({ onClose }) => {
                 const newImpulse = createImpulseResponse(audioContextRef.current, roomSize, decay);
                 convolverNodeRef.current.buffer = newImpulse;
             }
-
-            // console.log(`Reverb: ${reverb} -> Wet: ${wetLevel.toFixed(2)}, Dry: ${dryLevel.toFixed(2)}`);
         }
     }, [reverb]);
 
@@ -525,15 +495,12 @@ const Guitar = ({ onClose }) => {
             const panValue = pan / 135;
             const clampedPanValue = Math.max(-1, Math.min(1, panValue));
             panNodeRef.current.pan.value = clampedPanValue;
-            // console.log(`Pan value: ${pan} -> Stereo pan: ${clampedPanValue}`);
         }
     }, [pan]);
 
 
 
     const playNote = (midiNumber) => {
-        // Many soundfonts don't support notes below A0 (MIDI 21).
-        // Clamp to a safe, supported range for playback so low-octave keys still work.
         const effectiveMidi = Math.max(21, midiNumber);
         const noteName = Tone.Frequency(effectiveMidi, "midi").toNote();
         const currentTime = getRecordingTime();
@@ -551,12 +518,11 @@ const Guitar = ({ onClose }) => {
                 duration: 0.05,
                 midiNumber: effectiveMidi,
                 trackId: currentTrackId || null,
-                instrumentId: selectedInstrument,
+                instrumentId: recordingInstrumentRef.current || selectedInstrument,
                 id: `${midiNumber}-${Date.now()}-${Math.random()}`
             };
             const updated = [...(pianoNotesRef.current || []), newEvent];
             dispatch(setPianoNotes(updated));
-
 
             const notesForThisTrack = (updated || []).filter(n => n.trackId === (currentTrackId || null));
             if (notesForThisTrack.length > 0) {
@@ -568,13 +534,13 @@ const Guitar = ({ onClose }) => {
                     end: maxEnd,
                     color: trackColor,
                     trackId: currentTrackId || null,
-                    type: 'guitar',
-                    name: `Guitar Recording (${notesForThisTrack.length} notes)`,
+                    type: 'piano',
+                    name: `Piano Recording (${notesForThisTrack.length} notes)`,
                     duration: maxEnd - minStart,
                     startTime: minStart,
                     trimStart: 0,
                     trimEnd: maxEnd - minStart,
-                    id: `guitar_recording_${Date.now()}`,
+                    id: `piano_recording_${Date.now()}`,
                     pianoData: notesForThisTrack
                 }));
             }
@@ -617,6 +583,21 @@ const Guitar = ({ onClose }) => {
         const newInstrument = INSTRUMENTS[newIndex].id;
         dispatch(setSelectedInstrument(newInstrument));
     };
+
+    useEffect(() => {
+        if (getIsRecording) return;
+        if (!Array.isArray(existingPianoNotes) || existingPianoNotes.length === 0) return;
+
+        const needsUpdate = existingPianoNotes.some(
+            (n) => (n.trackId === (currentTrackId || null)) && n.instrumentId !== selectedInstrument
+        );
+        if (!needsUpdate) return;
+
+        const updated = existingPianoNotes.map((n) =>
+            n.trackId === (currentTrackId || null) ? { ...n, instrumentId: selectedInstrument } : n
+        );
+        dispatch(setPianoNotes(updated));
+    }, [selectedInstrument, existingPianoNotes, currentTrackId, getIsRecording, dispatch]);
 
 
     const toggleButton = (section, index) => {
@@ -665,7 +646,7 @@ const Guitar = ({ onClose }) => {
     const hendleStopRecord = () => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
             mediaRecorderRef.current.stop();
-            console.log("Recording stopped");
+            // console.log("Recording stopped");
         } else {
             // console.log("No active recording to stop");
         }
@@ -897,11 +878,11 @@ const Guitar = ({ onClose }) => {
                 <Piano noteRange={noteRange} playNote={playNote} stopNote={stopNote} keyboardShortcuts={keyboardShortcuts} />
                 {!musicalTypingEnabled && (
                     <style jsx>{`
-                        .ReactPiano__NoteLabel--natural,
-                        .ReactPiano__NoteLabel--accidental {
-                            display: none !important;
-                        }
-                    `}</style>
+            .ReactPiano__NoteLabel--natural,
+            .ReactPiano__NoteLabel--accidental {
+              display: none !important;
+            }
+          `}</style>
                 )}
                 <style jsx>{`
                     .ReactPiano__Keyboard{
@@ -950,6 +931,7 @@ const Guitar = ({ onClose }) => {
     const [isProcessingDrop, setIsProcessingDrop] = useState(false);
     const [effectsSearchTerm, setEffectsSearchTerm] = useState('');
     const [selectedEffectCategory, setSelectedEffectCategory] = useState(null);
+
 
     const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas, showEffectsTwo } = useSelector((state) => state.effects);
 
@@ -1569,7 +1551,6 @@ const Guitar = ({ onClose }) => {
                     simplePlayerSynth
                 };
 
-                // console.log("✅ Created", Object.keys(synths.current).length, "professional synths");
 
                 Tone.Transport.bpm.value = 120;
 
@@ -1939,7 +1920,7 @@ const Guitar = ({ onClose }) => {
         <>
             {showOffcanvas1 === true && (
                 <>
-                    <div className="fixed z-[26] w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px]  lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[516px]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
+                    <div className="fixed z-[10] w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px]  lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[516px]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
                         <div className="  border-b border-[#FFFFFF1A] h-full">
                             <div className=" bg-[#1F1F1F] flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                                 <div>
@@ -2194,8 +2175,8 @@ const Guitar = ({ onClose }) => {
                                                                                         onClick={() => handlePatternSelect(key)}
                                                                                         disabled={!isAudioReady}
                                                                                         className={`${isSelected
-                                                                                                ? "bg-white text-black"
-                                                                                                : "text-[#FFFFFF] bg-transparent hover:bg-[#FFFFFF10]"
+                                                                                            ? "bg-white text-black"
+                                                                                            : "text-[#FFFFFF] bg-transparent hover:bg-[#FFFFFF10]"
                                                                                             } border-[#FFFFFF1A] justify-center w-[100px] mt-1 h-[25px] lg:w-[100px] lg:h-[30px] md:mt-2 text-[8px] md600:text-[10px] rounded-md border transition-colors`}
                                                                                     >
                                                                                         {item.name}
@@ -2332,4 +2313,4 @@ const Guitar = ({ onClose }) => {
     )
 }
 
-export default Guitar
+export default NewSynth

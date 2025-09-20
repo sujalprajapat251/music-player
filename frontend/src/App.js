@@ -53,7 +53,6 @@ import File from './components/File';
 import OpenProjectModal from './components/OpenProjectModal';
 import Sound from './components/Sound';
 import FolderView from './components/FolderView';
-import VoiceAndMic from './components/VoiceAndMic';
 window.soundtouch = soundtouch;
 
 function App() {
@@ -152,7 +151,6 @@ function App() {
               <Route path="piano" element={<Piano />} />
               <Route path="guitar" element={<Guitar />} />
               <Route path="voice" element={<VoiceTransformer />} />
-              <Route path="VoiceAndMic" element={<VoiceAndMic />} />
             </Route>
 
           </Routes>
