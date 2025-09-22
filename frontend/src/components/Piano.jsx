@@ -1978,17 +1978,17 @@ const Pianodemo = ({ onClose }) => {
     <>
       {showOffcanvas1 === true && (
         <>
-          <div className="fixed z-[10] w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px]  lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[516px]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
-            <div className="  border-b border-[#FFFFFF1A] h-full">
-              <div className=" bg-[#1F1F1F] flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
+          <div className="fixed z-[10] w-full h-full transition-transform left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px] lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[516px]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
+            <div className="border-b border-gray-300 dark:border-[#FFFFFF1A] h-full">
+              <div className="bg-white dark:bg-[#1F1F1F] flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                 <div>
-                  <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => {
+                  <IoClose className="text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-gray-600 dark:text-[#FFFFFF99] cursor-pointer" onClick={() => {
                     setShowOffcanvas1(false);
                     onClose && onClose();
                   }} />
                 </div>
               </div>
-              <div className=" bg-[#1F1F1F] flex space-x-2 sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3">
+              <div className="bg-white dark:bg-[#1F1F1F] flex space-x-2 sm:space-x-3 px-1 md600:space-x-4 md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center lg:px-3">
                 {['Instruments', 'Chords', 'Piano Roll', 'Effects']
                   .filter(tab => {
                     // Hide "Chords" if getTrackType is "bass" or "808"
@@ -2002,7 +2002,11 @@ const Pianodemo = ({ onClose }) => {
                   })
                   .map((tab) => (
                     <button key={tab} onClick={() => setActiveTab(tab)}
-                      className={`text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white ' : 'text-gray-400 hover:text-white'}`}>
+                    className={`text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${
+                      activeTab === tab
+                      ? "text-black dark:text-white border-b-2 border-black dark:border-white"
+                      : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white"
+                      }`}>
                       {tab}
                     </button>
                   ))}
@@ -2011,29 +2015,29 @@ const Pianodemo = ({ onClose }) => {
               <div className=''>
                 {activeTab === 'Instruments' && (
                   <>
-                    <div className=" bg-[#1F1F1F] flex items-center justify-center pt-1 pb-1 px-2 md600:px-2 md600:pt-2 md600:pb-1 sm:gap-6 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
-                      <div className="bg-[#353535] p-1 md600:p-2 lg:p-3 rounded-lg">
+                    <div className="bg-white dark:bg-[#1F1F1F] flex items-center justify-center pt-1 pb-1 px-2 md600:px-2 md600:pt-2 md600:pb-1 sm:gap-6 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
+                      <div className="bg-gray-200 dark:bg-[#353535] p-1 md600:p-2 lg:p-3 rounded-lg">
                         <div className="flex items-center justify-between">
-                          <button onClick={prevInstrument} className="text-gray-400 hover:text-white transition-colors p-1 md600:p-2">
-                            <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px]' />
+                          <button onClick={prevInstrument} className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors p-1 md600:p-2">
+                            <FaChevronLeft className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                           </button>
 
                           <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-center 2xl:px-4 2xl:w-[250px]">
-                            <div className="text-white">
-                              <GiPianoKeys className='text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
+                            <div className="text-black dark:text-white">
+                              <GiPianoKeys className="text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[20px]" />
                             </div>
                             <div className="">
-                              <div className="text-white fw-bolder text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[16px]">
+                              <div className="text-black dark:text-white font-bold text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[16px]">
                                 {INSTRUMENTS[currentInstrumentIndex].name}
                               </div>
-                              <div className="text-gray-400 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px]">
+                              <div className="text-gray-600 dark:text-gray-400 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px]">
                                 {INSTRUMENTS[currentInstrumentIndex].category}
                               </div>
                             </div>
                           </div>
 
-                          <button onClick={nextInstrument} className="text-gray-400 hover:text-white transition-colors p-1 lg:p-2">
-                            <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] text-[#FFFFFF99]' />
+                          <button onClick={nextInstrument} className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors p-1 lg:p-2">
+                            <FaChevronRight className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                           </button>
                         </div>
                       </div>
@@ -2054,24 +2058,32 @@ const Pianodemo = ({ onClose }) => {
                     </div>
 
                     <div className="w-full h-[400px] md:h-[500px] lg:h-[250px]">
-                      <div className="bg-[#1F1F1F] flex gap-1 md600:gap-2 md:gap-3 pb-1  lg:gap-4 lg:pb-2 2xl:gap-5 items-center justify-between 2xl:pb-3">
-                        <div className='flex gap-1 sm:gap-2 md600:gap-3 lg:gap-4  2xl:gap-5 items-center ms-1 md600:ms-2 lg:ms-3'>
-                          <div className='border rounded-3xl border-[#FFFFFF1A]'>
-                            <p className="text-[#FFFFFF99] text-[8px] md600:text-[10px] lg:text-[12px] px-1 sm:px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Sustain</p>
+                      <div className="bg-primary-light dark:bg-primary-dark flex gap-1 md600:gap-2 md:gap-3 pb-1 lg:gap-4 lg:pb-2 2xl:gap-5 items-center justify-between 2xl:pb-3">
+                        <div className="flex gap-1 sm:gap-2 md600:gap-3 lg:gap-4 2xl:gap-5 items-center ms-1 md600:ms-2 lg:ms-3">
+                          <div className="border rounded-3xl border-secondary-light/10 dark:border-secondary-dark/10">
+                            <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[8px] md600:text-[10px] lg:text-[12px] px-1 sm:px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Sustain</p>
                           </div>
                           <div className="flex items-center justify-between ">
                             <button onClick={() => setActivePianoSection(prev => Math.max(prev - 1, 0))} disabled={activePianoSection === 0}
-                              className={`transition-colors p-1 lg:p-2 ${activePianoSection === 0 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white'}`}
+                              className={`transition-colors p-1 lg:p-2 ${
+                                activePianoSection === 0
+                                  ? "text-gray-400 cursor-not-allowed"
+                                  : "text-secondary-light dark:text-secondary-dark hover:text-secondary-dark dark:hover:text-secondary-light"
+                              }`}
                             >
                               <FaChevronLeft className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                             </button>
 
                             <div className="px-1 md600:px-2 lg:px-3 2xl:px-4 w-[50px] md600:w-[60px] lg:w-[80px] 2xl:w-[100px]">
-                              <div className="text-white text-center fw-bolder text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Octaves</div>
+                              <div className="text-secondary-light dark:text-secondary-dark text-center fw-bolder text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Octaves</div>
                             </div>
 
                             <button onClick={() => setActivePianoSection(prev => Math.min(prev + 1, 2))} disabled={activePianoSection === 2}
-                              className={`transition-colors p-1 lg:p-2 ${activePianoSection === 2 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white'}`}
+                              className={`transition-colors p-1 lg:p-2 ${
+                                activePianoSection === 2
+                                  ? "text-gray-400 cursor-not-allowed"
+                                  : "text-secondary-light dark:text-secondary-dark hover:text-secondary-dark dark:hover:text-secondary-light"
+                              }`}
                             >
                               <FaChevronRight className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                             </button>
@@ -2086,24 +2098,33 @@ const Pianodemo = ({ onClose }) => {
                         >
                           <p className="text-[#FFFFFF] text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
                         </button>
+                          <div className="border rounded-lg border-secondary-light/10 dark:border-secondary-dark/10 ms-auto me-1 md600:me-2 lg:me-3">
+                            <p className="text-secondary-light dark:text-secondary-dark text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
+                          </div>
+                        </div>
+                        <div className="border rounded-lg border-secondary-light/10 dark:border-secondary-dark/10 ms-auto me-1 md600:me-2 lg:me-3">
+                          <p className="text-secondary-light dark:text-secondary-dark text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
+                        </div>
                       </div>
 
-                      <div className="flex gap-1 md600:gap-2 lg:gap-3 bg-[#141414]">
+                      <div className="flex gap-1 md600:gap-2 lg:gap-3 bg-primary-light dark:bg-primary-dark">
                         {autoChords === true &&
-                          <div className="w-[30%] sm:w-[40%] md600:w-[25%] md:w-[30%] lg:w-[20%] xl:w-[18%] bg-[#1F1F1F] md600:ms-2 md600:mt-2 lg:ms-3 lg:mt-3 mb-1">
-                            <div className="w-full text-white p-1 md600:p-2 lg:p-3">
+                          <div className="w-[30%] sm:w-[40%] md600:w-[25%] md:w-[30%] lg:w-[20%] xl:w-[18%] bg-primary-light dark:bg-primary-dark md600:ms-2 md600:mt-2 lg:ms-3 lg:mt-3 mb-1">
+                            <div className="w-full text-secondary-light dark:text-secondary-dark p-1 md600:p-2 lg:p-3">
                               <div className="flex justify-between items-center">
                                 <div className="flex gap-1 items-center">
                                   <img src={subscription} alt="subscription" className="w-4 h-4" />
                                   <p className="text-white text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Auto Chord</p>
                                 </div>
                                 <IoClose className='text-[8px] sm:text-[10px] md600:text-[12px] md:text-[16px] lg:text-[20px] 2xl:text-[24px] text-[#FFFFFF99] cursor-pointer' onClick={() => setAutoChords(false)} />
+                                <p className="text-secondary-light dark:text-secondary-dark text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Auto Chord</p>
+                                <IoClose className="text-[8px] sm:text-[10px] md600:text-[12px] md:text-[16px] lg:text-[20px] 2xl:text-[24px] text-secondary-light/60 dark:text-secondary-dark/60 cursor-pointer" onClick={() => setAutoChords(false)} />
                               </div>
-                              <p className="text-[#FFFFFF99] text-[8px] md:text-[10px] lg:text-[12px] 2xl:text-[14px] text-nowrap truncate ">Play full chords with a single key</p>
+                              <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[8px] md:text-[10px] lg:text-[12px] 2xl:text-[14px] truncate">Play full chords with a single key</p>
                               <div className="flex justify-between gap-1 lg:gap-2 pt-1 md600:pt-2 lg:pt-4 2xl:gap-3 2xl:pt-5">
-                                <button className="text-white border border-[#FFFFFF1A] text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md">Triad</button>
-                                <button className="text-white border border-[#FFFFFF1A] text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md">7th</button>
-                                <button className="text-white border border-[#FFFFFF1A] text-[8px] md600:text-[10px] lg:text-[12px] py-1  px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md">Add9</button>
+                                <button className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">Triad</button>
+                                <button className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">7th</button>
+                                <button className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">Add9</button>
                               </div>
                               {/* Range Slider - Added here after the chord buttons */}
                               <div className=" pt-1 md600:pt-2 lg:pt-3">
@@ -2124,55 +2145,55 @@ const Pianodemo = ({ onClose }) => {
                           </div>
                         </div>
                       </div>
-                    </div>
+                  
                   </>
                 )}
 
                 {getTrackType !== "Bass & 808" && activeTab === 'Chords' && (
                   <>
-                    <div className="bg-[#1F1F1F] max-h-[180px] sm:max-h-[235px] md600:max-h-[235px] md:max-h-[410px] overflow-auto xl:overflow-hidden">
+                    <div className="bg-primary-light dark:bg-primary-dark max-h-[180px] sm:max-h-[235px] md600:max-h-[235px] md:max-h-[410px] overflow-auto xl:overflow-hidden">
                       <div className="w-full flex items-center justify-center">
-                        <div className="bg-[#FFFFFF1A] items-center mt-1 px-1 py-1 md:mt-2 md:px-2 md:py-2 lg:px-3 rounded-lg">
+                        <div className="bg-secondary-light/10 dark:bg-secondary-dark/10 items-center mt-1 px-1 py-1 md:mt-2 md:px-2 md:py-2 lg:px-3 rounded-lg">
 
                           {/* === CHORD TYPE SELECTOR === */}
                           <div className="relative flex gap-1 px-1 md:gap-2 md:px-2 lg:gap-3 items-center lg:px-3 cursor-pointer" onClick={() => setToggle(!toggle)}>
-                            <GiPianoKeys className='text-[10px] md600:text-[12px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
-                            <p className="text-white text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]">{chordType}</p>
-                            <HiMiniChevronUpDown className='text-[#FFFFFF99] text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]' />
+                            <GiPianoKeys className="text-[10px] md600:text-[12px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-secondary-light dark:text-secondary-dark" />
+                            <p className="text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]">{chordType}</p>
+                            <HiMiniChevronUpDown className="text-secondary-light/60 dark:text-secondary-dark/60 text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]" />
 
                             {toggle && (
-                              <div className="absolute top-[25px] w-[170px] bg-[#1F1F1F] rounded-[5px] z-50">
+                              <div className="absolute top-[25px] w-[170px] bg-primary-light dark:bg-primary-dark rounded-[5px] z-50">
                                 <div>
-                                  <p className="text-[#aeacb4] text-[14px] px-3 pt-3">Chord set:</p>
+                                  <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[14px] px-3 pt-3">Chord set:</p>
 
                                   {/* Basic Chords */}
-                                  <div className="flex mt-3 items-center hover:bg-[#FFFFFF1A] py-1 cursor-pointer" onClick={() => handleChordTypeChange("Basic")}>
+                                  <div className="flex mt-3 items-center hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10 py-1 cursor-pointer" onClick={() => handleChordTypeChange("Basic")}>
                                     {chordType === "Basic" ? (
                                       <div className="text-[15px] ms-3">✓</div>
                                     ) : (
                                       <div className="text-[15px] ms-3 invisible">✓</div>
                                     )}
-                                    <div className="ms-3 text-[15px] text-white">Basic</div>
+                                    <div className="ms-3 text-[15px] text-secondary-light dark:text-secondary-dark">Basic</div>
                                   </div>
 
                                   {/* EDM Chords */}
-                                  <div className="flex mt-1 items-center hover:bg-[#FFFFFF1A] py-1 cursor-pointer" onClick={() => handleChordTypeChange("EDM")}>
+                                  <div className="flex mt-1 items-center hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10 py-1 cursor-pointer" onClick={() => handleChordTypeChange("EDM")}>
                                     {chordType === "EDM" ? (
                                       <div className="text-[15px] ms-3">✓</div>
                                     ) : (
                                       <div className="text-[15px] ms-3 invisible">✓</div>
                                     )}
-                                    <div className="ms-3 text-[15px] text-white">EDM</div>
+                                    <div className="ms-3 text-[15px] text-secondary-light dark:text-secondary-dark">EDM</div>
                                   </div>
 
                                   {/* Hip Hop Chords */}
-                                  <div className="flex mt-1 items-center hover:bg-[#FFFFFF1A] py-1 cursor-pointer pb-3" onClick={() => handleChordTypeChange("Hip Hop")}>
+                                  <div className="flex mt-1 items-center hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10 py-1 cursor-pointer pb-3" onClick={() => handleChordTypeChange("Hip Hop")}>
                                     {chordType === "Hip Hop" ? (
                                       <div className="text-[15px] ms-3">✓</div>
                                     ) : (
                                       <div className="text-[15px] ms-3 invisible">✓</div>
                                     )}
-                                    <div className="ms-3 text-[15px] text-white">Hip Hop</div>
+                                    <div className="ms-3 text-[15px] text-secondary-light dark:text-secondary-dark">Hip Hop</div>
                                   </div>
                                 </div>
                               </div>
@@ -2189,15 +2210,22 @@ const Pianodemo = ({ onClose }) => {
                                   key={name}
                                   onClick={() => { handleChordClick(name); setActiveChords(index) }}
                                   disabled={!isAudioReady}
-                                  className={`bg-[#1F1F1F] cursor-pointer text-white w-[90px] md600:w-[110px] p-1 md600:px-2 md600:py-2 md:w-[120px] lg:w-[130px] rounded-md ${activeChords === index ? 'border-[white] border-[1px]' : 'border-[#FFFFFF33] border-[1px]'
-                                    } ${isPressed ? 'bg-[#FFFFFF20]' : ''} hover:bg-[#FFFFFF10] transition-colors`}
+                                  className={`cursor-pointer text-secondary-light dark:text-secondary-dark w-[90px] md600:w-[110px] p-1 md600:px-2 md600:py-2 md:w-[120px] lg:w-[130px] rounded-md border ${
+                                    activeChords === index
+                                      ? "border-secondary-light dark:border-secondary-dark"
+                                      : "border-secondary-light/20 dark:border-secondary-dark/20"
+                                  } ${
+                                    isPressed
+                                      ? "bg-secondary-light/20 dark:bg-secondary-dark/20"
+                                      : "bg-primary-light dark:bg-primary-dark hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10"
+                                  } transition-colors`}
                                 >
-                                  <p className="text-white text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px] text-center mb-1 font-medium">
+                                  <p className="text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px] text-center mb-1 font-medium">
                                     {name}
                                   </p>
                                   <div className="flex justify-between items-center">
                                     <img src={keyImage[index]?.image} alt="" className="w-2 h-2 md600:w-3 md600:h-3 lg:w-4 lg:h-4" />
-                                    <FaPlus className='text-[10px] md600:text-[12px] lg:text-[16px] text-[#FFFFFF99]' />
+                                    <FaPlus className="text-[10px] md600:text-[12px] lg:text-[16px] text-secondary-light/60 dark:text-secondary-dark/60" />
                                   </div>
                                 </div>
                               );
@@ -2208,25 +2236,25 @@ const Pianodemo = ({ onClose }) => {
 
                       {/* === PLAYING SOUNDS SECTION === */}
                       <div className="max-w-full md600:w-full flex items-center md600:justify-center my-3 lg:my-0 overflow-auto">
-                        <div className="bg-[#FFFFFF1A] items-center mt-1 px-1 md:mt-2 md:px-2 py-1 lg:px-3 lg:py-2 rounded-lg">
+                        <div className="bg-secondary-light/10 dark:bg-secondary-dark/10 items-center mt-1 px-1 md:mt-2 md:px-2 py-1 lg:px-3 lg:py-2 rounded-lg">
                           <div className="flex gap-1 px-1 md:gap-2 md:px-2 lg:gap-3 items-center lg:px-3">
                             <img src={music} alt="" className="w-2 h-2 md600:w-3 md600:h-3 lg:w-4 lg:h-4" />
-                            <p className="text-white text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]">Playing Sounds</p>
+                            <p className="text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]">Playing Sounds</p>
                           </div>
 
                           <div className="flex">
                             {Object.entries(patternCategories).map(([category, patterns], categoryIndex) => {
                               const isWideCategory = categoryIndex === 1 || categoryIndex === 2;
                               const containerClasses = isWideCategory
-                                ? 'bg-[#1F1F1F] mx-1 mt-1 p-1 w-[315px] h-[120px] md600:w-[170px] md600:h-[155px] md:mx-2 lg:mx-3 md:mt-2 md:p-2 md:w-[200px] md:h-[180px] lg:w-[340px] lg:h-[150px]'
-                                : 'bg-[#1F1F1F] ms-1 mt-1 p-1 w-[110px] h-[120px] md600:w-[100px] md600:h-[155px] md:ms-2 md:mt-2 md:p-2 md:w-[110px] md:h-[180px] lg:ms-3 lg:w-[116px] lg:h-[150px]';
+                                ? "bg-primary-light dark:bg-primary-dark mx-1 mt-1 p-1 w-[315px] h-[120px] md600:w-[170px] md600:h-[155px] md:mx-2 lg:mx-3 md:mt-2 md:p-2 md:w-[200px] md:h-[180px] lg:w-[340px] lg:h-[150px]"
+                                : "bg-primary-light dark:bg-primary-dark ms-1 mt-1 p-1 w-[110px] h-[120px] md600:w-[100px] md600:h-[155px] md:ms-2 md:mt-2 md:p-2 md:w-[110px] md:h-[180px] lg:ms-3 lg:w-[116px] lg:h-[150px]";
 
                               return (
                                 <div key={category} className={containerClasses}>
-                                  <p className="text-[#FFFFFF99] text-[10px] md600:text-[12px] md:text-[14px] capitalize">
+                                  <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[10px] md600:text-[12px] md:text-[14px] capitalize">
                                     {category}
                                   </p>
-                                  <div className={isWideCategory ? 'grid grid-cols-3 pt-1 md600:grid-cols-2 md:gap-1 lg:grid-cols-3 lg:gap-0 md:pt-1' : ''}>
+                                  <div className={ isWideCategory ? "grid grid-cols-3 pt-1 md600:grid-cols-2 md:gap-1 lg:grid-cols-3 lg:gap-0 md:pt-1" : "" }>
                                     {patterns.map((item, patternIndex) => {
                                       const key = `${category}-${patternIndex}`;
                                       const isSelected = activePatternKey === key;
@@ -2235,10 +2263,11 @@ const Pianodemo = ({ onClose }) => {
                                           <button
                                             onClick={() => handlePatternSelect(key)}
                                             disabled={!isAudioReady}
-                                            className={`${isSelected
-                                                ? "bg-white text-black"
-                                                : "text-[#FFFFFF] bg-transparent hover:bg-[#FFFFFF10]"
-                                              } border-[#FFFFFF1A] justify-center w-[100px] mt-1 h-[25px] lg:w-[100px] lg:h-[30px] md:mt-2 text-[8px] md600:text-[10px] rounded-md border transition-colors`}
+                                            className={`border justify-center w-[100px] mt-1 h-[25px] lg:w-[100px] lg:h-[30px] md:mt-2 text-[8px] md600:text-[10px] rounded-md transition-colors ${
+                                              isSelected
+                                                ? "bg-secondary-dark text-primary-dark dark:bg-secondary-light dark:text-primary-light"
+                                                : "bg-transparent text-secondary-light dark:text-secondary-dark hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10 border-secondary-light/10 dark:border-secondary-dark/10"
+                                            }`}
                                           >
                                             {item.name}
                                           </button>
@@ -2255,10 +2284,10 @@ const Pianodemo = ({ onClose }) => {
 
                       {/* === STATUS AND TEST BUTTONS === */}
                       <div className="text-center py-2">
-                        <div className="text-[#FFFFFF99] text-[10px] mb-2">
+                        <div className="text-secondary-light/60 dark:text-secondary-dark/60 text-[10px] mb-2">
                           Status: {loadingStatus} | Active: {chordType} | Pattern: {getPatternDisplayName() || "None"}
                         </div>
-                        <button onClick={testAllSynths} disabled={!isAudioReady} className="bg-[#FFFFFF1A] text-white px-3 py-1 rounded text-[10px] hover:bg-[#FFFFFF33] transition-colors">Test All Synths</button>
+                        <button onClick={testAllSynths} disabled={!isAudioReady} className="bg-secondary-light/10 dark:bg-secondary-dark/10 text-secondary-light dark:text-secondary-dark px-3 py-1 rounded text-[10px] hover:bg-secondary-light/20 dark:hover:bg-secondary-dark/20 transition-colors">Test All Synths</button>
                       </div>
                     </div>
                   </>
@@ -2269,7 +2298,9 @@ const Pianodemo = ({ onClose }) => {
                 )}
 
                 {activeTab === 'Effects' && (
-                  <div className={`w-full overflow-x-auto transition-all duration-200 ${isDragOver ? 'bg-[#409C9F] bg-opacity-10' : ''}`}
+                  <div className={`w-full overflow-x-auto transition-all duration-200 ${
+                    isDragOver ? "bg-[#409C9F] bg-opacity-10" : ""
+                    }`}
                     onDragOver={(e) => {
                       e.preventDefault();
                       e.dataTransfer.dropEffect = 'copy';
@@ -2296,10 +2327,10 @@ const Pianodemo = ({ onClose }) => {
                       }
                     }}
                   >
-                    <div className="flex items-center justify-center p-2 sm:p-4 min-w-max bg-[#1f1f1f]">
+                    <div className="flex items-center justify-center p-2 sm:p-4 min-w-max bg-white dark:bg-[#1f1f1f]">
                       <div className="flex gap-2 sm:gap-4 min-w-max">
                         {activeEffects.map((effect) => (
-                          <div key={effect.instanceId} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-white flex flex-col shrink-0">
+                          <div key={effect.instanceId} className="w-[150px] h-[180px] sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-gray-200 dark:bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-black dark:text-white flex flex-col shrink-0">
                             <div className="flex-1 w-full flex items-center justify-center">
                               {effect.component ? (
                                 <div className="w-full h-full flex items-center justify-center">
@@ -2307,14 +2338,14 @@ const Pianodemo = ({ onClose }) => {
                                 </div>
                               ) : (
                                 <div className="flex items-center justify-center h-full">
-                                  <p className="text-gray-400 text-sm">No component available</p>
+                                  <p className="text-gray-500 dark:text-gray-400 text-sm">No component available</p>
                                 </div>
                               )}
                             </div>
                           </div>
                         ))}
                         {activeEffects.length < effectsLibrary?.length && (
-                          <div className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-white cursor-pointer hover:bg-[#2a2a2a] transition-colors shrink-0 border-2 border-dashed border-gray-600"
+                          <div className="w-[150px] h-[180px] sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-gray-100 dark:bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-black dark:text-white cursor-pointer hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors shrink-0 border-2 border-dashed border-gray-400 dark:border-gray-600"
                             onClick={handlePlusButtonClick}
                             onDragOver={(e) => {
                               e.preventDefault();
@@ -2339,19 +2370,50 @@ const Pianodemo = ({ onClose }) => {
                               }
                             }}
                           >
-                            <div className="w-14 h-14 bg-white text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
+                            <div className="w-14 h-14 bg-black dark:bg-white text-white dark:text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
                             <p className="text-center text-sm leading-snug">Drop effects here or<br />select from library</p>
                           </div>
                         )}
                         {Array.from({ length: 4 - activeEffects.length - 1 }, (_, index) => (
-                          <div key={index} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl shrink-0 border-2 border-dashed border-gray-600"
-                            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; e.currentTarget.style.borderColor = '#409C9F'; e.currentTarget.style.backgroundColor = '#2a2a2a'; }}
-                            onDragLeave={(e) => { e.currentTarget.style.borderColor = '#4B5563'; e.currentTarget.style.backgroundColor = '#1a1a1a'; }}
-                            onDrop={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              e.currentTarget.style.borderColor = '#4B5563';
-                              e.currentTarget.style.backgroundColor = '#1a1a1a';
+                          <div key={index} className="
+                          w-[150px] h-[180px] sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px]
+                          md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 
+                          2xl:w-[256px] 2xl:h-[364px]
+                          rounded-xl shrink-0 border-2 border-dashed
+                          bg-primary-light dark:bg-primary-dark 
+                          border-gray-300 dark:border-gray-600
+                          transition-colors
+                        "
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "copy";
+                          e.currentTarget.style.borderColor = "#409C9F";
+                          e.currentTarget.style.backgroundColor =
+                            document.documentElement.classList.contains("dark")
+                              ? "#2a2a2a"
+                              : "#f3f4f6"; // light gray for light mode
+                        }}
+                        onDragLeave={(e) => {
+                          e.currentTarget.style.borderColor =
+                            document.documentElement.classList.contains("dark")
+                              ? "#4B5563"
+                              : "#D1D5DB"; // gray-300 for light
+                          e.currentTarget.style.backgroundColor =
+                            document.documentElement.classList.contains("dark")
+                              ? "#1a1a1a"
+                              : "#ffffff";
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          e.currentTarget.style.borderColor =
+                            document.documentElement.classList.contains("dark")
+                              ? "#4B5563"
+                              : "#D1D5DB";
+                          e.currentTarget.style.backgroundColor =
+                            document.documentElement.classList.contains("dark")
+                              ? "#1a1a1a"
+                              : "#ffffff";
                               try {
                                 const effectData = JSON.parse(e.dataTransfer.getData('application/json'));
                                 handleAddEffectFromLibrary(effectData);
