@@ -179,7 +179,7 @@ const Login = () => {
       dispatch(
         facebookLogin({ uid: id, firstName, lastName, email, photo })
       ).then((res) => {
-        if (res.payload?.success) navigate("/");
+        if (res.payload?.success) navigate("/project");
       });
     } else {
       console.error("Facebook login failed", response);
@@ -200,7 +200,7 @@ const Login = () => {
                 <Formik initialValues={{ email: "", password: "", showPassword: false, rememberMe: false,}} validationSchema={signInSchema}
                   onSubmit={(values) => {
                     dispatch(login(values)).then((response) => {
-                      if (response.payload.success) navigate("/");
+                      if (response.payload.success) navigate("/project");
                     });
                   }}
                 >
@@ -350,7 +350,7 @@ const Login = () => {
                   validationSchema={signUpSchema}
                   onSubmit={(values) => {
                     dispatch(register(values)).then((response) => {
-                      if (response.payload) navigate("/");
+                      if (response.payload) navigate("/project");
                     });
                   }}
                 >

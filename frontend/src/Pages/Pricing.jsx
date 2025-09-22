@@ -46,13 +46,13 @@ const Pricing = () => {
                     <>
                       {/*  Monthly pricing cards start -------------------------------------------------------------- */}
                       <div className="flex flex-col md:flex-row justify-center items-stretch gap-6 md:gap-8 w-full">
-                        <div className="basis-0 flex-1 w-full max-w-full p-5 bg-[#1F1F1F] border border-white rounded min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-105">
-                          <div className="main-price-month">
-                            <span className="text-[#FFFFFF] text-[36px] font-semibold">
+                        <div className="basis-0 flex-1 w-full max-w-full p-4 bg-[#1F1F1F] border border-white rounded min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-105">
+                          <div className="main-price-month mt-2 text-center">
+                            <span className="text-[#FFFFFF] text-[32px] font-semibold">
                               $15
                             </span>{" "}
                             <span className="text-[#FFFFFF]">/month</span>
-                            <ul className="text-[#FFFFFF] flex flex-col gap-2">
+                            <ul className="text-[#FFFFFF] flex flex-col gap-1">
                               <li>10,000+ loops</li>
                               <li>200 instruments</li>
                               <li>50 effects</li>
@@ -60,30 +60,30 @@ const Pricing = () => {
                             </ul>
                           </div>
                         </div>
-                        <div className="basis-0 flex-1 w-full max-w-full p-5 bg-[#1F1F1F] border border-white rounded min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-105">
-                          <div className="main-price-month relative pt-5">
-                            <span className="text-[#FFFFFF] text-[36px] font-semibold">
+                        <div className="basis-0 flex-1 w-full max-w-full p-4 bg-[#1F1F1F] border border-white rounded min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-105">
+                          <div className="main-price-month relative pt-2 text-center">
+                            <span className="text-[#FFFFFF] text-[32px] font-semibold">
                               $9
                             </span>{" "}
                             <span className="text-[#FFFFFF]">/month</span>
-                            <ul className="text-[#FFFFFF] flex flex-col gap-2">
+                            <ul className="text-[#FFFFFF] flex flex-col gap-1">
                               <li>7,000+ loops</li>
                               <li>150 instruments</li>
                               <li>30 effects</li>
                               <li>Basic vocal tools</li>
                             </ul>
-                            <span className="bg-[#FFFFFF] text-[#141414] p-2 rounded-full  text-[14px] py-[2px] px-[8px] lg:py-[4px] lg:px-[12px] lg:text-[16px] absolute top-[-14px] right-[-14px] lg:top-0 lg:right-0 ">
+                            <span className="bg-[#FFFFFF] text-[#141414] p-2 rounded-full text-[14px] py-[2px] px-[8px] lg:py-[4px] lg:px-[10px] lg:text-[16px] absolute top-[-14px] right-[-14px] lg:top-0 lg:right-0 ">
                               Best Value
                             </span>
                           </div>
                         </div>
-                        <div className="basis-0 flex-1 w-full max-w-full p-5 bg-[#1F1F1F] border border-white rounded min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-105">
-                          <div className="main-price-month">
-                            <span className="text-[#FFFFFF] text-[36px] font-semibold">
+                        <div className="basis-0 flex-1 w-full max-w-full p-4 bg-[#1F1F1F] border border-white rounded min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-105">
+                          <div className="main-price-month mt-2 text-center">
+                            <span className="text-[#FFFFFF] text-[32px] font-semibold">
                               $15
                             </span>{" "}
                             <span className="text-[#FFFFFF]">/month</span>
-                            <ul className="text-[#FFFFFF] flex flex-col gap-2">
+                            <ul className="text-[#FFFFFF] flex flex-col gap-1">
                               <li>10,000+ loops</li>
                               <li>200 instruments</li>
                               <li>50 effects</li>
@@ -93,14 +93,14 @@ const Pricing = () => {
                         </div>
                       </div>
 
-                      <div className="mt-20 w-full">
+                      <div className="mt-14 w-full">
                         <div className="flex flex-col md:flex-row items-stretch justify-center gap-6 md:gap-8 w-full">
                           <div className="p1-box flex-1 w-full max-w-full flex justify-center items-center flex-col">
                             <div className="k-loop-icon w-[50px] h-[50px] border-[1px] border-[#FFFFFF4D] rounded-sm flex justify-center items-center">
                               <img src={p1} alt="" />
                             </div>
                             <div className="p1-contant text-[#FFFFFF] text-center">
-                              <p className="text-[20px] mt-3">41K+</p>
+                              <p className="text-[20px] mt-2">41K+</p>
                               <p className="text-[22px]">loops/one-shots</p>
                               <p className="text-[14px] text-[#FFFFFF99]">
                                 (everything)
@@ -121,7 +121,7 @@ const Pricing = () => {
                               <img src={p2} alt="" />
                             </div>
                             <div className="p1-contant text-[#FFFFFF] text-center">
-                              <p className="text-[20px] mt-3">1250+</p>
+                              <p className="text-[20px] mt-2">1250+</p>
                               <p className="text-[22px]">Music Production</p>
                               <p className="text-[14px] text-[#FFFFFF99]">
                                 (everything)
@@ -142,7 +142,7 @@ const Pricing = () => {
                               <img src={p3} alt="" />
                             </div>
                             <div className="p1-contant text-[#FFFFFF] text-center">
-                              <p className="text-[20px] mt-3">41K+</p>
+                              <p className="text-[20px] mt-2">41K+</p>
                               <p className="text-[22px]">loops/one-shots</p>
                               <p className="text-[14px] text-[#FFFFFF99]">
                                 (everything)
@@ -169,13 +169,13 @@ const Pricing = () => {
                     <>
                       {/* Yearly pricing cards start -------------------------------------------------------------- */}
                       <div className="flex flex-col md:flex-row justify-center items-stretch gap-6 md:gap-8 w-full">
-                        <div className="basis-0 flex-1 w-full max-w-full p-5 bg-[#1F1F1F] border border-white rounded min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-105">
+                        <div className="basis-0 flex-1 w-full max-w-full p-6 bg-[#1F1F1F] border border-white rounded min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-105">
                           <div className="text-center">
                             <span className="text-[#FFFFFF] text-[28px] lg:text-[36px] font-semibold">
                               $144.79
                             </span>{" "}
                             <span className="text-[#FFFFFF]">/year</span>
-                            <p className="text-[#FFFFFF]">
+                            <p className="text-[#FFFFFF] mt-1">
                               Production & Vocals
                             </p>
                             <div className="price-year text-[#FFFFFF99] text-center mt-2">
@@ -187,13 +187,13 @@ const Pricing = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="basis-0 flex-1 w-full max-w-full p-5 bg-[#1F1F1F] border border-white rounded min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-105">
+                        <div className="basis-0 flex-1 w-full max-w-full p-6 bg-[#1F1F1F] border border-white rounded min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-105">
                           <div className="text-center">
                             <span className="text-[#FFFFFF] text-[28px] lg:text-[36px] font-semibold">
                               $144.79
                             </span>{" "}
                             <span className="text-[#FFFFFF]">/year</span>
-                            <p className="text-[#FFFFFF]">
+                            <p className="text-[#FFFFFF] mt-1">
                               Production & Vocals
                             </p>
                             <div className="price-year text-[#FFFFFF99] text-center mt-2">
@@ -205,13 +205,13 @@ const Pricing = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="basis-0 flex-1 w-full max-w-full p-5 bg-[#1F1F1F] border border-white rounded min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-105">
+                        <div className="basis-0 flex-1 w-full max-w-full p-6 bg-[#1F1F1F] border border-white rounded min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-105">
                           <div className="text-center">
                             <span className="text-[#FFFFFF] text-[28px] lg:text-[36px] font-semibold">
                               $144.79
                             </span>{" "}
                             <span className="text-[#FFFFFF]">/year</span>
-                            <p className="text-[#FFFFFF]">
+                            <p className="text-[#FFFFFF] mt-1">
                               Production & Vocals
                             </p>
                             <div className="price-year text-[#FFFFFF99] text-center mt-2">
@@ -225,14 +225,14 @@ const Pricing = () => {
                         </div>
                       </div>
 
-                      <div className="mt-20 w-full">
+                      <div className="mt-14 w-full">
                         <div className="flex flex-col md:flex-row items-stretch justify-center gap-6 md:gap-8 w-full">
                           <div className="p1-box flex-1 w-full max-w-full flex justify-center items-center flex-col">
                             <div className="k-loop-icon w-[50px] h-[50px] border-[1px] border-[#FFFFFF4D] rounded-sm flex justify-center items-center">
                               <img src={p1} alt="" />
                             </div>
                             <div className="p1-contant text-[#FFFFFF] text-center">
-                              <p className="text-[20px] mt-3">41K+</p>
+                              <p className="text-[20px] mt-2">41K+</p>
                               <p className="text-[22px]">loops/one-shots</p>
                               <p className="text-[14px] text-[#FFFFFF99]">
                                 (everything)
@@ -253,7 +253,7 @@ const Pricing = () => {
                               <img src={p2} alt="" />
                             </div>
                             <div className="p1-contant text-[#FFFFFF] text-center">
-                              <p className="text-[20px] mt-3">1250+</p>
+                              <p className="text-[20px] mt-2">1250+</p>
                               <p className="text-[22px]">Music Production</p>
                               <p className="text-[14px] text-[#FFFFFF99]">
                                 (everything)
@@ -274,7 +274,7 @@ const Pricing = () => {
                               <img src={p3} alt="" />
                             </div>
                             <div className="p1-contant text-[#FFFFFF] text-center">
-                              <p className="text-[20px] mt-3">41K+</p>
+                              <p className="text-[20px] mt-2">41K+</p>
                               <p className="text-[22px]">loops/one-shots</p>
                               <p className="text-[14px] text-[#FFFFFF99]">
                                 (everything)

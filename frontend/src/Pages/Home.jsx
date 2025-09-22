@@ -1,4 +1,5 @@
 import React from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import leftTop from "../Images/leftTop.png";
@@ -6,6 +7,8 @@ import rightBottom from "../Images/rightBottom.png";
 import Homepage from "../Images/Homepage.png";
 import pianoImg from "../Images/piyano.png";
 import playButtonSvg from "../Images/play.png";
+import playButtonSvg_1 from "../Images/play.svg";
+import pauseButtonSvg from "../Images/pause.svg";
 import f1 from "../Images/f1.svg";
 import f2 from "../Images/f2.svg";
 import f3 from "../Images/f3.svg";
@@ -51,6 +54,22 @@ const Home = () => {
       desc: "Borem ipsum dolor sit amet consectetur. Turpis tristique nulla posuere et amet arcu dictum ultricies convallis.",
     },
   ];
+
+  // export default function PianoVideo() {
+  const videoRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const togglePlay = () => {
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+      videoRef.current.play();
+      setIsPlaying(true);
+    } else {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
+    
   return (
     <>
       <div className="sticky top-0 z-10">
@@ -87,17 +106,41 @@ const Home = () => {
               >
                 Get Started
               </button>
-              <button className="bg-transparent border border-white text-white px-4 lg:px-6 py-2 text-sm md:text-base rounded font-medium hover:bg-white hover:text-black transition-colors duration-200">
+              <button 
+                className="bg-transparent border border-white text-white px-4 lg:px-6 py-2 text-sm md:text-base rounded font-medium hover:bg-white hover:text-black transition-colors duration-200"
+                onClick={() => navigate("/pricing")}
+              >
                 Go Premium
               </button>
             </div>
-            <img src={Homepage} alt="" className="h-full 3xl:h-[600px]" />
+            <img src={Homepage} alt="" 
+              // className="h-full 3xl:h-[600px]" 
+              className="
+                w-full h-full          /* default — mobile */
+                sm:max-w-[700px]       /* ≥640px */
+                md:max-w-[1000px]       /* ≥768px */
+                lg:max-w-[1300px]       /* ≥1024px */
+                3xl:max-w-[1500px]      /* ≥1920px */
+                rounded-xl object-cover
+              " 
+            />
           </div>
 
           <img
             src={rightBottom}
             alt="rightBottom"
-            className="absolute right-0 bottom-0 w-1/3 max-w-xs pointer-events-none select-none"
+            className="
+              absolute right-0 bottom-0 
+              w-[150px] h-[150px] 
+              sm:w-[140px] sm:h-[140px] 
+              md:w-[180px] md:h-[180px] 
+              lg:w-[220px] lg:h-[220px] 
+              xl:w-[260px] xl:h-[260px] 
+              2xl:w-[300px] 2xl:h-[300px]
+              pointer-events-none select-none
+              
+            "
+            // className="absolute right-0 bottom-0 w-1/3 max-w-xs pointer-events-none select-none"
             // style={{ zIndex: 1 }}
           />
         </div>
@@ -160,18 +203,34 @@ const Home = () => {
             </div>
             {/* Right: Image with Play Button */}
             <div className="flex-1 flex justify-center items-center relative">
-              <img
-                src={pianoImg}
-                alt="pianoImg"
-                className="rounded-xl w-[800px] h-full 3xl:h-[500px] object-cover"
-              />
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                {/* {playButtonSvg} */}
-                <img
-                  src={playButtonSvg}
-                  alt="playButtonSvg"
-                  className="h-[130px] w-[130px]"
-                />
+              
+                {/* Replace image with video */}
+                {<video
+                  ref={videoRef}
+                  src="https://cdn.pixabay.com/video/2017/11/28/13097-244835884_tiny.mp4"
+                  controls
+                  className="rounded-xl w-full max-w-[800px] sm:max-w-[400px] md:max-w-[600px] lg:max-w-[800px] h-auto object-cover"
+                  poster={pianoImg}
+                >
+                  Your browser does not support the video tag.
+                </video>}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <button
+                  onClick={togglePlay}
+                  className="
+                    focus:outline-none
+                    pointer-events-auto
+                    flex items-center justify-center 
+                    rounded-full bg-black/25 
+                    h-[30px] w-[30px] sm:h-[40px] sm:w-[40px] md:h-[50px] md:w-[50px]
+                  "
+                >
+                  <img
+                    src={isPlaying ? pauseButtonSvg : playButtonSvg_1}
+                    alt="play/pause"
+                    className="h-1/2 w-1/2"
+                  />
+                </button>
               </div>
             </div>
           </div>
@@ -337,7 +396,7 @@ const Home = () => {
                 <img
                   src={playButtonSvg}
                   alt="playButtonSvg"
-                  className="h-[80px] w-[80px] sm:h-[100px] sm:w-[100px] md:h-[130px] md:w-[130px]"
+                  className="h-[30px] w-[30px] sm:h-[80px] sm:w-[80px] md:h-[90px] md:w-[90px]"
                 />
               </div>
             </div>

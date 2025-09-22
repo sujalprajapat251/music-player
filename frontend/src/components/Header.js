@@ -1,10 +1,27 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 const Header = () => {
     const [menuOpen, setMenuOpen] = useState(false);
-    const [active, setActive] = useState('Music');
+    const [active, setActive] = useState('');
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // 🔹 Update active tab based on current path
+    useEffect(() => {
+        if (location.pathname === '/') {
+        setActive('Music');
+        } else if (location.pathname === '/faqs') {
+        setActive('FAQs');
+        } else if (location.pathname === '/pricing') {
+        setActive('Pricing');
+        } else if (location.pathname === '/contact') {
+        setActive('Contact');
+        } else if (location.pathname === '/login') {
+        setActive('Login');
+        }
+    }, [location.pathname]);
+
     
     return (
         <header className="bg-[#141414] text-white">
