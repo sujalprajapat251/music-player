@@ -49,8 +49,8 @@ const Sidebar = () => {
     <>
       <div className="flex items-center justify-between bg-[#FFFFFF1A] md:py-2 md:px-3 lg:py-3 lg:px-4 2xl:py-4 2xl:px-5 3xl:py-5 3xl:px-10" >
         <div className="flex items-center">
-          <div className="V_profile_img ">
-            <img src={userProfileImg} alt="profile img" className='w-[30px] h-[30px] lg:w-full rounded-full object-cover' onError={e => { e.target.src = profileimg; }} />
+          <div className="V_profile_img w-[33px] h-[33px]">
+            <img src={userProfileImg} alt="profile img" className='w-full h-full lg:w-full rounded-full object-cover' onError={e => { e.target.src = profileimg; }} />
           </div>
           <div className="V_profile_name text-white md:ps-2 lg:ps-3 2xl:ps-3 3xl:ps-4 my-auto text-[14px] xl:text-[16px]">
             {curruser?.firstName} {curruser?.lastName}
@@ -69,7 +69,7 @@ const Sidebar = () => {
             >
               <div className="">
                 <MenuItem >
-                  <Link to={"/profile"} className="block md:px-5 lg:px-6 md:py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" >
+                  <Link to={"/profile"} className="block md:px-5 lg:px-6 md:py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3 hover:bg-gray-800 cursor-pointer" >
                     <div className="flex">
                       <img src={profile} alt="" />
                       <p className="text-white md:ps-2 lg:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[14px] xl:text-[16px]">Profile</p>
@@ -104,7 +104,7 @@ const Sidebar = () => {
         </div>
       </div>
 
-      <div className="flex bg-white justify-center md:mt-3 md:mb-5 md:mx-4 lg:mt-4 lg:mb-6 lg:mx-5 xl:mt-5 xl:mb-7 xl:mx-7 3xl:mt-6  3xl:mb-9 3xl:mx-9 rounded-3xl md:p-1 lg:p-2">
+      <div onClick={() => setPricingModalOpen(true)} className="flex bg-white justify-center md:mt-3 md:mb-5 md:mx-4 lg:mt-4 lg:mb-6 lg:mx-5 xl:mt-5 xl:mb-7 xl:mx-7 3xl:mt-6  3xl:mb-9 3xl:mx-9 rounded-3xl md:p-1 lg:p-2 cursor-pointer">
         <img src={subscription} alt="" />
         <p className="text-black md:ps-2 lg:ps-3 3xl:ps-4 text-[14px] xl:text-[16px] font-semibold">Upgrade Now</p>
       </div>

@@ -1279,24 +1279,29 @@ const DrumPadMachine = ({ onClose }) => {
             }}>
             {/* Static Navbar with Tabs */}
             <div className="  border-b border-[#FFFFFF1A] h-full">
-              <div className=" bg-[#1F1F1F] flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
+              <div className="bg-primary-light dark:bg-primary-dark flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                 {/* Close Button */}
                 <div>
-                  <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => {
-                    setShowOffcanvas3(false);
-                    onClose && onClose();
-                  }} />
+                  <IoClose
+                    className="text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] 
+                              text-secondary-light dark:text-secondary-dark cursor-pointer justify-start"
+                    onClick={() => {
+                      setShowOffcanvas3(false);
+                      onClose && onClose();
+                    }}
+                  />
                 </div>
               </div>
               {/* Tabs */}
-              <div className=" bg-[#1F1F1F] flex space-x-2 sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3 pb-4">
-                {['Instruments', 'Patterns', 'Piano Roll', 'Effects'].map((tab) => (
+              <div className="bg-primary-light dark:bg-primary-dark flex space-x-2 sm:space-x-3 px-1 md600:space-x-4 md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center lg:px-3 pb-4">
+                {["Instruments", "Patterns", "Piano Roll", "Effects"].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveView(tab)}
-                    className={`text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeView === tab
-                      ? 'text-white border-b-2 border-white '
-                      : 'text-gray-400 hover:text-white'
+                    className={`text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] font-medium transition-colors
+                      ${activeView === tab
+                        ? "text-secondary-light dark:text-secondary-dark border-b-2 border-secondary-light dark:border-secondary-dark"
+                        : "text-gray-400 dark:text-gray-500 hover:text-secondary-light dark:hover:text-secondary-dark"
                       }`}
                   >
                     {tab}
@@ -1308,96 +1313,110 @@ const DrumPadMachine = ({ onClose }) => {
               <div className=''>
                 {activeView === 'Instruments' && (
                   <>
-                    <div className=" bg-[#1F1F1F] flex items-center justify-center pt-1 pb-1 md600:px-2 md600:pt-2 md600:pb-1 gap-2 sm:gap-2  md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
+                    <div className="bg-primary-light dark:bg-primary-dark flex items-center justify-center pt-1 pb-1 md600:px-2 md600:pt-2 md600:pb-1 gap-2 sm:gap-2  md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
                       {/* Instrument Selector */}
-                      <div className="bg-[#353535] p-1 md600:p-2 lg:p-3 rounded-lg">
+                      <div className="bg-secondary-light/10 dark:bg-secondary-dark/10 p-1 md600:p-2 lg:p-3 rounded-lg">
                         <div className="flex items-center justify-between">
                           <button
-                            onClick={() => { const next = (currentType - 1 + drumMachineTypes.length) % drumMachineTypes.length; setCurrentType(next); dispatch(setGlobalDrumTypeIndex(next)); }}
-                            className="text-gray-400 hover:text-white transition-colors  md600:p-2"
+                            onClick={() => {
+                              const next = (currentType - 1 + drumMachineTypes.length) % drumMachineTypes.length;
+                              setCurrentType(next);
+                              dispatch(setGlobalDrumTypeIndex(next));
+                            }}
+                            className="text-secondary-light/60 dark:text-secondary-dark/60 hover:text-secondary-light dark:hover:text-secondary-dark transition-colors md600:p-2"
                           >
-                            <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px]' />
+                            <FaChevronLeft className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                           </button>
 
                           <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-center 2xl:px-4 2xl:w-[250px]">
-                            <div className="text-white">
-                              <GiPianoKeys className='text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
-                            </div>
-                            <div className="">
-                              <div className="text-white fw-bolder text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[16px]">
+                            <GiPianoKeys className="text-secondary-light dark:text-secondary-dark text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[20px]" />
+                            <div>
+                              <div className="text-secondary-light dark:text-secondary-dark font-semibold text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[16px]">
                                 {currentTypeData.name}
                               </div>
-                              <div className="text-gray-400 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px] max-w-20 sm:max-w-32 truncate">
+                              <div className="text-secondary-light/60 dark:text-secondary-dark/60 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px] max-w-20 sm:max-w-32 truncate">
                                 {currentTypeData.description}
                               </div>
                             </div>
                           </div>
 
                           <button
-                            onClick={() => { const next = (currentType + 1) % drumMachineTypes.length; setCurrentType(next); dispatch(setGlobalDrumTypeIndex(next)); }}
-                            className="text-gray-400 hover:text-white transition-colors lg:p-2"
+                            onClick={() => {
+                              const next = (currentType + 1) % drumMachineTypes.length;
+                              setCurrentType(next);
+                              dispatch(setGlobalDrumTypeIndex(next));
+                            }}
+                            className="text-secondary-light/60 dark:text-secondary-dark/60 hover:text-secondary-light dark:hover:text-secondary-dark transition-colors lg:p-2"
                           >
-                            <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] text-[#FFFFFF99]' />
+                            <FaChevronRight className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                           </button>
                         </div>
                       </div>
 
-                      {/* Audio Effect Knobs */}
+                      {/* Knobs */}
                       <div className="flex space-x-1 md600:space-x-2 lg:space-x-4 2xl:space-x-6">
                         {/* Reverb Knob */}
                         <div className="flex flex-col items-center">
-                          <Knob label="Reverb" min={-135} max={135} defaultAngle={reverb} onChange={(value) => { setReverb(value); dispatch(setGlobalReverb(value)); }} />
+                          <Knob label="Reverb" min={-135} max={135} defaultAngle={reverb} onChange={(v) => { setReverb(v); dispatch(setGlobalReverb(v)); }} />
                         </div>
 
                         {/* Pan Knob */}
                         <div className="flex flex-col items-center">
-                          <Knob label="Pan" min={-135} max={135} defaultAngle={pan} onChange={(value) => { setPan(value); dispatch(setGlobalPan(value)); }} />
+                          <Knob label="Pan" min={-135} max={135} defaultAngle={pan} onChange={(v) => { setPan(v); dispatch(setGlobalPan(v)); }} />
                         </div>
 
                         {/* Volume Knob */}
                         <div className="flex flex-col items-center">
-                          <Knob label="Volume" min={-135} max={135} defaultAngle={volume} onChange={(value) => { setVolume(value); dispatch(setGlobalVolume(value)); }} />
+                          <Knob label="Volume" min={-135} max={135} defaultAngle={volume} onChange={(v) => { setVolume(v); dispatch(setGlobalVolume(v)); }} />
                         </div>
                       </div>
 
-                      <div className='items-center '>
-                        <div className='border rounded-lg border-[#FFFFFF1A]'>
-                          <p className="text-[#FFFFFF] text-center  text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
+                      {/* Save + Dropdown */}
+                      <div className="items-center">
+                        {/* Save Preset */}
+                        <div className="border rounded-lg border-secondary-light/20 dark:border-secondary-dark/20">
+                          <p className="text-secondary-light dark:text-secondary-dark text-center text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">
+                            Save Preset
+                          </p>
                         </div>
-                        <p className="text-white text-center text-[8px] sm:text-[10px]  px-2 md600:px-3 md:px-4 lg:px-4 py-1 mt-1 lg:mt-2">Auto-quantize</p>
-                        <div className="border  border-[#FFFFFF1A] mt-1 px-1 sm:px-2 md:px-3 lg:px-4 xl:px-5 2xl:px-6" onClick={() => { setIsIconDropdownOpen(!isIconDropdownOpen); setIsOpen2(!isOpen2) }}>
+
+                        {/* Auto-quantize */}
+                        <p className="text-secondary-light dark:text-secondary-dark text-center text-[8px] sm:text-[10px] px-2 md600:px-3 md:px-4 lg:px-4 py-1 mt-1 lg:mt-2">
+                          Auto-quantize
+                        </p>
+
+                        {/* Dropdown */}
+                        <div
+                          className="border border-secondary-light/20 dark:border-secondary-dark/20 mt-1 px-1 sm:px-2 md:px-3 lg:px-4 xl:px-5 2xl:px-6"
+                          onClick={() => {
+                            setIsIconDropdownOpen(!isIconDropdownOpen);
+                            setIsOpen2(!isOpen2);
+                          }}
+                        >
                           <div className="relative flex gap-1 sm:gap-2 md:gap-3" ref={menuDropdownRef}>
-                            <div className="items-center rounded-full " >
-                              <span className="text-[#14141499] dark:text-[#FFFFFF99] text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px]">{selectedMenuitems}</span>
-                            </div>
-                            <IoIosArrowDown className={`text-[#14141499] dark:text-[#FFFFFF99] transition-transform my-auto ms-auto  duration-300 ${isIconDropdownOpen ? 'rotate-180' : 'rotate-0'}`}
+                            <span className="text-secondary-light/60 dark:text-secondary-dark/60 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px]">
+                              {selectedMenuitems}
+                            </span>
+                            <IoIosArrowDown
+                              className={`text-secondary-light/60 dark:text-secondary-dark/60 transition-transform my-auto duration-300 ${isIconDropdownOpen ? "rotate-180" : "rotate-0"}`}
                             />
 
                             {isOpen2 && (
-                              <div className="absolute top-[27px] left-[5px] sm:left-[20px] md600:left-[30px] md:left-[40px]  transform -translate-x-1/2 w-32 md600:w-44 lg:w-44 bg-primary-light dark:bg-primary-dark rounded-lg shadow-2xl px-1 z-50">
-                                <div>
-                                  {menu.map((option) => (
-                                    <div
-                                      key={option.id}
-                                      className="flex items-center justify-between px-3 lg:px-4 py-1 3xl:py-2 text-secondary-light dark:text-secondary-dark cursor-pointer hover:bg-[#E5E5E5] dark:hover:bg-[#262529]"
-                                      onClick={() => handleMenuItemSelect(option.id, option.label)}
-                                    >
-                                      <div className="flex items-center gap-2 md600:gap-3">
-                                        {/* Show tick only for selected option */}
-                                        <div className="w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 flex items-center justify-center">
-                                          {selectedMenuitems === option.label && (
-                                            <Tick className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark' />
-                                          )}
-                                        </div>
-                                        <div className="flex flex-col">
-                                          <span className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px]'>
-                                            {option.label}
-                                          </span>
-                                        </div>
-                                      </div>
+                              <div className="absolute top-[27px] left-[5px] sm:left-[20px] md600:left-[30px] md:left-[40px] transform -translate-x-1/2 w-32 md600:w-44 lg:w-44 bg-primary-light dark:bg-primary-dark rounded-lg shadow-2xl px-1 z-50">
+                                {menu.map((option) => (
+                                  <div
+                                    key={option.id}
+                                    className="flex items-center justify-between px-3 lg:px-4 py-1 text-secondary-light dark:text-secondary-dark cursor-pointer hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/20"
+                                    onClick={() => handleMenuItemSelect(option.id, option.label)}
+                                  >
+                                    <div className="flex items-center gap-2 md600:gap-3">
+                                      {selectedMenuitems === option.label && (
+                                        <Tick className="w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 text-secondary-light dark:text-secondary-dark" />
+                                      )}
+                                      <span className="text-[10px] md600:text-[12px] lg:text-[14px]">{option.label}</span>
                                     </div>
-                                  ))}
-                                </div>
+                                  </div>
+                                ))}
                               </div>
                             )}
                           </div>
@@ -1406,7 +1425,7 @@ const DrumPadMachine = ({ onClose }) => {
                     </div>
 
                     {/* Drum Pad Area */}
-                    <div className="flex-1 flex items-center justify-center 3xl:p-4 relative bg-black">
+                    <div className="flex-1 flex items-center justify-center 3xl:p-4 relative bg-primary-light dark:bg-black">
                       {/* Scrollable wrapper for small screens */}
                       <div className="w-full h-full md:h-auto justify-center overflow-auto md:overflow-auto">
                         <div
@@ -1636,10 +1655,10 @@ const DrumPadMachine = ({ onClose }) => {
                       }
                     }}
                   >
-                    <div className="flex items-center justify-center p-16 sm:p-11 md600:p-14 md:p-3 lg:p-10 3xl:p-16 min-w-max">
+                    <div className="flex items-center justify-center p-16 sm:p-11 md600:p-14 md:p-3 lg:p-10 3xl:p-16 min-w-max bg-white dark:bg-[#1f1f1f]">
                       <div className="flex gap-2 sm:gap-4 min-w-max">
                         {activeEffects.map((effect) => (
-                          <div key={effect.instanceId} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-white flex flex-col shrink-0">
+                          <div key={effect.instanceId} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px]bg-gray-200 dark:bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-white dark:text-white flex flex-col shrink-0">
                             <div className="flex-1 w-full flex items-center justify-center">
                               {effect.component ? (
                                 <div className="w-full h-full flex items-center justify-center">
@@ -1647,14 +1666,14 @@ const DrumPadMachine = ({ onClose }) => {
                                 </div>
                               ) : (
                                 <div className="flex items-center justify-center h-full">
-                                  <p className="text-gray-400 text-sm">No component available</p>
+                                  <p className="text-gray-500 dark:text-gray-400 text-sm">No component available</p>
                                 </div>
                               )}
                             </div>
                           </div>
                         ))}
                         {activeEffects.length < effectsLibrary?.length && (
-                          <div className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-white cursor-pointer hover:bg-[#2a2a2a] transition-colors shrink-0 border-2 border-dashed border-gray-600"
+                          <div className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-gray-100 dark:bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-black dark:text-white cursor-pointer hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors shrink-0 border-2 border-dashed border-gray-400 dark:border-gray-600"
                             onClick={handlePlusButtonClick}
                             onDragOver={(e) => {
                               e.preventDefault();
@@ -1679,7 +1698,7 @@ const DrumPadMachine = ({ onClose }) => {
                               }
                             }}
                           >
-                            <div className="w-14 h-14 bg-white text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
+                            <div className="w-14 h-14 bg-black dark:bg-white text-white dark:text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
                             <p className="text-center text-sm leading-snug">Drop effects here or<br />select from library</p>
                           </div>
                         )}
@@ -1687,14 +1706,38 @@ const DrumPadMachine = ({ onClose }) => {
                           const aeLen = (activeEffects || []).length;
                           const count = Math.max(0, 4 - aeLen - 1);
                           return Array.from({ length: count }, (_, index) => (
-                            <div key={index} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl shrink-0 border-2 border-dashed border-gray-600"
-                              onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; e.currentTarget.style.borderColor = '#409C9F'; e.currentTarget.style.backgroundColor = '#2a2a2a'; }}
-                              onDragLeave={(e) => { e.currentTarget.style.borderColor = '#4B5563'; e.currentTarget.style.backgroundColor = '#1a1a1a'; }}
-                              onDrop={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                e.currentTarget.style.borderColor = '#4B5563';
-                                e.currentTarget.style.backgroundColor = '#1a1a1a';
+                            <div key={index} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] rounded-xl shrink-0 border-2 border-dashed bg-primary-light dark:bg-primary-dark 
+                          border-gray-300 dark:border-gray-600"
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = "copy";
+                            e.currentTarget.style.borderColor = "#409C9F";
+                            e.currentTarget.style.backgroundColor =
+                              document.documentElement.classList.contains("dark")
+                                ? "#2a2a2a"
+                                : "#f3f4f6"; // light gray for light mode
+                          }}
+                          onDragLeave={(e) => {
+                            e.currentTarget.style.borderColor =
+                              document.documentElement.classList.contains("dark")
+                                ? "#4B5563"
+                                : "#D1D5DB"; // gray-300 for light
+                            e.currentTarget.style.backgroundColor =
+                              document.documentElement.classList.contains("dark")
+                                ? "#1a1a1a"
+                                : "#ffffff";
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            e.currentTarget.style.borderColor =
+                              document.documentElement.classList.contains("dark")
+                                ? "#4B5563"
+                                : "#D1D5DB";
+                            e.currentTarget.style.backgroundColor =
+                              document.documentElement.classList.contains("dark")
+                                ? "#1a1a1a"
+                                : "#ffffff";
                                 try {
                                   const effectData = JSON.parse(e.dataTransfer.getData('application/json'));
                                   handleAddEffectFromLibrary(effectData);

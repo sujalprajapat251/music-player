@@ -24,6 +24,7 @@ import * as Tone from "tone";
 import Effects2 from './Effects2';
 import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsTwo } from '../Redux/Slice/effects.slice';
 import { selectStudioState } from '../Redux/rootReducer';
+import PricingModel from './PricingModel';
 
 function polarToCartesian(cx, cy, r, angle) {
   const a = (angle - 90) * Math.PI / 180.0;
@@ -978,6 +979,7 @@ const Pianodemo = ({ onClose }) => {
   const [pressedKeys, setPressedKeys] = useState(new Set());
   const [chordType, setChordType] = useState("Basic");
   const [toggle, setToggle] = useState(false);
+  const [pricingModalOpen, setPricingModalOpen] = useState(false);
 
   const [isProcessingDrop, setIsProcessingDrop] = useState(false);
   const [effectsSearchTerm, setEffectsSearchTerm] = useState('');
@@ -2204,7 +2206,7 @@ const Pianodemo = ({ onClose }) => {
                                   </p>
                                   <div className="flex justify-between items-center">
                                     <img src={keyImage[index]?.image} alt="" className="w-2 h-2 md600:w-3 md600:h-3 lg:w-4 lg:h-4" />
-                                    <FaPlus className="text-[10px] md600:text-[12px] lg:text-[16px] text-secondary-light/60 dark:text-secondary-dark/60" />
+                                    <FaPlus onClick={() => setPricingModalOpen(true)} className="text-[10px] md600:text-[12px] lg:text-[16px] text-secondary-light/60 dark:text-secondary-dark/60" />
                                   </div>
                                 </div>
                               );
@@ -2409,6 +2411,9 @@ const Pianodemo = ({ onClose }) => {
               </div>
             </div>
           </div>
+
+          {/* Pricing Modal */}
+          <PricingModel pricingModalOpen={pricingModalOpen} setPricingModalOpen={setPricingModalOpen} />
         </>
       )}
     </>

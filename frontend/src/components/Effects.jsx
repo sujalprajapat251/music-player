@@ -47,6 +47,7 @@ import Effects2 from './Effects2';
 import audioEffectsPlayer from '../components/AudioEffectsPlayer'
 import { showEffectsTwo } from '../Redux/Slice/effects.slice';
 import { setTrackType } from '../Redux/Slice/studio.slice';
+import PricingModel from './PricingModel';
 
 const effects = [
     { id: 1, name: "Bitcrushar", subscription: true, image: Bitcrushar, color: "#8F7CFD", category: "Distortion" },
@@ -81,6 +82,7 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const category = useSelector((state) => state.category?.category || []);
     const [dispatchedOnce, setDispatchedOnce] = useState(false);
+    const [pricingModalOpen, setPricingModalOpen] = useState(false);
 
     const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas, showEffectsTwo, showEffectsTwoState } = useSelector((state) => state.effects);
     // console.log("hhhh", showEffectsTwoState);
@@ -261,7 +263,7 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
                                         <div key={effect.id} className='cursor-pointer active:cursor-grabbing transition-all duration-200' draggable onDragStart={(e) => handleDragStart(e, effect)} onDragEnd={handleDragEnd}>
                                             {effect?.subscription === true ?
                                                 <div className="flex py-1 gap-1 md600:gap-2  md:gap-3 lg:gap-2 justify-center md600:py-2 items-center text-white" style={{ backgroundColor: effect?.color || '#8F7CFD' }}>
-                                                    <img src={subscription} alt="" className='w-5 h-5 sm:w-3 sm:h-3 md600:w-4 md600:h-4 md:w-4 md:h-4 3xl:w-5 3xl:h-5' />
+                                                    <img onClick={() => setPricingModalOpen(true)}  src={subscription} alt="" className='w-5 h-5 sm:w-3 sm:h-3 md600:w-4 md600:h-4 md:w-4 md:h-4 3xl:w-5 3xl:h-5' />
                                                     {effect?.name === "Juicy Distrotion" ? (
                                                         <p className="text-white text-[16px] sm:text-[14px] md600:text-[12px] md:text-[10px] lg:text-[8px] xl:text-[12px] 2xl:text-[11px] 4xl:text-[11px]">{effect.name}</p>
                                                     ) : effect?.name === "Instant Sidechain" ? (
@@ -313,6 +315,8 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
         )}
 
     </div>
+     {/* Pricing Modal */}
+     <PricingModel pricingModalOpen={pricingModalOpen} setPricingModalOpen={setPricingModalOpen} />
     </>
     )
 }

@@ -16,18 +16,18 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
     >
       <DialogBackdrop
         transition
-        className="fixed backdrop-blur-sm inset-0 bg-black/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
+        className="fixed inset-0 bg-black/60 backdrop-blur-md transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
       />
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
-        <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
+        <div className="flex min-h-full items-center justify-center p-4 sm:p-0">
           <DialogPanel
             transition
-            className="relative transform overflow-hidden p-7 rounded-[8px] bg-[#1F1F1F] text-left shadow-xl w-[1000px] max-w-full transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8"
+            className="relative transform overflow-hidden rounded-2xl bg-[#0F1115] shadow-2xl w-[1000px] max-w-full transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 p-10"
           >
-            {/* Close Icon Button */}
+            {/* Close Button */}
             <button
               onClick={() => setPricingModalOpen(false)}
-              className="absolute top-4 right-4 text-white hover:text-gray-300 focus:outline-none"
+              className="absolute top-4 right-4 text-gray-400 hover:text-white hover:scale-110 transition-transform"
               aria-label="Close"
             >
               <svg
@@ -45,271 +45,185 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                 />
               </svg>
             </button>
-            <div className="price-heading text-center mb-3">
-              <p className="text-[#FFFFFF] text-[32px] font-bold">
+
+            {/* Heading */}
+            <div className="text-center mb-8">
+              <p className="text-white text-3xl md:text-3xl font-extrabold tracking-wide">
                 Our Pricing Plans
               </p>
+              <div className="mt-2 h-1 w-20 mx-auto bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full"></div>
             </div>
-            <div className="price-navs">
+
+            {/* Tabs with Toggle */}
+            <div className=" justify-center mb-10">
               <Tabs
                 tabs={[
                   {
                     label: "Monthly",
                     content: (
-                      <>
-                        {/*  Monthly pricing cards start -------------------------------------------------------------- */}
-                        <div className="flex flex-col md:flex-row justify-center items-stretch gap-6 md:gap-8 w-full">
-                          <div className="basis-0 flex-1 w-full max-w-full p-2 bg-[#1F1F1F] border border-white rounded min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-105 hover:border-white hover:bg-white/10">
-                            <div className="main-price-month">
-                              <span className="text-[#FFFFFF] text-[24px] font-semibold">
-                                $15
-                              </span>{" "}
-                              <span className="text-[#FFFFFF]">/month</span>
-                              <ul className="text-[#FFFFFF] flex flex-col">
-                                <li>10,000+ loops</li>
-                                <li>200 instruments</li>
-                                <li>50 effects</li>
-                                <li>Advanced vocal tools</li>
-                              </ul>
-                            </div>
-                          </div>
-                          <div className="basis-0 flex-1 w-full max-w-full p-2 bg-[#1F1F1F] border border-white rounded min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-105 hover:border-white hover:bg-white/10">
-                            <div className="main-price-month">
-                              <span className="text-[#FFFFFF] text-[24px] font-semibold">
-                                $9
-                              </span>{" "}
-                              <span className="text-[#FFFFFF]">/month</span>
-                              <ul className="text-[#FFFFFF] flex flex-col">
-                                <li>7,000+ loops</li>
-                                <li>150 instruments</li>
-                                <li>30 effects</li>
-                                <li>Basic vocal tools</li>
-                              </ul>
-                            </div>
-                          </div>
-                          <div className="basis-0 flex-1 w-full max-w-full p-2 bg-[#1F1F1F] border border-white rounded min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-105 hover:border-white hover:bg-white/10">
-                            <div className="main-price-month">
-                              <span className="text-[#FFFFFF] text-[24px] font-semibold">
-                                $15
-                              </span>{" "}
-                              <span className="text-[#FFFFFF]">/month</span>
-                              <ul className="text-[#FFFFFF] flex flex-col">
-                                <li>10,000+ loops</li>
-                                <li>200 instruments</li>
-                                <li>50 effects</li>
-                                <li>Advanced vocal tools</li>
-                              </ul>
-                            </div>
-                          </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+                        {/* Starter */}
+                        <div className="bg-[#14161c] border border-white/10 rounded-2xl p-8 text-left flex flex-col hover:border-emerald-400 transition">
+                          <h3 className="text-xl font-semibold text-white mb-2">
+                            Starter
+                          </h3>
+                          <p className="text-gray-400 text-sm mb-6">
+                            Recommended for people with at least 1 year
+                            experience.
+                          </p>
+                          <p className="text-3xl font-bold text-white">
+                            $9<span className="text-lg font-normal">/mo</span>
+                          </p>
+                          <button className="mt-6 w-full py-2 rounded-lg border border-gray-600 text-white hover:bg-emerald-500 hover:border-emerald-500 transition">
+                            Get started →
+                          </button>
+                          <ul className="mt-6 space-y-2 text-sm text-gray-300">
+                            <li>10,000+ loops</li>
+                            <li>200 instruments</li>
+                            <li>50 effects</li>
+                            <li>Advanced vocal tools</li>
+                          </ul>
                         </div>
 
-                        <div className="mt-7 w-full">
-                          <div className="flex flex-col md:flex-row items-stretch justify-center gap-6 md:gap-8 w-full">
-                            <div className="p1-box flex-1 w-full max-w-full flex justify-center items-center flex-col">
-                              <div className="k-loop-icon w-[50px] h-[50px] border-[1px] border-[#FFFFFF4D] rounded-sm flex justify-center items-center">
-                                <img src={p1} alt="" />
-                              </div>
-                              <div className="p1-contant text-[#FFFFFF] text-center">
-                                <p className="text-[18px] mt-2">41K+</p>
-                                <p className="text-[20px]">loops/one-shots</p>
-                                <p className="text-[12px] text-[#FFFFFF99]">
-                                  (everything)
-                                </p>
-                              </div>
-                              <div className="main-price-month mt-2 text-[#FFFFFF99] text-[14px]">
-                                <ul>
-                                  <li>50+ effects</li>
-                                  <li>Realtime vocal tuning</li>
-                                  <li>Vocal tuning</li>
-                                  <li>Vocal cleanup</li>
-                                  <li>808 instrument (with glide)</li>
-                                </ul>
-                              </div>
-                            </div>
-                            <div className="p1-box flex-1 w-full max-w-full flex justify-center items-center flex-col">
-                              <div className="k-loop-icon w-[50px] h-[50px] border-[1px] border-[#FFFFFF4D] rounded-sm flex justify-center items-center">
-                                <img src={p2} alt="" />
-                              </div>
-                              <div className="p1-contant text-[#FFFFFF] text-center">
-                                <p className="text-[18px] mt-2">1250+</p>
-                                <p className="text-[20px]">Music Production</p>
-                                <p className="text-[12px] text-[#FFFFFF99]">
-                                  (everything)
-                                </p>
-                              </div>
-                              <div className="main-price-month mt-2 text-[#FFFFFF99] text-[14px]">
-                                <ul>
-                                  <li>Chords</li>
-                                  <li>Realtime vocal tuning</li>
-                                  <li>Save presets and loops </li>
-                                  <li>150k+ Sound Effects freesound</li>
-                                  <li>Automation</li>
-                                </ul>
-                              </div>
-                            </div>
-                            <div className="p1-box flex-1 w-full max-w-full flex justify-center items-center flex-col">
-                              <div className="k-loop-icon w-[50px] h-[50px] border-[1px] border-[#FFFFFF4D] rounded-sm flex justify-center items-center">
-                                <img src={p3} alt="" />
-                              </div>
-                              <div className="p1-contant text-[#FFFFFF] text-center">
-                                <p className="text-[18px] mt-2">41K+</p>
-                                <p className="text-[20px]">loops/one-shots</p>
-                                <p className="text-[12px] text-[#FFFFFF99]">
-                                  (everything)
-                                </p>
-                              </div>
-                              <div className="main-price-month mt-2 text-[#FFFFFF99] text-[14px]">
-                                <ul>
-                                  <li>Sampler</li>
-                                  <li>Priority mixing</li>
-                                  <li>High quality downloads</li>
-                                  <li>8 mastering styles</li>
-                                  <li>Multi-speaker transcription (8h)</li>
-                                </ul>
-                              </div>
-                            </div>
+                        {/* Professional */}
+                        <div className="bg-[#14161c] border-2 border-emerald-400 rounded-2xl p-8 text-left flex flex-col shadow-[0_0_20px_rgba(16,185,129,0.4)]">
+                          <div className="flex justify-between items-center mb-2">
+                            <h3 className="text-xl font-semibold text-white">
+                              Professional
+                            </h3>
+                            <span className="bg-emerald-500 text-xs px-2 py-1 rounded-full text-black font-semibold">
+                              Bestseller
+                            </span>
                           </div>
+                          <p className="text-gray-400 text-sm mb-6">
+                            Perfect plan for advanced creators.
+                          </p>
+                          <p className="text-3xl font-bold text-white">
+                            $15<span className="text-lg font-normal">/mo</span>
+                          </p>
+                          <button className="mt-6 w-full py-2 rounded-lg bg-emerald-500 text-black font-semibold hover:bg-emerald-400 transition">
+                            Get started →
+                          </button>
+                          <ul className="mt-6 space-y-2 text-sm text-gray-300">
+                            <li>7,000+ loops</li>
+                            <li>150 instruments</li>
+                            <li>30 effects</li>
+                            <li>Basic vocal tools</li>
+                          </ul>
                         </div>
-                      </>
+
+                        {/* Enterprise */}
+                        <div className="bg-[#14161c] border border-white/10 rounded-2xl p-8 text-left flex flex-col hover:border-emerald-400 transition">
+                          <h3 className="text-xl font-semibold text-white mb-2">
+                            Enterprise
+                          </h3>
+                          <p className="text-gray-400 text-sm mb-6">
+                            For teams & companies managing audio projects.
+                          </p>
+                          <p className="text-3xl font-bold text-white">
+                            $99<span className="text-lg font-normal">/mo</span>
+                          </p>
+                          <button className="mt-6 w-full py-2 rounded-lg border border-gray-600 text-white hover:bg-emerald-500 hover:border-emerald-500 transition">
+                            Schedule a call
+                          </button>
+                          <ul className="mt-6 space-y-2 text-sm text-gray-300">
+                            <li>Unlimited users</li>
+                            <li>Priority mixing</li>
+                            <li>High quality downloads</li>
+                            <li>Multi-speaker transcription (8h)</li>
+                          </ul>
+                        </div>
+                      </div>
                     ),
                   },
                   {
                     label: "Yearly",
                     content: (
-                      <>
-                        {/* Yearly pricing cards start -------------------------------------------------------------- */}
-                        <div className="flex flex-col md:flex-row justify-center items-stretch gap-6 md:gap-8 w-full">
-                          <div className="basis-0 flex-1 w-full max-w-full p-1 bg-[#1F1F1F] border border-white rounded min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-105 hover:border-white hover:bg-white/10">
-                            <div className="text-center">
-                              <span className="text-[#FFFFFF] text-[12px] lg:text-[26px] font-semibold">
-                                $144.79
-                              </span>{" "}
-                              <span className="text-[#FFFFFF]">/year</span>
-                              <p className="text-[#FFFFFF]">
-                                Production & Vocals
-                              </p>
-                              <div className="price-year text-[#FFFFFF99] text-center mt-1">
-                                <p>US $144.79/month (US$177.48/year)</p>
-                                <p className="break-words w-full lg:w-60  mt-1">
-                                  A full suite to help you create professional
-                                  sounding music
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="basis-0 flex-1 w-full max-w-full p-1 bg-[#1F1F1F] border border-white rounded min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-105 hover:border-white hover:bg-white/10">
-                            <div className="text-center">
-                              <span className="text-[#FFFFFF] text-[12px] lg:text-[26px] font-semibold">
-                                $144.79
-                              </span>{" "}
-                              <span className="text-[#FFFFFF]">/year</span>
-                              <p className="text-[#FFFFFF]">
-                                Production & Vocals
-                              </p>
-                              <div className="price-year text-[#FFFFFF99] text-center mt-1">
-                                <p>US $144.79/month (US$177.48/year)</p>
-                                <p className="break-words w-full lg:w-60 mx-auto mt-1">
-                                  A full suite to help you create professional
-                                  sounding music
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="basis-0 flex-1 w-full max-w-full p-1 bg-[#1F1F1F] border border-white rounded min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-105 hover:border-white hover:bg-white/10">
-                            <div className="text-center">
-                              <span className="text-[#FFFFFF] text-[12px] lg:text-[26px] font-semibold">
-                                $144.79
-                              </span>{" "}
-                              <span className="text-[#FFFFFF]">/year</span>
-                              <p className="text-[#FFFFFF]">
-                                Production & Vocals
-                              </p>
-                              <div className="price-year text-[#FFFFFF99] text-center mt-1">
-                                <p>US $144.79/month (US$177.48/year)</p>
-                                <p className="break-words w-full lg:w-60 mx-auto mt-1">
-                                  A full suite to help you create professional
-                                  sounding music
-                                </p>
-                              </div>
-                            </div>
-                          </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+                        {/* Starter */}
+                        <div className="bg-[#14161c] border border-white/10 rounded-2xl p-8 text-left flex flex-col hover:border-emerald-400 transition">
+                          <h3 className="text-xl font-semibold text-white mb-2">
+                            Starter
+                          </h3>
+                          <p className="text-gray-400 text-sm mb-6">
+                            Recommended for people with at least 1 year
+                            experience.
+                          </p>
+                          <p className="text-3xl font-bold text-white">
+                            $90
+                            <span className="text-lg font-normal">/yr</span>
+                          </p>
+                          <button className="mt-6 w-full py-2 rounded-lg border border-gray-600 text-white hover:bg-emerald-500 hover:border-emerald-500 transition">
+                            Get started →
+                          </button>
+                          <ul className="mt-6 space-y-2 text-sm text-gray-300">
+                            <li>10,000+ loops</li>
+                            <li>200 instruments</li>
+                            <li>50 effects</li>
+                            <li>Advanced vocal tools</li>
+                          </ul>
                         </div>
 
-                        <div className="mt-7 w-full">
-                          <div className="flex flex-col md:flex-row items-stretch justify-center gap-6 md:gap-8 w-full">
-                            <div className="p1-box flex-1 w-full max-w-full flex justify-center items-center flex-col">
-                              <div className="k-loop-icon w-[50px] h-[50px] border-[1px] border-[#FFFFFF4D] rounded-sm flex justify-center items-center">
-                                <img src={p1} alt="" />
-                              </div>
-                              <div className="p1-contant text-[#FFFFFF] text-center">
-                                <p className="text-[18px] mt-2">41K+</p>
-                                <p className="text-[20px]">loops/one-shots</p>
-                                <p className="text-[12px] text-[#FFFFFF99]">
-                                  (everything)
-                                </p>
-                              </div>
-                              <div className="main-price-month mt-2 text-[#FFFFFF99] text-[14px]">
-                                <ul>
-                                  <li>50+ effects</li>
-                                  <li>Realtime vocal tuning</li>
-                                  <li>Vocal tuning</li>
-                                  <li>Vocal cleanup</li>
-                                  <li>808 instrument (with glide)</li>
-                                </ul>
-                              </div>
-                            </div>
-                            <div className="p1-box flex-1 w-full max-w-full flex justify-center items-center flex-col">
-                              <div className="k-loop-icon w-[50px] h-[50px] border-[1px] border-[#FFFFFF4D] rounded-sm flex justify-center items-center">
-                                <img src={p2} alt="" />
-                              </div>
-                              <div className="p1-contant text-[#FFFFFF] text-center">
-                                <p className="text-[18px] mt-2">1250+</p>
-                                <p className="text-[20px]">Music Production</p>
-                                <p className="text-[12px] text-[#FFFFFF99]">
-                                  (everything)
-                                </p>
-                              </div>
-                              <div className="main-price-month mt-2 text-[#FFFFFF99] text-[14px]">
-                                <ul>
-                                  <li>Chords</li>
-                                  <li>Realtime vocal tuning</li>
-                                  <li>Save presets and loops </li>
-                                  <li>150k+ Sound Effects freesound</li>
-                                  <li>Automation</li>
-                                </ul>
-                              </div>
-                            </div>
-                            <div className="p1-box flex-1 w-full max-w-full flex justify-center items-center flex-col">
-                              <div className="k-loop-icon w-[50px] h-[50px] border-[1px] border-[#FFFFFF4D] rounded-sm flex justify-center items-center">
-                                <img src={p3} alt="" />
-                              </div>
-                              <div className="p1-contant text-[#FFFFFF] text-center">
-                                <p className="text-[18px] mt-2">41K+</p>
-                                <p className="text-[20px]">loops/one-shots</p>
-                                <p className="text-[12px] text-[#FFFFFF99]">
-                                  (everything)
-                                </p>
-                              </div>
-                              <div className="main-price-month mt-2 text-[#FFFFFF99] text-[14px]">
-                                <ul>
-                                  <li>Sampler</li>
-                                  <li>Priority mixing</li>
-                                  <li>High quality downloads</li>
-                                  <li>8 mastering styles</li>
-                                  <li>Multi-speaker transcription (8h)</li>
-                                </ul>
-                              </div>
-                            </div>
+                        {/* Professional */}
+                        <div className="bg-[#14161c] border-2 border-emerald-400 rounded-2xl p-8 text-left flex flex-col shadow-[0_0_20px_rgba(16,185,129,0.4)]">
+                          <div className="flex justify-between items-center mb-2">
+                            <h3 className="text-xl font-semibold text-white">
+                              Professional
+                            </h3>
+                            <span className="bg-emerald-500 text-xs px-2 py-1 rounded-full text-black font-semibold">
+                              Bestseller
+                            </span>
                           </div>
+                          <p className="text-gray-400 text-sm mb-6">
+                            Perfect plan for advanced creators.
+                          </p>
+                          <p className="text-3xl font-bold text-white">
+                            $150
+                            <span className="text-lg font-normal">/yr</span>
+                          </p>
+                          <button className="mt-6 w-full py-2 rounded-lg bg-emerald-500 text-black font-semibold hover:bg-emerald-400 transition">
+                            Get started →
+                          </button>
+                          <ul className="mt-6 space-y-2 text-sm text-gray-300">
+                            <li>7,000+ loops</li>
+                            <li>150 instruments</li>
+                            <li>30 effects</li>
+                            <li>Basic vocal tools</li>
+                          </ul>
                         </div>
-                      </>
+
+                        {/* Enterprise */}
+                        <div className="bg-[#14161c] border border-white/10 rounded-2xl p-8 text-left flex flex-col hover:border-emerald-400 transition">
+                          <h3 className="text-xl font-semibold text-white mb-2">
+                            Enterprise
+                          </h3>
+                          <p className="text-gray-400 text-sm mb-6">
+                            For teams & companies managing audio projects.
+                          </p>
+                          <p className="text-3xl font-bold text-white">
+                            $999
+                            <span className="text-lg font-normal">/yr</span>
+                          </p>
+                          <button className="mt-6 w-full py-2 rounded-lg border border-gray-600 text-white hover:bg-emerald-500 hover:border-emerald-500 transition">
+                            Schedule a call
+                          </button>
+                          <ul className="mt-6 space-y-2 text-sm text-gray-300">
+                            <li>Unlimited users</li>
+                            <li>Priority mixing</li>
+                            <li>High quality downloads</li>
+                            <li>Multi-speaker transcription (8h)</li>
+                          </ul>
+                        </div>
+                      </div>
                     ),
                   },
                 ]}
               />
             </div>
-            <div className="pri-next-btn text-center">
-              <button className="bg-[#FFFFFF] cursor-pointer text-[#141414] py-[10px] px-[90px] md:px-[168px] rounded">
+
+            {/* Footer Button */}
+            <div className="pri-next-btn text-center mt-10">
+              <button className="bg-gradient-to-r from-emerald-500 to-cyan-400 text-black font-semibold py-3 px-24 md:px-40 rounded-xl shadow-lg hover:scale-105 transition-transform">
                 Next
               </button>
             </div>

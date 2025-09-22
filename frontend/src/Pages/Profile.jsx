@@ -146,204 +146,201 @@ const Profile = () => {
   }
 
   return (
-    <section className="m-10">
-      <div className="pro-heading">
-        <p className="text-[#FFFFFF] text-[30px] font-semibold">Profile</p>
+    <section className="m-6 md:m-10">
+      {/* Heading */}
+      <div className="pro-heading mb-6">
+        <p className="text-white text-[28px] md:text-[32px] font-bold tracking-wide">
+          Profile 
+        </p>
+        <div className="h-1 w-16 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full mt-2"></div>
       </div>
 
-      <div className="pro-content bg-[#1F1F1F] p-4 md:p-8 lg:me-20 rounded-lg">
-        {/* Avatar Section */}
-        <div className="relative w-[100px] h-[100px] md:w-[120px] md:h-[120px] mb-6 md:mb-0 flex-shrink-0 mx-auto md:mx-0">
-          <img
-            src={imageUrl}
-            alt="Profile Avatar"
-            className="w-full h-full rounded-full object-cover border-4 border-[#232323]"
-            onError={(e) => {
-              e.target.src = pro; // Fallback to default image
-            }}
+  {/* Card */}
+  <div className="pro-content bg-[#1F1F1F]/80 backdrop-blur-xl p-6 md:p-10 rounded-2xl shadow-lg border border-white/10">
+    {/* Avatar */}
+    <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-10 mb-8">
+      <div className="relative w-[110px] h-[110px] md:w-[130px] md:h-[130px] mx-auto md:mx-0">
+        <img
+          src={imageUrl}
+          alt="Profile Avatar"
+          className="w-full h-full rounded-full object-cover border-4 border-[#2A2A2A] shadow-md"
+          onError={(e) => {
+            e.target.src = pro;
+          }}
+        />
+        <label
+          htmlFor="avatar-upload"
+          className="absolute bottom-2 right-2 bg-gradient-to-r from-emerald-500 to-cyan-400 p-2 rounded-full cursor-pointer shadow-lg hover:scale-105 transition-transform"
+        >
+          <TiCameraOutline className="text-black text-[20px]" />
+          <input
+            id="avatar-upload"
+            type="file"
+            className="hidden"
+            accept="image/*"
+            onChange={handleAvatarChange}
+            disabled={isSubmitting}
           />
-          <label
-            htmlFor="avatar-upload"
-            className="absolute bottom-2 right-2 bg-[#232323] p-2 rounded-full cursor-pointer border border-gray-700 hover:bg-[#2a2a2a] transition-colors"
-          >
-            <TiCameraOutline className="text-[#FFFFFF99] text-[20px]" />
-            <input
-              id="avatar-upload"
-              type="file"
-              className="hidden"
-              accept="image/*"
-              onChange={handleAvatarChange}
-              disabled={isSubmitting}
-            />
+        </label>
+      </div>
+
+      {/* Small Info */}
+      <div className="text-center md:text-left">
+        <p className="text-white text-lg font-semibold">
+          {form.firstName || "John"} {form.lastName || "Doe"}
+        </p>
+        <p className="text-gray-400 text-sm">{form.email || "user@email.com"}</p>
+      </div>
+    </div>
+
+    {/* Form */}
+    <form
+      className="w-full mt-5 mx-auto"
+      onSubmit={handleSubmit}
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8 mb-8">
+        <div>
+          <label className="block text-gray-300 mb-2 text-sm font-medium">
+            First Name
           </label>
+          <input
+            type="text"
+            name="firstName"
+            value={form.firstName}
+            onChange={handleChange}
+            disabled={isSubmitting}
+            className="w-full bg-[#232323] text-white rounded-lg px-4 py-2.5 shadow-inner focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition disabled:opacity-50"
+            placeholder="John"
+          />
         </div>
 
-        {/* Form Section */}
-        <form className="w-full md:max-w-2xl mt-5" onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
-            <div>
-              <label className="block text-white mb-2">First Name</label>
-              <input
-                type="text"
-                name="firstName"
-                value={form.firstName}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                className="w-full bg-[#232323] text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-50"
-                placeholder="John"
-              />
-            </div>
+        <div>
+          <label className="block text-gray-300 mb-2 text-sm font-medium">
+            Last Name
+          </label>
+          <input
+            type="text"
+            name="lastName"
+            value={form.lastName}
+            onChange={handleChange}
+            disabled={isSubmitting}
+            className="w-full bg-[#232323] text-white rounded-lg px-4 py-2.5 shadow-inner focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition disabled:opacity-50"
+            placeholder="Patel"
+          />
+        </div>
 
-            <div>
-              <label className="block text-white mb-2">Last Name</label>
-              <input
-                type="text"
-                name="lastName"
-                value={form.lastName}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                className="w-full bg-[#232323] text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-50"
-                placeholder="Patel"
-              />
-            </div>
-
-            <div>
-              <label className="block text-white mb-2">Mobile No.</label>
-              <div className="flex">
-                <select
-                  name="countryCode"
-                  value={form.countryCode}
-                  onChange={handleCountryCodeChange}
-                  disabled={isSubmitting}
-                  className="bg-[#232323] text-white rounded-l px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white/20 border-r border-gray-700 disabled:opacity-50"
-                >
-                  <option value="+91">+91</option>
-                  <option value="+1">+1</option>
-                  <option value="+44">+44</option>
-                  <option value="+61">+61</option>
-                  <option value="+971">+971</option>
-                </select>
-                <input
-                  type="tel"
-                  name="mobile"
-                  value={form.mobile}
-                  onChange={handleChange}
-                  disabled={isSubmitting}
-                  className="w-full bg-[#232323] text-white rounded-r px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-50"
-                  placeholder="65896 58585"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-white mb-2">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                className="w-full bg-[#232323] text-white rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-50"
-                placeholder="johanpatil123@gmail.com"
-              />
-            </div>
-          </div>
-
-          {/* Gender Section */}
-          <div className="mb-6">
-            <label className="block text-white mb-2">Gender</label>
-            <div className="flex flex-wrap items-center space-x-4 md:space-x-6">
-              <label className="flex items-center text-white cursor-pointer">
-                <input
-                  type="radio"
-                  name="gender"
-                  value="Male"
-                  checked={form.gender === "Male"}
-                  onChange={handleGenderChange}
-                  disabled={isSubmitting}
-                  className="mr-2 disabled:opacity-50"
-                />
-                Male
-              </label>
-              <label className="flex items-center text-white cursor-pointer">
-                <input
-                  type="radio"
-                  name="gender"
-                  value="Female"
-                  checked={form.gender === "Female"}
-                  onChange={handleGenderChange}
-                  disabled={isSubmitting}
-                  className="mr-2 disabled:opacity-50"
-                />
-                Female
-              </label>
-              <label className="flex items-center text-white cursor-pointer">
-                <input
-                  type="radio"
-                  name="gender"
-                  value="Other"
-                  checked={form.gender === "Other"}
-                  onChange={handleGenderChange}
-                  disabled={isSubmitting}
-                  className="mr-2 disabled:opacity-50"
-                />
-                Other
-              </label>
-            </div>
-          </div>
-
-          {/* Update Button */}
-          <div>
-            <button
-              type="submit"
-              disabled={isSubmitting || loading}
-              className="w-full md:w-auto bg-white text-black font-semibold px-8 py-2 rounded hover:bg-gray-200 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+        <div>
+          <label className="block text-gray-300 mb-2 text-sm font-medium">
+            Mobile No.
+          </label>
+          <div className="flex">
+            <select
+              name="countryCode"
+              value={form.countryCode}
+              onChange={handleCountryCodeChange}
+              disabled={isSubmitting}
+              className="bg-[#232323] text-white rounded-l-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 border-r border-gray-700 disabled:opacity-50"
             >
-              {isSubmitting ? (
-                <>
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-black"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Updating...
-                </>
-              ) : (
-                "Update Profile"
-              )}
-            </button>
+              <option value="+91">+91</option>
+              <option value="+1">+1</option>
+              <option value="+44">+44</option>
+              <option value="+61">+61</option>
+              <option value="+971">+971</option>
+            </select>
+            <input
+              type="tel"
+              name="mobile"
+              value={form.mobile}
+              onChange={handleChange}
+              disabled={isSubmitting}
+              className="w-full bg-[#232323] text-white rounded-r-lg px-4 py-2.5 shadow-inner focus:outline-none focus:ring-2 focus:ring-emerald-400/50 disabled:opacity-50"
+              placeholder="65896 58585"
+            />
           </div>
+        </div>
 
-          {/* Display current status */}
-          {/* {message && (
-            <div
-              className={`mt-4 p-3 rounded ${
-                success
-                  ? "bg-green-500/20 text-green-400"
-                  : "bg-red-500/20 text-red-400"
-              }`}
-            >
-              {message}
-            </div>
-          )} */}
-        </form>
+        <div>
+          <label className="block text-gray-300 mb-2 text-sm font-medium">
+            Email
+          </label>
+          <input
+            type="email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
+            disabled={isSubmitting}
+            className="w-full bg-[#232323] text-white rounded-lg px-4 py-2.5 shadow-inner focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition disabled:opacity-50"
+            placeholder="johanpatil123@gmail.com"
+          />
+        </div>
       </div>
-    </section>
+
+      {/* Gender */}
+      <div className="mb-8">
+        <label className="block text-gray-300 mb-2 text-sm font-medium">
+          Gender
+        </label>
+        <div className="flex flex-wrap items-center gap-4">
+          {["Male", "Female", "Other"].map((g) => (
+            <label
+              key={g}
+              className="flex items-center text-white cursor-pointer bg-[#232323] px-4 py-2 rounded-lg hover:bg-[#2a2a2a] transition"
+            >
+              <input
+                type="radio"
+                name="gender"
+                value={g}
+                checked={form.gender === g}
+                onChange={handleGenderChange}
+                disabled={isSubmitting}
+                className="mr-2 accent-emerald-400 disabled:opacity-50"
+              />
+              {g}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Update Button */}
+      <div className="flex justify-center md:justify-start">
+        <button
+          type="submit"
+          disabled={isSubmitting || loading}
+          className="bg-gradient-to-r from-emerald-500 to-cyan-400 text-black font-semibold px-10 py-3 rounded-xl shadow-md hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+        >
+          {isSubmitting ? (
+            <>
+              <svg
+                className="animate-spin -ml-1 mr-3 h-5 w-5 text-black"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Updating...
+            </>
+          ) : (
+            "Update Profile"
+          )}
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+
   );
 };
 
