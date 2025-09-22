@@ -870,14 +870,16 @@ const TopHeader = () => {
                         >
                             <div className="">
                                 {/* First item: Print */}
-                                <Menu.Item>
+                                <Menu.Item disabled={!canUndo}>
                                     {({ active }) => (
                                         <p 
-                                            className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer transition-colors"
+                                            onClick={canUndo ? handleUndo : undefined}
+                                            className={`flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 transition-colors ${canUndo ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                                             style={{ 
                                                 backgroundColor: active ? colors.menuItemHover : 'transparent',
-                                                color: colors.textSecondary
+                                                color: canUndo ? colors.textSecondary : colors.buttonDisabled
                                             }}
+                                            aria-disabled={!canUndo}
                                         >
                                             <Undo 
                                                 className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
@@ -893,13 +895,15 @@ const TopHeader = () => {
                                         </p>
                                     )}
                                 </Menu.Item>
-                                <Menu.Item>
+                                <Menu.Item disabled={!canRedo}>
                                     {({ active }) => (
-                                        <p className="flex gap-2 pb-3 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer transition-colors"
+                                        <p className={`flex gap-2 pb-3 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 transition-colors ${canRedo ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                                            onClick={canRedo ? handleRedo : undefined}
                                             style={{ 
                                                 backgroundColor: active ? colors.menuItemHover : 'transparent',
-                                                color: colors.textSecondary
+                                                color: canRedo ? colors.textSecondary : colors.buttonDisabled
                                             }}
+                                            aria-disabled={!canRedo}
                                         >
                                             <Redo 
                                                 className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
@@ -910,7 +914,7 @@ const TopHeader = () => {
                                                 className="text-[10px] md:text-[12px] ms-auto"
                                                 style={{ color: colors.textMuted }}
                                             >
-                                                Shift+Ctrl+Z
+                                                Ctrl+Y
                                             </p>
                                         </p>
                                     )}

@@ -337,11 +337,14 @@ const Pianodemo = ({ onClose }) => {
   const selectedInstrument = INSTRUMENTS[currentInstrumentIndex].id;
 
   // Update Redux when local instrument changes
-  useEffect(() => {
-    if (selectedInstrument !== selectedInstrumentFromRedux) {
-      dispatch(setSelectedInstrument(selectedInstrument));
-    }
-  }, [selectedInstrument, selectedInstrumentFromRedux, dispatch]);
+  // useEffect(() => {
+  //   if (selectedInstrument !== selectedInstrumentFromRedux) {
+  //     dispatch(setSelectedInstrument(selectedInstrument));
+  //   }
+  // }, [selectedInstrument, selectedInstrumentFromRedux, dispatch]);
+
+  // Avoid continuous local->Redux syncing to prevent render loops.
+  // We dispatch only on explicit next/prev instrument actions.
 
   const getIsRecording = useSelector((state) => selectStudioState(state).isRecording);
   const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);

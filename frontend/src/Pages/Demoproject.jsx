@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { getAllSound } from '../Redux/Slice/sound.slice';
 import { IMAGE_URL } from '../Utils/baseUrl';
 import { useOffcanvas } from '../components/Layout/Layout';
@@ -15,6 +16,7 @@ const Demoproject = () => {
     const { openOffcanvas } = useOffcanvas();
 
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const sounds = useSelector((state) => state.sound.allsounds)
     const audioRefs = useRef([]);
     const [playingIndex, setPlayingIndex] = useState(null);
@@ -74,7 +76,7 @@ const Demoproject = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 3xl:grid-cols-7 gap-6 max-h-[70vh] overflow-auto d_customscrollbar">
                     {sounds.map((sound, index) => (
-                        <div key={sound._id || index} className="bg-[#14141480] rounded-[4px] overflow-hidden d_customborder">
+                        <div key={sound._id || index} className="bg-[#14141480] rounded-[4px] overflow-hidden d_customborder" onClick={() => navigate('/sidebar/timeline', { state: { demoSound: { _id: sound?._id, soundname: sound?.soundname, image: sound?.image, soundfile: sound?.soundfile } } })}>
                             <div className='w-full h-[160px]'>
                                 <img src={`${IMAGE_URL}uploads/image/${sound?.image}`} alt="Album" className="w-full h-full object-cover" />
                             </div>
@@ -85,7 +87,7 @@ const Demoproject = () => {
                                         <p className="text-[#FFFFFF99] font-[400] text-[14px]">{sound?.category[0]?.name}</p>
                                     </div>
                                     <button
-                                        onClick={() => handlePlayPause(index)}
+                                        onClick={(e) => { e.stopPropagation(); handlePlayPause(index); }}
                                         className="bg-[#141414] text-black rounded-full w-[28px] h-[28px] flex justify-center items-center border-[0.5px] border-[#FFFFFF1A]"
                                     >
                                         <img src={playingIndex === index ? pause : play} alt="" />

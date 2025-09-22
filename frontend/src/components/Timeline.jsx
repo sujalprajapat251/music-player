@@ -44,7 +44,7 @@ import { getEffectsProcessor } from '../Utils/audioEffectsProcessor';
 import Guitar from "./Guitar";
 import Orchestral from "./Orchestral";
 import PricingModel from './PricingModel';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { setShowLoopLibrary } from "../Redux/Slice/ui.slice";
 import { getAllMusic, setCurrentMusic } from "../Redux/Slice/music.slice";
 import { setSelectedTrackId } from '../Redux/Slice/effects.slice';
@@ -59,6 +59,7 @@ import NewSynth from "./NewSynth";
 const Timeline = () => {
   
   const dispatch = useDispatch();
+  const location = useLocation();
   const svgRef = useRef(null);
   const lastReduxUpdateRef = useRef(0);
   const lastPlayerUpdateRef = useRef(0);
@@ -3228,6 +3229,62 @@ const Timeline = () => {
   const musicLoading = useSelector((state) => state.music?.loading || false);
 
   useEffect(() => {
+    // If navigated with a demo sound from Home2, create a track and clip immediately
+    const demoSound = location?.state?.demoSound;
+    if (demoSound && (!projectId)) {
+      const url = `${IMAGE_URL}uploads/soundfile/${demoSound.soundfile}`;
+      const newClipId = Date.now() + Math.random();
+      const newTrackId = Date.now() + Math.random();
+
+      // Create a minimal track with a single clip; duration will be updated once decoded/ready
+      const initialDuration = 5; // temporary placeholder
+      const clip = {
+        id: newClipId,
+        name: demoSound.soundname || 'New Clip',
+        url,
+        color: '#FFB6C1',
+        startTime: 0,
+        duration: initialDuration,
+        trimStart: 0,
+        trimEnd: initialDuration,
+        soundData: demoSound,
+        type: 'audio'
+      };
+
+      const track = {
+        id: newTrackId,
+        name: demoSound.soundname || 'New Track',
+        volume: 80,
+        audioClips: [clip],
+        type: 'audio',
+        color: getNextTrackColor(0)
+      };
+
+      dispatch(addTrack(track));
+      dispatch(setCurrentTrackId(newTrackId));
+
+      // Try to fetch real duration asynchronously and update clip
+      (async () => {
+        try {
+          const response = await fetch(url);
+          const arrayBuffer = await response.arrayBuffer();
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+          const realDuration = audioBuffer.duration || initialDuration;
+          dispatch(updateAudioClip({
+            trackId: newTrackId,
+            clipId: newClipId,
+            updates: { duration: realDuration, trimEnd: realDuration }
+          }));
+          dispatch(setAudioDuration(Math.max(realDuration, 120)));
+        } catch (_) {
+          // ignore
+        }
+      })();
+    }
+  }, [location?.state?.demoSound, projectId, dispatch]);
+
+  useEffect(() => {
     if (!projectId) return;
 
     try {
@@ -3654,10 +3711,10 @@ const Timeline = () => {
             </div>
           </div>
 
-          <div ref={gridSettingRef} className="hover:bg-[#1F1F1F] w-[30px] h-[30px] z-30 flex items-center justify-center rounded-full cursor-pointer" onClick={() => setShowGridSetting((prev) => !prev)}>
+          <div ref={gridSettingRef} className="hover:bg-[#1F1F1F] w-[30px] h-[30px] z-[60] flex items-center justify-center rounded-full cursor-pointer" onClick={() => setShowGridSetting((prev) => !prev)}>
             <img src={settingIcon} alt="Settings" />
             {showGridSetting && (
-              <div className="absolute top-full right-0 z-30">
+              <div className="absolute top-full right-0 z-[150]">
                 <GridSetting
                   // anchorRef={gridSettingRef}
                   selectedGrid={selectedGrid}

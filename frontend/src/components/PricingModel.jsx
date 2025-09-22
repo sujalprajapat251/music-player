@@ -12,7 +12,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
     <Dialog
       open={pricingModalOpen}
       onClose={setPricingModalOpen}
-      className="relative z-50"
+      className="relative z-[200]"
     >
       <DialogBackdrop
         transition
@@ -22,7 +22,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
         <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
           <DialogPanel
             transition
-            className="relative transform overflow-hidden p-7 rounded-[8px] bg-[#1F1F1F] text-left shadow-xl w-[1000px] max-w-full transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8"
+            className="relative z-[210] transform overflow-hidden p-7 rounded-[8px] bg-[#1F1F1F] text-left shadow-xl w-[1000px] max-w-full transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8"
           >
             {/* Close Icon Button */}
             <button
