@@ -20,12 +20,19 @@ import music from "../Images/playingsounds.svg";
 import BottomToolbar from './Layout/BottomToolbar';
 import { addPianoNote, setRecordingAudio, setPianoNotes, setPianoRecordingClip, setSelectedInstrument, updateTrack } from '../Redux/Slice/studio.slice';
 import PianoRolls from './PianoRolls';
+import Instruments from './OpenInstrumentsModel';
 import * as Tone from "tone";
 import Effects2 from './Effects2';
 import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsTwo } from '../Redux/Slice/effects.slice';
 import { selectStudioState } from '../Redux/rootReducer';
 import subscription from "../Images/subscriptionIcon.svg";
 import PricingModel from './PricingModel';
+
+
+const InstrumentCard = ({ INSTRUMENTS, currentInstrumentIndex }) => {
+  // ✅ Declare state properly
+  const [openInstrumentsModal, setOpenInstrumentsModal] = useState(false);
+};
 
 function polarToCartesian(cx, cy, r, angle) {
   const a = (angle - 90) * Math.PI / 180.0;
@@ -2018,7 +2025,7 @@ const Pianodemo = ({ onClose }) => {
                             <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px]' />
                           </button>
 
-                          <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-center 2xl:px-4 2xl:w-[250px]">
+                          <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-center 2xl:px-4 2xl:w-[250px]" onClick={() => setOpenInstrumentsModal(true)}>
                             <div className="text-white">
                               <GiPianoKeys className='text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
                             </div>
@@ -2031,6 +2038,31 @@ const Pianodemo = ({ onClose }) => {
                               </div>
                             </div>
                           </div>
+
+                          {openInstrumentsModal && (
+                            <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+                              <div className="bg-[#1F1F1F] text-white rounded-xl p-6 w-[90%] max-w-md relative shadow-lg">
+                                {/* Close button */}
+                                <button
+                                  className="absolute top-2 right-2 text-gray-400 hover:text-white text-lg"
+                                  onClick={() => setOpenInstrumentsModal(false)}
+                                >
+                                  ✕
+                                </button>
+
+                                <h2 className="text-xl font-bold mb-2">
+                                  {INSTRUMENTS[currentInstrumentIndex].name}
+                                </h2>
+                                <p className="text-gray-400 mb-4">
+                                  Category: {INSTRUMENTS[currentInstrumentIndex].category}
+                                </p>
+
+                                <p className="text-sm">
+                                  🎹 Instrument details / settings ahiya muki shako.
+                                </p>
+                              </div>
+                            </div>
+                          )}
 
                           <button onClick={nextInstrument} className="text-gray-400 hover:text-white transition-colors p-1 lg:p-2">
                             <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] text-[#FFFFFF99]' />
