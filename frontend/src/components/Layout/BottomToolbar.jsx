@@ -385,7 +385,7 @@ const BottomToolbar = () => {
 
     const [recordingStartTime, setRecordingStartTime] = useState(null);
 
-    const selectedSound = useSelector(state => state.studio.selectedSound);
+    const selectedSound = useSelector(state => selectStudioState(state)?.selectedSound);
     const audioRef = useRef(null);
     const useMetronomePlayer = (selectedSound) => {
 

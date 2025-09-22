@@ -2767,13 +2767,13 @@ const Timeline = () => {
       const newTrack = {
         id: newTrackId,
         name: 'Synth',
-        type: 'keys',
+        type: 'Synth',
         volume: 80,
         audioClips: []
       };
       dispatch(addTrack(newTrack));
       dispatch(setCurrentTrackId(newTrackId));
-      dispatch(setTrackType('Keys'));
+      dispatch(setTrackType('Synth'));
     } else if (action === "Patterns Beatmaker") {
       const newTrackId = Date.now() + Math.random();
       const newTrack = {

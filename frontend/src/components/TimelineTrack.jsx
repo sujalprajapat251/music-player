@@ -545,13 +545,16 @@ const TimelineTrack = ({
     typeName === 'keys' ||
     typeName === 'guitar' ||
     typeName === 'orchestral' ||
+    typeName === 'synth' ||
     displayName === 'keys' ||
     displayName === 'guitar' ||
     displayName === 'orchestral' ||
+    displayName === 'synth' ||
     displayName.includes('piano') ||
     displayName.includes('key') ||
     displayName.includes('guitar') ||
-    displayName.includes('orchestral')
+    displayName.includes('orchestral') ||
+    displayName.includes('synth')
   );
   const isDrumTrack = typeName === 'drum' || displayName === 'drum' || displayName.includes('drum') || displayName.includes('percussion');
 

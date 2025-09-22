@@ -24,6 +24,8 @@ import * as Tone from "tone";
 import Effects2 from './Effects2';
 import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsTwo } from '../Redux/Slice/effects.slice';
 import { selectStudioState } from '../Redux/rootReducer';
+import subscription from "../Images/subscriptionIcon.svg";
+import PricingModel from './PricingModel';
 
 function polarToCartesian(cx, cy, r, angle) {
   const a = (angle - 90) * Math.PI / 180.0;
@@ -157,7 +159,10 @@ const RangeSlider = ({ min = 0, max = 100, step = 1, initialValue = 0, label = "
   return (
     <div className={`w-full ${className}`}>
       <div className="flex justify-between items-center">
-        <label className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] text-[#FFFFFF]">{label}</label>
+        <div className="flex gap-1 items-center">
+          <img src={subscription} alt="subscription" className="w-4 h-4" />
+          <label className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] text-[#FFFFFF]">{label}</label>
+        </div>
         <span className="text-[10px] md600:text-[12px] md:text-[14px] text-[#FFFFFF99] outline-none focus:outline-none">{value}{unit}</span>
       </div>
 
@@ -285,6 +290,7 @@ const Pianodemo = ({ onClose }) => {
   const [reverb, setReverb] = useState(-90);
   const [pan, setPan] = useState(0);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [pricingModalOpen, setPricingModalOpen] = useState(false);
   const pianoSectionsRef = useRef(null);
 
   // Get the selected instrument from Redux
@@ -2015,7 +2021,7 @@ const Pianodemo = ({ onClose }) => {
                     </div>
 
                     <div className="w-full h-[400px] md:h-[500px] lg:h-[250px]">
-                        <div className="bg-primary-light dark:bg-primary-dark flex gap-1 md600:gap-2 md:gap-3 pb-1 lg:gap-4 lg:pb-2 2xl:gap-5 items-center justify-between 2xl:pb-3">
+                        <div className="bg-primary-light dark:bg-[#1F1F1F] flex gap-1 md600:gap-2 md:gap-3 pb-1 lg:gap-4 lg:pb-2 2xl:gap-5 items-center justify-between 2xl:pb-3">
                           <div className="flex gap-1 sm:gap-2 md600:gap-3 lg:gap-4 2xl:gap-5 items-center ms-1 md600:ms-2 lg:ms-3">
                           <div className="border rounded-3xl border-secondary-light/10 dark:border-secondary-dark/10">
                               <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[8px] md600:text-[10px] lg:text-[12px] px-1 sm:px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Sustain</p>
@@ -2045,11 +2051,11 @@ const Pianodemo = ({ onClose }) => {
                               <FaChevronRight className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                             </button>
                           </div>
-                          <div className="border rounded-lg border-secondary-light/10 dark:border-secondary-dark/10 ms-auto me-1 md600:me-2 lg:me-3">
-                            <p className="text-secondary-light dark:text-secondary-dark text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
+                          <div className="border rounded-lg border-secondary-light/10 dark:border-secondary-dark/10 ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer" onClick={() => setAutoChords(true)}>
+                            <p className="text-secondary-light dark:text-secondary-dark text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Auto Chord</p>
                           </div>
                         </div>
-                        <div className="border rounded-lg border-secondary-light/10 dark:border-secondary-dark/10 ms-auto me-1 md600:me-2 lg:me-3">
+                        <div onClick={() => setPricingModalOpen(true)} className="border rounded-lg border-secondary-light/10 dark:border-secondary-dark/10 ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer">
                           <p className="text-secondary-light dark:text-secondary-dark text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
                         </div>
                       </div>
@@ -2057,19 +2063,26 @@ const Pianodemo = ({ onClose }) => {
                       <div className="flex gap-1 md600:gap-2 lg:gap-3 bg-primary-light dark:bg-primary-dark">
                         {autoChords === true &&
                           <div className="w-[30%] sm:w-[40%] md600:w-[25%] md:w-[30%] lg:w-[20%] xl:w-[18%] bg-primary-light dark:bg-primary-dark md600:ms-2 md600:mt-2 lg:ms-3 lg:mt-3 mb-1">
-                            <div className="w-full text-secondary-light dark:text-secondary-dark p-1 md600:p-2 lg:p-3">
-                              <div className="flex justify-between items-center">
-                              <p className="text-secondary-light dark:text-secondary-dark text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Auto Chord</p>
-                              <IoClose className="text-[8px] sm:text-[10px] md600:text-[12px] md:text-[16px] lg:text-[20px] 2xl:text-[24px] text-secondary-light/60 dark:text-secondary-dark/60 cursor-pointer" onClick={() => setAutoChords(false)} />
+                            <div className="w-full bg-primary-light dark:bg-[#1F1F1F] p-1 md600:p-2 lg:p-3">
+                              <div className="flex justify-between items-center mb-2">
+                                <div className="flex gap-1 items-center">
+                                  <img src={subscription} alt="subscription" className="w-4 h-4" />
+                                  <p className="text-white text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Auto Chord</p>
+                                </div>
+                                <IoClose className="text-[8px] sm:text-[10px] md600:text-[12px] md:text-[16px] lg:text-[20px] 2xl:text-[24px] text-secondary-light/60 dark:text-secondary-dark/60 cursor-pointer" onClick={() => setAutoChords(false)} />
                               </div>
-                              <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[8px] md:text-[10px] lg:text-[12px] 2xl:text-[14px] truncate">Play full chords with a single key</p>
-                              <div className="flex justify-between gap-1 lg:gap-2 pt-1 md600:pt-2 lg:pt-4 2xl:gap-3 2xl:pt-5">
-                                  <button className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">Triad</button>
-                                  <button className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">7th</button>
-                                  <button className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">Add9</button>
+                              <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[8px] md:text-[10px] lg:text-[12px] 2xl:text-[14px] truncate mb-3">Play full chords with a single key</p>
+                              <div className="flex gap-1 items-center">
+                                  <img src={subscription} alt="subscription" className="w-4 h-4" />
+                                  <p className="text-white text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Shape</p>
+                              </div>
+                              <div className="flex justify-between gap-1 lg:gap-2 md600:pt-2 lg:pt-4 2xl:gap-2 2xl:pt-2">
+                                  <button onClick={() => setPricingModalOpen(true)} className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">Triad</button>
+                                  <button onClick={() => setPricingModalOpen(true)} className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">7th</button>
+                                  <button onClick={() => setPricingModalOpen(true)} className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">Add9</button>
                               </div>
                               {/* Range Slider - Added here after the chord buttons */}
-                              <div className=" pt-1 md600:pt-2 lg:pt-3">
+                              <div className="pt-1 md600:pt-2 lg:pt-4">
                                 <RangeSlider min={0} max={10} step={0.1} initialValue={0} label="Strum" unit="s" onChange={setStrumValue} />
                               </div>
                             </div>
@@ -2374,6 +2387,12 @@ const Pianodemo = ({ onClose }) => {
           </div>
         </>
       )}
+
+      {/* Pricing Modal */}
+      <PricingModel
+        pricingModalOpen={pricingModalOpen}
+        setPricingModalOpen={setPricingModalOpen}
+      />
     </>
   )
 }

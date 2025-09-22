@@ -23,6 +23,7 @@ import * as Tone from "tone";
 import { setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
 import { selectStudioState } from '../Redux/rootReducer';
 import subscription from "../Images/subscriptionIcon.svg";
+import PricingModel from './PricingModel';
 
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
@@ -205,24 +206,24 @@ const RangeSlider = ({ min = 0, max = 100, step = 1, initialValue = 0, label = "
 
 
 const INSTRUMENTS = [
-    { id: 'acoustic_grand_piano', name: 'Piano', category: 'Jazz Chord Memos' },
-    { id: 'whistle', name: 'Whistle', category: 'Effects' },
-    { id: 'fx_1_rain', name: 'Rain', category: 'Atmospheric' },
-    { id: 'fx_3_crystal', name: 'Crystal', category: 'Ambient' },
-    { id: 'fx_4_atmosphere', name: 'Atmosphere', category: 'Ambient' },
-    { id: 'fx_5_brightness', name: 'Brightness', category: 'Effects' },
-    { id: 'fx_6_goblins', name: 'Goblins', category: 'Fantasy' },
-    { id: 'fx_7_echoes', name: 'Echoes', category: 'Reverb' },
-    { id: 'fx_8_scifi', name: 'Sci-Fi', category: 'Futuristic' },
-    { id: 'glockenspiel', name: 'Glockenspiel', category: 'Percussion' },
-    { id: 'guitar_fret_noise', name: 'Guitar Fret', category: 'String' },
-    { id: 'guitar_harmonics', name: 'Guitar Harmonics', category: 'String' },
-    { id: 'gunshot', name: 'Gunshot', category: 'Effects' },
-    { id: 'harmonica', name: 'Harmonica', category: 'Wind' },
-    { id: 'harpsichord', name: 'Harpsichord', category: 'Baroque' },
-    { id: 'honkytonk_piano', name: 'Honky Tonk', category: 'Piano' },
-    { id: 'kalimba', name: 'Kalimba', category: 'African' },
-    { id: 'koto', name: 'Koto', category: 'Japanese' }
+    { id: 'violin', name: 'Violin', category: 'Strings' },
+    { id: 'cello', name: 'Cello', category: 'Strings' },
+    { id: 'viola', name: 'Viola', category: 'Strings' },
+    { id: 'flute', name: 'Flute', category: 'Woodwinds' },
+    { id: 'oboe', name: 'Oboe', category: 'Woodwinds' },
+    { id: 'clarinet', name: 'Clarinet', category: 'Woodwinds' },
+    { id: 'trumpet', name: 'Trumpet', category: 'Brass' },
+    { id: 'french_horn', name: 'French Horn', category: 'Brass' },
+    { id: 'trombone', name: 'Trombone', category: 'Brass' },
+    { id: 'tuba', name: 'Tuba', category: 'Brass' },
+    { id: 'timpani', name: 'Timpani', category: 'Percussion' },
+    { id: 'harp', name: 'Harp', category: 'Strings' },
+    { id: 'string_ensemble_1', name: 'String Ensemble', category: 'Ensemble' },
+    { id: 'choir_aahs', name: 'Choir Aahs', category: 'Voice' },
+    { id: 'orchestral_harp', name: 'Orchestral Harp', category: 'Strings' },
+    { id: 'contrabass', name: 'Contrabass', category: 'Strings' },
+    { id: 'bassoon', name: 'Bassoon', category: 'Woodwinds' },
+    { id: 'piccolo', name: 'Piccolo', category: 'Woodwinds' }
 ];
 
 const NewSynth = ({ onClose }) => {
@@ -238,10 +239,14 @@ const NewSynth = ({ onClose }) => {
     const [reverb, setReverb] = useState(-90);
     const [pan, setPan] = useState(0);
     const [isDragOver, setIsDragOver] = useState(false);
+    const [pricingModalOpen, setPricingModalOpen] = useState(false);
     const pianoSectionsRef = useRef(null);
 
     // Get the selected instrument from Redux  
-    const selectedInstrumentFromRedux = useSelector((state) => selectStudioState(state)?.selectedInstrument || 'acoustic_grand_piano');
+    const selectedInstrumentFromRedux = useSelector((state) => 
+        selectStudioState(state)?.selectedInstrument || 'violin'
+    );
+
     useEffect(() => {
         const index = INSTRUMENTS.findIndex(inst => inst.id === selectedInstrumentFromRedux);
         if (index !== -1) {
@@ -306,16 +311,6 @@ const NewSynth = ({ onClose }) => {
 
 
     const getActiveTabs = useSelector((state) => state.effects.activeTabs);
-
-    // Sync the track's nametype with the selected instrument's display name unless user renamed (locked)
-    useEffect(() => {
-        // For Synth tracks, keep the track type as "Synth" instead of changing to instrument name
-        const instrumentName = INSTRUMENTS.find(inst => inst.id === selectedInstrument)?.name || 'Synth';
-        const trackName = currentTrack?.name === 'Synth' ? 'Synth' : instrumentName;
-        if (currentTrackId && !currentTrack?.nametypeLocked) {
-            dispatch(updateTrack({ id: currentTrackId, updates: { nametype: trackName } }));
-        }
-    }, [selectedInstrument, currentTrack?.nametypeLocked, currentTrack?.name, dispatch]);
 
     useEffect(() => {
         if (getActiveTabs) {
@@ -435,20 +430,20 @@ const NewSynth = ({ onClose }) => {
         const dryGainNode = audioContext.createGain();
         const reverbGainNode = audioContext.createGain();
         const convolverNode = audioContext.createConvolver();
-
+    
         const impulseResponse = createImpulseResponse(audioContext, 2.5, 2);
         convolverNode.buffer = impulseResponse;
-
+    
         gainNode.connect(dryGainNode);
         gainNode.connect(reverbGainNode);
         reverbGainNode.connect(convolverNode);
-
+    
         dryGainNode.connect(panNode);
         convolverNode.connect(panNode);
-
+    
         panNode.connect(audioContext.destination);
         panNode.connect(destination);
-
+    
         audioContextRef.current = audioContext;
         destinationRef.current = destination;
         gainNodeRef.current = gainNode;
@@ -456,19 +451,28 @@ const NewSynth = ({ onClose }) => {
         reverbGainNodeRef.current = reverbGainNode;
         dryGainNodeRef.current = dryGainNode;
         convolverNodeRef.current = convolverNode;
-
+    
+        // Load the orchestral instrument using Soundfont
         Soundfont.instrument(audioContext, selectedInstrument, {
             destination: gainNode,
-        }).then((piano) => {
-            pianoRef.current = piano;
+        }).then((instrument) => {
+            pianoRef.current = instrument;
         }).catch((error) => {
-            console.error("Error loading piano instrument:", error);
+            console.error("Error loading orchestral instrument:", error);
+            // Fallback to violin if the selected instrument fails to load
+            Soundfont.instrument(audioContext, 'violin', {
+                destination: gainNode,
+            }).then((fallback) => {
+                pianoRef.current = fallback;
+            });
         });
-
+    
         return () => {
             audioContext && audioContext.close();
         };
     }, [selectedInstrument]);
+    
+    
 
     useEffect(() => {
         if (reverbGainNodeRef.current && dryGainNodeRef.current && convolverNodeRef.current && audioContextRef.current) {
@@ -504,12 +508,12 @@ const NewSynth = ({ onClose }) => {
         const effectiveMidi = Math.max(21, midiNumber);
         const noteName = Tone.Frequency(effectiveMidi, "midi").toNote();
         const currentTime = getRecordingTime();
-
+    
         // Ensure audio context is resumed (required for audio to work)
         if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
             audioContextRef.current.resume();
         }
-
+    
         // Only push notes to timeline state when recording is active
         if (getIsRecording) {
             const newEvent = {
@@ -523,7 +527,7 @@ const NewSynth = ({ onClose }) => {
             };
             const updated = [...(pianoNotesRef.current || []), newEvent];
             dispatch(setPianoNotes(updated));
-
+    
             const notesForThisTrack = (updated || []).filter(n => n.trackId === (currentTrackId || null));
             if (notesForThisTrack.length > 0) {
                 const minStart = Math.min(...notesForThisTrack.map(n => n.startTime));
@@ -534,13 +538,13 @@ const NewSynth = ({ onClose }) => {
                     end: maxEnd,
                     color: trackColor,
                     trackId: currentTrackId || null,
-                    type: 'piano',
-                    name: `Piano Recording (${notesForThisTrack.length} notes)`,
+                    type: 'orchestral',  // Changed from 'piano' to 'orchestral'
+                    name: `Orchestral Recording (${notesForThisTrack.length} notes)`,  // Changed name
                     duration: maxEnd - minStart,
                     startTime: minStart,
                     trimStart: 0,
                     trimEnd: maxEnd - minStart,
-                    id: `piano_recording_${Date.now()}`,
+                    id: `orchestral_recording_${Date.now()}`,  // Changed ID prefix
                     pianoData: notesForThisTrack
                 }));
             }
@@ -551,12 +555,15 @@ const NewSynth = ({ onClose }) => {
             ...prevNotes,
             { midiNumber, time: Date.now(), type: 'play' },
         ]);
+
+        // Play the orchestral instrument (same as original piano logic)
         if (pianoRef.current) {
-            const audioNode = pianoRef.current.play(effectiveMidi);
+            const audioNode = pianoRef.current.play(effectiveMidi, 0, { duration: 1 });
             activeAudioNodes.current[midiNumber] = audioNode;
         }
     };
 
+    // 4. Keep the existing stopNote function (it already works)
     const stopNote = (midiNumber) => {
         setRecordedNotes((prevNotes) => [
             ...prevNotes,
@@ -567,6 +574,8 @@ const NewSynth = ({ onClose }) => {
             delete activeAudioNodes.current[midiNumber];
         }
     };
+    
+    
 
     const nextInstrument = () => {
         const newIndex = currentInstrumentIndex === INSTRUMENTS.length - 1 ? 0 : currentInstrumentIndex + 1;
@@ -1606,6 +1615,51 @@ const NewSynth = ({ onClose }) => {
 
         stopAllSounds();
 
+        // Helper: append scheduled chord notes to timeline while recording
+        const recordChordToTimeline = (notes, getOffsetForIndex) => {
+            if (!getIsRecording || !Array.isArray(notes) || notes.length === 0) return;
+
+            const baseTime = getRecordingTime();
+            const events = notes.map((note, idx) => {
+                const startTime = baseTime + (typeof getOffsetForIndex === 'function' ? (getOffsetForIndex(idx) || 0) : 0);
+                const midi = Tone.Frequency(note).toMidi();
+                return {
+                    note,
+                    startTime,
+                    duration: 0.25,
+                    midiNumber: Math.max(21, midi),
+                    trackId: currentTrackId || null,
+                    instrumentId: recordingInstrumentRef.current || selectedInstrument,
+                    id: `${note}-${Date.now()}-${Math.random()}`
+                };
+            });
+
+            const updatedAll = [...(pianoNotesRef.current || []), ...events];
+            dispatch(setPianoNotes(updatedAll));
+
+            const notesForThisTrack = (updatedAll || []).filter(n => n.trackId === (currentTrackId || null));
+            if (notesForThisTrack.length > 0) {
+                const minStart = Math.min(...notesForThisTrack.map(n => n.startTime));
+                const maxEnd = Math.max(...notesForThisTrack.map(n => n.startTime + (n.duration || 0.25)));
+                const trackColor = (tracks.find(t => t.id === currentTrackId)?.color);
+                dispatch(setPianoRecordingClip({
+                    start: minStart,
+                    end: maxEnd,
+                    color: trackColor,
+                    trackId: currentTrackId || null,
+                    type: 'orchestral',
+                    name: `Orchestral Recording (${notesForThisTrack.length} notes)`,
+                    duration: maxEnd - minStart,
+                    startTime: minStart,
+                    trimStart: 0,
+                    trimEnd: maxEnd - minStart,
+                    id: `orchestral_recording_${Date.now()}`,
+                    pianoData: notesForThisTrack
+                }));
+            }
+            pianoNotesRef.current = updatedAll;
+        };
+
         const synthType = getCurrentSynthType();
         const currentChordNotes = getCurrentChordNotes();
         const notes = currentChordNotes[chordName];
@@ -1694,83 +1748,107 @@ const NewSynth = ({ onClose }) => {
         if (selectedSynth && notes) {
             try {
                 if (synthType === "fullChord") {
+                    recordChordToTimeline(notes);
                     selectedSynth.triggerAttackRelease(notes, "1n", now);
                 } else if (synthType === "onOne") {
+                    recordChordToTimeline(notes);
                     selectedSynth.triggerAttackRelease(notes, "4n", now);
                 } else if (synthType === "onAir") {
+                    recordChordToTimeline(notes);
                     selectedSynth.triggerAttackRelease(notes, "8n", now);
                 } else if (synthType === "eights") {
+                    recordChordToTimeline(notes, (i) => i * 0.125);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "8n", now + i * 0.125);
                     });
                 } else if (synthType === "soulStabs") {
+                    recordChordToTimeline(notes, (i) => i * 0.05);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "4n", now + i * 0.05);
                     });
                 } else if (synthType === "delayedStab") {
+                    recordChordToTimeline(notes, (i) => (i % 2 === 0 ? 0 : 0.5));
                     notes.forEach((note, i) => {
                         const timing = i % 2 === 0 ? 0 : 0.5;
                         selectedSynth.triggerAttackRelease(note, "8n", now + timing);
                     });
                 } else if (synthType === "simpleStabs") {
+                    recordChordToTimeline(notes);
                     selectedSynth.triggerAttackRelease(notes, "8n", now);
                 } else if (synthType === "latinesque") {
+                    const pattern = [0, 0.25, 0.75, 1.0];
+                    recordChordToTimeline(notes, (i) => pattern[i % 4]);
                     notes.forEach((note, i) => {
                         const timing = [0, 0.25, 0.75, 1.0][i % 4];
                         selectedSynth.triggerAttackRelease(note, "16n", now + timing);
                     });
                 } else if (synthType === "layeredStab") {
+                    recordChordToTimeline(notes, (i) => i * 0.02);
                     notes.forEach((note, i) => {
                         const offset = i * 0.02;
                         selectedSynth.triggerAttackRelease(note, "1n", now + offset);
                     });
                 } else if (synthType === "moderateStabs") {
+                    recordChordToTimeline(notes);
                     selectedSynth.triggerAttackRelease(notes, "4n", now);
                 } else if (synthType === "layout") {
+                    recordChordToTimeline(notes, (i) => i * 0.2);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "4n", now + i * 0.2);
                     });
                 } else if (synthType === "storytime") {
+                    recordChordToTimeline(notes, (i) => i * 0.15);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "4n", now + i * 0.15);
                     });
                 } else if (synthType === "risingArp") {
+                    recordChordToTimeline(notes, (i) => i * 0.1);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "8n", now + i * 0.1);
                     });
                 } else if (synthType === "dreamer") {
+                    recordChordToTimeline(notes, (i) => i * 0.15);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "2n", now + i * 0.15);
                     });
                 } else if (synthType === "movingArp") {
+                    recordChordToTimeline(notes, (i) => i * 0.06);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "16n", now + i * 0.06);
                     });
                 } else if (synthType === "quickArp") {
+                    recordChordToTimeline(notes, (i) => i * 0.04);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "32n", now + i * 0.04);
                     });
                 } else if (synthType === "simpleStride") {
+                    recordChordToTimeline(notes, (i) => (i % 2 === 0 ? 0 : 0.25));
                     notes.forEach((note, i) => {
                         const timing = i % 2 === 0 ? 0 : 0.25;
                         selectedSynth.triggerAttackRelease(note, "8n", now + timing);
                     });
                 } else if (synthType === "simpleRain") {
+                    // Use deterministic offsets for recording to keep timeline stable
+                    recordChordToTimeline(notes, (i) => i * 0.08 + 0.02);
                     notes.forEach((note, i) => {
                         const delay = i * 0.08 + (Math.random() * 0.03);
                         selectedSynth.triggerAttackRelease(note, "8n", now + delay);
                     });
                 } else if (synthType === "simpleSlide") {
+                    recordChordToTimeline(notes, (i) => i * 0.06);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "4n", now + i * 0.06);
                     });
                 } else if (synthType === "simplePlayer") {
+                    recordChordToTimeline(notes);
                     selectedSynth.triggerAttackRelease(notes, "1n", now);
                 } else if (synthType === "alternatingStride") {
+                    recordChordToTimeline(notes, (i) => i * 0.12);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "4n", now + i * 0.12);
                     });
                 } else {
+                    recordChordToTimeline(notes);
                     selectedSynth.triggerAttackRelease(notes, "2n", now);
                 }
 
@@ -2022,30 +2100,34 @@ const NewSynth = ({ onClose }) => {
                                                         <p className="text-[#FFFFFF] text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Auto Chord</p>
                                                     </div>
                                                 </div>
-                                                <div className='border rounded-lg border-[#FFFFFF1A] ms-auto me-1 md600:me-2 lg:me-3'>
+                                                <div onClick={() => setPricingModalOpen(true)} className='border rounded-lg border-[#FFFFFF1A] ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer'>
                                                     <p className="text-[#FFFFFF] text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
                                                 </div>
                                             </div>
 
                                             <div className="flex gap-1 md600:gap-2 lg:gap-3 bg-[#141414]">
                                                 {autoChords === true &&
-                                                    <div className="w-[30%] sm:w-[40%] md600:w-[25%] md:w-[30%] lg:w-[20%] xl:w-[18%] bg-[#1F1F1F] md600:ms-2 md600:mt-2 lg:ms-3 lg:mt-3 mb-1">
-                                                        <div className="w-full text-white p-1 md600:p-2 lg:p-3">
-                                                            <div className="flex justify-between items-center">
+                                                    <div className="w-[30%] sm:w-[40%] md600:w-[25%] md:w-[30%] lg:w-[20%] xl:w-[18%] bg-primary-light dark:bg-primary-dark md600:ms-2 md600:mt-2 lg:ms-3 lg:mt-3 mb-1">
+                                                        <div className="w-full bg-primary-light dark:bg-[#1F1F1F] p-1 md600:p-2 lg:p-3">
+                                                            <div className="flex justify-between items-center mb-2">
                                                                 <div className="flex gap-1 items-center">
                                                                     <img src={subscription} alt="subscription" className="w-4 h-4" />
                                                                     <p className="text-white text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Auto Chord</p>
                                                                 </div>
-                                                                <IoClose className='text-[8px] sm:text-[10px] md600:text-[12px] md:text-[16px] lg:text-[20px] 2xl:text-[24px] text-[#FFFFFF99] cursor-pointer' onClick={() => setAutoChords(false)} />
+                                                                <IoClose className="text-[8px] sm:text-[10px] md600:text-[12px] md:text-[16px] lg:text-[20px] 2xl:text-[24px] text-secondary-light/60 dark:text-secondary-dark/60 cursor-pointer" onClick={() => setAutoChords(false)} />
                                                             </div>
-                                                            <p className="text-[#FFFFFF99] text-[8px] md:text-[10px] lg:text-[12px] 2xl:text-[14px] text-nowrap truncate ">Play full chords with a single key</p>
-                                                            <div className="flex justify-between gap-1 lg:gap-2 pt-1 md600:pt-2 lg:pt-4 2xl:gap-3 2xl:pt-5">
-                                                                <button className="text-white border border-[#FFFFFF1A] text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md">Triad</button>
-                                                                <button className="text-white border border-[#FFFFFF1A] text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md">7th</button>
-                                                                <button className="text-white border border-[#FFFFFF1A] text-[8px] md600:text-[10px] lg:text-[12px] py-1  px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md">Add9</button>
+                                                            <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[8px] md:text-[10px] lg:text-[12px] 2xl:text-[14px] truncate mb-3">Play full chords with a single key</p>
+                                                            <div className="flex gap-1 items-center">
+                                                                <img src={subscription} alt="subscription" className="w-4 h-4" />
+                                                                <p className="text-white text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Shape</p>
+                                                            </div>
+                                                            <div className="flex justify-between gap-1 lg:gap-2 md600:pt-2 lg:pt-4 2xl:gap-2 2xl:pt-2">
+                                                                <button onClick={() => setPricingModalOpen(true)} className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">Triad</button>
+                                                                <button onClick={() => setPricingModalOpen(true)} className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">7th</button>
+                                                                <button onClick={() => setPricingModalOpen(true)} className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">Add9</button>
                                                             </div>
                                                             {/* Range Slider - Added here after the chord buttons */}
-                                                            <div className=" pt-1 md600:pt-2 lg:pt-3">
+                                                            <div className="pt-1 md600:pt-2 lg:pt-4">
                                                                 <RangeSlider min={0} max={10} step={0.1} initialValue={0} label="Strum" unit="s" onChange={setStrumValue} />
                                                             </div>
                                                         </div>
@@ -2309,6 +2391,12 @@ const NewSynth = ({ onClose }) => {
                     </div>
                 </>
             )}
+
+            {/* Pricing Modal */}
+            <PricingModel
+                pricingModalOpen={pricingModalOpen}
+                setPricingModalOpen={setPricingModalOpen}
+            />
         </>
     )
 }
