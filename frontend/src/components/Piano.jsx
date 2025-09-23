@@ -20,12 +20,19 @@ import music from "../Images/playingsounds.svg";
 import BottomToolbar from './Layout/BottomToolbar';
 import { addPianoNote, setRecordingAudio, setPianoNotes, setPianoRecordingClip, setSelectedInstrument, updateTrack } from '../Redux/Slice/studio.slice';
 import PianoRolls from './PianoRolls';
+import Instruments from './OpenInstrumentsModel';
 import * as Tone from "tone";
 import Effects2 from './Effects2';
 import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsTwo } from '../Redux/Slice/effects.slice';
 import { selectStudioState } from '../Redux/rootReducer';
 import PricingModel from './PricingModel';
 import subscription from "../Images/subscriptionIcon.svg";
+
+
+const InstrumentCard = ({ INSTRUMENTS, currentInstrumentIndex }) => {
+  // ✅ Declare state properly
+  const [openInstrumentsModal, setOpenInstrumentsModal] = useState(false);
+};
 
 function polarToCartesian(cx, cy, r, angle) {
   const a = (angle - 90) * Math.PI / 180.0;
@@ -2038,6 +2045,34 @@ const Pianodemo = ({ onClose }) => {
 
                           <button onClick={nextInstrument} className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors p-1 lg:p-2">
                             <FaChevronRight className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
+                          {openInstrumentsModal && (
+                            <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+                              <div className="bg-[#1F1F1F] text-white rounded-xl p-6 w-[90%] max-w-md relative shadow-lg">
+                                {/* Close button */}
+                                <button
+                                  className="absolute top-2 right-2 text-gray-400 hover:text-white text-lg"
+                                  onClick={() => setOpenInstrumentsModal(false)}
+                                >
+                                  ✕
+                                </button>
+
+                                <h2 className="text-xl font-bold mb-2">
+                                  {INSTRUMENTS[currentInstrumentIndex].name}
+                                </h2>
+                                <p className="text-gray-400 mb-4">
+                                  Category: {INSTRUMENTS[currentInstrumentIndex].category}
+                                </p>
+
+                                <p className="text-sm">
+                                  🎹 Instrument details / settings ahiya muki shako.
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                          </button>
+
+                          <button onClick={nextInstrument} className="text-gray-400 hover:text-white transition-colors p-1 lg:p-2">
+                            <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] text-[#FFFFFF99]' />
                           </button>
                         </div>
                       </div>

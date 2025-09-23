@@ -1,5 +1,5 @@
 import React from "react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import leftTop from "../Images/leftTop.png";
@@ -69,6 +69,69 @@ const Home = () => {
       setIsPlaying(false);
     }
   };
+
+  // useEffect(() => {
+  //   const observer = new IntersectionObserver(
+  //     (entries) => {
+  //       entries.forEach((entry) => {
+  //         if (videoRef.current) {
+  //           if (entry.isIntersecting) {
+  //             // If video visible and user already clicked play, continue
+  //             if (isPlaying) {
+  //               videoRef.current.play();
+  //             }
+  //           } else {
+  //             // If video not visible → pause
+  //             videoRef.current.pause();
+  //             setIsPlaying(false);
+  //           }
+  //         }
+  //       });
+  //     },
+  //     { threshold: 0.5 } // 50% video visible required
+  //   );
+
+  //   if (videoRef.current) {
+  //     observer.observe(videoRef.current);
+  //   }
+
+  //   return () => {
+  //     if (videoRef.current) {
+  //       observer.unobserve(videoRef.current);
+  //     }
+  //   };
+  // }, [isPlaying]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (videoRef.current) {
+            if (entry.isIntersecting) {
+              // Visible → auto play
+              videoRef.current.play();
+              setIsPlaying(true);
+            } else {
+              // Not visible → auto pause
+              videoRef.current.pause();
+              setIsPlaying(false);
+            }
+          }
+        });
+      },
+      {
+        threshold: 0.5, // 50% video visible required
+      }
+    );
+
+    if (videoRef.current) {
+      observer.observe(videoRef.current);
+    }
+
+    return () => {
+      if (videoRef.current) observer.unobserve(videoRef.current);
+    };
+  }, []);
     
   return (
     <>
@@ -115,14 +178,20 @@ const Home = () => {
             </div>
             <img src={Homepage} alt="" 
               // className="h-full 3xl:h-[600px]" 
+              // className="
+              //   w-full h-full          /* default — mobile */
+              //   sm:max-w-[700px]       /* ≥640px */
+              //   md:max-w-[1000px]       /* ≥768px */
+              //   lg:max-w-[1300px]       /* ≥1024px */
+              //   3xl:max-w-[1500px]      /* ≥1920px */
+              //   rounded-xl object-cover
+              // " 
               className="
-                w-full h-full          /* default — mobile */
-                sm:max-w-[700px]       /* ≥640px */
-                md:max-w-[1000px]       /* ≥768px */
-                lg:max-w-[1300px]       /* ≥1024px */
-                3xl:max-w-[1500px]      /* ≥1920px */
+                relative z-0
+                w-full max-w-[600px] sm:max-w-[800px] md:max-w-[1000px] lg:max-w-[1200px] 3xl:max-w-[1500px] mx-auto
+                h-auto sm:h-[250px] md:h-[350px] lg:h-[450px] 3xl:h-[600px]
                 rounded-xl object-cover
-              " 
+              "
             />
           </div>
 
@@ -130,16 +199,27 @@ const Home = () => {
             src={rightBottom}
             alt="rightBottom"
             className="
-              absolute right-0 bottom-0 
-              w-[150px] h-[150px] 
-              sm:w-[140px] sm:h-[140px] 
-              md:w-[180px] md:h-[180px] 
-              lg:w-[220px] lg:h-[220px] 
-              xl:w-[260px] xl:h-[260px] 
-              2xl:w-[300px] 2xl:h-[300px]
+              absolute right-0 bottom-0
+              w-[50px] h-[50px]
+              sm:w-[110px] sm:h-[110px]
+              md:w-[160px] md:h-[160px]
+              lg:w-[200px] lg:h-[200px]
+              xl:w-[240px] xl:h-[240px]
+              2xl:w-[280px] 2xl:h-[280px]
+              3xl:w-[320px] 3xl:h-[320px]
+              max-w-[30vw] max-h-[30vw] sm:max-w-full sm:max-h-full
               pointer-events-none select-none
-              
             "
+            // className="
+            //   absolute right-0 bottom-0 
+            //   w-[150px] h-[150px] 
+            //   sm:w-[140px] sm:h-[140px] 
+            //   md:w-[180px] md:h-[180px] 
+            //   lg:w-[220px] lg:h-[220px] 
+            //   xl:w-[260px] xl:h-[260px] 
+            //   2xl:w-[300px] 2xl:h-[300px]
+            //   pointer-events-none select-none
+            // "
             // className="absolute right-0 bottom-0 w-1/3 max-w-xs pointer-events-none select-none"
             // style={{ zIndex: 1 }}
           />
@@ -209,8 +289,10 @@ const Home = () => {
                   ref={videoRef}
                   src="https://cdn.pixabay.com/video/2017/11/28/13097-244835884_tiny.mp4"
                   controls
+                  muted
+                  playsInline
                   className="rounded-xl w-full max-w-[800px] sm:max-w-[400px] md:max-w-[600px] lg:max-w-[800px] h-auto object-cover"
-                  poster={pianoImg}
+                  // poster={pianoImg}
                 >
                   Your browser does not support the video tag.
                 </video>}
@@ -396,7 +478,7 @@ const Home = () => {
                 <img
                   src={playButtonSvg}
                   alt="playButtonSvg"
-                  className="h-[30px] w-[30px] sm:h-[80px] sm:w-[80px] md:h-[90px] md:w-[90px]"
+                  className="h-[30px] w-[30px] sm:h-[70px] sm:w-[70px] md:h-[80px] md:w-[80px]"
                 />
               </div>
             </div>
