@@ -22,6 +22,15 @@ import payStore from "../Images/play-store.png";
 import Footer from "../components/Footer";
 const Home = () => {
   const navigate = useNavigate();
+  
+  // Redirect authenticated users away from public home
+  useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      navigate('/project', { replace: true });
+    }
+  }, []);
+
   const features = [
     {
       icon: f1,

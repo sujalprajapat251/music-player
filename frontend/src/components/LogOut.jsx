@@ -13,9 +13,9 @@ const LogOut = ({ logoutModalOpen, setLogoutModalOpen }) => {
     const userId = sessionStorage.getItem('userId');
     if (userId) {
       dispatch(logoutUser(userId));
-      navigate('/');
     }
     setLogoutModalOpen(false);
+    navigate('/login', { replace: true });
   };
 
   return (

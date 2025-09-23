@@ -25,6 +25,8 @@ import Piano from './components/Piano';
 import Profile from './Pages/Profile';
 import Timeline from './components/Timeline';
 import { ThemeProvider } from './Utils/ThemeContext';
+import RequireAuth from './Utils/RequireAuth';
+import GuestOnly from './Utils/GuestOnly';
 // import Loops from './components/Loops';
 // import GridSetting from './components/GridSetting';
 // import Knob from './components/Knob';
@@ -110,49 +112,40 @@ function App() {
             <Route path='tearms' element={<TearmsOfUse />} />
             <Route path='privacy' element={<PrivacyPolicy />} />
             <Route path='ani' element={<Animation />} />
-            <Route path='piano' element={<Piano />} />
-            <Route path='effcts2' element={<Effects2 />} />
-            <Route path='file' element={<File />} />
-            <Route path='sound' element={<Sound />} />
-            {/* <Route path='fuzz' element={<Fuzz />} />
-          <Route path='Overdrive' element={<Overdrive />} />
-          <Route path='autopan' element={<AutoPan />} />
-          <Route path='autowah' element={<AutoWah />} />
-          <Route path="Chorus" element={<Chorus />} />
-          <Route path="Flanger" element={<Flanger />} />
-          <Route path="Phaser" element={<Phaser />} />
-          <Route path="rotery" element={<Rotary />} />
-          <Route path="StereoChorus" element={<StereoChorus />} />
-          <Route path='Clipper' element={<Clipper />} />
-          <Route path='Crusher' element={<Crusher />} />
-          <Route path='JuicyDistrotion' element={<JuicyDistrotion />} />
-          <Route path='TapeWobble' element={<TapeWobble />} /> */}
 
-
-            <Route path='/login' element={<Login />} />
-
-          <Route path="/" element={<Layout />} >
-            <Route path='project' element={<Home2 />} />
-            <Route path='project/folder/:id' element={<FolderView />} />
-            <Route path='recently-deleted' element={<RecentlyDeleted />} />
-            <Route path='recentlydeleted' element={<RecentlyDeleted />} />
-            <Route path='demo-project' element={<Demoproject />} />
-            <Route path='profile' element={<Profile />} />
-          </Route>
-
-            <Route path='/sidebar' element={<Sidebar2 />} >
-              <Route path='timeline' element={<Timeline />} />
-              <Route path='timeline/:id' element={<Timeline />} />
-
-              {/* <Route path='knob' element={<Knob />} />
-            <Route path='loop' element={<Loops />} /> */}
-              <Route path="effects" element={<Effects />} />
-              <Route path="savani" element={<SDemo />} />
-              <Route path="piano" element={<Piano />} />
-              <Route path="guitar" element={<Guitar />} />
-              <Route path="voice" element={<VoiceTransformer />} />
+            <Route element={<GuestOnly />}>
+              <Route path='/login' element={<Login />} />
             </Route>
 
+            <Route element={<RequireAuth />}>
+              <Route path="/" element={<Layout />} >
+                <Route path='project' element={<Home2 />} />
+                <Route path='project/folder/:id' element={<FolderView />} />
+                <Route path='recently-deleted' element={<RecentlyDeleted />} />
+                <Route path='recentlydeleted' element={<RecentlyDeleted />} />
+                <Route path='demo-project' element={<Demoproject />} />
+                <Route path='profile' element={<Profile />} />
+              </Route>
+
+              {/* Standalone feature routes (protected) */}
+              <Route path='piano' element={<Piano />} />
+              <Route path='effcts2' element={<Effects2 />} />
+              <Route path='file' element={<File />} />
+              <Route path='sound' element={<Sound />} />
+
+              {/* Sidebar namespace (protected) */}
+              <Route path='/sidebar' element={<Sidebar2 />} >
+                <Route path='timeline' element={<Timeline />} />
+                <Route path='timeline/:id' element={<Timeline />} />
+                {/* <Route path='knob' element={<Knob />} />
+              <Route path='loop' element={<Loops />} /> */}
+                <Route path="effects" element={<Effects />} />
+                <Route path="savani" element={<SDemo />} />
+                <Route path="piano" element={<Piano />} />
+                <Route path="guitar" element={<Guitar />} />
+                <Route path="voice" element={<VoiceTransformer />} />
+              </Route>
+            </Route>
           </Routes>
         </ThemeProvider>
       </SnackbarProvider>

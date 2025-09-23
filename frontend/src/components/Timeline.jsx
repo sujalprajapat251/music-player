@@ -44,7 +44,7 @@ import { getEffectsProcessor } from '../Utils/audioEffectsProcessor';
 import Guitar from "./Guitar";
 import Orchestral from "./Orchestral";
 import PricingModel from './PricingModel';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { setShowLoopLibrary } from "../Redux/Slice/ui.slice";
 import { getAllMusic, setCurrentMusic } from "../Redux/Slice/music.slice";
 import { setSelectedTrackId } from '../Redux/Slice/effects.slice';
@@ -60,6 +60,7 @@ const Timeline = () => {
   
   const dispatch = useDispatch();
   const location = useLocation();
+  const navigate = useNavigate();
   const svgRef = useRef(null);
   const lastReduxUpdateRef = useRef(0);
   const lastPlayerUpdateRef = useRef(0);
@@ -3232,6 +3233,19 @@ const Timeline = () => {
     // If navigated with a demo sound from Home2, create a track and clip immediately
     const demoSound = location?.state?.demoSound;
     if (demoSound && (!projectId)) {
+      // Clear navigation state immediately so refresh shows no demo
+      try {
+        navigate('.', { replace: true, state: {} });
+      } catch (_) {
+        try {
+          window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+        } catch (_) {}
+      }
+
+      // If there's already content on the timeline, replace it with the new demo
+      if (Array.isArray(tracks) && tracks.length > 0) {
+        dispatch(setTracks([]));
+      }
       const url = `${IMAGE_URL}uploads/soundfile/${demoSound.soundfile}`;
       const newClipId = Date.now() + Math.random();
       const newTrackId = Date.now() + Math.random();
