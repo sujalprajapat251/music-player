@@ -16,6 +16,10 @@ import { IoIosArrowDown } from "react-icons/io";
 import { FiSearch } from "react-icons/fi";
 import { BsThreeDotsVertical } from 'react-icons/bs';
 import { IoClose } from 'react-icons/io5';
+import { FaRegFolderOpen } from "react-icons/fa6";
+import { LuArrowDownToLine } from "react-icons/lu";
+import { RiDeleteBin5Line } from "react-icons/ri";
+import { RiImageAddLine } from "react-icons/ri";
 import { Dialog, DialogBackdrop, DialogPanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { useFloating, offset, flip, shift, autoUpdate } from "@floating-ui/react";
 import { getFolderByUserId, updateFolderName, deleteFolderById, createFolder } from '../Redux/Slice/folder.slice';
@@ -833,7 +837,7 @@ const handleSaveCoverImage = async () => {
                   <p className="text-white text-[14px] md:text-[16px]  lg:text-[18px] 2xl:text-[20px] 3xl:text-[24px] font-[600]">Start a new project</p>
                   <p className="text-white text-[12px] lg:text-[14px] 2xl:text-[14px] 3xl:text-[15px] lg:text-nowrap">Create a music or podcast project.</p>
                   <div className='flex bg-black mt-3 md:mt-2 lg:mt-3 3xl:mt-4 h-[150px] md:w-[150px]  lg:h-[180px] lg:w-[220px] 2xl:h-[180px] 2xl:w-[200px] 3xl:h-[200px] 3xl:w-[250px] d_customborder items-center justify-center' onClick={() => navigate('/sidebar/timeline')} >
-                    <button className='border border-dashed border-white flex flex-col items-center justify-center group p-2 md:p-1 xl:p-2 rounded-xl hover:bg-gray-900' >
+                    <button className='border border-dashed border-white flex flex-col items-center justify-center group p-3 xl:p-4 rounded-xl hover:bg-gray-900' >
                       <p className="text-white text-[16px] lg:text-[20px] xl:text-[24px]">+</p>
                       <p className="text-white text-[12px] xl:text-[14px] md:w-[60px] lg:w-full text-wrap lg:text-nowrap">New Project</p>
                     </button>
@@ -959,7 +963,7 @@ const handleSaveCoverImage = async () => {
 
           {sortedAndFilteredFolders?.map((ele, index) => (
             <div key={ele._id} className="flex pt-2  md600:pt-3  lg:pt-3 ps-2 md600:ps-3 2xl:pt-4 2xl:ps-4 3xl:pt-5 3xl:ps-5 pe-2 md600:pe-3 md:pe-2 border-b border-[#FFFFFF1A] pb-2 cursor-pointer" onClick={() => navigate(`/project/folder/${ele._id}`)}>
-              <img src={folder} alt="" className='w-[16px] h-[16px] sm:w-[24px] sm:h-[24px] lg:w-[30px] lg:h-[30px] my-auto' />
+              <img src={folder} alt="" className='w-[16px] h-[16px] sm:w-[20px] sm:h-[20px] lg:w-[22px] lg:h-[22px] my-auto' />
               <p className="text-white ps-2 md600:ps-3 lg:ps-4  my-auto text-[12px] sm:text-[14px] md:text-[16px] ">{ele?.folderName}</p>
               <div className='ms-auto' onClick={(e) => e.stopPropagation()}>
                 <AdaptiveMenu button={<BsThreeDotsVertical className='text-white text-[12px] sm:text-[14px] md600:text-[16px] lg:text-[18px] 3xl:text-[20px]' />} widthClass="w-40 2xl:w-44">
@@ -1123,6 +1127,58 @@ const handleSaveCoverImage = async () => {
                                       </MenuItem>
                                   </div>
                               </AdaptiveMenu>
+                                <Menu>
+                                  <MenuItems ref={refs.setFloating} style={floatingStyles} className="absolute z-50 right-0 top-full mt-2 w-56 rounded-md bg-[#1f1f1f] shadow-lg ring-1 ring-black ring-opacity-5 outline-none">
+                                      <div className="py-1">
+                                          <MenuItem>
+                                              {({ active }) => (
+                                                  <button onClick={() => handleMusicRenameClick(ele._id, ele.name)} className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
+                                                      <span className="font-medium">A</span>
+                                                      Rename
+                                                  </button>
+                                              )}    
+                                          </MenuItem>
+ 
+                                          <MenuItem>
+                                              {({ active }) => (
+                                                  <button type="button" onClick={() => { setSelectedMusicId(ele._id); setImage(coverUrl || null); setOpen(true);}} className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
+                                                  <RiImageAddLine /> Change cover
+                                                  </button>
+                                              )}
+                                          </MenuItem>
+
+                                          <MenuItem>
+                                              {({ active }) => (
+                                                  <button type="button" onClick={() => { setMoveMusicId(ele._id); setMoveModalOpen(true); }} className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
+                                                      <span className="flex items-center gap-2"><FaRegFolderOpen /> Move to folder</span>
+                                                      <span>›</span>
+                                                  </button>
+                                              )}
+                                          </MenuItem>
+
+                                          <hr className="my-1 border-gray-200" />
+
+                                          <MenuItem>
+                                              {({ active }) => (
+                                                  <button type="button" onClick={() => handleExport(ele)} className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
+                                                      <span className="flex items-center gap-2"><LuArrowDownToLine /> Export (MP3)</span>
+                                                      <span>›</span>
+                                                  </button>
+                                              )}
+                                          </MenuItem>
+
+                                          <hr className="my-1 border-gray-200" />
+
+                                          <MenuItem>
+                                              {({ active }) => (
+                                                  <button type="button" onClick={() => { setSelectedProjectName(ele?.name || ''); setDeleteId(ele?._id || ele?.id); setDeleteProModal(true); }} className={`flex items-center gap-2 px-4 py-2 text-sm ${active ? "text-red-600" : "text-red-600"}`}>
+                                                      <RiDeleteBin5Line /> Delete
+                                                  </button>
+                                              )}
+                                          </MenuItem>
+                                      </div>
+                                  </MenuItems>
+                              </Menu>
                           </div>
                       </div>
                   </div>

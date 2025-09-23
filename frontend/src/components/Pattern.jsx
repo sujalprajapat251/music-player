@@ -786,9 +786,9 @@ const Pattern = () => {
 
   return (
     <>
-      <div className=" bg-[#1F1F1F] flex items-center justify-center pt-1 pb-1 md600:px-2 md600:pt-2 md600:pb-1 gap-2 sm:gap-2  md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
+    <div className="bg-primary-light dark:bg-primary-dark flex items-center justify-center pt-1 pb-1 md600:px-2 md600:pt-2 md600:pb-1 gap-2 sm:gap-2  md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
         {/* Instrument Selector */}
-        <div className="bg-[#353535] p-1 md600:p-2 lg:p-3 rounded-lg">
+        <div className="bg-secondary-light/10 dark:bg-secondary-dark/10 p-1 md600:p-2 lg:p-3 rounded-lg">
           <div className="flex items-center justify-between">
             <button
               onClick={() => {
@@ -796,20 +796,18 @@ const Pattern = () => {
                 setCurrentType(next);
                 dispatch(setGlobalDrumTypeIndex(next));
               }}
-              className="text-gray-400 hover:text-white transition-colors  md600:p-2"
+              className="text-secondary-light/60 dark:text-secondary-dark/60 hover:text-secondary-light dark:hover:text-secondary-dark transition-colors md600:p-2"
             >
               <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px]' />
             </button>
 
             <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-center 2xl:px-4 2xl:w-[250px]">
-              <div className="text-white">
-                <GiPianoKeys className='text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
-              </div>
-              <div className="">
-                <div className="text-white fw-bolder text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[16px]">
+              <GiPianoKeys className="text-secondary-light dark:text-secondary-dark text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[20px]" />
+              <div>
+                <div className="text-secondary-light dark:text-secondary-dark font-semibold text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[16px]">
                   {currentTypeData.name}
                 </div>
-                <div className="text-gray-400 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px] max-w-20 sm:max-w-32 truncate">
+                <div className="text-secondary-light/60 dark:text-secondary-dark/60 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px] max-w-20 sm:max-w-32 truncate">
                   {currentTypeData.description}
                 </div>
               </div>
@@ -821,9 +819,9 @@ const Pattern = () => {
                 setCurrentType(next);
                 dispatch(setGlobalDrumTypeIndex(next));
               }}
-              className="text-gray-400 hover:text-white transition-colors lg:p-2"
+              className="text-secondary-light/60 dark:text-secondary-dark/60 hover:text-secondary-light dark:hover:text-secondary-dark transition-colors md600:p-2"
             >
-              <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] text-[#FFFFFF99]' />
+              <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]' />
             </button>
           </div>
         </div>

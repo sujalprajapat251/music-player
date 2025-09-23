@@ -718,7 +718,7 @@ const TopHeader = () => {
                                 </div>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 pt-1 pb-2 gap-2 md600:px-4 lg:px-6 md600:pt-2 md600:pb-3 lg:pb-4 flex md600:gap-3 outline-none transition-colors`}style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary,borderBottom: `1px solid ${colors.menuBorder}`}}>
+                                        <p className={`px-3 pt-1 pb-2 gap-2 md600:px-4 lg:px-6 md600:pt-2 md600:pb-3 lg:pb-4 flex md600:gap-3 outline-none transition-colors`}style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary,borderBottom: `1px solid ${colors.menuBorder}`}} onClick={() => setPricingModalOpen(true)}>
                                             <Previous className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }}/>  
                                             <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Previous versions</span>
                                         </p>
@@ -733,7 +733,7 @@ const TopHeader = () => {
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 md600:px-4 lg:px-6 md600:py-2 flex gap-2 md600:gap-3 outline-none transition-colors`} style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }}>
+                                        <p className={`px-3 py-1 md600:px-4 lg:px-6 md600:py-2 flex gap-2 md600:gap-3 outline-none transition-colors`} style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }} onClick={handleExportModal} >
                                             <Exports className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }}/> 
                                             <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Export</span>
                                         </p>
@@ -817,6 +817,7 @@ const TopHeader = () => {
                                                 color: colors.textSecondary,
                                                 borderBottom: `1px solid ${colors.menuBorder}`
                                             }}
+                                            onClick={() => setShareModalOpen(true)}
                                         >
                                             <Shareproject 
                                                 className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
@@ -1442,7 +1443,7 @@ const TopHeader = () => {
 
                     <div 
                         className="flex xl:gap-2 justify-center items-center md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full cursor-pointer hover:opacity-80 transition-all"
-                        style={{ backgroundColor: colors.upgradeBackground }}
+                        style={{border: `1px solid ${colors.borderStrong}`, backgroundColor: colors.upgradeBackground }}
                         onClick={() => setPricingModalOpen(true)}
                     >
                         <img src={subscription} alt="" className='h-[18px] w-[18px]' />
@@ -1525,7 +1526,7 @@ const TopHeader = () => {
             </Dialog>
 
             {/* Low Latency Mode Modal */}
-            <Dialog open={lowlatencyomodal} onClose={setLowLatencyModel} className="relative z-10">
+            <Dialog open={lowlatencyomodal} onClose={setLowLatencyModel} className="relative z-50">
                 <DialogBackdrop transition className="fixed backdrop-blur-sm inset-0 bg-black/50 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in" />
                 <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
                     <div className="flex min-h-full items-center justify-center p-4 text-center sm:items-center sm:p-0">
