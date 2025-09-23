@@ -536,21 +536,6 @@ const Home2 = () => {
     }, [sortedAndFilteredMusic, drawWaveform, musicProgress]);
 
     const buttonRef = useRef(null);
-
-    const {
-        refs,
-        floatingStyles,
-        update,
-    } = useFloating({
-        placement: "right-start",
-        middleware: [offset(4), flip(), shift()],
-    });
-
-    useEffect(() => {
-        if (refs.reference.current && refs.floating.current) {
-            return autoUpdate(refs.reference.current, refs.floating.current, update);
-        }
-    }, [refs.reference, refs.floating, update]);
     
 
     const handleDeleteMusic = async () => {
@@ -871,7 +856,7 @@ const handleSaveCoverImage = async () => {
                   <div>
                     <div className="grid grid-cols-2 md600:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 md600:gap-4 md:gap-3 lg:gap-4 3xl:gap-6 mt-3 md:mt-2 lg:mt-3 3xl:mt-5">
                         {sounds.map((sound, index) => (
-                            <div key={sound._id || index} className="bg-[#14141480] rounded-[4px] overflow-hidden d_customborder">
+                            <div key={sound._id || index} className="bg-[#14141480] rounded-[4px] overflow-hidden d_customborder" onClick={() => navigate('/sidebar/timeline', { state: { demoSound: { _id: sound?._id, soundname: sound?.soundname, image: sound?.image, soundfile: sound?.soundfile } } })}>
                                 <div className='w-full h-[105px] sm:h-[135px] md600:h-[105px] lg:h-[131px] xl:h-[125px] 2xl:h-[124px] 3xl:h-[135px]'>
                                     <img src={`${IMAGE_URL}uploads/image/${sound?.image}`} alt="Album" className="w-full h-full object-cover" />
                                 </div>
@@ -1083,64 +1068,61 @@ const handleSaveCoverImage = async () => {
                               {/* <div className="flex items-center gap-2"> */}
                                 <div className="text-md font-mono">{duration}</div>
                               {/* </div> */}
-                              <Menu as="div" className="relative inline-block text-left" key={ele._id}>
-                                  <div>
-                                      <MenuButton ref={refs.setReference} className="outline-none">
-                                          <BsThreeDotsVertical size={16} className="cursor-pointer transition-colors" />
-                                      </MenuButton>
+                              <AdaptiveMenu
+                                key={ele._id}
+                                placement="right-start"
+                                widthClass="w-56"
+                                button={<BsThreeDotsVertical size={16} className="cursor-pointer transition-colors" />}
+                              >
+                                  <div className="py-1">
+                                      <MenuItem>
+                                          {({ active }) => (
+                                              <button onClick={() => handleMusicRenameClick(ele._id, ele.name)} className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
+                                                  <span className="font-medium">A</span>
+                                                  Rename
+                                              </button>
+                                          )}
+                                      </MenuItem>
+
+                                      <MenuItem>
+                                          {({ active }) => (
+                                              <button type="button" onClick={() => { setSelectedMusicId(ele._id); setImage(coverUrl || null); setOpen(true);}} className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
+                                              🖼️ Change cover
+                                              </button>
+                                          )}
+                                      </MenuItem>
+
+                                      <MenuItem>
+                                          {({ active }) => (
+                                              <button type="button" onClick={() => { setMoveMusicId(ele._id); setMoveModalOpen(true); }} className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
+                                                  <span className="flex items-center gap-2">📁 Move to folder</span>
+                                                  <span>›</span>
+                                              </button>
+                                          )}
+                                      </MenuItem>
+
+                                      <hr className="my-1 border-gray-200" />
+
+                                      <MenuItem>
+                                          {({ active }) => (
+                                              <button type="button" onClick={() => handleExport(ele)} className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
+                                                  <span className="flex items-center gap-2">⬇ Export (MP3)</span>
+                                                  <span>›</span>
+                                              </button>
+                                          )}
+                                      </MenuItem>
+
+                                      <hr className="my-1 border-gray-200" />
+
+                                      <MenuItem>
+                                          {({ active }) => (
+                                              <button type="button" onClick={() => { setSelectedProjectName(ele?.name || ''); setDeleteId(ele?._id || ele?.id); setDeleteProModal(true); }} className={`flex items-center gap-2 px-4 py-2 text-sm ${active ? "text-red-600" : "text-red-600"}`}>
+                                                  🗑️ Delete
+                                              </button>
+                                          )}
+                                      </MenuItem>
                                   </div>
-
-                                  <MenuItems ref={refs.setFloating} style={floatingStyles} className="absolute z-50 right-0 top-full mt-2 w-56 rounded-md bg-[#1f1f1f] shadow-lg ring-1 ring-black ring-opacity-5 outline-none">
-                                      <div className="py-1">
-                                          <MenuItem>
-                                              {({ active }) => (
-                                                  <button onClick={() => handleMusicRenameClick(ele._id, ele.name)} className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
-                                                      <span className="font-medium">A</span>
-                                                      Rename
-                                                  </button>
-                                              )}    
-                                          </MenuItem>
- 
-                                          <MenuItem>
-                                              {({ active }) => (
-                                                  <button type="button" onClick={() => { setSelectedMusicId(ele._id); setImage(coverUrl || null); setOpen(true);}} className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
-                                                  🖼️ Change cover
-                                                  </button>
-                                              )}
-                                          </MenuItem>
-
-                                          <MenuItem>
-                                              {({ active }) => (
-                                                  <button type="button" onClick={() => { setMoveMusicId(ele._id); setMoveModalOpen(true); }} className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
-                                                      <span className="flex items-center gap-2">📁 Move to folder</span>
-                                                      <span>›</span>
-                                                  </button>
-                                              )}
-                                          </MenuItem>
-
-                                          <hr className="my-1 border-gray-200" />
-
-                                          <MenuItem>
-                                              {({ active }) => (
-                                                  <button type="button" onClick={() => handleExport(ele)} className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
-                                                      <span className="flex items-center gap-2">⬇ Export (MP3)</span>
-                                                      <span>›</span>
-                                                  </button>
-                                              )}
-                                          </MenuItem>
-
-                                          <hr className="my-1 border-gray-200" />
-
-                                          <MenuItem>
-                                              {({ active }) => (
-                                                  <button type="button" onClick={() => { setSelectedProjectName(ele?.name || ''); setDeleteId(ele?._id || ele?.id); setDeleteProModal(true); }} className={`flex items-center gap-2 px-4 py-2 text-sm ${active ? "text-red-600" : "text-red-600"}`}>
-                                                      🗑️ Delete
-                                                  </button>
-                                              )}
-                                          </MenuItem>
-                                      </div>
-                                  </MenuItems>
-                              </Menu>
+                              </AdaptiveMenu>
                           </div>
                       </div>
                   </div>
