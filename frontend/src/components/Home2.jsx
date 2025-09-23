@@ -861,25 +861,25 @@ const handleSaveCoverImage = async () => {
                     <div className="grid grid-cols-2 md600:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 md600:gap-4 md:gap-3 lg:gap-4 3xl:gap-6 mt-3 md:mt-2 lg:mt-3 3xl:mt-5">
                         {sounds.map((sound, index) => (
                             <div key={sound._id || index} className="bg-[#14141480] rounded-[4px] overflow-hidden d_customborder" onClick={() => navigate('/sidebar/timeline', { state: { demoSound: { _id: sound?._id, soundname: sound?.soundname, image: sound?.image, soundfile: sound?.soundfile } } })}>
-                                <div className='w-full h-[105px] sm:h-[135px] md600:h-[105px] lg:h-[131px] xl:h-[125px] 2xl:h-[124px] 3xl:h-[135px]'>
-                                    <img src={`${IMAGE_URL}uploads/image/${sound?.image}`} alt="Album" className="w-full h-full object-cover" />
-                                </div>
-                                <div className="py-[4px] px-[4px] lg:py-[6px] lg:px-[8px] 2xl:px-[10px] 3xl:py-[8px] 3xl:px-[12px]">
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <h3 className="text-[#fff] font-[500] text-[12px] sm:text-[14px] md:text-[12px] 2xl:text-[14px] 3xl:text-[16px] mb-[2px]">{sound?.soundname}</h3>
-                                            <p className="text-[#FFFFFF99] font-[400] text-[10px] sm:text-[12px] md:text-[10px] xl:text-[14px]">{sound?.category[0]?.name}</p>
-                                        </div>
-                                        <button onClick={() => handlePlayPause(index)} className="bg-[#141414] text-black rounded-full w-[20px] h-[20px] sm:w-[28px] sm:h-[28px] md:w-[24px] md:h-[24px] lg:w-[28px] lg:h-[28px] flex justify-center items-center border-[0.5px] border-[#FFFFFF1A]">
-                                            <img src={playingIndex === index ? pause : play} alt="" className='w-2 h-2 sm:w-3 sm:h-3' />
-                                        </button>
-                                        <audio
-                                            ref={el => audioRefs.current[index] = el}
-                                            src={`${IMAGE_URL}uploads/soundfile/${sound?.soundfile}`}
-                                            onEnded={() => handleEnded(index)}
-                                        />
+                            <div className='w-full h-[105px] sm:h-[135px] md600:h-[105px] lg:h-[131px] xl:h-[125px] 2xl:h-[124px] 3xl:h-[135px]'>
+                                <img src={`${IMAGE_URL}uploads/image/${sound?.image}`} alt="Album" className="w-full h-full object-cover" />
+                            </div>
+                            <div className="py-[4px] px-[4px] lg:py-[6px] lg:px-[8px] 2xl:px-[10px] 3xl:py-[8px] 3xl:px-[12px]">
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <h3 className="text-[#fff] font-[500] text-[12px] sm:text-[14px] md:text-[12px] 2xl:text-[14px] 3xl:text-[16px] mb-[2px]">{sound?.soundname}</h3>
+                                        <p className="text-[#FFFFFF99] font-[400] text-[10px] sm:text-[12px] md:text-[10px] xl:text-[14px]">{sound?.category[0]?.name}</p>
                                     </div>
+                                    <button onClick={() => handlePlayPause(index)} className="bg-[#141414] text-black rounded-full w-[20px] h-[20px] sm:w-[28px] sm:h-[28px] md:w-[24px] md:h-[24px] lg:w-[28px] lg:h-[28px] flex justify-center items-center border-[0.5px] border-[#FFFFFF1A]">
+                                        <img src={playingIndex === index ? pause : play} alt="" className='w-2 h-2 sm:w-3 sm:h-3' />
+                                    </button>
+                                    <audio
+                                        ref={el => audioRefs.current[index] = el}
+                                        src={`${IMAGE_URL}uploads/soundfile/${sound?.soundfile}`}
+                                        onEnded={() => handleEnded(index)}
+                                    />
                                 </div>
+                            </div>
                             </div>
                         ))}
                     </div>
@@ -1087,7 +1087,7 @@ const handleSaveCoverImage = async () => {
                                               </button>
                                           )}
                                       </MenuItem>
-
+ 
                                       <MenuItem>
                                           {({ active }) => (
                                               <button type="button" onClick={() => { setSelectedMusicId(ele._id); setImage(coverUrl || null); setOpen(true);}} className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
@@ -1095,7 +1095,7 @@ const handleSaveCoverImage = async () => {
                                               </button>
                                           )}
                                       </MenuItem>
-
+ 
                                       <MenuItem>
                                           {({ active }) => (
                                               <button type="button" onClick={() => { setMoveMusicId(ele._id); setMoveModalOpen(true); }} className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
@@ -1104,9 +1104,9 @@ const handleSaveCoverImage = async () => {
                                               </button>
                                           )}
                                       </MenuItem>
-
+ 
                                       <hr className="my-1 border-gray-200" />
-
+ 
                                       <MenuItem>
                                           {({ active }) => (
                                               <button type="button" onClick={() => handleExport(ele)} className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
@@ -1115,9 +1115,9 @@ const handleSaveCoverImage = async () => {
                                               </button>
                                           )}
                                       </MenuItem>
-
+ 
                                       <hr className="my-1 border-gray-200" />
-
+ 
                                       <MenuItem>
                                           {({ active }) => (
                                               <button type="button" onClick={() => { setSelectedProjectName(ele?.name || ''); setDeleteId(ele?._id || ele?.id); setDeleteProModal(true); }} className={`flex items-center gap-2 px-4 py-2 text-sm ${active ? "text-red-600" : "text-red-600"}`}>
@@ -1127,58 +1127,6 @@ const handleSaveCoverImage = async () => {
                                       </MenuItem>
                                   </div>
                               </AdaptiveMenu>
-                                <Menu>
-                                  <MenuItems ref={refs.setFloating} style={floatingStyles} className="absolute z-50 right-0 top-full mt-2 w-56 rounded-md bg-[#1f1f1f] shadow-lg ring-1 ring-black ring-opacity-5 outline-none">
-                                      <div className="py-1">
-                                          <MenuItem>
-                                              {({ active }) => (
-                                                  <button onClick={() => handleMusicRenameClick(ele._id, ele.name)} className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
-                                                      <span className="font-medium">A</span>
-                                                      Rename
-                                                  </button>
-                                              )}    
-                                          </MenuItem>
- 
-                                          <MenuItem>
-                                              {({ active }) => (
-                                                  <button type="button" onClick={() => { setSelectedMusicId(ele._id); setImage(coverUrl || null); setOpen(true);}} className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
-                                                  <RiImageAddLine /> Change cover
-                                                  </button>
-                                              )}
-                                          </MenuItem>
-
-                                          <MenuItem>
-                                              {({ active }) => (
-                                                  <button type="button" onClick={() => { setMoveMusicId(ele._id); setMoveModalOpen(true); }} className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
-                                                      <span className="flex items-center gap-2"><FaRegFolderOpen /> Move to folder</span>
-                                                      <span>›</span>
-                                                  </button>
-                                              )}
-                                          </MenuItem>
-
-                                          <hr className="my-1 border-gray-200" />
-
-                                          <MenuItem>
-                                              {({ active }) => (
-                                                  <button type="button" onClick={() => handleExport(ele)} className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
-                                                      <span className="flex items-center gap-2"><LuArrowDownToLine /> Export (MP3)</span>
-                                                      <span>›</span>
-                                                  </button>
-                                              )}
-                                          </MenuItem>
-
-                                          <hr className="my-1 border-gray-200" />
-
-                                          <MenuItem>
-                                              {({ active }) => (
-                                                  <button type="button" onClick={() => { setSelectedProjectName(ele?.name || ''); setDeleteId(ele?._id || ele?.id); setDeleteProModal(true); }} className={`flex items-center gap-2 px-4 py-2 text-sm ${active ? "text-red-600" : "text-red-600"}`}>
-                                                      <RiDeleteBin5Line /> Delete
-                                                  </button>
-                                              )}
-                                          </MenuItem>
-                                      </div>
-                                  </MenuItems>
-                              </Menu>
                           </div>
                       </div>
                   </div>
