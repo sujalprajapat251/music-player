@@ -40,14 +40,14 @@ import { ReactComponent as Theme } from "../../Images/themes.svg";
 import { useTheme } from '../../Utils/ThemeContext';
 import { ReactComponent as Close } from '../../Images/closeicon.svg';
 import midi from '../../Images/midi.svg';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { setIsSongSection, setMusicalTypingEnabled } from '../../Redux/Slice/ui.slice';
 import { setSoundQuality } from '../../Redux/Slice/audioSettings.slice';
 import audioQualityManager from '../../Utils/audioQualityManager';
 import ExportPopup from '../ExportProjectModel';
 import { useUndoRedo } from '../../hooks/useUndoRedo';
-import { createMusic } from '../../Redux/Slice/music.slice';
+import { createMusic, getAllMusic } from '../../Redux/Slice/music.slice';
 import axiosInstance from '../../Utils/axiosInstance';
 import { selectStudioState } from '../../Redux/rootReducer';
 import WavEncoder from 'wav-encoder';
@@ -55,6 +55,7 @@ import NewProject from '../NewProjectModel';
 import ShareModal from '../Sharemodal';
 import PricingModel from '../PricingModel';
 import { setCurrentMusic } from '../../Redux/Slice/music.slice';
+import { addAudioClipToTrack, createTrackWithDefaults, updateAudioClip, setTrackType } from '../../Redux/Slice/studio.slice';
 
 const getTopHeaderColors = (isDark) => ({
   // Background colors
@@ -121,6 +122,11 @@ const TopHeader = () => {
     // Get theme colors
     const { isDark } = useTheme();
     const colors = getTopHeaderColors(isDark);
+    
+    // Get current track ID and tracks from Redux
+    const currentTrackId = useSelector((state) => selectStudioState(state)?.currentTrackId);
+    const tracks = useSelector((state) => selectStudioState(state)?.tracks || []);
+
     // Undo/Redo functionality
     const { undo: originalUndo, redo: originalRedo, canUndo, canRedo, historyLength, futureLength } = useUndoRedo();
 
@@ -162,10 +168,40 @@ const TopHeader = () => {
     const [isEditingSongName, setIsEditingSongName] = useState(false);
 
     const currentMusic = useSelector((state) => state.music?.currentMusic);
+    const allMusic = useSelector((state) => state?.music?.allmusic || []);
+    console.log(".... > ", allMusic);
+    
+    const navigate = useNavigate();
+    useEffect(() => {
+        if ( allMusic.length === 0) {
+
+            dispatch(getAllMusic());
+        }
+    }, [dispatch]);
 
     useEffect(() => {
         setSongName(currentMusic?.name || 'Untitled_song');
     }, [currentMusic]);
+
+    // Initialize low latency mode from localStorage
+    useEffect(() => {
+        const savedLowLatencyMode = localStorage.getItem('lowLatencyMode');
+        if (savedLowLatencyMode === 'true') {
+            setIsLowLatency(true);
+        }
+    }, []);
+
+    // Low latency info banner state (shown once after refresh)
+    const [showLowLatencyInfo, setShowLowLatencyInfo] = useState(false);
+
+    useEffect(() => {
+        const pendingInfo = localStorage.getItem('lowLatencyInfoPending');
+        if (pendingInfo === 'true') {
+            setShowLowLatencyInfo(true);
+            // Clear pending flag so it only shows once
+            localStorage.removeItem('lowLatencyInfoPending');
+        }
+    }, []);
 
     // Add state for selected sound quality
     const [selectedSoundQuality, setSelectedSoundQuality] = useState('High');
@@ -351,7 +387,12 @@ const TopHeader = () => {
         setShowSubmenu({
             import: false,
             navigator: false,
-            effects: false
+            effects: false,
+            openrecentfolder: false,
+            keyboard: false,
+            soundquality: false,
+            language: false,
+            theme: false
         });
         // Reset active menu to close the main menu
         setIsActiveMenu("");
@@ -368,11 +409,23 @@ const TopHeader = () => {
         }, 10);
     };
 
+    const handleOpenProject = (project) => {
+        if (!project?._id) return; 
+        dispatch(setCurrentMusic(project));
+        setIsActiveMenu("");
+        setShowSubmenu(prev => ({ ...prev, openrecentfolder: false }));
+        setTimeout(() => {
+            document.dispatchEvent(new KeyboardEvent('keydown', {
+                key: 'Escape', code: 'Escape', keyCode: 27, which: 27, bubbles: true
+            }));
+        }, 10);
+        navigate(`/sidebar/timeline/${project._id}`);
+    }
+    
     const handleExportModal = () => {
         setExportProjectModal(true);
     }
 
-    const tracks = useSelector((state) => selectStudioState(state)?.tracks || []);
     const bpm = useSelector((state) => selectStudioState(state)?.bpm || 120);
 
     // Handle song name editing
@@ -637,6 +690,247 @@ const TopHeader = () => {
         }
     }
 
+    // Add state for file input
+    const [fileInputRef, setFileInputRef] = useState(null);
+    const [voiceMicFileInputRef, setVoiceMicFileInputRef] = useState(null);
+
+    // Add import audio handler
+    const handleImportAudio = () => {
+        if (fileInputRef) {
+            fileInputRef.click();
+        }
+    };
+
+    // Add import to Voice & Mic handler
+    const handleImportToVoiceMic = () => {
+        if (voiceMicFileInputRef) {
+            voiceMicFileInputRef.click();
+        }
+    };
+
+    // Add file change handler for regular audio import
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Check if file is audio
+        if (!file.type.startsWith('audio/')) {
+            alert('Please select an audio file');
+            return;
+        }
+
+        try {
+            // Create object URL for the file
+            const url = URL.createObjectURL(file);
+
+            // Get audio duration
+            let duration = null;
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const arrayBuffer = await file.arrayBuffer();
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                duration = audioBuffer.duration;
+            } catch (err) {
+                console.error('Error getting audio duration:', err);
+                duration = 0;
+            }
+
+            // If no current track, create a new audio track
+            let targetTrackId = currentTrackId;
+            if (!targetTrackId || !tracks.find(t => t.id === targetTrackId)) {
+                const newTrackId = Date.now();
+                dispatch(createTrackWithDefaults({
+                    id: newTrackId,
+                    name: 'Audio Track',
+                    type: 'audio',
+                    color: '#FFB6C1'
+                }));
+                targetTrackId = newTrackId;
+            }
+
+            // Create audio clip data
+            const audioClip = {
+                id: Date.now() + Math.random(),
+                url: url,
+                name: file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
+                duration: duration,
+                trimStart: 0,
+                trimEnd: duration,
+                startTime: 0,
+                color: '#FFB6C1',
+                type: 'audio',
+                fromImport: true
+            };
+
+            // Add the audio clip to the track
+            dispatch(addAudioClipToTrack({
+                trackId: targetTrackId,
+                audioClip: audioClip
+            }));
+
+            // Upload to backend for persistent storage
+            try {
+                const formData = new FormData();
+                formData.append('audio', file, file.name);
+                const uploadRes = await axiosInstance.post('/upload-audio', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                
+                if (uploadRes?.data?.url) {
+                    // Update the clip with the persistent URL
+                    dispatch(updateAudioClip({
+                        trackId: targetTrackId,
+                        clipId: audioClip.id,
+                        updates: { url: uploadRes.data.url }
+                    }));
+                }
+            } catch (uploadError) {
+                console.error('Failed to upload audio file:', uploadError);
+                // Keep the blob URL if upload fails
+            }
+
+            // Reset file input
+            e.target.value = '';
+            
+        } catch (error) {
+            console.error('Error importing audio file:', error);
+            alert('Failed to import audio file. Please try again.');
+        }
+    };
+
+    // Add file change handler for Voice & Mic import
+    const handleVoiceMicFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Check if file is audio
+        if (!file.type.startsWith('audio/')) {
+            alert('Please select an audio file');
+            return;
+        }
+
+        try {
+            // Create object URL for the file
+            const url = URL.createObjectURL(file);
+
+            // Get audio duration
+            let duration = null;
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const arrayBuffer = await file.arrayBuffer();
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                duration = audioBuffer.duration;
+            } catch (err) {
+                console.error('Error getting audio duration:', err);
+                duration = 0;
+            }
+
+            // Create a new Voice & Mic track
+            const newTrackId = Date.now();
+            dispatch(createTrackWithDefaults({
+                id: newTrackId,
+                name: 'Voice & Mic Track',
+                type: 'Voice & Mic',
+                color: '#FF6B6B' // Different color for Voice & Mic tracks
+            }));
+
+            // Create audio clip data
+            const audioClip = {
+                id: Date.now() + Math.random(),
+                url: url,
+                name: file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
+                duration: duration,
+                trimStart: 0,
+                trimEnd: duration,
+                startTime: 0,
+                color: '#FF6B6B',
+                type: 'voice_mic',
+                fromImport: true
+            };
+
+            // Add the audio clip to the Voice & Mic track
+            dispatch(addAudioClipToTrack({
+                trackId: newTrackId,
+                audioClip: audioClip
+            }));
+
+            // Set the track type to Voice & Mic to show the Voice & Mic interface
+            dispatch(setTrackType('Voice & Mic'));
+
+            // Upload to backend for persistent storage
+            try {
+                const formData = new FormData();
+                formData.append('audio', file, file.name);
+                const uploadRes = await axiosInstance.post('/upload-audio', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                
+                if (uploadRes?.data?.url) {
+                    // Update the clip with the persistent URL
+                    dispatch(updateAudioClip({
+                        trackId: newTrackId,
+                        clipId: audioClip.id,
+                        updates: { url: uploadRes.data.url }
+                    }));
+                }
+            } catch (uploadError) {
+                console.error('Failed to upload audio file:', uploadError);
+                // Keep the blob URL if upload fails
+            }
+
+            // Reset file input
+            e.target.value = '';
+            
+        } catch (error) {
+            console.error('Error importing audio file to Voice & Mic track:', error);
+            alert('Failed to import audio file. Please try again.');
+        }
+    };
+
+    // Handle low latency mode application
+    const handleApplyLowLatencyMode = async () => {
+        try {
+            // Save low latency mode preference to localStorage
+            localStorage.setItem('lowLatencyMode', 'true');
+            // Mark that we should show the info banner after refresh
+            localStorage.setItem('lowLatencyInfoPending', 'true');
+            
+            // Dispatch action to update Redux state
+            // Note: You may need to create a Redux action for this if it doesn't exist
+            // dispatch(setLowLatencyMode(true));
+            
+            // Close the modal
+            setLowLatencyModel(false);
+            setIsLowLatency(true);
+            
+            // Show a brief message before refresh
+            const message = document.createElement('div');
+            message.textContent = 'Applying low latency mode...';
+            message.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 20px;
+                border-radius: 8px;
+                z-index: 10000;
+                font-family: Arial, sans-serif;
+            `;
+            document.body.appendChild(message);
+            
+            // Refresh the page after a short delay
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Failed to apply low latency mode:', error);
+            alert('Failed to apply low latency mode. Please try again.');
+        }
+    };
+
     return (
         <>
             <ExportPopup open={exportProjectModal} onClose={() => setExportProjectModal(false)} />
@@ -695,24 +989,27 @@ const TopHeader = () => {
                                             className="absolute left-full top-0 z-50 w-36 md600:w-40 lg:mt-0 shadow-lg outline-none text-nowrap"
                                             style={{ backgroundColor: colors.menuBackground }}
                                         >
-                                            <p 
-                                                className="block px-2 py-1 md600:px-3 lg:px-4 md:py-2 cursor-pointer transition-colors text-[10px] md600:text-[12px] lg:text-[14px]" 
-                                                style={{ color: colors.textSecondary }}
-                                                onClick={handleNestedOptionClick}
-                                                onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
-                                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                                            >
-                                                Page navigator
-                                            </p>
-                                            <p 
-                                                className="block px-2 py-1 md600:px-3 lg:px-4 md:py-2 cursor-pointer transition-colors text-[10px] md600:text-[12px] lg:text-[14px]" 
-                                                style={{ color: colors.textSecondary }}
-                                                onClick={handleNestedOptionClick}
-                                                onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
-                                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                                            >
-                                                Bookmark
-                                            </p>
+                                            {(allMusic || []).slice(0, 8).map((m) => (
+                                                <p
+                                                    key={m?._id}
+                                                    className="block px-2 py-1 md600:px-3 lg:px-4 md:py-2 cursor-pointer transition-colors text-[10px] md600:text-[12px] lg:text-[14px]"
+                                                    style={{ color: colors.textSecondary }}
+                                                    onClick={(e) => { e.stopPropagation(); handleOpenProject(m); }}
+                                                    onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                                    title={m?.name || 'Untitled'}
+                                                >
+                                                    {m?.name || 'Untitled'}
+                                                </p>
+                                            ))}
+                                            {(!allMusic || allMusic.length === 0) && (
+                                                <p
+                                                    className="block px-2 py-1 md600:px-3 lg:px-4 md:py-2 text-[10px] md600:text-[12px] lg:text-[14px] opacity-70"
+                                                    style={{ color: colors.textSecondary }}
+                                                >
+                                                    No recent projects
+                                                </p>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -769,7 +1066,10 @@ const TopHeader = () => {
                                             <p 
                                                 className="flex gap-2 md600:gap-3 px-3 py-1 lg:px-4 md600:py-2 cursor-pointer transition-colors" 
                                                 style={{ color: colors.textSecondary }}
-                                                onClick={handleNestedOptionClick}
+                                                onClick={() => {
+                                                    handleImportAudio();
+                                                    handleNestedOptionClick();
+                                                }}
                                                 onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
                                                 onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                                             >
@@ -782,7 +1082,10 @@ const TopHeader = () => {
                                             <p 
                                                 className="flex gap-2 md600:gap-3 px-3 py-1 lg:px-4 md600:py-2 cursor-pointer transition-colors" 
                                                 style={{ color: colors.textSecondary }}
-                                                onClick={handleNestedOptionClick}
+                                                onClick={() => {
+                                                    handleImportToVoiceMic();
+                                                    handleNestedOptionClick();
+                                                }}
                                                 onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
                                                 onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                                             >
@@ -790,7 +1093,7 @@ const TopHeader = () => {
                                                     className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
                                                     style={{ color: colors.iconSecondary }}
                                                 />  
-                                                <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Import to Audio track</span>
+                                                <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Import to Voice & Mic track</span>
                                             </p>
                                             <p 
                                                 className="flex gap-2 md600:gap-3 px-3 py-1 lg:px-4 md600:py-2 cursor-pointer transition-colors" 
@@ -1144,6 +1447,7 @@ const TopHeader = () => {
                                                             if (!isLowLatency) {
                                                                 setLowLatencyModel(true);
                                                             } else {
+                                                                localStorage.removeItem('lowLatencyMode');
                                                                 setIsLowLatency(false);
                                                             }
                                                         }}
@@ -1546,10 +1850,7 @@ const TopHeader = () => {
                                         setIsLowLatency(false);
                                         setLowLatencyModel(false);
                                     }}>Cancel </button>
-                                    <button className="d_btn d_createbtn d_permanentlyall" onClick={() => {
-                                        setIsLowLatency(true);
-                                        setLowLatencyModel(false);
-                                    }}>Apply and refresh</button>
+                                    <button className="d_btn d_createbtn d_permanentlyall" onClick={handleApplyLowLatencyMode}>Apply and refresh</button>
                                 </div>
                             </div>
                         </DialogPanel>
@@ -1583,6 +1884,38 @@ const TopHeader = () => {
                 </div>
             )}
 
+            {/* Low Latency Info Banner (post-refresh) */}
+            {showLowLatencyInfo && (
+                <div 
+                    className="fixed bottom-14 z-50 border rounded-lg px-4 py-3 shadow-lg"
+                    style={{ 
+                        backgroundColor: colors.background,
+                        borderColor: colors.borderStrong,
+                        maxWidth: '800px',
+                        width: 'calc(100% - 24px)'
+                    }}
+                >
+                    <div className="flex items-start gap-3">
+                        <div className="text-sm" style={{ color: colors.textPrimary }}>
+                            <strong>Low Latency Mode enabled.</strong>
+                            <div className="mt-1" style={{ color: colors.textMuted }}>
+                                In a music player or digital audio workstation (DAW) app, Low Latency Mode reduces the delay between an action and the resulting sound.
+                                Examples include playing a virtual piano, triggering drum pads, or pressing Play — interactions feel more instant and responsive.
+                                Common uses: Live performance/recording, beatmaking/looping, audio monitoring, and overall better responsiveness.
+                                Note: This may use more CPU because audio buffers are processed faster.
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setShowLowLatencyInfo(false)}
+                            className="ml-auto px-2 py-1 rounded text-sm"
+                            style={{ color: colors.textSecondary, border: `1px solid ${colors.borderStrong}` }}
+                        >
+                            Dismiss
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <style jsx>{`
                 @keyframes fade-in {
                     from {
@@ -1604,6 +1937,24 @@ const TopHeader = () => {
 
             {/* Pricing Modal */}
             <PricingModel pricingModalOpen={pricingModalOpen} setPricingModalOpen={setPricingModalOpen} />
+
+            {/* Add hidden file input for regular audio import */}
+            <input
+                type="file"
+                ref={setFileInputRef}
+                onChange={handleFileChange}
+                accept="audio/*"
+                style={{ display: 'none' }}
+            />
+            
+            {/* Add hidden file input for Voice & Mic import */}
+            <input
+                type="file"
+                ref={setVoiceMicFileInputRef}
+                onChange={handleVoiceMicFileChange}
+                accept="audio/*"
+                style={{ display: 'none' }}
+            />
         </>
     )
 }
