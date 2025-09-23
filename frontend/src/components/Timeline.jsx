@@ -55,6 +55,7 @@ import VoiceAndMic from "./VoiceAndMic";
 import AccessPopup from "./AccessPopup";
 import { setAlert } from "../Redux/Slice/alert.slice";
 import NewSynth from "./NewSynth";
+import BassAnd808 from "./BassAnd808";
 
 const Timeline = () => {
   
@@ -82,6 +83,7 @@ const Timeline = () => {
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
   const [showPiano, setShowPiano] = useState(false);
   const [showSynth, setShowSynth] = useState(false);
+  const [showBass808, setShowBass808] = useState(false);
   const [showAccessPopup, setShowAccessPopup] = useState(false);
   const [micStream, setMicStream] = useState(null);
   const [micAccessDenied, setMicAccessDenied] = useState(false);
@@ -3956,6 +3958,20 @@ const Timeline = () => {
             className="fixed bottom-0 left-0 right-0 bg-white shadow-lg rounded-t-lg p-4 z-50"
           >
             <NewSynth onClose={() => { setShowSynth(false); dispatch(setTrackType(null)); }} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {(showBass808 || getTrackType === "Bass & 808") && (
+          <motion.div
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: "0%", opacity: 1 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="fixed bottom-0 left-0 right-0 bg-white shadow-lg rounded-t-lg p-4 z-50"
+          >
+            <BassAnd808 onClose={() => { setShowBass808(false); dispatch(setTrackType(null)); }} />
           </motion.div>
         )}
       </AnimatePresence>

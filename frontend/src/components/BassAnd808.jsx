@@ -5,28 +5,13 @@ import Soundfont from 'soundfont-player';
 import { useSelector, useDispatch } from "react-redux";
 import { IoClose } from "react-icons/io5";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { GiPianoKeys } from "react-icons/gi";
-import { HiMiniChevronUpDown } from "react-icons/hi2";
-import Am from "../Images/am.svg";
-import Bdmi from "../Images/bdmi.svg";
-import C from "../Images/c.svg";
-import Dm from "../Images/r.svg";
-import E from "../Images/e.svg";
-import F from "../Images/f.svg";
-import G from "../Images/g.svg";
-import Am7 from "../Images/am7.svg";
-import { FaPlus, FaStop } from "react-icons/fa6";
-import music from "../Images/playingsounds.svg";
-import BottomToolbar from './Layout/BottomToolbar';
-import { addPianoNote, setRecordingAudio, setPianoNotes, setPianoRecordingClip, setSelectedInstrument } from '../Redux/Slice/studio.slice';
+import { setRecordingAudio, setPianoNotes, setPianoRecordingClip, setSelectedInstrument } from '../Redux/Slice/studio.slice';
 import PianoRolls from './PianoRolls';
 import * as Tone from "tone";
-import Effects2 from './Effects2';
-import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsTwo } from '../Redux/Slice/effects.slice';
+import { setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
 import { selectStudioState } from '../Redux/rootReducer';
 import PricingModel from './PricingModel';
-import subscription from "../Images/subscriptionIcon.svg";
-import { LuGuitar } from "react-icons/lu";
+import svg808 from '../Images/808-icon.svg'
 
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
@@ -75,7 +60,7 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
 
     const getResponsiveStroke = () => {
         if (typeof window !== 'undefined') {
-            if (window.innerWidth >= 768) return 3;
+            if (window.innerWidth >= 768) return 4;
             // if (window.innerWidth >= 640) return 40;
             return 2;
         }
@@ -95,7 +80,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
             setAngle(defaultAngle);
         }
     }, [defaultAngle]);
-
 
     const radius = (size - stroke) / 2;
     const center = size / 2;
@@ -117,7 +101,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
             if (onChange) {
                 onChange(next);
             }
-
             return next;
         });
     };
@@ -137,163 +120,62 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
             <div ref={knobRef} style={{ width: size, height: size, position: "relative", cursor: "pointer", }} onMouseDown={onMouseDown}>
                 <svg width={size} height={size}>
                     <circle cx={center} cy={center} r={radius} stroke="#444" strokeWidth={stroke} fill="#1F1F1F" />
-                    <path d={fgArc} stroke="#bbb" strokeWidth={stroke} fill="#1F1F1F" strokeLinecap="round" />
+                    <path d={fgArc} stroke="#ff780a" strokeWidth={stroke} fill="#1F1F1F" strokeLinecap="round" />
                 </svg>
-                <div className={`absolute top-1.5 left-1/2 w-0.5 h-2 md600:h-3 lg:h-4 bg-gray-400 rounded-sm -translate-x-1/2 origin-bottom`} style={{ transform: `translateX(-50%) rotate(${angle}deg)`, }} />
+                <div className={`absolute top-1.5 left-1/2 w-1 h-2 md600:h-3 lg:h-4 bg-[#ff780a] rounded-sm -translate-x-1/2 origin-bottom`} style={{ transform: `translateX(-50%) rotate(${angle}deg)`, }} />
             </div>
-            <div className='text-[8px] md600:text-[10px] md:text-[12px] 2xl:text-[14px] mt-1 items-center text-[#aaa]' style={{ fontFamily: "sans-serif" }}>{label}</div>
+            <div className='text-[8px] md600:text-[12px] md:text-[14px] 2xl:text-[16px] mt-1 items-center text-[#aaa]' style={{ fontFamily: "sans-serif" }}>{label}</div>
         </div>
     );
 }
 
-const RangeSlider = ({ min = 0, max = 100, step = 1, initialValue = 0, label = "Strum", unit = "s", onChange = () => { }, className = "" }) => {
-    const [value, setValue] = useState(initialValue);
-
-    const handleChange = (e) => {
-        const newValue = Number(e.target.value);
-        setValue(newValue);
-        onChange(newValue);
-    };
-
-    const percentage = ((value - min) / (max - min)) * 100;
-
-    return (
-        <div className={`w-full ${className}`}>
-            <div className="flex justify-between items-center">
-                <div className="flex gap-1 items-center">
-                    <img src={subscription} alt="subscription" className="w-4 h-4" />
-                    <label className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] text-[#FFFFFF]">{label}</label>
-                </div>
-                <span className="text-[10px] md600:text-[12px] md:text-[14px] text-[#FFFFFF99] outline-none focus:outline-none">{value}{unit}</span>
-            </div>
-
-            <div className="relative">
-                <input type="range" min={min} max={max} step={step} value={value} onChange={handleChange} className="w-full h-1 bg-[#444] rounded-lg appearance-none cursor-pointer slider"
-                    style={{ background: `linear-gradient(to right, #bbb 0%, #bbb ${percentage}%, #444 ${percentage}%, #444 100%)` }} />
-            </div>
-            <style jsx>{`
-        .slider::-webkit-slider-thumb {
-          appearance: none;
-          width: 12px;
-          height: 12px;
-          background: #bbb;
-          border: 2px solid white;
-          border-radius: 50%;
-          cursor: pointer;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-          transition: all 0.15s ease;
-        }
-        
-        .slider::-webkit-slider-thumb:hover {
-          background: #ccc;
-          transform: scale(1.1);
-        }
-        
-        .slider::-moz-range-thumb {
-          width: 16px;
-          height: 16px;
-          background: #bbb;
-          border: 2px solid white;
-          border-radius: 50%;
-          cursor: pointer;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-          transition: all 0.15s ease;
-        }
-        
-        .slider::-moz-range-thumb:hover {
-          background: #ccc;
-          transform: scale(1.1);
-        }
-      `}</style>
-        </div>
-    );
-};
-
-
 const INSTRUMENTS = [
-    { id: 'acoustic_guitar_nylon', name: 'Acoustic Guitar (Nylon)', category: 'Guitar' },
-    { id: 'acoustic_guitar_steel', name: 'Acoustic Guitar (Steel)', category: 'Guitar' },
-    { id: 'electric_guitar_clean', name: 'Electric Guitar (Clean)', category: 'Guitar' },
-    { id: 'electric_guitar_jazz', name: 'Electric Guitar (Jazz)', category: 'Guitar' },
-    { id: 'electric_guitar_muted', name: 'Electric Guitar (Muted)', category: 'Guitar' },
-    { id: 'overdriven_guitar', name: 'Overdriven Guitar', category: 'Guitar' },
-    { id: 'distortion_guitar', name: 'Distortion Guitar', category: 'Guitar' },
-    { id: 'guitar_harmonics', name: 'Guitar Harmonics', category: 'Guitar' },
-    { id: 'banjo', name: 'Banjo', category: 'Plucked Strings' },
-    { id: 'shamisen', name: 'Shamisen', category: 'Plucked Strings' },
-    { id: 'sitar', name: 'Sitar', category: 'Plucked Strings' },
+    { id: 'violin', name: 'Violin', category: 'Strings' },
+    { id: 'cello', name: 'Cello', category: 'Strings' },
+    { id: 'viola', name: 'Viola', category: 'Strings' },
+    { id: 'flute', name: 'Flute', category: 'Woodwinds' },
+    { id: 'oboe', name: 'Oboe', category: 'Woodwinds' },
+    { id: 'clarinet', name: 'Clarinet', category: 'Woodwinds' },
+    { id: 'trumpet', name: 'Trumpet', category: 'Brass' },
+    { id: 'french_horn', name: 'French Horn', category: 'Brass' },
+    { id: 'trombone', name: 'Trombone', category: 'Brass' },
+    { id: 'tuba', name: 'Tuba', category: 'Brass' },
+    { id: 'timpani', name: 'Timpani', category: 'Percussion' },
+    { id: 'harp', name: 'Harp', category: 'Strings' },
+    { id: 'string_ensemble_1', name: 'String Ensemble', category: 'Ensemble' },
+    { id: 'choir_aahs', name: 'Choir Aahs', category: 'Voice' },
+    { id: 'orchestral_harp', name: 'Orchestral Harp', category: 'Strings' },
+    { id: 'contrabass', name: 'Contrabass', category: 'Strings' },
+    { id: 'bassoon', name: 'Bassoon', category: 'Woodwinds' },
+    { id: 'piccolo', name: 'Piccolo', category: 'Woodwinds' }
 ];
 
-const BasicData = [
-    { name: "Am", image: Am },
-    { name: "Bdmi", image: Bdmi },
-    { name: "C", image: C },
-    { name: "Dm", image: Dm },
-    { name: "E", image: E },
-    { name: "F", image: F },
-    { name: "G", image: G },
-    { name: "Am7", image: Am7 }
-];
-
-const BasicData1 = [
-    { name: "Full Chord" },
-    { name: "On One" },
-];
-
-const Stabs = [
-    { name: "On Air" },
-    { name: "Eight's" },
-    { name: "Soul Stabs" },
-    { name: "One and Three" },
-    { name: "Simple Stabs" },
-    { name: "Latinesque" },
-    { name: "All Four" },
-    { name: "Moderate Stabs" },
-]
-
-const Arpeggiated = [
-    { name: "Layout" },
-    { name: "Storytime" },
-    { name: "Rising Arp" },
-    { name: "Dreamer" },
-    { name: "Moving Arp" },
-    { name: "Quick Arp" },
-    { name: "Simple Stride" },
-    { name: "Simple Rain" }
-]
-
-const other = [
-    { name: "Simple Slide" },
-    { name: "Simple Player" },
-    { name: "Alternating Stride" }
-];
-
-
-const Guitar = ({ onClose }) => {
+const BassAnd808 = ({ onClose }) => {
     const dispatch = useDispatch();
     const [showOffcanvas1, setShowOffcanvas1] = useState(true);
-    const [autoChords, setAutoChords] = useState(false);
-    const [selectedButtons, setSelectedButtons] = useState({ basic: null, stabs: null, arpeggiated: null, other: null });
     const [currentInstrumentIndex, setCurrentInstrumentIndex] = useState(0);
     const [activeTab, setActiveTab] = useState('Instruments');
     const [activePianoSection, setActivePianoSection] = useState(0);
-    const [strumValue, setStrumValue] = useState(0);
     const [volume, setVolume] = useState(90);
-    const [reverb, setReverb] = useState(-90);
-    const [pan, setPan] = useState(0);
+    const [glide, setGlide] = useState(-90);
+    const [saturation, setSaturation] = useState(0);
+    const [attack, setAttack] = useState(0);
+    const [release, setRelease] = useState(0);
     const [isDragOver, setIsDragOver] = useState(false);
     const [pricingModalOpen, setPricingModalOpen] = useState(false);
     const pianoSectionsRef = useRef(null);
 
-    // Get the selected instrument from Redux
-    const selectedInstrumentFromRedux = useSelector((state) => selectStudioState(state)?.selectedInstrument || 'acoustic_grand_piano');
+    // Get the selected instrument from Redux  
+    const selectedInstrumentFromRedux = useSelector((state) =>
+        selectStudioState(state)?.selectedInstrument || 'violin'
+    );
 
     useEffect(() => {
         const index = INSTRUMENTS.findIndex(inst => inst.id === selectedInstrumentFromRedux);
         if (index !== -1) {
             setCurrentInstrumentIndex(index);
         }
-    }, [selectedInstrumentFromRedux]);
+    }, []);
 
     useEffect(() => {
         const containerEl = pianoSectionsRef.current;
@@ -332,25 +214,22 @@ const Guitar = ({ onClose }) => {
     const convolverNodeRef = useRef(null);
     const activeAudioNodes = useRef({});
     const recordAnchorRef = useRef({ systemMs: 0, playheadSec: 0 });
+    // Lock instrument for the duration of a recording session
+    const recordingInstrumentRef = useRef(null);
     const selectedInstrument = INSTRUMENTS[currentInstrumentIndex].id;
 
     // Update Redux when local instrument changes
-    // useEffect(() => {
-    //     if (selectedInstrument !== selectedInstrumentFromRedux) {
-    //         dispatch(setSelectedInstrument(selectedInstrument));
-    //     }
-    // }, [selectedInstrument, selectedInstrumentFromRedux, dispatch]);
-
-    // Avoid syncing local instrument to Redux on every render to prevent loops.
-    // Dispatch happens only on explicit next/prev instrument actions.
+    useEffect(() => {
+        if (selectedInstrument !== selectedInstrumentFromRedux) {
+            dispatch(setSelectedInstrument(selectedInstrument));
+        }
+    }, [selectedInstrument, selectedInstrumentFromRedux, dispatch]);
 
     const getIsRecording = useSelector((state) => selectStudioState(state).isRecording);
     const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
     const studioCurrentTime = useSelector((state) => selectStudioState(state).currentTime || 0);
     const existingPianoNotes = useSelector((state) => selectStudioState(state).pianoNotes || []);
     const tracks = useSelector((state) => selectStudioState(state).tracks || []);
-
-
     const getActiveTabs = useSelector((state) => state.effects.activeTabs);
 
     useEffect(() => {
@@ -379,9 +258,12 @@ const Guitar = ({ onClose }) => {
     useEffect(() => {
         if (getIsRecording) {
             recordAnchorRef.current = { systemMs: Date.now(), playheadSec: studioCurrentTime };
+            // Capture the instrument at recording start so the whole take uses one instrument
+            recordingInstrumentRef.current = selectedInstrument;
             hendleRecord();
         } else {
             hendleStopRecord();
+            recordingInstrumentRef.current = null;
         }
     }, [getIsRecording, studioCurrentTime]);
 
@@ -402,15 +284,15 @@ const Guitar = ({ onClose }) => {
 
     useEffect(() => {
         if (audioContextRef.current) {
-            const reverbValue = (reverb + 135) / 270;
+            const reverbValue = (glide + 135) / 270;
         }
-    }, [reverb]);
+    }, [glide]);
 
     useEffect(() => {
         if (audioContextRef.current) {
-            const panValue = (pan + 135) / 270 * 2 - 1;
+            const panValue = (saturation + 135) / 270 * 2 - 1;
         }
-    }, [pan]);
+    }, [saturation]);
 
     const firstNote = MidiNumbers.fromNote('C0');
     const lastNote = MidiNumbers.fromNote('C5');
@@ -490,13 +372,19 @@ const Guitar = ({ onClose }) => {
         dryGainNodeRef.current = dryGainNode;
         convolverNodeRef.current = convolverNode;
 
+        // Load the orchestral instrument using Soundfont
         Soundfont.instrument(audioContext, selectedInstrument, {
             destination: gainNode,
-        }).then((piano) => {
-            pianoRef.current = piano;
-            console.log("Guitar instrument loaded successfully");
+        }).then((instrument) => {
+            pianoRef.current = instrument;
         }).catch((error) => {
-            console.error("Error loading piano instrument:", error);
+            console.error("Error loading orchestral instrument:", error);
+            // Fallback to violin if the selected instrument fails to load
+            Soundfont.instrument(audioContext, 'violin', {
+                destination: gainNode,
+            }).then((fallback) => {
+                pianoRef.current = fallback;
+            });
         });
 
         return () => {
@@ -504,9 +392,11 @@ const Guitar = ({ onClose }) => {
         };
     }, [selectedInstrument]);
 
+
+
     useEffect(() => {
         if (reverbGainNodeRef.current && dryGainNodeRef.current && convolverNodeRef.current && audioContextRef.current) {
-            const reverbAmount = (reverb + 135) / 270;
+            const reverbAmount = (glide + 135) / 270;
 
             const wetLevel = reverbAmount * 0.6;
             reverbGainNodeRef.current.gain.setValueAtTime(wetLevel, audioContextRef.current.currentTime);
@@ -521,25 +411,20 @@ const Guitar = ({ onClose }) => {
                 const newImpulse = createImpulseResponse(audioContextRef.current, roomSize, decay);
                 convolverNodeRef.current.buffer = newImpulse;
             }
-
-            // console.log(`Reverb: ${reverb} -> Wet: ${wetLevel.toFixed(2)}, Dry: ${dryLevel.toFixed(2)}`);
         }
-    }, [reverb]);
+    }, [glide]);
 
     useEffect(() => {
         if (panNodeRef.current) {
-            const panValue = pan / 135;
+            const panValue = saturation / 135;
             const clampedPanValue = Math.max(-1, Math.min(1, panValue));
             panNodeRef.current.pan.value = clampedPanValue;
-            // console.log(`Pan value: ${pan} -> Stereo pan: ${clampedPanValue}`);
         }
-    }, [pan]);
+    }, [saturation]);
 
 
 
     const playNote = (midiNumber) => {
-        // Many soundfonts don't support notes below A0 (MIDI 21).
-        // Clamp to a safe, supported range for playback so low-octave keys still work.
         const effectiveMidi = Math.max(21, midiNumber);
         const noteName = Tone.Frequency(effectiveMidi, "midi").toNote();
         const currentTime = getRecordingTime();
@@ -557,12 +442,11 @@ const Guitar = ({ onClose }) => {
                 duration: 0.05,
                 midiNumber: effectiveMidi,
                 trackId: currentTrackId || null,
-                instrumentId: selectedInstrument,
+                instrumentId: recordingInstrumentRef.current || selectedInstrument,
                 id: `${midiNumber}-${Date.now()}-${Math.random()}`
             };
             const updated = [...(pianoNotesRef.current || []), newEvent];
             dispatch(setPianoNotes(updated));
-
 
             const notesForThisTrack = (updated || []).filter(n => n.trackId === (currentTrackId || null));
             if (notesForThisTrack.length > 0) {
@@ -574,13 +458,13 @@ const Guitar = ({ onClose }) => {
                     end: maxEnd,
                     color: trackColor,
                     trackId: currentTrackId || null,
-                    type: 'guitar',
-                    name: `Guitar Recording (${notesForThisTrack.length} notes)`,
+                    type: 'orchestral',  // Changed from 'piano' to 'orchestral'
+                    name: `Orchestral Recording (${notesForThisTrack.length} notes)`,  // Changed name
                     duration: maxEnd - minStart,
                     startTime: minStart,
                     trimStart: 0,
                     trimEnd: maxEnd - minStart,
-                    id: `guitar_recording_${Date.now()}`,
+                    id: `orchestral_recording_${Date.now()}`,  // Changed ID prefix
                     pianoData: notesForThisTrack
                 }));
             }
@@ -591,12 +475,15 @@ const Guitar = ({ onClose }) => {
             ...prevNotes,
             { midiNumber, time: Date.now(), type: 'play' },
         ]);
+
+        // Play the orchestral instrument (same as original piano logic)
         if (pianoRef.current) {
-            const audioNode = pianoRef.current.play(effectiveMidi);
+            const audioNode = pianoRef.current.play(effectiveMidi, 0, { duration: 1 });
             activeAudioNodes.current[midiNumber] = audioNode;
         }
     };
 
+    // 4. Keep the existing stopNote function (it already works)
     const stopNote = (midiNumber) => {
         setRecordedNotes((prevNotes) => [
             ...prevNotes,
@@ -607,6 +494,8 @@ const Guitar = ({ onClose }) => {
             delete activeAudioNodes.current[midiNumber];
         }
     };
+
+
 
     const nextInstrument = () => {
         const newIndex = currentInstrumentIndex === INSTRUMENTS.length - 1 ? 0 : currentInstrumentIndex + 1;
@@ -624,17 +513,20 @@ const Guitar = ({ onClose }) => {
         dispatch(setSelectedInstrument(newInstrument));
     };
 
+    useEffect(() => {
+        if (getIsRecording) return;
+        if (!Array.isArray(existingPianoNotes) || existingPianoNotes.length === 0) return;
 
-    const toggleButton = (section, index) => {
-        setSelectedButtons(prev => ({
-            ...prev,
-            [section]: prev[section] === index ? null : index
-        }));
-    };
+        const needsUpdate = existingPianoNotes.some(
+            (n) => (n.trackId === (currentTrackId || null)) && n.instrumentId !== selectedInstrument
+        );
+        if (!needsUpdate) return;
 
-    const isButtonSelected = (section, index) => {
-        return selectedButtons[section] === index;
-    };
+        const updated = existingPianoNotes.map((n) =>
+            n.trackId === (currentTrackId || null) ? { ...n, instrumentId: selectedInstrument } : n
+        );
+        dispatch(setPianoNotes(updated));
+    }, [selectedInstrument, existingPianoNotes, currentTrackId, getIsRecording, dispatch]);
 
     const [isRecording, setIsRecording] = useState(false);
 
@@ -671,7 +563,6 @@ const Guitar = ({ onClose }) => {
     const hendleStopRecord = () => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
             mediaRecorderRef.current.stop();
-            console.log("Recording stopped");
         } else {
             // console.log("No active recording to stop");
         }
@@ -889,7 +780,7 @@ const Guitar = ({ onClose }) => {
 
         return (
             <div
-                className="relative h-[99%] overscroll-none"
+                className="relative h-[90%] overscroll-none"
                 ref={pianoRef}
                 onWheel={handleLocalWheel}
                 onMouseDown={handleMouseDown}
@@ -903,11 +794,11 @@ const Guitar = ({ onClose }) => {
                 <Piano noteRange={noteRange} playNote={playNote} stopNote={stopNote} keyboardShortcuts={keyboardShortcuts} />
                 {!musicalTypingEnabled && (
                     <style jsx>{`
-                        .ReactPiano__NoteLabel--natural,
-                        .ReactPiano__NoteLabel--accidental {
-                            display: none !important;
-                        }
-                    `}</style>
+            .ReactPiano__NoteLabel--natural,
+            .ReactPiano__NoteLabel--accidental {
+              display: none !important;
+            }
+          `}</style>
                 )}
                 <style jsx>{`
                     .ReactPiano__Keyboard{
@@ -915,11 +806,11 @@ const Guitar = ({ onClose }) => {
                     }
 
                     .ReactPiano__Key--natural:hover {
-                        background-color: #cececf !important;
+                        background-color: #f69e2b !important;
                     }
                     
                     .ReactPiano__Key--natural.highlighted {
-                        border-bottom: 9px solid #36075f !important;
+                        border-bottom: 7px solid #36075f !important;
                     }
 
                     .ReactPiano__Key--accidental.highlighted {
@@ -939,13 +830,13 @@ const Guitar = ({ onClose }) => {
     const [activeChords, setActiveChords] = useState(-1);
     const [pressedKeys, setPressedKeys] = useState(new Set());
     const [chordType, setChordType] = useState("Basic");
-    const [toggle, setToggle] = useState(false);
 
     const [isProcessingDrop, setIsProcessingDrop] = useState(false);
     const [effectsSearchTerm, setEffectsSearchTerm] = useState('');
     const [selectedEffectCategory, setSelectedEffectCategory] = useState(null);
 
-    const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas, showEffectsTwo } = useSelector((state) => state.effects);
+
+    const { activeEffects, effectsLibrary } = useSelector((state) => state.effects);
 
     const getTrackType = useSelector((state) => state.studio.newtrackType);
     // console.log(getTrackType);
@@ -953,17 +844,6 @@ const Guitar = ({ onClose }) => {
     // === REFS FOR TONE.JS OBJECTS ===
     const synths = useRef(null);
     const effects = useRef(null);
-
-    const keyImage = [
-        { image: Am },
-        { image: Bdmi },
-        { image: C },
-        { image: Dm },
-        { image: E },
-        { image: F },
-        { image: G },
-        { image: Am7 }
-    ];
 
     // === COMPLETE CHORD DEFINITIONS ===
     const chordSets = {
@@ -1079,27 +959,11 @@ const Guitar = ({ onClose }) => {
         return keyboardMappings[chordType] || keyboardMappings.Basic;
     };
 
-    const getKeyboardKey = (chordName) => {
-        const currentKeyboardMap = getCurrentKeyboardMap();
-        const keyEntry = Object.entries(currentKeyboardMap).find(([key, chord]) => chord === chordName);
-        return keyEntry ? keyEntry[0].toUpperCase() : '';
-    };
-
     const getCurrentSynthType = () => {
         if (!activePatternKey) return "fullChord";
         const [category, indexStr] = activePatternKey.split("-");
         const pattern = patternCategories[category]?.[parseInt(indexStr, 10)];
         return pattern?.synthType || "fullChord";
-    };
-
-    // === CHORD TYPE CHANGE HANDLER ===
-    const handleChordTypeChange = (newChordType) => {
-        setChordType(newChordType);
-        setActiveChord(null);
-        setActiveChords(-1);
-        setPressedKeys(new Set());
-        setToggle(false);
-        console.log(`🎵 Switched to ${newChordType} chord set`);
     };
 
     // === AUDIO INITIALIZATION ===
@@ -1563,7 +1427,6 @@ const Guitar = ({ onClose }) => {
                     simplePlayerSynth
                 };
 
-                // console.log("✅ Created", Object.keys(synths.current).length, "professional synths");
 
                 Tone.Transport.bpm.value = 120;
 
@@ -1593,7 +1456,6 @@ const Guitar = ({ onClose }) => {
         if (Tone.context.state !== "running") {
             await Tone.start();
             setIsAudioStarted(true);
-            console.log("🔊 Audio context started");
         }
     };
 
@@ -1618,6 +1480,51 @@ const Guitar = ({ onClose }) => {
         setActiveChord(chordName);
 
         stopAllSounds();
+
+        // Helper: append scheduled chord notes to timeline while recording
+        const recordChordToTimeline = (notes, getOffsetForIndex) => {
+            if (!getIsRecording || !Array.isArray(notes) || notes.length === 0) return;
+
+            const baseTime = getRecordingTime();
+            const events = notes.map((note, idx) => {
+                const startTime = baseTime + (typeof getOffsetForIndex === 'function' ? (getOffsetForIndex(idx) || 0) : 0);
+                const midi = Tone.Frequency(note).toMidi();
+                return {
+                    note,
+                    startTime,
+                    duration: 0.25,
+                    midiNumber: Math.max(21, midi),
+                    trackId: currentTrackId || null,
+                    instrumentId: recordingInstrumentRef.current || selectedInstrument,
+                    id: `${note}-${Date.now()}-${Math.random()}`
+                };
+            });
+
+            const updatedAll = [...(pianoNotesRef.current || []), ...events];
+            dispatch(setPianoNotes(updatedAll));
+
+            const notesForThisTrack = (updatedAll || []).filter(n => n.trackId === (currentTrackId || null));
+            if (notesForThisTrack.length > 0) {
+                const minStart = Math.min(...notesForThisTrack.map(n => n.startTime));
+                const maxEnd = Math.max(...notesForThisTrack.map(n => n.startTime + (n.duration || 0.25)));
+                const trackColor = (tracks.find(t => t.id === currentTrackId)?.color);
+                dispatch(setPianoRecordingClip({
+                    start: minStart,
+                    end: maxEnd,
+                    color: trackColor,
+                    trackId: currentTrackId || null,
+                    type: 'orchestral',
+                    name: `Orchestral Recording (${notesForThisTrack.length} notes)`,
+                    duration: maxEnd - minStart,
+                    startTime: minStart,
+                    trimStart: 0,
+                    trimEnd: maxEnd - minStart,
+                    id: `orchestral_recording_${Date.now()}`,
+                    pianoData: notesForThisTrack
+                }));
+            }
+            pianoNotesRef.current = updatedAll;
+        };
 
         const synthType = getCurrentSynthType();
         const currentChordNotes = getCurrentChordNotes();
@@ -1707,83 +1614,107 @@ const Guitar = ({ onClose }) => {
         if (selectedSynth && notes) {
             try {
                 if (synthType === "fullChord") {
+                    recordChordToTimeline(notes);
                     selectedSynth.triggerAttackRelease(notes, "1n", now);
                 } else if (synthType === "onOne") {
+                    recordChordToTimeline(notes);
                     selectedSynth.triggerAttackRelease(notes, "4n", now);
                 } else if (synthType === "onAir") {
+                    recordChordToTimeline(notes);
                     selectedSynth.triggerAttackRelease(notes, "8n", now);
                 } else if (synthType === "eights") {
+                    recordChordToTimeline(notes, (i) => i * 0.125);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "8n", now + i * 0.125);
                     });
                 } else if (synthType === "soulStabs") {
+                    recordChordToTimeline(notes, (i) => i * 0.05);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "4n", now + i * 0.05);
                     });
                 } else if (synthType === "delayedStab") {
+                    recordChordToTimeline(notes, (i) => (i % 2 === 0 ? 0 : 0.5));
                     notes.forEach((note, i) => {
                         const timing = i % 2 === 0 ? 0 : 0.5;
                         selectedSynth.triggerAttackRelease(note, "8n", now + timing);
                     });
                 } else if (synthType === "simpleStabs") {
+                    recordChordToTimeline(notes);
                     selectedSynth.triggerAttackRelease(notes, "8n", now);
                 } else if (synthType === "latinesque") {
+                    const pattern = [0, 0.25, 0.75, 1.0];
+                    recordChordToTimeline(notes, (i) => pattern[i % 4]);
                     notes.forEach((note, i) => {
                         const timing = [0, 0.25, 0.75, 1.0][i % 4];
                         selectedSynth.triggerAttackRelease(note, "16n", now + timing);
                     });
                 } else if (synthType === "layeredStab") {
+                    recordChordToTimeline(notes, (i) => i * 0.02);
                     notes.forEach((note, i) => {
                         const offset = i * 0.02;
                         selectedSynth.triggerAttackRelease(note, "1n", now + offset);
                     });
                 } else if (synthType === "moderateStabs") {
+                    recordChordToTimeline(notes);
                     selectedSynth.triggerAttackRelease(notes, "4n", now);
                 } else if (synthType === "layout") {
+                    recordChordToTimeline(notes, (i) => i * 0.2);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "4n", now + i * 0.2);
                     });
                 } else if (synthType === "storytime") {
+                    recordChordToTimeline(notes, (i) => i * 0.15);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "4n", now + i * 0.15);
                     });
                 } else if (synthType === "risingArp") {
+                    recordChordToTimeline(notes, (i) => i * 0.1);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "8n", now + i * 0.1);
                     });
                 } else if (synthType === "dreamer") {
+                    recordChordToTimeline(notes, (i) => i * 0.15);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "2n", now + i * 0.15);
                     });
                 } else if (synthType === "movingArp") {
+                    recordChordToTimeline(notes, (i) => i * 0.06);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "16n", now + i * 0.06);
                     });
                 } else if (synthType === "quickArp") {
+                    recordChordToTimeline(notes, (i) => i * 0.04);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "32n", now + i * 0.04);
                     });
                 } else if (synthType === "simpleStride") {
+                    recordChordToTimeline(notes, (i) => (i % 2 === 0 ? 0 : 0.25));
                     notes.forEach((note, i) => {
                         const timing = i % 2 === 0 ? 0 : 0.25;
                         selectedSynth.triggerAttackRelease(note, "8n", now + timing);
                     });
                 } else if (synthType === "simpleRain") {
+                    // Use deterministic offsets for recording to keep timeline stable
+                    recordChordToTimeline(notes, (i) => i * 0.08 + 0.02);
                     notes.forEach((note, i) => {
                         const delay = i * 0.08 + (Math.random() * 0.03);
                         selectedSynth.triggerAttackRelease(note, "8n", now + delay);
                     });
                 } else if (synthType === "simpleSlide") {
+                    recordChordToTimeline(notes, (i) => i * 0.06);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "4n", now + i * 0.06);
                     });
                 } else if (synthType === "simplePlayer") {
+                    recordChordToTimeline(notes);
                     selectedSynth.triggerAttackRelease(notes, "1n", now);
                 } else if (synthType === "alternatingStride") {
+                    recordChordToTimeline(notes, (i) => i * 0.12);
                     notes.forEach((note, i) => {
                         selectedSynth.triggerAttackRelease(note, "4n", now + i * 0.12);
                     });
                 } else {
+                    recordChordToTimeline(notes);
                     selectedSynth.triggerAttackRelease(notes, "2n", now);
                 }
 
@@ -1802,17 +1733,6 @@ const Guitar = ({ onClose }) => {
                 synths.current.acousticPiano.triggerAttackRelease(notes || ["C4", "E4", "G4"], "2n", now);
             }
         }
-    };
-
-    const getPatternDisplayName = () => {
-        if (!activePatternKey) return null;
-        const [category, indexStr] = activePatternKey.split("-");
-        return patternCategories[category]?.[parseInt(indexStr, 10)]?.name || null;
-    };
-
-    const handlePatternSelect = (key) => {
-        setActivePatternKey((prev) => (prev === key ? null : key));
-        setActiveChord(null);
     };
 
     useEffect(() => {
@@ -1877,34 +1797,6 @@ const Guitar = ({ onClose }) => {
         };
     }, [isAudioReady, pressedKeys, chordType]);
 
-    const testAllSynths = async () => {
-        if (!isAudioReady) return;
-        await startAudioContext();
-
-        console.log("🧪 Testing all professional synths...");
-        const testNotes = ["C4", "E4", "G4"];
-
-        Object.entries(synths.current).forEach(([name, synth], index) => {
-            setTimeout(() => {
-                try {
-                    if (synth && synth.triggerAttackRelease) {
-                        if (name === "bassSynth") {
-                            synth.triggerAttackRelease("C3", "4n", Tone.now());
-                        } else {
-                            synth.triggerAttackRelease(testNotes, "4n", Tone.now());
-                        }
-                        console.log(`✅ ${name} - Professional sound working`);
-                    } else {
-                        console.log(`❌ ${name} - Not available`);
-                    }
-                } catch (e) {
-                    console.log(`❌ ${name} - Error:`, e);
-                }
-            }, index * 800);
-        });
-    };
-
-
 
     const handleAddEffectFromLibrary = (effect) => {
         console.log('handleAddEffectFromLibrary called with:', effect);
@@ -1933,35 +1825,27 @@ const Guitar = ({ onClose }) => {
         <>
             {showOffcanvas1 === true && (
                 <>
-        <div className="fixed z-[10] w-full h-full transition-transform left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px] lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[516px]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
-                <div className="border-b border-gray-300 dark:border-[#FFFFFF1A] h-full">
-                <div className="bg-white dark:bg-[#1F1F1F] flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
+                    <div className="fixed z-[10] w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px]  lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[516px]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
+                        <div className="  border-b border-[#FFFFFF1A] h-full">
+                            <div className=" bg-[#1F1F1F] flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                                 <div>
-                                <IoClose className="text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-gray-600 dark:text-[#FFFFFF99] cursor-pointer" onClick={() => {
+                                    <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => {
                                         setShowOffcanvas1(false);
                                         onClose && onClose();
                                     }} />
                                 </div>
                             </div>
-                            <div className="bg-white dark:bg-[#1F1F1F] flex space-x-2 sm:space-x-3 px-1 md600:space-x-4 md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center lg:px-3">
-                                {['Instruments', 'Chords', 'Piano Roll', 'Effects']
+                            <div className="bg-[#1F1F1F] flex space-x-2 sm:space-x-3 px-1 md600:space-x-4 md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3">
+                                {['Instruments', 'Piano Roll', 'Effects']
                                     .filter(tab => {
-                                        // Hide "Chords" if getTrackType is "bass" or "808"
-                                        if (
-                                            tab === 'Chords' &&
-                                            (getTrackType === 'Bass & 808' || getTrackType === 'bass' || getTrackType === '808')
-                                        ) {
+                                        if (getTrackType === 'Bass & 808' || getTrackType === 'bass' || getTrackType === '808') {
                                             return false;
                                         }
                                         return true;
                                     })
                                     .map((tab) => (
                                         <button key={tab} onClick={() => setActiveTab(tab)}
-                                        className={`text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${
-                                            activeTab === tab
-                                            ? "text-black dark:text-white border-b-2 border-black dark:border-white"
-                                            : "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white"
-                                            }`}>
+                                            className={`text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white ' : 'text-gray-400 hover:text-white'}`}>
                                             {tab}
                                         </button>
                                     ))}
@@ -1970,116 +1854,90 @@ const Guitar = ({ onClose }) => {
                             <div className=''>
                                 {activeTab === 'Instruments' && (
                                     <>
-                                        <div className="bg-white dark:bg-[#1F1F1F] flex items-center justify-center pt-1 pb-1 px-2 md600:px-2 md600:pt-2 md600:pb-1 sm:gap-6 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
-                                            <div className="bg-gray-200 dark:bg-[#353535] p-1 md600:p-2 lg:p-3 rounded-lg">
+                                        <div className="bg-[#1F1F1F] flex items-center justify-center pt-1 pb-1 px-2 md600:px-2 md600:pt-2 md600:pb-1 sm:gap-6 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
+                                            <div className="bg-[#353535] p-1 md600:p-2 lg:p-3 rounded-lg">
                                                 <div className="flex items-center justify-between">
-                                                    <button onClick={prevInstrument} className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors p-1 md600:p-2">
-                                                        <FaChevronLeft className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]"  />
+                                                    <button onClick={prevInstrument} className="text-gray-400 hover:text-white transition-colors p-1 md600:p-2">
+                                                        <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px]' />
                                                     </button>
 
-                                                    <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-center 2xl:px-4 2xl:w-[260px]">
-                                                        <div className="text-black dark:text-white">
-                                                        <LuGuitar className="text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[20px]" />
+                                                    <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-start 2xl:px-4 2xl:w-[250px]">
+                                                        <div className="text-white">
+                                                            <b>808</b>
                                                         </div>
                                                         <div className="">
-                                                            <div className="text-black dark:text-white font-bold text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[16px]">
+                                                            <div className="text-white fw-bolder text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[16px]">
                                                                 {INSTRUMENTS[currentInstrumentIndex].name}
                                                             </div>
-                                                            <div className="text-gray-600 dark:text-gray-400 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px]">
+                                                            <div className="text-gray-400 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px]">
                                                                 {INSTRUMENTS[currentInstrumentIndex].category}
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    <button onClick={nextInstrument} className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors p-1 lg:p-2">
-                                                        <FaChevronRight className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
+                                                    <button onClick={nextInstrument} className="text-gray-400 hover:text-white transition-colors p-1 lg:p-2">
+                                                        <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] text-[#FFFFFF99]' />
                                                     </button>
                                                 </div>
                                             </div>
 
                                             <div className="flex space-x-1 md600:space-x-2 lg:space-x-4 2xl:space-x-6">
-                                                <div className="flex flex-col items-center">
-                                                    <Knob label="Reverb" min={-135} max={135} defaultAngle={reverb} onChange={(value) => setReverb(value)} />
+                                                <div className="flex items-center bg-[#353535] px-[25px] py-[10px] rounded-[7px]">
+                                                    <img src={svg808} alt="808 svg icon" />                                           
                                                 </div>
 
-                                                <div className="flex flex-col items-center">
-                                                    <Knob label="Pan" min={-135} max={135} defaultAngle={pan} onChange={(value) => setPan(value)} />
+                                                <div className="flex flex-col items-center bg-[#353535] px-[25px] py-[10px] rounded-[7px]">
+                                                    <Knob label="Glide" min={-135} max={135} defaultAngle={glide} onChange={(value) => setGlide(value)} />
                                                 </div>
 
-                                                <div className="flex flex-col items-center">
+                                                <div className="flex flex-col items-center bg-[#353535] px-[25px] py-[10px] rounded-[7px]">
+                                                    <Knob label="Saturation" min={-135} max={135} defaultAngle={saturation} onChange={(value) => setSaturation(value)} />
+                                                </div>
+
+                                                <div className="flex flex-row items-center gap-10 bg-[#353535] px-[25px] py-[10px] rounded-[7px]">
+                                                    <Knob label="Attack" min={-135} max={135} defaultAngle={attack} onChange={(value) => setAttack(value)} />
+                                                    {/* </div> */}
+
+                                                    {/* <div className="flex flex-col items-center bg-[#353535] px-[25px] py-[10px] rounded-[7px]"> */}
+                                                    <Knob label="Release" min={-135} max={135} defaultAngle={release} onChange={(value) => setRelease(value)} />
+                                                </div>
+
+                                                <div className="flex flex-col items-center bg-[#353535] px-[25px] py-[10px] rounded-[7px]">
                                                     <Knob label="Volume" min={-135} max={135} defaultAngle={volume} onChange={(value) => setVolume(value)} />
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="w-full h-[400px] md:h-[500px] lg:h-[250px]">
-                                            <div className="bg-primary-light dark:bg-[#1F1F1F] flex gap-1 md600:gap-2 md:gap-3 pb-1 lg:gap-4 lg:pb-2 2xl:gap-5 items-center justify-between 2xl:pb-3">
-                                                <div className="flex gap-1 sm:gap-2 md600:gap-3 lg:gap-4 2xl:gap-5 items-center ms-1 md600:ms-2 lg:ms-3">
-                                                <div className="border rounded-3xl border-secondary-light/10 dark:border-secondary-dark/10">
-                                                    <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[8px] md600:text-[10px] lg:text-[12px] px-1 sm:px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Sustain</p>
-                                                </div>
+                                            <div className="bg-[#1F1F1F] flex gap-1 md600:gap-2 md:gap-3 pb-1  lg:gap-4 lg:pb-2 2xl:gap-5 items-center justify-between 2xl:pb-3">
+                                                <div className='flex gap-1 sm:gap-2 md600:gap-3 lg:gap-4  2xl:gap-5 items-center ms-1 md600:ms-2 lg:ms-3'>
+                                                    <div className='border rounded-3xl border-[#FFFFFF1A]'>
+                                                        <p className="text-[#FFFFFF99] text-[8px] md600:text-[10px] lg:text-[12px] px-1 sm:px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Sustain</p>
+                                                    </div>
                                                     <div className="flex items-center justify-between ">
                                                         <button onClick={() => setActivePianoSection(prev => Math.max(prev - 1, 0))} disabled={activePianoSection === 0}
-                                                            className={`transition-colors p-1 lg:p-2 ${
-                                                                activePianoSection === 0
-                                                                ? "text-gray-400 cursor-not-allowed"
-                                                                : "text-secondary-light dark:text-secondary-dark hover:text-secondary-dark dark:hover:text-secondary-light"
-                                                            }`}
+                                                            className={`transition-colors p-1 lg:p-2 ${activePianoSection === 0 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white'}`}
                                                         >
                                                             <FaChevronLeft className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                                                         </button>
 
                                                         <div className="px-1 md600:px-2 lg:px-3 2xl:px-4 w-[50px] md600:w-[60px] lg:w-[80px] 2xl:w-[100px]">
-                                                        <div className="text-secondary-light dark:text-secondary-dark text-center fw-bolder text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Octaves</div>
+                                                            <div className="text-[#ed791c] text-center fw-bolder text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Octaves</div>
                                                         </div>
 
                                                         <button onClick={() => setActivePianoSection(prev => Math.min(prev + 1, 2))} disabled={activePianoSection === 2}
-                                                            className={`transition-colors p-1 lg:p-2 ${
-                                                                activePianoSection === 2
-                                                                ? "text-gray-400 cursor-not-allowed"
-                                                                : "text-secondary-light dark:text-secondary-dark hover:text-secondary-dark dark:hover:text-secondary-light"
-                                                            }`}
+                                                            className={`transition-colors p-1 lg:p-2 ${activePianoSection === 2 ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white'}`}
                                                         >
                                                             <FaChevronRight className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                                                         </button>
                                                     </div>
-                                                    <div className="border rounded-lg border-secondary-light/10 dark:border-secondary-dark/10 ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer" onClick={() => setAutoChords(true)}>
-                                                        <p className="text-secondary-light dark:text-secondary-dark text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Auto Chord</p>
-                                                    </div>
                                                 </div>
-                                                <div onClick={() => setPricingModalOpen(true)} className="border rounded-lg border-secondary-light/10 dark:border-secondary-dark/10 ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer">
-                                                    <p className="text-secondary-light dark:text-secondary-dark text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
+                                                <div onClick={() => setPricingModalOpen(true)} className='border rounded-lg border-[#FFFFFF1A] ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer'>
+                                                    <p className="text-[#FFFFFF] text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
                                                 </div>
                                             </div>
 
-                                            <div className="flex gap-1 md600:gap-2 lg:gap-3 bg-primary-light dark:bg-primary-dark">
-                                                {autoChords === true &&
-                                                    <div className="w-[30%] sm:w-[40%] md600:w-[25%] md:w-[30%] lg:w-[20%] xl:w-[18%] bg-primary-light dark:bg-primary-dark md600:ms-2 md600:mt-2 lg:ms-3 lg:mt-3 mb-1">
-                                                        <div className="w-full bg-primary-light dark:bg-[#1F1F1F] p-1 md600:p-2 lg:p-3">
-                                                            <div className="flex justify-between items-center mb-2">
-                                                                <div className="flex gap-1 items-center">
-                                                                    <img src={subscription} alt="subscription" className="w-4 h-4" />
-                                                                    <p className="text-white text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Auto Chord</p>
-                                                                </div>
-                                                                <IoClose className="text-[8px] sm:text-[10px] md600:text-[12px] md:text-[16px] lg:text-[20px] 2xl:text-[24px] text-secondary-light/60 dark:text-secondary-dark/60 cursor-pointer" onClick={() => setAutoChords(false)} />
-                                                            </div>
-                                                            <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[8px] md:text-[10px] lg:text-[12px] 2xl:text-[14px] truncate mb-3">Play full chords with a single key</p>
-                                                            <div className="flex gap-1 items-center">
-                                                                <img src={subscription} alt="subscription" className="w-4 h-4" />
-                                                                <p className="text-white text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Shape</p>
-                                                            </div>
-                                                            <div className="flex justify-between gap-1 lg:gap-2 md600:pt-2 lg:pt-4 2xl:gap-2 2xl:pt-2">
-                                                                <button onClick={() => setPricingModalOpen(true)} className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">Triad</button>
-                                                                <button onClick={() => setPricingModalOpen(true)} className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">7th</button>
-                                                                <button onClick={() => setPricingModalOpen(true)} className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">Add9</button>
-                                                            </div>
-                                                            {/* Range Slider - Added here after the chord buttons */}
-                                                            <div className="pt-1 md600:pt-2 lg:pt-4">
-                                                                <RangeSlider min={0} max={10} step={0.1} initialValue={0} label="Strum" unit="s" onChange={setStrumValue} />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                }
+                                            <div className="flex gap-1 md600:gap-2 lg:gap-3 bg-[#141414]">
                                                 <div ref={pianoSectionsRef} className="w-full h-[105px] sm:h-[150px] md600:h-[140px] md:h-[290px] lg:h-[250px] overflow-x-hidden overscroll-none">
                                                     <div className="w-full h-full">
                                                         <div className="flex transition-transform duration-300 ease-in-out h-full" style={{ transform: `translateX(-${activePianoSection * 100}%)` }}>
@@ -2096,158 +1954,12 @@ const Guitar = ({ onClose }) => {
                                     </>
                                 )}
 
-                                {getTrackType !== "Bass & 808" && activeTab === 'Chords' && (
-                                    <>
-                                        <div className="bg-primary-light dark:bg-primary-dark max-h-[180px] sm:max-h-[235px] md600:max-h-[235px] md:max-h-[410px] overflow-auto xl:overflow-hidden">
-                                            <div className="w-full flex items-center justify-center">
-                                                <div className="bg-secondary-light/10 dark:bg-secondary-dark/10 items-center mt-1 px-1 py-1 md:mt-2 md:px-2 md:py-2 lg:px-3 rounded-lg">
-
-                                                    {/* === CHORD TYPE SELECTOR === */}
-                                                    <div className="relative flex gap-1 px-1 md:gap-2 md:px-2 lg:gap-3 items-center lg:px-3 cursor-pointer" onClick={() => setToggle(!toggle)}>
-                                                    <GiPianoKeys className="text-[10px] md600:text-[12px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-secondary-light dark:text-secondary-dark" />
-                                                    <p className="text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]">{chordType}</p>
-                                                    <HiMiniChevronUpDown className="text-secondary-light/60 dark:text-secondary-dark/60 text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]" />
-
-                                                        {toggle && (
-                                                            <div className="absolute top-[25px] w-[170px] bg-primary-light dark:bg-primary-dark rounded-[5px] z-50">
-                                                                <div>
-                                                                <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[14px] px-3 pt-3">Chord set:</p>
-
-                                                                    {/* Basic Chords */}
-                                                                    <div className="flex mt-3 items-center hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10 py-1 cursor-pointer" onClick={() => handleChordTypeChange("Basic")}>
-                                                                        {chordType === "Basic" ? (
-                                                                            <div className="text-[15px] ms-3">✓</div>
-                                                                        ) : (
-                                                                            <div className="text-[15px] ms-3 invisible">✓</div>
-                                                                        )}
-                                                                        <div className="ms-3 text-[15px] text-secondary-light dark:text-secondary-dark">Basic</div>
-                                                                    </div>
-
-                                                                    {/* EDM Chords */}
-                                                                    <div className="flex mt-1 items-center hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10 py-1 cursor-pointer" onClick={() => handleChordTypeChange("EDM")}>
-                                                                        {chordType === "EDM" ? (
-                                                                            <div className="text-[15px] ms-3">✓</div>
-                                                                        ) : (
-                                                                            <div className="text-[15px] ms-3 invisible">✓</div>
-                                                                        )}
-                                                                        <div className="ms-3 text-[15px] text-secondary-light dark:text-secondary-dark">EDM</div>
-                                                                    </div>
-
-                                                                    {/* Hip Hop Chords */}
-                                                                    <div className="flex mt-1 items-center hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10 py-1 cursor-pointer pb-3" onClick={() => handleChordTypeChange("Hip Hop")}>
-                                                                        {chordType === "Hip Hop" ? (
-                                                                            <div className="text-[15px] ms-3">✓</div>
-                                                                        ) : (
-                                                                            <div className="text-[15px] ms-3 invisible">✓</div>
-                                                                        )}
-                                                                        <div className="ms-3 text-[15px] text-secondary-light dark:text-secondary-dark">Hip Hop</div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    {/* === CHORD BUTTONS === */}
-                                                    <div className="grid grid-cols-3 gap-1 md600:gap-1 mx-1 mt-1 md:grid-cols-4 md:gap-3 md:mx-2 md:mt-2 lg:gap-4 lg:mx-3 lg:mt-3">
-                                                        {Object.keys(getCurrentChordNotes()).map((name, index) => {
-                                                            const keyboardKey = getKeyboardKey(name);
-                                                            const isPressed = pressedKeys.has(keyboardKey.toLowerCase()) || pressedKeys.has(keyboardKey);
-                                                            return (
-                                                                <div
-                                                                    key={name}
-                                                                    onClick={() => { handleChordClick(name); setActiveChords(index) }}
-                                                                    disabled={!isAudioReady}
-                                                                    className={`cursor-pointer text-secondary-light dark:text-secondary-dark w-[90px] md600:w-[110px] p-1 md600:px-2 md600:py-2 md:w-[120px] lg:w-[130px] rounded-md border ${
-                                                                        activeChords === index
-                                                                          ? "border-secondary-light dark:border-secondary-dark"
-                                                                          : "border-secondary-light/20 dark:border-secondary-dark/20"
-                                                                      } ${
-                                                                        isPressed
-                                                                          ? "bg-secondary-light/20 dark:bg-secondary-dark/20"
-                                                                          : "bg-primary-light dark:bg-primary-dark hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10"
-                                                                      } transition-colors`}
-                                                                >
-                                                                    <p className="text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px] text-center mb-1 font-medium">
-                                                                        {name}
-                                                                    </p>
-                                                                    <div className="flex justify-between items-center">
-                                                                        <img src={keyImage[index]?.image} alt="" className="w-2 h-2 md600:w-3 md600:h-3 lg:w-4 lg:h-4" />
-                                                                        <FaPlus onClick={() => setPricingModalOpen(true)} className="text-[10px] md600:text-[12px] lg:text-[16px] text-secondary-light/60 dark:text-secondary-dark/60" />
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* === PLAYING SOUNDS SECTION === */}
-                                            <div className="max-w-full md600:w-full flex items-center md600:justify-center my-3 lg:my-0 overflow-auto">
-                                                <div className="bg-secondary-light/10 dark:bg-secondary-dark/10 items-center mt-1 px-1 md:mt-2 md:px-2 py-1 lg:px-3 lg:py-2 rounded-lg">
-                                                    <div className="flex gap-1 px-1 md:gap-2 md:px-2 lg:gap-3 items-center lg:px-3">
-                                                        <img src={music} alt="" className="w-2 h-2 md600:w-3 md600:h-3 lg:w-4 lg:h-4" />
-                                                        <p className="text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]">Playing Sounds</p>
-                                                    </div>
-
-                                                    <div className="flex">
-                                                        {Object.entries(patternCategories).map(([category, patterns], categoryIndex) => {
-                                                            const isWideCategory = categoryIndex === 1 || categoryIndex === 2;
-                                                            const containerClasses = isWideCategory
-                                                            ? "bg-primary-light dark:bg-primary-dark mx-1 mt-1 p-1 w-[315px] h-[120px] md600:w-[170px] md600:h-[155px] md:mx-2 lg:mx-3 md:mt-2 md:p-2 md:w-[200px] md:h-[180px] lg:w-[340px] lg:h-[150px]"
-                                                            : "bg-primary-light dark:bg-primary-dark ms-1 mt-1 p-1 w-[110px] h-[120px] md600:w-[100px] md600:h-[155px] md:ms-2 md:mt-2 md:p-2 md:w-[110px] md:h-[180px] lg:ms-3 lg:w-[116px] lg:h-[150px]";
-
-                                                            return (
-                                                                <div key={category} className={containerClasses}>
-                                                                    <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[10px] md600:text-[12px] md:text-[14px] capitalize">
-                                                                        {category}
-                                                                    </p>
-                                                                    <div className={ isWideCategory ? "grid grid-cols-3 pt-1 md600:grid-cols-2 md:gap-1 lg:grid-cols-3 lg:gap-0 md:pt-1" : "" }>
-                                                                        {patterns.map((item, patternIndex) => {
-                                                                            const key = `${category}-${patternIndex}`;
-                                                                            const isSelected = activePatternKey === key;
-                                                                            return (
-                                                                                <div key={patternIndex}>
-                                                                                    <button
-                                                                                        onClick={() => handlePatternSelect(key)}
-                                                                                        disabled={!isAudioReady}
-                                                                                        className={`border justify-center w-[100px] mt-1 h-[25px] lg:w-[100px] lg:h-[30px] md:mt-2 text-[8px] md600:text-[10px] rounded-md transition-colors ${
-                                                                                            isSelected
-                                                                                              ? "bg-secondary-dark text-primary-dark dark:bg-secondary-light dark:text-primary-light"
-                                                                                              : "bg-transparent text-secondary-light dark:text-secondary-dark hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10 border-secondary-light/10 dark:border-secondary-dark/10"
-                                                                                          }`}
-                                                                                    >
-                                                                                        {item.name}
-                                                                                    </button>
-                                                                                </div>
-                                                                            );
-                                                                        })}
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* === STATUS AND TEST BUTTONS === */}
-                                            <div className="text-center py-2">
-                                                <div className="text-[#FFFFFF99] text-[10px] mb-2">
-                                                    Status: {loadingStatus} | Active: {chordType} | Pattern: {getPatternDisplayName() || "None"}
-                                                </div>
-                                                <button onClick={testAllSynths} disabled={!isAudioReady} className="bg-[#FFFFFF1A] text-white px-3 py-1 rounded text-[10px] hover:bg-[#FFFFFF33] transition-colors">Test All Synths</button>
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-
                                 {activeTab === 'Piano Roll' && (
                                     <PianoRolls />
                                 )}
 
                                 {activeTab === 'Effects' && (
-                                    <div className={`w-full overflow-x-auto transition-all duration-200 ${
-                                        isDragOver ? "bg-[#409C9F] bg-opacity-10" : ""
-                                        }`}
+                                    <div className={`w-full overflow-x-auto transition-all duration-200 ${isDragOver ? 'bg-[#409C9F] bg-opacity-10' : ''}`}
                                         onDragOver={(e) => {
                                             e.preventDefault();
                                             e.dataTransfer.dropEffect = 'copy';
@@ -2274,10 +1986,10 @@ const Guitar = ({ onClose }) => {
                                             }
                                         }}
                                     >
-                                        <div className="flex items-center justify-center p-2 sm:p-4 min-w-max bg-white dark:bg-[#1f1f1f]">
+                                        <div className="flex items-center justify-center p-2 sm:p-4 min-w-max bg-[#1f1f1f]">
                                             <div className="flex gap-2 sm:gap-4 min-w-max">
                                                 {activeEffects.map((effect) => (
-                                                    <div key={effect.instanceId} className="w-[150px] h-[180px] sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-gray-200 dark:bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-black dark:text-white flex flex-col shrink-0">
+                                                    <div key={effect.instanceId} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-white flex flex-col shrink-0">
                                                         <div className="flex-1 w-full flex items-center justify-center">
                                                             {effect.component ? (
                                                                 <div className="w-full h-full flex items-center justify-center">
@@ -2285,14 +1997,14 @@ const Guitar = ({ onClose }) => {
                                                                 </div>
                                                             ) : (
                                                                 <div className="flex items-center justify-center h-full">
-                                                                    <p className="text-gray-500 dark:text-gray-400 text-sm">No component available</p>
+                                                                    <p className="text-gray-400 text-sm">No component available</p>
                                                                 </div>
                                                             )}
                                                         </div>
                                                     </div>
                                                 ))}
                                                 {activeEffects.length < effectsLibrary?.length && (
-                                                    <div className="w-[150px] h-[180px] sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-gray-100 dark:bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-black dark:text-white cursor-pointer hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors shrink-0 border-2 border-dashed border-gray-400 dark:border-gray-600"
+                                                    <div className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-white cursor-pointer hover:bg-[#2a2a2a] transition-colors shrink-0 border-2 border-dashed border-gray-600"
                                                         onClick={handlePlusButtonClick}
                                                         onDragOver={(e) => {
                                                             e.preventDefault();
@@ -2317,50 +2029,19 @@ const Guitar = ({ onClose }) => {
                                                             }
                                                         }}
                                                     >
-                                                        <div className="w-14 h-14 bg-black dark:bg-white text-white dark:text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
+                                                        <div className="w-14 h-14 bg-white text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
                                                         <p className="text-center text-sm leading-snug">Drop effects here or<br />select from library</p>
                                                     </div>
                                                 )}
                                                 {Array.from({ length: 4 - activeEffects.length - 1 }, (_, index) => (
-                                                    <div key={index} className="
-                                                    w-[150px] h-[180px] sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px]
-                                                    md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 
-                                                    2xl:w-[256px] 2xl:h-[364px]
-                                                    rounded-xl shrink-0 border-2 border-dashed
-                                                    bg-primary-light dark:bg-primary-dark 
-                                                    border-gray-300 dark:border-gray-600
-                                                    transition-colors
-                                                  "
-                                                  onDragOver={(e) => {
-                                                    e.preventDefault();
-                                                    e.dataTransfer.dropEffect = "copy";
-                                                    e.currentTarget.style.borderColor = "#409C9F";
-                                                    e.currentTarget.style.backgroundColor =
-                                                      document.documentElement.classList.contains("dark")
-                                                        ? "#2a2a2a"
-                                                        : "#f3f4f6"; // light gray for light mode
-                                                  }}
-                                                  onDragLeave={(e) => {
-                                                    e.currentTarget.style.borderColor =
-                                                      document.documentElement.classList.contains("dark")
-                                                        ? "#4B5563"
-                                                        : "#D1D5DB"; // gray-300 for light
-                                                    e.currentTarget.style.backgroundColor =
-                                                      document.documentElement.classList.contains("dark")
-                                                        ? "#1a1a1a"
-                                                        : "#ffffff";
-                                                  }}
-                                                  onDrop={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    e.currentTarget.style.borderColor =
-                                                      document.documentElement.classList.contains("dark")
-                                                        ? "#4B5563"
-                                                        : "#D1D5DB";
-                                                    e.currentTarget.style.backgroundColor =
-                                                      document.documentElement.classList.contains("dark")
-                                                        ? "#1a1a1a"
-                                                        : "#ffffff";
+                                                    <div key={index} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl shrink-0 border-2 border-dashed border-gray-600"
+                                                        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; e.currentTarget.style.borderColor = '#409C9F'; e.currentTarget.style.backgroundColor = '#2a2a2a'; }}
+                                                        onDragLeave={(e) => { e.currentTarget.style.borderColor = '#4B5563'; e.currentTarget.style.backgroundColor = '#1a1a1a'; }}
+                                                        onDrop={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            e.currentTarget.style.borderColor = '#4B5563';
+                                                            e.currentTarget.style.backgroundColor = '#1a1a1a';
                                                             try {
                                                                 const effectData = JSON.parse(e.dataTransfer.getData('application/json'));
                                                                 handleAddEffectFromLibrary(effectData);
@@ -2377,8 +2058,6 @@ const Guitar = ({ onClose }) => {
                             </div>
                         </div>
                     </div>
-                     {/* Pricing Modal */}
-                    <PricingModel pricingModalOpen={pricingModalOpen} setPricingModalOpen={setPricingModalOpen} />
                 </>
             )}
 
@@ -2391,4 +2070,4 @@ const Guitar = ({ onClose }) => {
     )
 }
 
-export default Guitar
+export default BassAnd808

@@ -1,18 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Play, Pause, Square } from 'lucide-react';
+import { Mic } from 'lucide-react';
 import { IoClose } from 'react-icons/io5';
 import { useDispatch, useSelector } from 'react-redux';
 import { setRecordingAudio, addAudioClipToTrack, updateAudioClip } from '../Redux/Slice/studio.slice';
 import AccessPopup from './AccessPopup';
 import { selectStudioState } from '../Redux/rootReducer';
 import { BASE_URL } from '../Utils/baseUrl';
-import { IoVolumeHighOutline } from "react-icons/io5";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import subscription from "../Images/subscriptionIcon.svg";
 import { LuHeadphoneOff } from "react-icons/lu";
 import { PiWaveformBold } from "react-icons/pi";
 import PricingModel from './PricingModel';
 import { LiaWaveSquareSolid } from "react-icons/lia";
+import { FaChevronDown } from "react-icons/fa";
 
 
 function polarToCartesian(cx, cy, r, angle) {
@@ -136,7 +136,6 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
     const dispatch = useDispatch();
     const [showOffcanvas1, setShowOffcanvas1] = useState(true);
     const [isRecording, setIsRecording] = useState(false);
-    const [isPlaying, setIsPlaying] = useState(false);
     const [audioLevel, setAudioLevel] = useState(0);
     const [recordingTime, setRecordingTime] = useState(0);
     const [selectedInput, setSelectedInput] = useState('No Input selected');
@@ -162,8 +161,6 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
     const [isRealtimeEnabled, setIsRealtimeEnabled] = useState(true);
     const [vocalTunerAmount, setVocalTunerAmount] = useState(70);
     const [selectedKey, setSelectedKey] = useState('D');
-
-    const keyOptions = ['DbM', 'DM', 'EbM', 'EM', 'FM', 'F#M', 'GM', 'AbM', 'AM', 'BbM', 'BM', 'CM'];
 
     // Initialize audio context and get microphone access
     const initializeAudio = async () => {
@@ -390,6 +387,22 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [getIsRecording, getTrackType]);
 
+    const [isOpen, setIsOpen] = useState(false);
+
+    const audioInputs = [
+        'No input selected',
+        'External Microphone Synpath...',
+        'Built-in Microphone',
+        'USB Audio Device',
+        'Bluetooth Headset'
+    ];
+
+    const handleSelectInput = (input) => {
+        setSelectedInput(input);
+        setIsOpen(false);
+        setPricingModalOpen(true);
+    };
+
     return (
         <>
             {showOffcanvas1 === true && (
@@ -425,124 +438,80 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                             <div className="h-full">
                                 {activeTab === 'Audio' && (
                                     <>
-                                        {/* <div>
-                                            <div className=" bg-[#1F1F1F] flex items-center justify-center pt-1 pb-1 px-2 md600:px-2 md600:pt-2 md600:pb-1 sm:gap-6 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
-                                                <div className="flex space-x-1 md600:space-x-2 lg:space-x-4 2xl:space-x-10">
-                                                    <div className="flex flex-col items-center">
-                                                        <Knob label="Reverb" min={-135} max={135} defaultAngle={reverb} onChange={(value) => setReverb(value)} />
-                                                    </div>
-
-                                                    <div className="flex flex-col items-center">
-                                                        <Knob label="Pan" min={-135} max={135} defaultAngle={pan} onChange={(value) => setPan(value)} />
-                                                    </div>
-
-                                                    <div className="flex flex-col items-center">
-                                                        <Knob label="Volume" min={-135} max={135} defaultAngle={volume} onChange={(value) => setVolume(value)} />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div> */}
-
-                                        {/* Header */}
-                                        {/* <div className="bg-gray-800 rounded-lg p-4 mb-4 h-full">
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center space-x-4">
-                                                    <div className="flex items-center space-x-2">
-                                                        <Mic className="text-purple-400" size={24} />
-                                                        <span className="text-xl font-semibold">Recording Studio</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center space-x-4">
-                                                    <AudioLevelBars />
-                                                    <span className="text-sm text-gray-400">{formatTime(recordingTime)}</span>
-                                                </div>
-                                            </div>
-
-                                            
-                                            <div className="flex items-center space-x-4 mb-4">
-                                                <select
-                                                    className="bg-gray-700 px-3 py-2 rounded text-sm"
-                                                    value={selectedInput}
-                                                    onChange={(e) => setSelectedInput(e.target.value)}
-                                                >
-                                                    <option>No Input selected</option>
-                                                    <option>Default Microphone</option>
-                                                    <option>External Microphone</option>
-                                                </select>
-
-                                                <button className="bg-purple-600 px-4 py-2 rounded text-sm hover:bg-purple-700 transition-colors">
-                                                    Calibrate
-                                                </button>
-
-                                                <span className="text-sm text-gray-400">Monitoring:</span>
-                                            </div>
-
-                                            
-                                            <div className="flex items-center space-x-2">
-                                                <button
-                                                    onClick={isRecording ? stopRecording : startRecording}
-                                                    className={`p-3 rounded-full transition-colors ${isRecording
-                                                        ? 'bg-red-600 hover:bg-red-700'
-                                                        : 'bg-purple-600 hover:bg-purple-700'
-                                                        }`}
-                                                >
-                                                    {isRecording ? <Square size={20} /> : <Mic size={20} />}
-                                                </button>
-
-                                                <button
-                                                    className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors"
-                                                    onClick={() => setIsPlaying(!isPlaying)}
-                                                >
-                                                    {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-                                                </button>
-                                            </div>
-                                        </div> */}
-
-
-
                                         <div className="min-h-screen text-white">
                                             {/* Header */}
                                             <div className="flex items-center justify-between px-6 bg-[#1f1f1f]">
                                                 {/* Left Section */}
-                                                <div className="flex items-center space-x-4">
-                                                    <div className="flex items-center space-x-2">
-                                                        <Mic className="w-4 h-4" />
-                                                        <span className="text-sm">External Microphone Synpath...</span>
-                                                        <FaChevronLeft className="w-4 h-4 transform rotate-90" />
-                                                    </div>
+                                                <div className="">
+                                                    <div className="relative w-64">
+                                                        <button
+                                                            onClick={() => setIsOpen(!isOpen)}
+                                                            className="w-full transition-colors duration-200 rounded-lg px-3 py-2 flex items-center justify-between text-white border border-gray-600"
+                                                        >
+                                                            <div className="flex items-center space-x-2">
+                                                                <Mic className="w-4 h-4 text-gray-300" />
+                                                                <span className="text-sm text-gray-300 truncate">
+                                                                    {selectedInput}
+                                                                </span>
+                                                            </div>
+                                                            <FaChevronDown
+                                                                className={`w-4 h-4 text-gray-300 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''
+                                                                    }`}
+                                                            />
+                                                        </button>
 
-                                                    <div className="flex items-center space-x-2">
-                                                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                                                        <span className="text-sm">Calibrate</span>
+                                                        {isOpen && (
+                                                            <div className="absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] border border-gray-600 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                                                                {audioInputs.map((input, index) => (
+                                                                    <button
+                                                                        key={index}
+                                                                        onClick={() => handleSelectInput(input)}
+                                                                        className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-700 transition-colors duration-150 flex items-center space-x-2 ${selectedInput === input ? 'bg-gray-700 text-white' : 'text-gray-300'
+                                                                            } ${index === 0 ? 'rounded-t-lg' : ''} ${index === audioInputs.length - 1 ? 'rounded-b-lg' : ''
+                                                                            }`}
+                                                                    >
+                                                                        <Mic className="w-4 h-4" />
+                                                                        <span className="truncate">{input}</span>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
+                                                    <div className='flex items-center justify-between mt-3'>
+                                                        <div className="flex items-center space-x-2 border border-[#5d5d5d] py-1 px-3 rounded-full cursor-pointer" onClick={() => setPricingModalOpen(true)}>
+                                                            <Mic className="w-4 h-4" />
+                                                            <span className="text-sm">Calibrate</span>
+                                                        </div>
 
-                                                    <div className="flex items-center space-x-2">
-                                                        <span className="text-sm">Monitoring:</span>
-                                                        <div className="w-8 h-8 bg-[#525252] rounded-lg flex items-center justify-center">
-                                                            <LuHeadphoneOff className="w-4 h-4" />
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className="text-sm">Monitoring:</span>
+                                                            <div className="w-8 h-8 bg-[#525252] rounded-lg flex items-center justify-center">
+                                                                <LuHeadphoneOff className="w-4 h-4" />
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 {/* Center Section */}
-                                                <div className="flex items-center space-x-2 border border-[#5d5d5d] px-6 py-3">
-                                                    <div className="flex items-center">
-                                                        <FaChevronLeft className="w-4 h-4 cursor-pointer hover:text-purple-300" />
-                                                        <FaChevronRight className="w-4 h-4 cursor-pointer hover:text-purple-300" />
+                                                <div>
+                                                    <div className="flex items-center space-x-2 border border-[#5d5d5d] rounded-lg">
+                                                        <div className="flex items-center px-4 py-3 gap-4 border-r border-[#5d5d5d]">
+                                                            <FaChevronLeft className="w-4 h-4 cursor-pointer hover:text-purple-300" />
+                                                            <FaChevronRight className="w-4 h-4 cursor-pointer hover:text-purple-300" />
+                                                        </div>
+                                                        <div className="flex items-center gap-8 px-4 py-3">
+                                                            <span className="text-sm">Load and Clear</span>
+                                                            <FaChevronDown className="w-4 h-4 transform cursor-pointer hover:text-purple-300" />
+                                                        </div>
                                                     </div>
-                                                    <div className="flex items-center gap-5">
-                                                        <span className="text-sm">Blues</span>
-                                                        <FaChevronLeft className="w-4 h-4 transform rotate-90 cursor-pointer hover:text-purple-300" />
+
+                                                    <div className="inline-block mt-2 border rounded-lg border-secondary-light/10 dark:border-secondary-dark/10 ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer" onClick={() => setPricingModalOpen(true)}>
+                                                        <p className="text-secondary-light dark:text-secondary-dark text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
                                                     </div>
                                                 </div>
 
                                                 {/* Right Section */}
                                                 <div className="flex items-center space-x-6">
-                                                    <div className="border rounded-lg border-secondary-light/10 dark:border-secondary-dark/10 ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer" onClick={() => setPricingModalOpen(true)}>
-                                                        <p className="text-secondary-light dark:text-secondary-dark text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
-                                                    </div>
-
                                                     <div className="flex items-center space-x-6">
                                                         <div className="flex items-center justify-center px-2 md600:px-2 md600:pt-2 md600:pb-1 sm:gap-6 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
                                                             <div className="flex space-x-1 md600:space-x-2 lg:space-x-4 2xl:space-x-10">
@@ -558,11 +527,6 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                                     <Knob label="Volume" min={-135} max={135} defaultAngle={volume} onChange={(value) => setVolume(value)} />
                                                                 </div>
                                                             </div>
-                                                        </div>
-
-                                                        <div className="flex flex-col items-center cursor-pointer hover:text-purple-300">
-                                                            <IoVolumeHighOutline className="w-8 h-8 mb-1" />
-                                                            <span className="text-xs">Volume</span>
                                                         </div>
                                                     </div>
                                                 </div>

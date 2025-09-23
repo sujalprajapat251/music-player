@@ -113,6 +113,7 @@ const Sidebar2 = () => {
     const isOrchestralTrack = track.name === 'Orchestral' || track.type === 'Orchestral';
     const isVoiceMicTrack = track.name === 'Voice & Mic' || track.type === 'Voice & Mic';
     const isSynthTrack = track.name === 'Synth' || track.type === 'Synth';
+    const isBass808 = track.name === 'Bass & 808' || track.type === 'Bass & 808';
     
     // Ensure track selection
     if (currentTrackId !== track.id) {
@@ -152,6 +153,12 @@ const Sidebar2 = () => {
     if (isSynthTrack) {
       const isOpen = openTrackType === 'Synth' && currentTrackId === track.id;
       dispatch(setTrackType(isOpen ? null : 'Synth'));
+      return;
+    }
+
+    if (isBass808) {
+      const isOpen = openTrackType === 'Bass & 808' && currentTrackId === track.id;
+      dispatch(setTrackType(isOpen ? null : 'Bass & 808'));
       return;
     }
 
@@ -257,7 +264,9 @@ const Sidebar2 = () => {
               const isOrchestralTrack = track.name === 'Orchestral' || track.type === 'Orchestral';
               const isVoiceMicTrack = track.name === 'Voice & Mic' || track.type === 'Voice & Mic';
               const isSynthTrack = track.name === 'Synth' || track.type === 'Synth';
-              const isComponentOpen = (track.id === currentTrackId) && ((openTrackType === 'Drums & Machines' && isDrumTrack) || (openTrackType === 'Keys' && isPianoTrack) || (openTrackType === 'Guitar' && isGuitarTrack) || (openTrackType === 'Orchestral' && isOrchestralTrack) || (openTrackType === 'Voice & Mic' && isVoiceMicTrack) || (openTrackType === 'Synth' && isSynthTrack));
+              const isBass808 = track.name === 'Bass & 808' || track.type === 'Bass & 808';
+
+              const isComponentOpen = (track.id === currentTrackId) && ((openTrackType === 'Drums & Machines' && isDrumTrack) || (openTrackType === 'Keys' && isPianoTrack) || (openTrackType === 'Guitar' && isGuitarTrack) || (openTrackType === 'Orchestral' && isOrchestralTrack) || (openTrackType === 'Voice & Mic' && isVoiceMicTrack) || (openTrackType === 'Synth' && isSynthTrack) || (openTrackType === 'Bass & 808' && isBass808));
 
               return (
                 <div

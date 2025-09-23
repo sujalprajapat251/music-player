@@ -55,6 +55,7 @@ import NewProject from '../NewProjectModel';
 import ShareModal from '../Sharemodal';
 import PricingModel from '../PricingModel';
 import { setCurrentMusic } from '../../Redux/Slice/music.slice';
+import AccessPopup from '../AccessPopup';
 
 const getTopHeaderColors = (isDark) => ({
   // Background colors
@@ -85,7 +86,7 @@ const getTopHeaderColors = (isDark) => ({
   buttonDisabled: isDark ? '#2a2a2a' : '#e0e0e0',
   
   // Menu colors
-  menuBackground: isDark ? '#141414' : '#ffffff',
+  menuBackground: isDark ? '#404040' : '#ffffff',
   menuItemHover: isDark ? '#262529' : '#f5f5f5',
   menuBorder: isDark ? '#FFFFFF1A' : '#1414141A',
   
@@ -156,6 +157,7 @@ const TopHeader = () => {
     const [shareModalOpen, setShareModalOpen] = useState(false);
     const [pricingModalOpen, setPricingModalOpen] = useState(false);
     const [saveStatus, setSaveStatus] = useState('idle');
+    const [showAccessPopup, setShowAccessPopup] = useState(false);
 
     // Add state for song name editing
     const [songName, setSongName] = useState('Untitled_song');
@@ -653,7 +655,7 @@ const TopHeader = () => {
                             </MenuButton>
                         </div>
 
-                        <Menu.Items className="absolute left-[-20px] sm:left-0 z-[99] mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60 origin-top-right shadow-lg outline-none"style={{ backgroundColor: colors.menuBackground }}>
+                        <Menu.Items className="absolute left-[-20px] sm:left-0 z-[99] mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60 origin-top-right shadow-lg outline-none rounded-b-md" style={{ backgroundColor: colors.menuBackground }}>
                             <div className="">
                                 {/* First item: Print */}
                                 <Menu.Item>
@@ -692,7 +694,7 @@ const TopHeader = () => {
 
                                     {showSubmenu.openrecentfolder && (
                                         <div 
-                                            className="absolute left-full top-0 z-50 w-36 md600:w-40 lg:mt-0 shadow-lg outline-none text-nowrap"
+                                            className="absolute left-full top-0 z-50 w-36 md600:w-40 lg:mt-0 shadow-lg outline-none text-nowrap rounded-md"
                                             style={{ backgroundColor: colors.menuBackground }}
                                         >
                                             <p 
@@ -763,7 +765,7 @@ const TopHeader = () => {
 
                                     {showSubmenu.import && (
                                         <div 
-                                            className="absolute left-full top-0 z-50 w-36 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none"
+                                            className="absolute left-full top-0 z-50 w-36 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none rounded-md"
                                             style={{ backgroundColor: colors.menuBackground }}
                                         >
                                             <p 
@@ -866,7 +868,7 @@ const TopHeader = () => {
                         </div>
 
                         <Menu.Items 
-                            className="absolute left-0 z-[99] mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60 origin-top-right shadow-lg outline-none"
+                            className="absolute left-0 z-[99] mt-2 lg:mt-3 w-36 md600:w-48 lg:w-60 origin-top-right shadow-lg outline-none bg-red-500 rounded-b-md"
                             style={{ backgroundColor: colors.menuBackground }}
                         >
                             <div className="">
@@ -999,12 +1001,12 @@ const TopHeader = () => {
 
                                             {showSubmenu.effects && (
                                                 <div 
-                                                    className="absolute flex left-full px-2 py-2 gap-2 md600:px-3 lg:px-4 md:py-2 top-0 z-50 w-40 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none text-nowrap"
+                                                    className="absolute left-full px-2 py-2 gap-2 md600:px-3 lg:px-4 md:py-2 top-0 z-50 w-40 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none text-nowrap rounded-md"
                                                     style={{ backgroundColor: colors.menuBackground }}
                                                 >
                                                     <Link 
                                                         to="/sidebar/voice-transform" 
-                                                        className="block cursor-pointer text-[10px] md600:text-[12px] lg:text-[14px] px-2 py-1 rounded transition-colors"
+                                                        className="block cursor-pointer text-[10px] md600:text-[12px] lg:text-[14px] px-2 py-2 rounded transition-colors"
                                                         style={{ color: colors.textSecondary }}
                                                         onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
                                                         onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
@@ -1013,7 +1015,7 @@ const TopHeader = () => {
                                                     </Link>
                                                     <Link 
                                                         to="/sidebar/advanced-voice-transform" 
-                                                        className="block cursor-pointer text-[10px] md600:text-[12px] lg:text-[14px] px-2 py-1 rounded transition-colors"
+                                                        className="block cursor-pointer text-[10px] md600:text-[12px] lg:text-[14px] px-2 py-2 rounded transition-colors"
                                                         style={{ color: colors.textSecondary }}
                                                         onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
                                                         onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
@@ -1056,7 +1058,7 @@ const TopHeader = () => {
                             </MenuButton>
                         </div>
 
-                        <Menu.Items className="absolute left-[-60px] sm:left-0 z-[99] mt-2 lg:mt-3 w-40 sm:w-44 md600:w-48 lg:w-60   origin-top-right bg-primary-light dark:bg-primary-dark shadow-lg outline-none">
+                        <Menu.Items className="absolute left-[-60px] sm:left-0 z-[99] mt-2 lg:mt-3 w-40 sm:w-44 md600:w-48 lg:w-60 rounded-b-md origin-top-right bg-primary-light dark:bg-[#404040] shadow-lg outline-none">
                             <div className="">
                                 <Menu.Item>
                                     {({ active }) => (
@@ -1076,11 +1078,12 @@ const TopHeader = () => {
                                 <Menu.Item>
                                     {({ active }) => (
                                         <p 
-                                            className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3 outline-none transition-colors`}
+                                            className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3 outline-none transition-colors cursor-pointer`}
                                             style={{ 
                                                 backgroundColor: active ? colors.menuItemHover : 'transparent',
                                                 color: colors.textSecondary
                                             }}
+                                            onClick={() => setShowAccessPopup(true)}
                                         >
                                             <Tuner className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />  
                                             <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Tuner</span>
@@ -1104,7 +1107,7 @@ const TopHeader = () => {
 
                                     {showSubmenu.keyboard && (
                                         <div 
-                                            className="absolute flex left-full px-2 py-2 gap-2 md600:px-3 lg:px-4 md:py-2 top-0 z-50 w-32 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none text-nowrap"
+                                            className="absolute flex left-full px-2 py-2 gap-2 md600:px-3 lg:px-4 md:py-2 top-0 z-50 w-32 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none text-nowrap rounded-md"
                                             style={{ backgroundColor: colors.menuBackground }}
                                         >
                                             <p 
@@ -1169,7 +1172,7 @@ const TopHeader = () => {
 
                                     {showSubmenu.soundquality && (
                                         <div 
-                                            className="absolute left-full top-0 z-50 w-28 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none"
+                                            className="absolute left-full top-0 z-50 w-28 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none rounded-md"
                                             style={{ backgroundColor: colors.menuBackground }}
                                         >
                                             {soundQualityOptions.map((option) => (
@@ -1234,13 +1237,13 @@ const TopHeader = () => {
 
                                     {showSubmenu.language && (
                                         <div 
-                                            className="absolute left-full top-0 z-50 w-32 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none"
+                                            className="absolute left-full top-0 z-50 w-32 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none rounded-md"
                                             style={{ backgroundColor: colors.menuBackground }}
                                         >
                                             {languageOptions.map((lang) => (
                                                 <div 
                                                     key={lang.id} 
-                                                    className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-1 cursor-pointer transition-colors"
+                                                    className="flex items-center justify-between px-3 py-1 lg:px-4 md600:py-2 cursor-pointer transition-colors"
                                                     style={{ color: colors.textSecondary }}
                                                     onClick={() => handleLanguage(lang.id, lang.label)}
                                                     onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
@@ -1279,7 +1282,7 @@ const TopHeader = () => {
 
                                     {showSubmenu.theme && (
                                         <div 
-                                            className="absolute left-full top-0 z-50 w-28 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none"
+                                            className="absolute left-full top-0 z-50 w-28 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none rounded-md"
                                             style={{ backgroundColor: colors.menuBackground }}
                                         >
                                             {themesOptions.map((option) => (
@@ -1604,6 +1607,11 @@ const TopHeader = () => {
 
             {/* Pricing Modal */}
             <PricingModel pricingModalOpen={pricingModalOpen} setPricingModalOpen={setPricingModalOpen} />
+
+            {/* AccessPopup for microphone permission */}
+            {showAccessPopup && (
+                <AccessPopup onClose={() => setShowAccessPopup(false)} />
+            )}
         </>
     )
 }

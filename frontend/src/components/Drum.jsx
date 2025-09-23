@@ -18,6 +18,8 @@ import { IoIosArrowDown } from 'react-icons/io';
 import { ReactComponent as Tick } from "../Images/Tick.svg";
 import { useTheme } from '../Utils/ThemeContext';
 import { setGlobalReverb, setGlobalPan, setGlobalVolume, setGlobalDrumTypeIndex } from '../Redux/Slice/audioSettings.slice';
+import PricingModel from './PricingModel';
+import { ReactComponent as Track5 } from '../Images/track5.svg'
 
 function polarToCartesian(cx, cy, r, angle) {
   const a = (angle - 90) * Math.PI / 180.0;
@@ -230,6 +232,7 @@ const DrumPadMachine = ({ onClose }) => {
   const reverbBufferRef = useRef(null);
   const lastPlayTime = useRef({});
   const dispatch = useDispatch();
+  const [pricingModalOpen, setPricingModalOpen] = useState(false);
 
   // Keep local knob state synced with global Redux changes that may come from other pages
   useEffect(() => { setVolume(globalVolume); }, [globalVolume]);
@@ -1329,7 +1332,7 @@ const DrumPadMachine = ({ onClose }) => {
                           </button>
 
                           <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-center 2xl:px-4 2xl:w-[250px]">
-                            <GiPianoKeys className="text-secondary-light dark:text-secondary-dark text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[20px]" />
+                            <Track5 className="text-secondary-light dark:text-secondary-dark text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[20px]" />
                             <div>
                               <div className="text-secondary-light dark:text-secondary-dark font-semibold text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[16px]">
                                 {currentTypeData.name}
@@ -1374,7 +1377,7 @@ const DrumPadMachine = ({ onClose }) => {
                       {/* Save + Dropdown */}
                       <div className="items-center">
                         {/* Save Preset */}
-                        <div className="border rounded-lg border-secondary-light/20 dark:border-secondary-dark/20">
+                        <div onClick={() => setPricingModalOpen(true)} className="border rounded-lg border-secondary-light/20 dark:border-secondary-dark/20 cursor-pointer">
                           <p className="text-secondary-light dark:text-secondary-dark text-center text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">
                             Save Preset
                           </p>
@@ -1757,6 +1760,12 @@ const DrumPadMachine = ({ onClose }) => {
           </div>
         </>
       )}
+
+      {/* Pricing Modal */}
+      <PricingModel
+          pricingModalOpen={pricingModalOpen}
+          setPricingModalOpen={setPricingModalOpen}
+      />
     </>
   );
 };

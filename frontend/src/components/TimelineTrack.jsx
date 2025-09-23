@@ -545,17 +545,21 @@ const TimelineTrack = ({
     typeName === 'keys' ||
     typeName === 'guitar' ||
     typeName === 'orchestral' ||
+    typeName === 'bass & 808' ||
     typeName === 'synth' ||
     displayName === 'keys' ||
     displayName === 'guitar' ||
     displayName === 'orchestral' ||
+    displayName === 'bass & 808' ||
     displayName === 'synth' ||
     displayName.includes('piano') ||
     displayName.includes('key') ||
     displayName.includes('guitar') ||
     displayName.includes('orchestral') ||
+    displayName.includes('bass & 808') ||
     displayName.includes('synth')
   );
+
   const isDrumTrack = typeName === 'drum' || displayName === 'drum' || displayName.includes('drum') || displayName.includes('percussion');
 
   // the clip persisted on the track so switching tracks does not reset length

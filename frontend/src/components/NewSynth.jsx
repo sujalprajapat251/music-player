@@ -24,6 +24,7 @@ import { setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Red
 import { selectStudioState } from '../Redux/rootReducer';
 import subscription from "../Images/subscriptionIcon.svg";
 import PricingModel from './PricingModel';
+import { ReactComponent as Track7 } from '../Images/track7.svg'
 
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
@@ -873,7 +874,7 @@ const NewSynth = ({ onClose }) => {
 
         return (
             <div
-                className="relative h-[93%] overscroll-none"
+                className="relative h-full overscroll-none"
                 ref={pianoRef}
                 onWheel={handleLocalWheel}
                 onMouseDown={handleMouseDown}
@@ -898,28 +899,16 @@ const NewSynth = ({ onClose }) => {
                       background-color: #c7c7c7;
                     }
 
-                    .ReactPiano__Key--natural,
-                    .ReactPiano__Key--accidental {
-                        transition: all 0.3s ease;
-                    }
-
                     .ReactPiano__Key--natural:hover {
                         background-color: #cececf !important;
                     }
                     
                     .ReactPiano__Key--natural.highlighted {
-                        border-bottom: 7px solid #36075f !important;
+                        border-bottom: 9px solid #36075f !important;
                     }
 
                     .ReactPiano__Key--accidental.highlighted {
                         border-bottom: 7px solid #8b5cf6 !important;
-                    }
-                    
-                    /* Visual feedback for active playing */
-                    .ReactPiano__Key--natural:active,
-                    .ReactPiano__Key--accidental:active {
-                        transform: scale(0.98);
-                        transition: transform 0.1s ease;
                     }
                 `}</style>
             </div>
@@ -2040,7 +2029,7 @@ const NewSynth = ({ onClose }) => {
 
                                                     <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-center 2xl:px-4 2xl:w-[250px]">
                                                         <div className="text-white">
-                                                            <GiPianoKeys className='text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
+                                                            <Track7 className='text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
                                                         </div>
                                                         <div className="">
                                                             <div className="text-white fw-bolder text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[16px]">
@@ -2133,7 +2122,7 @@ const NewSynth = ({ onClose }) => {
                                                         </div>
                                                     </div>
                                                 }
-                                                <div ref={pianoSectionsRef} className="w-full h-[105px] sm:h-[150px] md600:h-[140px] md:h-[290px] lg:h-[250px] overflow-x-hidden pt-1 md600:pt-2 lg:pt-3 overscroll-none ">
+                                                <div ref={pianoSectionsRef} className="w-full h-[105px] sm:h-[150px] md600:h-[140px] md:h-[290px] lg:h-[250px] overflow-x-hidden overscroll-none">
                                                     <div className="w-full h-full">
                                                         <div className="flex transition-transform duration-300 ease-in-out h-full" style={{ transform: `translateX(-${activePianoSection * 100}%)` }}>
                                                             {pianoSections.map((section, index) => (

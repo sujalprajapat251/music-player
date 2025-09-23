@@ -31,12 +31,14 @@ const LogOut = ({ logoutModalOpen, setLogoutModalOpen }) => {
             </div>
             <div className="md:pt-[20px] md:pb-[30px] py-[20px] md:w-[400px] m-auto">
               <div className='text-center'>
-                <div className='text-base text-[#FFFFFF] font-[600] mb-[20px]'>Logout</div>
-                <p className='text-[#FFFFFF99] text-sm font-[400] w-[260px] m-auto'>Are you sure you want <br /> to log out?</p>
+                <div className='text-base text-[#FFFFFF] font-[600] mb-[20px]'>
+                  <h1 className='text-[30px]'>Logout</h1>
+                </div>
+                <p className='text-[#FFFFFF99] text-md font-[400] w-[260px] m-auto'>Are you sure you want <br /> to log out?</p>
               </div>
               <div className="text-center md:pt-[40px] pt-[20px] flex justify-center gap-4">
                 <button className="d_btn d_cancelbtn" onClick={() => setLogoutModalOpen(false)}>Cancel</button>
-                <button className="d_btn bg-[#FFFFFF]" onClick={handleLogout}>Yes, Logout</button>
+                <button className="d_btn bg-[#FFFFFF] text-[#000000]" onClick={handleLogout}>Yes, Logout</button>
               </div>
             </div>
           </DialogPanel>

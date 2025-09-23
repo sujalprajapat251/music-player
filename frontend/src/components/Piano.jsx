@@ -927,7 +927,7 @@ const Pianodemo = ({ onClose }) => {
 
     return (
       <div
-        className="relative h-[93%] overscroll-none"
+        className="relative h-full overscroll-none"
         ref={pianoRef}
         onWheel={handleLocalWheel}
         onMouseDown={handleMouseDown}
@@ -952,11 +952,6 @@ const Pianodemo = ({ onClose }) => {
                       background-color: #c7c7c7;
                     }
 
-                    .ReactPiano__Key--natural,
-                    .ReactPiano__Key--accidental {
-                        transition: all 0.3s ease;
-                    }
-
                     .ReactPiano__Key--natural:hover {
                         background-color: #cececf !important;
                     }
@@ -967,13 +962,6 @@ const Pianodemo = ({ onClose }) => {
 
                     .ReactPiano__Key--accidental.highlighted {
                         border-bottom: 7px solid #8b5cf6 !important;
-                    }
-                    
-                    /* Visual feedback for active playing */
-                    .ReactPiano__Key--natural:active,
-                    .ReactPiano__Key--accidental:active {
-                        transform: scale(0.98);
-                        transition: transform 0.1s ease;
                     }
                 `}</style>
       </div>
@@ -2028,7 +2016,7 @@ const Pianodemo = ({ onClose }) => {
                             <FaChevronLeft className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                           </button>
 
-                          <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-center 2xl:px-4 2xl:w-[250px]">
+                          <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-start 2xl:px-4 2xl:w-[250px]">
                             <div className="text-black dark:text-white">
                               <GiPianoKeys className="text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[20px]" />
                             </div>
@@ -2131,7 +2119,7 @@ const Pianodemo = ({ onClose }) => {
                             </div>
                           </div>
                         }
-                        <div ref={pianoSectionsRef} className="w-full h-[105px] sm:h-[150px] md600:h-[140px] md:h-[290px] lg:h-[250px] overflow-x-hidden pt-1 md600:pt-2 lg:pt-3 overscroll-none ">
+                        <div ref={pianoSectionsRef} className="w-full h-[105px] sm:h-[150px] md600:h-[140px] md:h-[290px] lg:h-[250px] overflow-x-hidden overscroll-none">
                           <div className="w-full h-full">
                             <div className="flex transition-transform duration-300 ease-in-out h-full" style={{ transform: `translateX(-${activePianoSection * 100}%)` }}>
                               {pianoSections.map((section, index) => (

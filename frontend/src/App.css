@@ -179,6 +179,7 @@ body.light-theme .d_btn.d_createbtn:hover {
 .ReactPiano__NoteLabel--natural {
   border: 1px solid #aeaeae;
   border-bottom: 3px solid #aeaeae;
+  color: #525252 !important;
 }
 
 
