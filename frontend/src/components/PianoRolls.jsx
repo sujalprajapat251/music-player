@@ -1375,6 +1375,7 @@ const PianoRolls = () => {
     const audioContextRef = useRef(null);
     const gainNodeRef = useRef(null);
     const panNodeRef = useRef(null);
+    const instrumentLoadIdRef = useRef(0);
     const activeAudioNodes = useRef({});
     const notesScheduledRef = useRef(false);
     const playheadRef = useRef(null);
@@ -1405,18 +1406,50 @@ const PianoRolls = () => {
     useEffect(() => {
         if (!audioContextRef.current) return;
         if (isDrumTrack) {
-            pianoRef.current = null; // ensure we don't accidentally use melodic instrument
+            pianoRef.current = null;
             return;
         }
         if (!selectedInstrument) return;
 
-        Soundfont.instrument(audioContextRef.current, selectedInstrument, { destination: gainNodeRef.current })
-            .then((p) => { 
-                pianoRef.current = p;
-            })
-            .catch((error) => { 
+        const ctx = audioContextRef.current;
+        const currentLoadId = ++instrumentLoadIdRef.current;
+
+        // Map unsupported/custom labels (e.g., "Bass & 808") to available soundfont names
+        const resolveInstrumentName = (name) => {
+            const n = String(name || '').toLowerCase();
+            if (n.includes('808')) return 'synth_bass_1';
+            // Keep other instruments as-is; Soundfont covers many GM names
+            return name;
+        };
+
+        const primaryName = resolveInstrumentName(selectedInstrument);
+        const fallbackNames = primaryName === selectedInstrument ? ['electric_bass_finger'] : ['electric_bass_finger'];
+
+        let cancelled = false;
+
+        const tryLoad = async () => {
+            const tryNames = [primaryName, ...fallbackNames];
+            for (const name of tryNames) {
+                try {
+                    const inst = await Soundfont.instrument(ctx, name, { destination: gainNodeRef.current });
+                    if (cancelled) return;
+                    // Guard against stale async after instrument changes
+                    if (currentLoadId === instrumentLoadIdRef.current && !isDrumTrack) {
+                        pianoRef.current = inst;
+                    }
+                    return;
+                } catch (e) {
+                    // Continue to next fallback
+                }
+            }
+            // If all attempts failed, only null out if still the active request
+            if (!cancelled && currentLoadId === instrumentLoadIdRef.current) {
                 pianoRef.current = null;
-            });
+            }
+        };
+
+        tryLoad();
+        return () => { cancelled = true; };
     }, [isDrumTrack, selectedInstrument]);
 
 

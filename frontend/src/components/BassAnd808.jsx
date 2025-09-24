@@ -1,7 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react'
 import { Piano, KeyboardShortcuts, MidiNumbers } from 'react-piano';
 import 'react-piano/dist/styles.css';
-import Soundfont from 'soundfont-player';
 import { useSelector, useDispatch } from "react-redux";
 import { IoClose } from "react-icons/io5";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
@@ -130,24 +129,23 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
 }
 
 const INSTRUMENTS = [
-    { id: 'violin', name: 'Violin', category: 'Strings' },
-    { id: 'cello', name: 'Cello', category: 'Strings' },
-    { id: 'viola', name: 'Viola', category: 'Strings' },
-    { id: 'flute', name: 'Flute', category: 'Woodwinds' },
-    { id: 'oboe', name: 'Oboe', category: 'Woodwinds' },
-    { id: 'clarinet', name: 'Clarinet', category: 'Woodwinds' },
-    { id: 'trumpet', name: 'Trumpet', category: 'Brass' },
-    { id: 'french_horn', name: 'French Horn', category: 'Brass' },
-    { id: 'trombone', name: 'Trombone', category: 'Brass' },
-    { id: 'tuba', name: 'Tuba', category: 'Brass' },
-    { id: 'timpani', name: 'Timpani', category: 'Percussion' },
-    { id: 'harp', name: 'Harp', category: 'Strings' },
-    { id: 'string_ensemble_1', name: 'String Ensemble', category: 'Ensemble' },
-    { id: 'choir_aahs', name: 'Choir Aahs', category: 'Voice' },
-    { id: 'orchestral_harp', name: 'Orchestral Harp', category: 'Strings' },
-    { id: 'contrabass', name: 'Contrabass', category: 'Strings' },
-    { id: 'bassoon', name: 'Bassoon', category: 'Woodwinds' },
-    { id: 'piccolo', name: 'Piccolo', category: 'Woodwinds' }
+    { id: '808_atom', name: '808 Atom', category: '808' },
+    { id: '808_bass_tube', name: '808 Bass Tube', category: '808' },
+    { id: '808_broad_stereo', name: '808 Broad Stereo', category: '808' },
+    { id: '808_clean', name: '808 Clean', category: '808' },
+    { id: '808_pi_bass', name: '808 Pi Bass', category: '808' },
+    { id: '808_provider', name: '808 Provider', category: '808' },
+    { id: '808_yeast', name: '808 Yeast', category: '808' },
+    { id: 'drm_808', name: 'DRM 808', category: '808' },
+    { id: 'flag_808', name: 'Flag 808', category: '808' },
+    { id: 'gritty_sub_808', name: 'Gritty Sub 808', category: '808' },
+    { id: 'gritty_rumble_808', name: 'Gritty Rumble 808', category: '808' },
+    { id: 'hangry_808', name: 'Hangry 808', category: '808' },
+    { id: 'heavy_808', name: 'Heavy 808', category: '808' },
+    { id: 'upright_bass', name: 'Upright Bass', category: 'Bass' },
+    { id: 'electric_bass', name: 'Electric Bass', category: 'Bass' },
+    { id: 'synth_bass', name: 'Synth Bass', category: 'Bass' },
+    { id: 'sub_bass', name: 'Sub Bass', category: 'Bass' }
 ];
 
 const BassAnd808 = ({ onClose }) => {
@@ -167,7 +165,7 @@ const BassAnd808 = ({ onClose }) => {
 
     // Get the selected instrument from Redux  
     const selectedInstrumentFromRedux = useSelector((state) =>
-        selectStudioState(state)?.selectedInstrument || 'violin'
+        selectStudioState(state)?.selectedInstrument || '808_atom'
     );
 
     useEffect(() => {
@@ -212,7 +210,7 @@ const BassAnd808 = ({ onClose }) => {
     const reverbGainNodeRef = useRef(null);
     const dryGainNodeRef = useRef(null);
     const convolverNodeRef = useRef(null);
-    const activeAudioNodes = useRef({});
+    const saturationNodeRef = useRef(null);
     const recordAnchorRef = useRef({ systemMs: 0, playheadSec: 0 });
     // Lock instrument for the duration of a recording session
     const recordingInstrumentRef = useRef(null);
@@ -241,20 +239,6 @@ const BassAnd808 = ({ onClose }) => {
     const pianoNotesRef = useRef([]);
     useEffect(() => { pianoNotesRef.current = existingPianoNotes || []; }, [existingPianoNotes]);
 
-    const createImpulseResponse = (audioContext, duration, decay, reverse = false) => {
-        const length = audioContext.sampleRate * duration;
-        const impulse = audioContext.createBuffer(2, length, audioContext.sampleRate);
-        const left = impulse.getChannelData(0);
-        const right = impulse.getChannelData(1);
-
-        for (let i = 0; i < length; i++) {
-            const n = reverse ? length - i : i;
-            left[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
-            right[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
-        }
-        return impulse;
-    };
-
     useEffect(() => {
         if (getIsRecording) {
             recordAnchorRef.current = { systemMs: Date.now(), playheadSec: studioCurrentTime };
@@ -278,21 +262,10 @@ const BassAnd808 = ({ onClose }) => {
     useEffect(() => {
         if (gainNodeRef.current) {
             const volumeValue = (volume + 135) / 270;
-            gainNodeRef.current.gain.value = volumeValue;
+            gainNodeRef.current.gain.rampTo(Math.max(0, Math.min(1, volumeValue)), 0.05);
         }
     }, [volume]);
 
-    useEffect(() => {
-        if (audioContextRef.current) {
-            const reverbValue = (glide + 135) / 270;
-        }
-    }, [glide]);
-
-    useEffect(() => {
-        if (audioContextRef.current) {
-            const panValue = (saturation + 135) / 270 * 2 - 1;
-        }
-    }, [saturation]);
 
     const firstNote = MidiNumbers.fromNote('C0');
     const lastNote = MidiNumbers.fromNote('C5');
@@ -343,84 +316,177 @@ const BassAnd808 = ({ onClose }) => {
     const gainNodeRef = useRef(null);
 
     useEffect(() => {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const destination = audioContext.createMediaStreamDestination();
-        const gainNode = audioContext.createGain();
-        const panNode = audioContext.createStereoPanner();
-        const dryGainNode = audioContext.createGain();
-        const reverbGainNode = audioContext.createGain();
-        const convolverNode = audioContext.createConvolver();
+        // Use Tone.js context for consistency
+        const toneContext = Tone.context;
+        const destination = toneContext.createMediaStreamDestination();
+        
+        // Create Tone.js nodes for effects
+        const gainNode = new Tone.Gain(1).toDestination();
+        const panNode = new Tone.Panner(0).connect(gainNode);
+        const saturationNode = new Tone.Distortion({ distortion: 0.0, wet: 0.0 }).connect(panNode);
+        const reverbNode = new Tone.Reverb({
+            decay: 2.5,
+            wet: 0.3
+        }).connect(panNode);
 
-        const impulseResponse = createImpulseResponse(audioContext, 2.5, 2);
-        convolverNode.buffer = impulseResponse;
-
-        gainNode.connect(dryGainNode);
-        gainNode.connect(reverbGainNode);
-        reverbGainNode.connect(convolverNode);
-
-        dryGainNode.connect(panNode);
-        convolverNode.connect(panNode);
-
-        panNode.connect(audioContext.destination);
-        panNode.connect(destination);
-
-        audioContextRef.current = audioContext;
+        // Store references
+        audioContextRef.current = toneContext;
         destinationRef.current = destination;
         gainNodeRef.current = gainNode;
         panNodeRef.current = panNode;
-        reverbGainNodeRef.current = reverbGainNode;
-        dryGainNodeRef.current = dryGainNode;
-        convolverNodeRef.current = convolverNode;
+        reverbGainNodeRef.current = reverbNode;
+        dryGainNodeRef.current = gainNode;
+        convolverNodeRef.current = reverbNode;
+        saturationNodeRef.current = saturationNode;
 
-        // Load the orchestral instrument using Soundfont
-        Soundfont.instrument(audioContext, selectedInstrument, {
-            destination: gainNode,
-        }).then((instrument) => {
-            pianoRef.current = instrument;
-        }).catch((error) => {
-            console.error("Error loading orchestral instrument:", error);
-            // Fallback to violin if the selected instrument fails to load
-            Soundfont.instrument(audioContext, 'violin', {
-                destination: gainNode,
-            }).then((fallback) => {
-                pianoRef.current = fallback;
-            });
-        });
+        // Create Bass & 808 synth for piano keys based on selected instrument
+        const createBass808Synth = (instrumentId) => {
+            const baseConfig = {
+                oscillator: { 
+                    type: "sawtooth",
+                    detune: -1200 // Lower pitch for bass sound
+                },
+                envelope: {
+                    attack: 0.01,
+                    decay: 0.35,
+                    sustain: 0.7,
+                    release: 1.2
+                },
+                filterEnvelope: {
+                    attack: 0.02,
+                    decay: 0.25,
+                    sustain: 0.4,
+                    release: 1.0,
+                    baseFrequency: 180,
+                    octaves: 5
+                },
+                volume: -1
+            };
+
+            // Customize synth based on instrument type
+            switch (instrumentId) {
+                case '808_atom':
+                    baseConfig.oscillator.type = "square";
+                    baseConfig.envelope.attack = 0.001;
+                    baseConfig.envelope.decay = 0.2;
+                    baseConfig.envelope.sustain = 0.1;
+                    baseConfig.envelope.release = 0.8;
+                    break;
+                case '808_bass_tube':
+                    baseConfig.oscillator.type = "triangle";
+                    baseConfig.envelope.attack = 0.005;
+                    baseConfig.envelope.decay = 0.4;
+                    baseConfig.envelope.sustain = 0.3;
+                    baseConfig.envelope.release = 1.0;
+                    break;
+                case '808_clean':
+                    baseConfig.oscillator.type = "sine";
+                    baseConfig.envelope.attack = 0.01;
+                    baseConfig.envelope.decay = 0.3;
+                    baseConfig.envelope.sustain = 0.5;
+                    baseConfig.envelope.release = 0.6;
+                    break;
+                case 'heavy_808':
+                    baseConfig.oscillator.type = "sawtooth";
+                    baseConfig.envelope.attack = 0.001;
+                    baseConfig.envelope.decay = 0.5;
+                    baseConfig.envelope.sustain = 0.2;
+                    baseConfig.envelope.release = 1.5;
+                    baseConfig.volume = 2; // Louder
+                    break;
+                case 'upright_bass':
+                    baseConfig.oscillator.type = "triangle";
+                    baseConfig.envelope.attack = 0.05;
+                    baseConfig.envelope.decay = 0.2;
+                    baseConfig.envelope.sustain = 0.8;
+                    baseConfig.envelope.release = 0.8;
+                    break;
+                case 'electric_bass':
+                    baseConfig.oscillator.type = "sawtooth";
+                    baseConfig.envelope.attack = 0.02;
+                    baseConfig.envelope.decay = 0.3;
+                    baseConfig.envelope.sustain = 0.6;
+                    baseConfig.envelope.release = 0.5;
+                    break;
+                default:
+                    // Default 808 sound
+                    break;
+            }
+
+            const synth = new Tone.MonoSynth(baseConfig);
+            // Connect through saturation, then onward in the chain
+            if (saturationNodeRef.current) {
+                synth.connect(saturationNodeRef.current);
+            } else if (panNodeRef.current) {
+                synth.connect(panNodeRef.current);
+            } else {
+                synth.toDestination();
+            }
+            return synth;
+        };
+
+        pianoRef.current = createBass808Synth(selectedInstrument);
 
         return () => {
-            audioContext && audioContext.close();
+            if (pianoRef.current) {
+                pianoRef.current.dispose();
+            }
+            if (gainNode) {
+                gainNode.dispose();
+            }
+            if (panNode) {
+                panNode.dispose();
+            }
+            if (reverbNode) {
+                reverbNode.dispose();
+            }
         };
     }, [selectedInstrument]);
 
-
-
     useEffect(() => {
-        if (reverbGainNodeRef.current && dryGainNodeRef.current && convolverNodeRef.current && audioContextRef.current) {
-            const reverbAmount = (glide + 135) / 270;
-
-            const wetLevel = reverbAmount * 0.6;
-            reverbGainNodeRef.current.gain.setValueAtTime(wetLevel, audioContextRef.current.currentTime);
-
-            const dryLevel = Math.max(0.3, 1 - (reverbAmount * 0.4));
-            dryGainNodeRef.current.gain.setValueAtTime(dryLevel, audioContextRef.current.currentTime);
-
-            if (reverbAmount > 0.1) {
-                const roomSize = 1 + (reverbAmount * 3);
-                const decay = 1.5 + (reverbAmount * 2);
-
-                const newImpulse = createImpulseResponse(audioContextRef.current, roomSize, decay);
-                convolverNodeRef.current.buffer = newImpulse;
-            }
+        // Map Glide knob to portamento (0..0.3s)
+        const port = Math.max(0, Math.min(0.3, ((glide + 135) / 270) * 0.3));
+        if (pianoRef.current && typeof pianoRef.current.portamento === 'number') {
+            pianoRef.current.portamento = port;
+        }
+        // Also give a subtle reverb change to glide
+        if (reverbGainNodeRef.current) {
+            const wetLevel = Math.max(0, Math.min(1, ((glide + 135) / 270) * 0.6));
+            reverbGainNodeRef.current.wet.rampTo(wetLevel, 0.05);
         }
     }, [glide]);
 
     useEffect(() => {
+        // Map Saturation knob to Distortion wet and amount
+        if (saturationNodeRef.current) {
+            const amt = Math.max(0, Math.min(1, (saturation + 135) / 270));
+            const distortion = amt * 0.8; // cap at 0.8 to avoid harshness
+            saturationNodeRef.current.distortion = distortion;
+            saturationNodeRef.current.wet.rampTo(amt, 0.05);
+        }
+        // Small stereo movement based on saturation for width
         if (panNodeRef.current) {
-            const panValue = saturation / 135;
-            const clampedPanValue = Math.max(-1, Math.min(1, panValue));
-            panNodeRef.current.pan.value = clampedPanValue;
+            const panValue = (saturation / 135) * 0.2; // keep subtle (-0.2..0.2)
+            const clamped = Math.max(-0.25, Math.min(0.25, panValue));
+            panNodeRef.current.pan.rampTo(clamped, 0.05);
         }
     }, [saturation]);
+
+    useEffect(() => {
+        // Attack knob to synth envelope attack (0.001..0.2s)
+        if (pianoRef.current?.envelope) {
+            const atk = 0.001 + ((attack + 135) / 270) * 0.199;
+            pianoRef.current.envelope.attack = atk;
+        }
+    }, [attack]);
+
+    useEffect(() => {
+        // Release knob to synth envelope release (0.05..1.5s)
+        if (pianoRef.current?.envelope) {
+            const rel = 0.05 + ((release + 135) / 270) * 1.45;
+            pianoRef.current.envelope.release = rel;
+        }
+    }, [release]);
 
 
 
@@ -429,9 +495,9 @@ const BassAnd808 = ({ onClose }) => {
         const noteName = Tone.Frequency(effectiveMidi, "midi").toNote();
         const currentTime = getRecordingTime();
 
-        // Ensure audio context is resumed (required for audio to work)
-        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-            audioContextRef.current.resume();
+        // Ensure Tone.js context is started (required for audio to work)
+        if (Tone.context.state !== 'running') {
+            Tone.start();
         }
 
         // Only push notes to timeline state when recording is active
@@ -458,13 +524,13 @@ const BassAnd808 = ({ onClose }) => {
                     end: maxEnd,
                     color: trackColor,
                     trackId: currentTrackId || null,
-                    type: 'orchestral',  // Changed from 'piano' to 'orchestral'
-                    name: `Orchestral Recording (${notesForThisTrack.length} notes)`,  // Changed name
+                    type: 'bass808',  // Changed to Bass & 808
+                    name: `Bass & 808 Recording (${notesForThisTrack.length} notes)`,  // Changed name
                     duration: maxEnd - minStart,
                     startTime: minStart,
                     trimStart: 0,
                     trimEnd: maxEnd - minStart,
-                    id: `orchestral_recording_${Date.now()}`,  // Changed ID prefix
+                    id: `bass808_recording_${Date.now()}`,  // Changed ID prefix
                     pianoData: notesForThisTrack
                 }));
             }
@@ -476,22 +542,21 @@ const BassAnd808 = ({ onClose }) => {
             { midiNumber, time: Date.now(), type: 'play' },
         ]);
 
-        // Play the orchestral instrument (same as original piano logic)
+        // Play the Bass & 808 synth
         if (pianoRef.current) {
-            const audioNode = pianoRef.current.play(effectiveMidi, 0, { duration: 1 });
-            activeAudioNodes.current[midiNumber] = audioNode;
+            const noteName = Tone.Frequency(effectiveMidi, "midi", { duration: 1 }).toNote();
+            pianoRef.current.triggerAttackRelease(noteName, "1n");
         }
     };
 
-    // 4. Keep the existing stopNote function (it already works)
+    // Stop the Bass & 808 synth
     const stopNote = (midiNumber) => {
         setRecordedNotes((prevNotes) => [
             ...prevNotes,
             { midiNumber, time: Date.now(), type: 'stop' },
         ]);
-        if (activeAudioNodes.current[midiNumber]) {
-            activeAudioNodes.current[midiNumber].stop();
-            delete activeAudioNodes.current[midiNumber];
+        if (pianoRef.current) {
+            pianoRef.current.triggerRelease();
         }
     };
 
@@ -537,8 +602,8 @@ const BassAnd808 = ({ onClose }) => {
             return;
         }
 
-        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-            audioContextRef.current.resume();
+        if (Tone.context.state !== 'running') {
+            Tone.start();
         }
 
         recordedChunksRef.current = [];
@@ -1513,13 +1578,13 @@ const BassAnd808 = ({ onClose }) => {
                     end: maxEnd,
                     color: trackColor,
                     trackId: currentTrackId || null,
-                    type: 'orchestral',
-                    name: `Orchestral Recording (${notesForThisTrack.length} notes)`,
+                    type: 'bass808',
+                    name: `Bass & 808 Recording (${notesForThisTrack.length} notes)`,
                     duration: maxEnd - minStart,
                     startTime: minStart,
                     trimStart: 0,
                     trimEnd: maxEnd - minStart,
-                    id: `orchestral_recording_${Date.now()}`,
+                    id: `bass808_recording_${Date.now()}`,
                     pianoData: notesForThisTrack
                 }));
             }
@@ -1896,9 +1961,6 @@ const BassAnd808 = ({ onClose }) => {
 
                                                 <div className="flex flex-row items-center gap-10 bg-[#353535] px-[25px] py-[10px] rounded-[7px]">
                                                     <Knob label="Attack" min={-135} max={135} defaultAngle={attack} onChange={(value) => setAttack(value)} />
-                                                    {/* </div> */}
-
-                                                    {/* <div className="flex flex-col items-center bg-[#353535] px-[25px] py-[10px] rounded-[7px]"> */}
                                                     <Knob label="Release" min={-135} max={135} defaultAngle={release} onChange={(value) => setRelease(value)} />
                                                 </div>
 

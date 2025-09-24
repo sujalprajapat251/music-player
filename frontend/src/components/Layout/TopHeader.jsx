@@ -57,6 +57,7 @@ import PricingModel from '../PricingModel';
 import { setCurrentMusic } from '../../Redux/Slice/music.slice';
 import AccessPopup from '../AccessPopup';
 import { addAudioClipToTrack, createTrackWithDefaults, updateAudioClip, setTrackType } from '../../Redux/Slice/studio.slice';
+import TunerPopup from '../TunerPopup';
 
 const getTopHeaderColors = (isDark) => ({
   // Background colors
@@ -164,6 +165,26 @@ const TopHeader = () => {
     const [pricingModalOpen, setPricingModalOpen] = useState(false);
     const [saveStatus, setSaveStatus] = useState('idle');
     const [showAccessPopup, setShowAccessPopup] = useState(false);
+    const [showTunerPopup, setShowTunerPopup] = useState(false);
+
+    // Open AccessPopup if microphone permission is not granted, otherwise open TunerPopup
+    const handleTunerClick = async () => {
+        if (getTrackType !== 'Voice & Mic') return;
+        try {
+            if (navigator.permissions && navigator.permissions.query) {
+                const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
+                if (permissionStatus.state === 'granted') {
+                    setShowTunerPopup(true);
+                } else {
+                    setShowAccessPopup(true);
+                }
+                return;
+            }
+        } catch (error) {
+            // Fall through to showing access popup below
+        }
+        setShowAccessPopup(true);
+    };
 
     // Add state for song name editing
     const [songName, setSongName] = useState('Untitled_song');
@@ -171,6 +192,7 @@ const TopHeader = () => {
 
     const currentMusic = useSelector((state) => state.music?.currentMusic);
     const allMusic = useSelector((state) => state?.music?.allmusic || []);
+    const getTrackType = useSelector((state) => selectStudioState(state).newtrackType);
     console.log(".... > ", allMusic);
     
     const navigate = useNavigate();
@@ -1191,7 +1213,7 @@ const TopHeader = () => {
                                                 className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
                                                 style={{ color: colors.iconSecondary }}
                                             />
-                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Undo</span>
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]' style={{ color: colors.textSecondary }}>Undo</span>
                                             <p 
                                                 className="text-[10px] md:text-[12px] ms-auto"
                                                 style={{ color: colors.textMuted }}
@@ -1215,7 +1237,7 @@ const TopHeader = () => {
                                                 className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
                                                 style={{ color: colors.iconSecondary }}
                                             />
-                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Redo</span>
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]' style={{ color: colors.textSecondary }}>Redo</span>
                                             <p 
                                                 className="text-[10px] md:text-[12px] ms-auto"
                                                 style={{ color: colors.textMuted }}
@@ -1381,16 +1403,15 @@ const TopHeader = () => {
                                 <Menu.Item>
                                     {({ active }) => (
                                         <p 
-                                            className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3 outline-none transition-colors cursor-pointer`}
-                                            style={{ 
-                                                backgroundColor: active ? colors.menuItemHover : 'transparent',
-                                                color: colors.textSecondary
-                                            }}
-                                            onClick={() => setShowAccessPopup(true)}
-                                        >
-                                            <Tuner className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />  
-                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Tuner</span>
-                                        </p>
+                                        className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3 outline-none transition-colors ${getTrackType !== 'Voice & Mic' ? 'pointer-events-none opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                        style={{ 
+                                            backgroundColor: active ? colors.menuItemHover : 'transparent',
+                                            color: colors.textSecondary
+                                        }}
+                                        onClick={handleTunerClick}>
+                                        <Tuner className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />  
+                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Tuner</span>
+                                      </p>
                                     )}
                                 </Menu.Item>
                                 <div className="relative " onMouseEnter={() => handleSubmenuToggle('keyboard', true)} onMouseLeave={() => handleSubmenuToggle('keyboard', false)}>
@@ -1404,7 +1425,7 @@ const TopHeader = () => {
                                         onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                                     >
                                         <Keyboard className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
-                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Keyboard</span>
+                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]' onMouseEnter={(e) => e.target.style.backgroundColor = 'transparent'}>Keyboard</span>
                                         <MdOutlineKeyboardArrowRight className="text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" style={{ color: colors.iconSecondary }} />
                                     </div>
 
@@ -1412,13 +1433,13 @@ const TopHeader = () => {
                                         <div 
                                             className="absolute flex left-full px-2 py-2 gap-2 md600:px-3 lg:px-4 md:py-2 top-0 z-50 w-32 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none text-nowrap rounded-md"
                                             style={{ backgroundColor: colors.menuBackground }}
+                                            onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                            // onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                                         >
                                             <p 
                                                 className="block cursor-pointer text-[10px] md600:text-[12px] lg:text-[14px] transition-colors" 
                                                 style={{ color: colors.textSecondary }}
-                                                onClick={handleNestedOptionClick}
-                                                onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
-                                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                                onClick={handleNestedOptionClick}                                                
                                             >
                                                 Musical Typing
                                             </p>
@@ -1470,7 +1491,7 @@ const TopHeader = () => {
                                         onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                                     >
                                         <Soundquality className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
-                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Sound quality</span>
+                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]' onMouseEnter={(e) => e.target.style.backgroundColor = 'transparent'}>Sound quality</span>
                                         <MdOutlineKeyboardArrowRight className="text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" style={{ color: colors.iconSecondary }} />
                                     </div>
 
@@ -1492,11 +1513,11 @@ const TopHeader = () => {
                                                         {/* Show tick only for selected option */}
                                                         <div className="w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5 flex items-center justify-center">
                                                             {selectedSoundQuality === option.label && (
-                                                                <Tick className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
+                                                                <Tick className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'} style={{ color: colors.iconSecondary }} />
                                                             )}
                                                         </div>
                                                         <div className="flex flex-col">
-                                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{option.label}</span>
+                                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]' onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}>{option.label}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1535,7 +1556,7 @@ const TopHeader = () => {
                                         onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                                     >
                                         <Language className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
-                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Language</span>
+                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]' onMouseEnter={(e) => e.target.style.backgroundColor = 'transparent'}>Language</span>
                                         <MdOutlineKeyboardArrowRight className="text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" style={{ color: colors.iconSecondary }} />
                                     </div>
 
@@ -1945,6 +1966,12 @@ const TopHeader = () => {
             {showAccessPopup && (
                 <AccessPopup onClose={() => setShowAccessPopup(false)} />
             )}
+
+            {/* AccessPopup for microphone permission */}
+            {showTunerPopup && (
+                <TunerPopup onClose={() => setShowTunerPopup(false)} />
+            )}
+
             {/* Add hidden file input for regular audio import */}
             <input
                 type="file"

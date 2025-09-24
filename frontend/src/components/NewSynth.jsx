@@ -609,18 +609,6 @@ const NewSynth = ({ onClose }) => {
         dispatch(setPianoNotes(updated));
     }, [selectedInstrument, existingPianoNotes, currentTrackId, getIsRecording, dispatch]);
 
-
-    const toggleButton = (section, index) => {
-        setSelectedButtons(prev => ({
-            ...prev,
-            [section]: prev[section] === index ? null : index
-        }));
-    };
-
-    const isButtonSelected = (section, index) => {
-        return selectedButtons[section] === index;
-    };
-
     const [isRecording, setIsRecording] = useState(false);
 
     const hendleRecord = () => {
@@ -2027,7 +2015,7 @@ const NewSynth = ({ onClose }) => {
                                                         <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px]' />
                                                     </button>
 
-                                                    <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-center 2xl:px-4 2xl:w-[250px]">
+                                                    <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-start 2xl:px-4 2xl:w-[250px]">
                                                         <div className="text-white">
                                                             <Track7 className='text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
                                                         </div>
