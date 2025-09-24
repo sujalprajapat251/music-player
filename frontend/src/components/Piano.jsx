@@ -20,7 +20,7 @@ import music from "../Images/playingsounds.svg";
 import BottomToolbar from './Layout/BottomToolbar';
 import { addPianoNote, setRecordingAudio, setPianoNotes, setPianoRecordingClip, setSelectedInstrument, updateTrack } from '../Redux/Slice/studio.slice';
 import PianoRolls from './PianoRolls';
-import Instruments from './OpenInstrumentsModel';
+import OpenInstrumentsModel from './OpenInstrumentsModel';
 import * as Tone from "tone";
 import Effects2 from './Effects2';
 import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsTwo } from '../Redux/Slice/effects.slice';
@@ -1968,8 +1968,13 @@ const Pianodemo = ({ onClose }) => {
     dispatch(toggleEffectsOffcanvas());
   };
 
+  const [openInstrumentModal, setOpenInstrumentModal] = useState(false);
+
   return (
     <>
+      {openInstrumentModal && (
+        <OpenInstrumentsModel onClose={() => setOpenInstrumentModal(false)} />
+      )}
       {showOffcanvas1 === true && (
         <>
           <div className="fixed z-[10] w-full h-full transition-transform left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px] lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[516px]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
@@ -2016,7 +2021,7 @@ const Pianodemo = ({ onClose }) => {
                             <FaChevronLeft className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                           </button>
 
-                          <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-start 2xl:px-4 2xl:w-[250px]">
+                          <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-center 2xl:px-4 2xl:w-[250px]" onClick={() => setOpenInstrumentModal(true)}>
                             <div className="text-black dark:text-white">
                               <GiPianoKeys className="text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[20px]" />
                             </div>
