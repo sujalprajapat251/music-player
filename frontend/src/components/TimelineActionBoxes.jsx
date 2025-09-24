@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import timeIcon1 from '../Images/timeIcon1.svg'
 import timeIcon2 from '../Images/timeIcon2.svg'
 import timeIcon3 from '../Images/timeIcon3.svg'
@@ -31,103 +31,153 @@ const getActionCardColors = (isDark) => ({
 const TimelineActionBoxes = ({ onAction }) => {
   const { isDark } = useTheme();
   const colors = getActionCardColors(isDark);
-return (
-  <div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    minHeight: "800px",
-    width: "calc(100vw - 300px)",
-    gap: "15px",
-  }}
->
-  {/* Row 1 */}
-  <div style={{ display: "flex", gap: "15px" }}>
-    {row1.map((action) => (
-      <div
-        key={action.label}
-        onClick={() => onAction && onAction(action.label)}
-        style={{
-          width: "130px",
-          height: "120px",
-          background: colors.cardBg,
-          borderRadius: "8px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          color: colors.text,
-          fontSize: "18px",
-          fontWeight: 600,
-          cursor: "pointer",
-          // boxShadow: colors.shadow,
-          transition: "background 0.2s",
-        }}
-        onMouseOver={(e) =>
-          (e.currentTarget.style.background = colors.cardHover)
-        }
-        onMouseOut={(e) =>
-          (e.currentTarget.style.background = colors.cardBg)
-        }
-      >
-        <img
-          style={{ width: "40px", height: "40px" }}
-          src={action.icon}
-          alt={action.label}
-          className="mb-2"
-        />
-        <p style={{ fontSize: "14px", textAlign: "center" }}>
-          {action.label}
-        </p>
-      </div>
-    ))}
-  </div>
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
-  {/* Row 2 */}
-  <div style={{ display: "flex", gap: "15px" }}>
-    {row2.map((action) => (
-      <div
-        key={action.label}
-        onClick={() => onAction && onAction(action.label)}
-        style={{
-          width: "130px",
-          height: "120px",
-          background: colors.cardBg,
-          borderRadius: "8px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          color: colors.text,
-          fontSize: "18px",
-          fontWeight: 600,
-          cursor: "pointer",
-          boxShadow: colors.shadow,
-          transition: "background 0.2s",
-        }}
-        onMouseOver={(e) =>
-          (e.currentTarget.style.background = colors.cardHover)
-        }
-        onMouseOut={(e) =>
-          (e.currentTarget.style.background = colors.cardBg)
-        }
-      >
-        <img
-          style={{ width: "30px", height: "30px" }}
-          src={action.icon}
-          alt={action.label}
-          className="mb-2"
-        />
-        <p style={{ fontSize: "14px", textAlign: "center" }}>
-          {action.label}
-        </p>
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleActionClick = (action, e) => {
+    if (action.label === "Import file") {
+      setMenuOpen(!menuOpen);
+    } else {
+      onAction && onAction(action.label);
+    }
+  };
+
+  const handleMenuClick = (menuAction) => {
+    setMenuOpen(false);
+    onAction && onAction(menuAction);
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "800px",
+        width: "calc(100vw - 300px)",
+        gap: "15px",
+      }}
+    >
+      {/* Row 1 */}
+      <div style={{ display: "flex", gap: "15px" }}>
+        {row1.map((action) => (
+          <div
+            key={action.label}
+            onClick={(e) => handleActionClick(action, e)}
+            style={{
+              width: "130px",
+              height: "120px",
+              background: colors.cardBg,
+              borderRadius: "8px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              color: colors.text,
+              fontSize: "18px",
+              fontWeight: 600,
+              cursor: "pointer",
+              // boxShadow: colors.shadow,
+              transition: "background 0.2s",
+            }}
+            onMouseOver={(e) =>
+              (e.currentTarget.style.background = colors.cardHover)
+            }
+            onMouseOut={(e) =>
+              (e.currentTarget.style.background = colors.cardBg)
+            }
+          >
+            <img
+              style={{ width: "40px", height: "40px" }}
+              src={action.icon}
+              alt={action.label}
+              className="mb-2"
+            />
+            <p style={{ fontSize: "14px", textAlign: "center" }}>
+              {action.label}
+            </p>
+          </div>
+        ))}
       </div>
-    ))}
-  </div>
-</div>
-);
+
+      {/* Row 2 */}
+      <div style={{ display: "flex", gap: "15px", position: "relative" }}>
+        {row2.map((action) => (
+          <div
+            key={action.label}
+            onClick={(e) => handleActionClick(action, e)}
+            style={{
+              width: "130px",
+              height: "120px",
+              background: colors.cardBg,
+              borderRadius: "8px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              color: colors.text,
+              fontSize: "18px",
+              fontWeight: 600,
+              cursor: "pointer",
+              boxShadow: colors.shadow,
+              transition: "background 0.2s",
+            }}
+            onMouseOver={(e) =>
+              (e.currentTarget.style.background = colors.cardHover)
+            }
+            onMouseOut={(e) =>
+              (e.currentTarget.style.background = colors.cardBg)
+            }
+          >
+            <img
+              style={{ width: "30px", height: "30px" }}
+              src={action.icon}
+              alt={action.label}
+              className="mb-2"
+            />
+            <p style={{ fontSize: "14px", textAlign: "center" }}>
+              {action.label}
+            </p>
+          </div>
+        ))}
+
+        {/* Dropdown menu */}
+        {menuOpen && (
+          <div ref={menuRef} style={{ position: "absolute", top: "100px", left: "200px", background: colors.cardBg, borderRadius: "6px", padding: "8px 0", boxShadow: colors.shadow, minWidth: "260px", zIndex: 1000,}}>
+            <div 
+              style={{ padding: "8px 12px", cursor: "pointer", color: colors.text,}} 
+              onClick={() => handleMenuClick("Import to Audio track")}
+            > 
+              🎵 Import to Audio track 
+            </div>
+            <div 
+              style={{ padding: "8px 12px", cursor: "pointer", color: colors.text,}} 
+              onClick={() => handleMenuClick("Import to Voice & Mic track")}
+            > 
+              🎤 Import to Voice & Mic track 
+            </div>
+            <div 
+              style={{ padding: "8px 12px", cursor: "pointer", color: colors.text,}} 
+              onClick={() => handleMenuClick("Open in sampler")}
+            > 
+              🎶 Open in sampler 
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default TimelineActionBoxes;
