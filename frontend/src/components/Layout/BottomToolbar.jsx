@@ -143,6 +143,20 @@ const BottomToolbar = () => {
         dispatch(togglePlayPause());
     };
 
+    // When recording is active and user hits play/pause, pause recording instead of full stop
+    const handlePlayPauseWithRecordingGuard = () => {
+        if (isRecording) {
+            // Pause recording state and stop metronome ticks
+            dispatch(setRecording(false));
+            if (tickIntervalRef.current) {
+                clearInterval(tickIntervalRef.current);
+                tickIntervalRef.current = null;
+            }
+            stopTick();
+        }
+        handlePlayPause();
+    };
+
     // Handle move one second ahead
     const handleMoveForward = () => {
         const newTime = Math.min(currentTime + 1, audioDuration);
@@ -582,7 +596,7 @@ const handleMoveBackwardSmall = () => {
                             <img src={media2} alt="" className="w-[10px] h-[10px] md:w-[12px] md:h-[12px] lg:w-[16px] lg:h-[16px]" />
                         </div>
                         <button
-                            onClick={handlePlayPause}
+                            onClick={handlePlayPauseWithRecordingGuard}
                             className="items-center rounded-full bg-[#1414141A] dark:bg-[#1F1F1F] p-1 lg:p-2 cursor-pointer hover:bg-[#1414142A] dark:hover:bg-[#2F2F2F] transition-colors"
                             title='Play / Pause [Space]'
                         >

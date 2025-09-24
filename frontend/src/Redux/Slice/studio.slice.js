@@ -39,6 +39,7 @@ const initialState = {
   isPlayingDrumRecording: false, // Track if playing back drum recording
   drumPlaybackStartTime: null, // Track when drum playback started
   drumRecordingClip: null, // transient info for background of last drum recording
+  drumQuantizeGrid: 'Off', // Drum-only quantize grid selection
   // TimelineTrack specific state
   selectedClipId: null,
   selectedTrackId: null,
@@ -492,6 +493,9 @@ const studioSlice = createSlice({
     setSoundQuality(state, action) {
       state.soundQuality = action.payload;
     },
+    setDrumQuantizeGrid: (state, action) => {
+      state.drumQuantizeGrid = action.payload || 'Off';
+    },
     setPatternDrumPlayback: (state, action) => {
       const { trackId, clipId, isPlaying: isDrumPlaying } = action.payload;
       if (!state.patternDrumPlayback) {
@@ -674,6 +678,7 @@ export const {
   clearKeyScaleSelection,
   setMetronomeSound,
   setSoundQuality,
+  setDrumQuantizeGrid,
   setPatternDrumPlayback,
   setPatternDrumEvents,
   moveTrackUp,

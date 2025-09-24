@@ -133,6 +133,14 @@ const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  // Redirect if already authenticated (prevents back navigation to /login)
+  useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      navigate('/project', { replace: true });
+    }
+  }, []);
+
   // Handle navigation state changes
   useEffect(() => {
     if (location.state?.openSignUp) {
@@ -179,7 +187,7 @@ const Login = () => {
       dispatch(
         facebookLogin({ uid: id, firstName, lastName, email, photo })
       ).then((res) => {
-        if (res.payload?.success) navigate("/project");
+        if (res.payload?.success) navigate("/project", { replace: true });
       });
     } else {
       console.error("Facebook login failed", response);
@@ -200,7 +208,7 @@ const Login = () => {
                 <Formik initialValues={{ email: "", password: "", showPassword: false, rememberMe: false,}} validationSchema={signInSchema}
                   onSubmit={(values) => {
                     dispatch(login(values)).then((response) => {
-                      if (response.payload.success) navigate("/project");
+                      if (response.payload.success) navigate("/project", { replace: true });
                     });
                   }}
                 >
@@ -273,7 +281,7 @@ const Login = () => {
                         googleLogin({ uid, firstName, lastName, email })
                       ).then((response) => {
                         console.log(response);
-                        if (response.payload.success) navigate("/project");
+                        if (response.payload.success) navigate("/project", { replace: true });
                       });
                     }}
                     onFailure={console.error}
@@ -350,7 +358,7 @@ const Login = () => {
                   validationSchema={signUpSchema}
                   onSubmit={(values) => {
                     dispatch(register(values)).then((response) => {
-                      if (response.payload) navigate("/project");
+                      if (response.payload) navigate("/project", { replace: true });
                     });
                   }}
                 >
@@ -434,7 +442,7 @@ const Login = () => {
                       googleLogin({ uid, firstName, lastName, email })
                     ).then((response) => {
                       console.log(response);
-                      if (response.payload.success) navigate("/home");
+                      if (response.payload.success) navigate("/project", { replace: true });
                     });
                   }}
                   onFailure={console.error}
