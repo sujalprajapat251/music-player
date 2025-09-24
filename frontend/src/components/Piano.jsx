@@ -2015,7 +2015,7 @@ const Pianodemo = ({ onClose }) => {
                 {activeTab === 'Instruments' && (
                   <>
                     <div className="bg-white dark:bg-[#1F1F1F] flex items-center justify-center pt-1 pb-1 px-2 md600:px-2 md600:pt-2 md600:pb-1 sm:gap-6 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
-                      <div className="bg-gray-200 dark:bg-[#353535] p-1 md600:p-2 lg:p-3 rounded-lg">
+                      <div className="bg-gray-200 dark:bg-[#353535] p-1 md600:p-2 lg:p-3 rounded-lg cursor-pointer">
                         <div className="flex items-center justify-between">
                           <button onClick={prevInstrument} className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors p-1 md600:p-2">
                             <FaChevronLeft className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
