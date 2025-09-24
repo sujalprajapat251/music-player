@@ -28,7 +28,7 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Link, useNavigate } from 'react-router-dom';
 import NewProjectModel from './NewProjectModel';
-import { deleteMusic, getAllMusic, moveToFolderMusic, renameMusic, addCoverImage, removeCoverImage } from '../Redux/Slice/music.slice';
+import { deleteMusic, getAllMusic, moveToFolderMusic, renameMusic, addCoverImage, removeCoverImage, createMusic, setCurrentMusic } from '../Redux/Slice/music.slice';
 import { log } from 'tone/build/esm/core/util/Debug';
 
 const AdaptiveMenu = ({ button, children, placement = 'bottom-end', widthClass = 'w-40 2xl:w-44' }) => {
@@ -129,6 +129,26 @@ const Home2 = () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
+
+    const handleCreateNewProject = async () => {
+        try {
+            const uniqueName = `Untitled Song ${new Date().toISOString().replace(/[:.]/g, '-')}`;
+            const created = await dispatch(createMusic({
+                name: uniqueName,
+                musicdata: {},
+                userId: userId
+            })).unwrap();
+            const id = created?._id || created?.id;
+            if (id) {
+                dispatch(setCurrentMusic(created));
+                navigate(`/sidebar/timeline/${id}`);
+            } else {
+                navigate('/sidebar/timeline');
+            }
+        } catch (e) {
+            navigate('/sidebar/timeline');
+        }
+    };
 
     const handlePlayPause = (index) => {
         if (playingIndex === index) {
@@ -836,7 +856,7 @@ const handleSaveCoverImage = async () => {
               <div>
                   <p className="text-white text-[14px] md:text-[16px]  lg:text-[18px] 2xl:text-[20px] 3xl:text-[24px] font-[600]">Start a new project</p>
                   <p className="text-white text-[12px] lg:text-[14px] 2xl:text-[14px] 3xl:text-[15px] lg:text-nowrap">Create a music or podcast project.</p>
-                  <div className='flex bg-black mt-3 md:mt-2 lg:mt-3 3xl:mt-4 h-[150px] md:w-[150px]  lg:h-[180px] lg:w-[220px] 2xl:h-[180px] 2xl:w-[200px] 3xl:h-[200px] 3xl:w-[250px] d_customborder items-center justify-center' onClick={() => navigate('/sidebar/timeline')} >
+                  <div className='flex bg-black mt-3 md:mt-2 lg:mt-3 3xl:mt-4 h-[150px] md:w-[150px]  lg:h-[180px] lg:w-[220px] 2xl:h-[180px] 2xl:w-[200px] 3xl:h-[200px] 3xl:w-[250px] d_customborder items-center justify-center' onClick={handleCreateNewProject} >
                     <button className='border border-dashed border-white flex flex-col items-center justify-center group p-3 xl:p-4 rounded-xl hover:bg-gray-900' >
                       <p className="text-white text-[16px] lg:text-[20px] xl:text-[24px]">+</p>
                       <p className="text-white text-[12px] xl:text-[14px] md:w-[60px] lg:w-full text-wrap lg:text-nowrap">New Project</p>
