@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Search,
   Play,
@@ -11,20 +11,86 @@ import {
   Volume2
 } from 'lucide-react';
 import { IoClose } from "react-icons/io5";
+import { isAction } from '@reduxjs/toolkit';
 
 const InstrumentPresets = ({ onClose }) => {
   const [selectedCategory, setSelectedCategory] = useState('Keys');
   const [selectedSubCategory, setSelectedSubCategory] = useState('Pianos');
   const [searchTerm, setSearchTerm] = useState('');
+  const rightPanelRef = useRef(null);
+  const sectionRefs = useRef({});
+  const isSyncingFromScrollRef = useRef(false);
+
+  useEffect(() => {
+    const sectionElement = sectionRefs.current[selectedSubCategory];
+    if (sectionElement) {
+      if (isSyncingFromScrollRef.current) {
+        // Skip auto-scrolling when selection was set from scroll sync
+        isSyncingFromScrollRef.current = false;
+        return;
+      }
+      sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedSubCategory, selectedCategory, searchTerm]);
+
+  // Sync middle-panel selection while scrolling the right panel
+  useEffect(() => {
+    const container = rightPanelRef.current;
+    if (!container) return;
+
+    let ticking = false;
+    const handleScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        ticking = false;
+        const containerTop = container.getBoundingClientRect().top;
+        const entries = Object.entries(sectionRefs.current || {});
+        const list = entries
+          .map(([sub, el]) => ({ sub, el, rect: el ? el.getBoundingClientRect() : null }))
+          .filter(item => item.el && item.rect);
+
+        if (list.length === 0) return;
+
+        // Sort by vertical position
+        list.sort((a, b) => a.rect.top - b.rect.top);
+
+        // Find the last section whose top is at or above the container top (with small tolerance)
+        const tolerance = 8; // px
+        let active = null;
+        for (let i = 0; i < list.length; i++) {
+          if (list[i].rect.top - containerTop <= tolerance) {
+            active = list[i];
+          } else {
+            break;
+          }
+        }
+
+        // If none are at/above, pick the first one below the top
+        if (!active) {
+          active = list[0];
+        }
+
+        const nextSub = active?.sub;
+        if (nextSub && nextSub !== selectedSubCategory) {
+          isSyncingFromScrollRef.current = true;
+          setSelectedSubCategory(nextSub);
+        }
+      });
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [selectedSubCategory, selectedCategory, searchTerm]);
 
   const categories = [
     { name: 'My Preset Collection', icon: <Disc2 className="w-5 h-5" />, color: 'bg-gradient-to-r from-blue-500 to-purple-500' },
-    { name: 'Guitar', icon: <Guitar className="w-5 h-5" />, color: 'bg-gray-600' },
-    { name: 'Bass & 808s', icon: <Volume2 className="w-5 h-5" />, color: 'bg-gray-600' },
-    { name: 'Orchestral', icon: <Radio className="w-5 h-5" />, color: 'bg-gray-600' },
-    { name: 'Keys', icon: <Keyboard className="w-5 h-5" />, color: 'bg-gray-600' },
-    { name: 'Synths', icon: <Disc2 className="w-5 h-5" />, color: 'bg-gray-600' },
-    { name: 'Drums & Machines', icon: <Drum className="w-5 h-5" />, color: 'bg-gray-600' }
+    { name: 'Guitar', icon: <Guitar className="w-4 h-4" />, color: 'bg-[#37363a]' },
+    { name: 'Bass & 808s', icon: <Volume2 className="w-4 h-4" />, color: 'bg-[#37363a]' },
+    { name: 'Orchestral', icon: <Radio className="w-4 h-4" />, color: 'bg-[#37363a]' },
+    { name: 'Keys', icon: <Keyboard className="w-4 h-4" />, color: 'bg-[#37363a]' },
+    { name: 'Synths', icon: <Disc2 className="w-4 h-4" />, color: 'bg-[#37363a]' },
+    { name: 'Drums & Machines', icon: <Drum className="w-4 h-4" />, color: 'bg-[#37363a]' }
   ];
 
 
@@ -413,16 +479,16 @@ const InstrumentPresets = ({ onClose }) => {
       {/* Overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-50" />
       {/* Modal Box Centered */}
-      <div className="relative bg-[#262529] rounded-lg border border-[#23232A] shadow-2xl w-full max-w-3xl mx-auto flex flex-col" style={{ minHeight: '520px', maxHeight: '660px', width: '900px' }}>
+      <div className="relative bg-[#262529] rounded-lg border border-[#23232A] shadow-2xl w-full max-w-3xl mx-auto flex flex-col" style={{ height: '660px', width: '900px' }}>
         {/* Header and Close */}
         <div className="flex items-center justify-between p-5 border-b border-[#36363C]">
           <h2 className="text-2xl font-semibold text-white ml-5">Instrument presets</h2>
           <div className="relative w-full max-w-xs ml-auto">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#c0c0c0] w-4 h-4" />
             <input
               type="text"
               placeholder="Search"
-              className="w-full bg-[#262529] border border-[#36363C] rounded-full pl-10 pr-4 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+              className="w-full bg-[#1e1d20] border border-[#343238] rounded-full pl-10 pr-4 py-2 text-sm text-white placeholder-[#c0c0c0] focus:outline-none focus:border-[#a78ae6]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -434,16 +500,17 @@ const InstrumentPresets = ({ onClose }) => {
           </button>
         </div>
         {/* Three Columns */}
-        <div className="flex flex-1 min-h-[400px] overflow-y-auto">
+        <div className="flex flex-1 min-h-[400px]">
           {/* Left Sidebar */}
-          <div className="w-64 bg-[#262529] border-r border-[#2f2e31] py-2">
+          <div className="w-64 bg-[#262529] border-r border-[#37363a]"> 
             {categories.map((category, index) => (
               <div
                 key={index}
-                className={`flex items-center gap-3 px-3 py-2 mb-1 rounded-md cursor-pointer hover:bg-[#575757] transition-colors ${
+                className={`flex items-center gap-3 px-3 py-3 rounded-md cursor-pointer border-b border-[#36363c] hover:bg-[#2c2b2f] transition-colors ${
                   category.name === selectedCategory ? 'bg-[#2f2e31]' : ''
                 }`}
                 onClick={() => {
+                  sectionRefs.current = {};
                   setSelectedCategory(category.name);
                   if (category.name === 'Guitar') {
                     setSelectedSubCategory('Acoustic');
@@ -461,50 +528,100 @@ const InstrumentPresets = ({ onClose }) => {
               </div>
             ))}
           </div>
-          {/* Middle Panel - Subcategories */}
-          <div className="w-64 bg-[#262529] border-r border-[#2f2e31] py-2 overflow-y-auto">
-            {subCategories.map((sub, idx) => (
-              <div
-                key={idx}
-                className={`px-3 py-2 mb-1 rounded-md cursor-pointer transition-colors ${
-                  sub === selectedSubCategory
-                    ? 'bg-[#2f2e31] text-white font-semibold '
-                    : 'text-gray-300 hover:bg-[#575757] hover:text-white'
-                }`}
-                onClick={() => setSelectedSubCategory(sub)}
-              >
-                <span className="text-sm">{sub}</span>
-              </div>
-            ))}
-          </div>
-          {/* Right Panel - Presets List */}
-          <div className="flex-1 bg-[#262529] py-2 overflow-y-auto">
-            <div className="flex items-center justify-between px-3 py-2 mb-2">
-              <div className="font-semibold text-white">{selectedSubCategory} <span className="text-gray-400">({filteredPresets.length})</span></div>
-            </div>
-            {filteredPresets.map((preset, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between px-3 py-3 rounded-md hover:bg-[#575757] cursor-pointer transition-colors group border-b border-gray-900"
-              >
-                <div className="flex items-center gap-3">
-                  <Play className="w-4 h-4 text-white" />
-                  <div>
-                    <div className="text-white font-medium text-sm">
-                      {preset.name}
-                    </div>
-                    {preset.trial && (
-                      <div className="text-gray-400 text-xs">
-                        Start free {preset.trialType}
+          
+          {selectedCategory === 'My Preset Collection' ? (
+            // Parent container
+            <div className="flex-1 flex items-center justify-center bg-[#1e1d20] text-[#e2e2e2]">
+              <div className="flex flex-col items-center justify-center text-center ">
+                {/* Dummy cards */}
+                <div className="space-y-2 mb-6">
+                  {[1, 2, 3].map((item) => (
+                    <div
+                      key={item}
+                      className="flex items-center bg-[#262529] w-80 h-12 rounded px-3 space-x-3"
+                    >
+                      {/* Play button */}
+                      <div className="w-0 h-0 border-t-[8px] border-b-[8px] border-l-[12px] border-t-transparent border-b-transparent border-l-white" />
+                      
+                      {/* Text lines */}
+                      <div className="flex flex-col space-y-1 w-full">
+                        <div className="h-2 bg-[#7f7b87] rounded w-2/3" />
+                        <div className="h-2 bg-[#7f7b87] rounded w-1/2" />
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  ))}
                 </div>
-                <ChevronRight className="w-4 h-4 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                <p>Your custom presets will end up here.</p>
+                <a href="#" className="text-[#a78ae6] text-sm mt-2 underline">
+                  Learn how
+                </a>
               </div>
-            ))}
+            </div>
+            ) : (
+              <>
+                {/* Middle Panel - Subcategories */}
+                <div className="w-64 bg-[#262529] border-r border-[#37363a] overflow-y-auto">
+                  {subCategories.map((sub, idx) => {
+                    const isActive = sub === selectedSubCategory;
+                    return (
+                      <div
+                        key={idx}
+                        className={`px-3 py-3 border-b border-[#36363c] rounded-md cursor-pointer transition-colors ${
+                          isActive
+                            ? 'bg-[#2f2e31] text-white font-semibold'
+                            : 'text-gray-300 hover:bg-[#2c2b2f] hover:text-white'
+                        }`}
+                        onClick={() => setSelectedSubCategory(sub)}
+                      >
+                        <span className="text-sm">{sub}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+            {/* Right Panel - Presets List */}
+                <div ref={rightPanelRef} className="flex-1 bg-[#262529] overflow-y-auto">
+                  {(['Guitar', 'Bass & 808s','Orchestral', 'Keys', 'Synths','Drums & Machines'].includes(selectedCategory) ? subCategories : [selectedSubCategory]).map((sub, idx) => {
+                    // Filter presets by search term
+                    const presets = (presetMap[selectedCategory] && presetMap[selectedCategory][sub]) || [];
+                    const filtered = presets.filter(preset =>
+                      preset.name.toLowerCase().includes(searchTerm.toLowerCase())
+                    );
+                    if (filtered.length === 0) return null;
+                    return (
+                      <div key={sub} ref={(el) => { if (el) sectionRefs.current[sub] = el; }} className="">
+                        <div className="flex items-center justify-between px-3 py-3 border-b border-[#36363c] bg-[#37363a] z-10">
+                          <div className="font-semibold text-white">{sub} <span className="text-gray-400">({filtered.length})</span></div>
+                        </div>
+                        {filtered.map((preset, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between px-3 py-3 rounded-md hover:bg-[#2c2b2f] cursor-pointer transition-colors group border-b border-[#36363c]"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Play className="w-4 h-4 text-white" />
+                              <div>
+                                <div className="text-white font-medium text-sm">
+                                  {preset.name}
+                                </div>
+                                {preset.trial && (
+                                  <div className="text-gray-400 text-xs">
+                                    Start free {preset.trialType}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
-        </div>
       </div>
     </div>
   );
