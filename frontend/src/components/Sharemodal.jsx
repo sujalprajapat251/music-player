@@ -88,7 +88,7 @@ const ShareModal = ({ isOpen, onClose, projectId }) => {
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 ${colors.overlayBg} flex items-center justify-center z-[99]`}>
+    <div className={`fixed inset-0 ${colors.overlayBg} flex items-center justify-center z-[99] bg-black/60 backdrop-blur-sm transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in`}>
     <div
       className="rounded-lg p-6 w-full max-w-md mx-4 shadow-2xl"
       style={{ background: colors.modalBg }}
@@ -150,10 +150,10 @@ const ShareModal = ({ isOpen, onClose, projectId }) => {
       </div>
 
       {/* Divider */}
-      <div className="mb-6" style={{ borderTop: `1px solid ${colors.divider}` }}></div>
+      {/* <div className="mb-6" style={{ borderTop: `1px solid ${colors.divider}` }}></div> */}
 
       {/* Add people */}
-      <div>
+      {/* <div>
         <h3
           className="text-lg font-semibold mb-3"
           style={{ color: colors.modalText }}
@@ -202,7 +202,7 @@ const ShareModal = ({ isOpen, onClose, projectId }) => {
         <p style={{ color: colors.modalSubText }} className="text-sm">
           These people can join and make changes to your project.
         </p>
-      </div>
+      </div> */}
     </div>
   </div>
   );

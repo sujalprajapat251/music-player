@@ -152,7 +152,7 @@ const Profile = () => {
         <p className="text-white text-[28px] md:text-[32px] font-bold tracking-wide">
           Profile 
         </p>
-        <div className="h-1 w-16 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full mt-2"></div>
+        <div className="h-1 w-16 bg-gradient-to-r from-indigo-500 to-purple-400 rounded-full mt-2"></div>
       </div>
 
   {/* Card */}
@@ -170,7 +170,7 @@ const Profile = () => {
         />
         <label
           htmlFor="avatar-upload"
-          className="absolute bottom-2 right-2 bg-gradient-to-r from-emerald-500 to-cyan-400 p-2 rounded-full cursor-pointer shadow-lg hover:scale-105 transition-transform"
+          className="absolute bottom-2 right-2 bg-gradient-to-r from-indigo-500 to-purple-400 p-2 rounded-full cursor-pointer shadow-lg hover:scale-105 transition-transform"
         >
           <TiCameraOutline className="text-black text-[20px]" />
           <input
@@ -209,7 +209,7 @@ const Profile = () => {
             value={form.firstName}
             onChange={handleChange}
             disabled={isSubmitting}
-            className="w-full bg-[#232323] text-white rounded-lg px-4 py-2.5 shadow-inner focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition disabled:opacity-50"
+            className="w-full bg-[#232323] text-white rounded-lg px-4 py-2.5 shadow-inner focus:outline-none focus:ring-2 focus:ring-violet-500 transition disabled:opacity-50"
             placeholder="John"
           />
         </div>
@@ -224,7 +224,7 @@ const Profile = () => {
             value={form.lastName}
             onChange={handleChange}
             disabled={isSubmitting}
-            className="w-full bg-[#232323] text-white rounded-lg px-4 py-2.5 shadow-inner focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition disabled:opacity-50"
+            className="w-full bg-[#232323] text-white rounded-lg px-4 py-2.5 shadow-inner focus:outline-none focus:ring-2 focus:ring-violet-500 transition disabled:opacity-50"
             placeholder="Patel"
           />
         </div>
@@ -239,7 +239,7 @@ const Profile = () => {
               value={form.countryCode}
               onChange={handleCountryCodeChange}
               disabled={isSubmitting}
-              className="bg-[#232323] text-white rounded-l-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 border-r border-gray-700 disabled:opacity-50"
+              className="bg-[#232323] text-white rounded-l-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-500 border-r border-gray-700 disabled:opacity-50"
             >
               <option value="+91">+91</option>
               <option value="+1">+1</option>
@@ -253,7 +253,7 @@ const Profile = () => {
               value={form.mobile}
               onChange={handleChange}
               disabled={isSubmitting}
-              className="w-full bg-[#232323] text-white rounded-r-lg px-4 py-2.5 shadow-inner focus:outline-none focus:ring-2 focus:ring-emerald-400/50 disabled:opacity-50"
+              className="w-full bg-[#232323] text-white rounded-r-lg px-4 py-2.5 shadow-inner focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-50"
               placeholder="65896 58585"
             />
           </div>
@@ -269,7 +269,7 @@ const Profile = () => {
             value={form.email}
             onChange={handleChange}
             disabled={isSubmitting}
-            className="w-full bg-[#232323] text-white rounded-lg px-4 py-2.5 shadow-inner focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition disabled:opacity-50"
+            className="w-full bg-[#232323] text-white rounded-lg px-4 py-2.5 shadow-inner focus:outline-none focus:ring-2 focus:ring-violet-500 transition disabled:opacity-50"
             placeholder="johanpatil123@gmail.com"
           />
         </div>
@@ -293,7 +293,7 @@ const Profile = () => {
                 checked={form.gender === g}
                 onChange={handleGenderChange}
                 disabled={isSubmitting}
-                className="mr-2 accent-emerald-400 disabled:opacity-50"
+                className="mr-2 accent-violet-400 disabled:opacity-50"
               />
               {g}
             </label>
@@ -306,7 +306,7 @@ const Profile = () => {
         <button
           type="submit"
           disabled={isSubmitting || loading}
-          className="bg-gradient-to-r from-emerald-500 to-cyan-400 text-black font-semibold px-10 py-3 rounded-xl shadow-md hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          className="bg-gradient-to-r from-indigo-500 to-purple-400 text-black font-semibold px-10 py-3 rounded-xl shadow-md hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
         >
           {isSubmitting ? (
             <>

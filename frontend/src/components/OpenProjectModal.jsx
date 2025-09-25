@@ -259,7 +259,7 @@ const drawWaveform = useCallback((musicId, idx) => {
     <div>
       {open && (
         <div
-          className="fixed inset-0 z-[999] flex items-center justify-center"
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
           style={{ backgroundColor: colors.overlayBg }}
           onClick={onClose}
         >
