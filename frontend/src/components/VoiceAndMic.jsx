@@ -138,7 +138,7 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
     const [isRecording, setIsRecording] = useState(false);
     const [audioLevel, setAudioLevel] = useState(0);
     const [recordingTime, setRecordingTime] = useState(0);
-    const [selectedInput, setSelectedInput] = useState('No Input selected');
+    const [selectedInput, setSelectedInput] = useState('No instrument selected');
     const [activeTab, setActiveTab] = useState('Audio');
     const [showAccessPopup, setShowAccessPopup] = useState(false);
     const [volume, setVolume] = useState(90);
@@ -388,14 +388,41 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
     }, [getIsRecording, getTrackType]);
 
     const [isOpen, setIsOpen] = useState(false);
+    const [audioInputs, setAudioInputs] = useState([]);
 
-    const audioInputs = [
-        'No input selected',
-        'External Microphone Synpath...',
-        'Built-in Microphone',
-        'USB Audio Device',
-        'Bluetooth Headset'
-    ];
+    // Discover connected audio input devices (potential live instruments)
+    useEffect(() => {
+        const fetchAudioInputs = async () => {
+            try {
+                // Ensure labels are available
+                try {
+                    await navigator.mediaDevices.getUserMedia({ audio: true });
+                } catch (_) {
+                    // ignore; enumerateDevices may still work, and AccessPopup handles perms elsewhere
+                }
+
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const inputs = devices
+                    .filter(d => d.kind === 'audioinput')
+                    .map(d => d.label || 'Audio Input');
+
+                // Optional: prioritize likely instrument/audio interface devices
+                const keywords = ['usb', 'interface', 'mixer', 'line', 'guitar', 'external'];
+                const prioritized = inputs.sort((a, b) => {
+                    const aMatch = keywords.some(k => a.toLowerCase().includes(k));
+                    const bMatch = keywords.some(k => b.toLowerCase().includes(k));
+                    return (bMatch === aMatch) ? 0 : (bMatch ? 1 : -1);
+                });
+
+                setAudioInputs(prioritized);
+            } catch (_) {
+                setAudioInputs([]);
+            }
+        };
+
+        fetchAudioInputs();
+        // Re-run if permissions change or component opens
+    }, []);
 
     const handleSelectInput = (input) => {
         setSelectedInput(input);
@@ -448,9 +475,9 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                             onClick={() => setIsOpen(!isOpen)}
                                                             className="w-full transition-colors duration-200 rounded-lg px-3 py-2 flex items-center justify-between text-white border border-gray-600"
                                                         >
-                                                            <div className="flex items-center space-x-2">
+                                                            <div className="flex items-center space-x-2 min-w-0">
                                                                 <Mic className="w-4 h-4 text-gray-300" />
-                                                                <span className="text-sm text-gray-300 truncate">
+                                                                <span className="text-sm text-gray-300 truncate max-w-[11rem] sm:max-w-[14rem] md:max-w-[18rem] lg:max-w-[22rem]">
                                                                     {selectedInput}
                                                                 </span>
                                                             </div>
@@ -462,18 +489,22 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
 
                                                         {isOpen && (
                                                             <div className="absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] border border-gray-600 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
-                                                                {audioInputs.map((input, index) => (
-                                                                    <button
-                                                                        key={index}
-                                                                        onClick={() => handleSelectInput(input)}
-                                                                        className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-700 transition-colors duration-150 flex items-center space-x-2 ${selectedInput === input ? 'bg-gray-700 text-white' : 'text-gray-300'
-                                                                            } ${index === 0 ? 'rounded-t-lg' : ''} ${index === audioInputs.length - 1 ? 'rounded-b-lg' : ''
-                                                                            }`}
-                                                                    >
-                                                                        <Mic className="w-4 h-4" />
-                                                                        <span className="truncate">{input}</span>
-                                                                    </button>
-                                                                ))}
+                                                                {audioInputs.length > 0 ? (
+                                                                    audioInputs.map((input, index) => (
+                                                                        <button
+                                                                            key={index}
+                                                                            onClick={() => handleSelectInput(input)}
+                                                                            className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-700 transition-colors duration-150 flex items-center space-x-2 ${selectedInput === input ? 'bg-gray-700 text-white' : 'text-gray-300'
+                                                                                } ${index === 0 ? 'rounded-t-lg' : ''} ${index === audioInputs.length - 1 ? 'rounded-b-lg' : ''
+                                                                                }`}
+                                                                        >
+                                                                            <Mic className="w-4 h-4" />
+                                                                            <span className="truncate">{input}</span>
+                                                                        </button>
+                                                                    ))
+                                                                ) : (
+                                                                    <div className="px-3 py-2 text-sm text-gray-400">No instrument detected</div>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </div>
@@ -569,11 +600,11 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                                 <span className="text-sm text-[#ffffff]">Realtime</span>
                                                                 {/* onClick={() => setIsRealtimeEnabled(!isRealtimeEnabled) */}
                                                                 <div
-                                                                    className={`w-10 h-6 rounded-full cursor-pointer transition-colors ${isRealtimeEnabled ? 'bg-purple-500' : 'bg-gray-600'
+                                                                    className={`w-8 h-5 rounded-full cursor-pointer transition-colors ${isRealtimeEnabled ? 'bg-purple-500' : 'bg-gray-600'
                                                                         }`}
                                                                     onClick={() => setPricingModalOpen(true)}>
                                                                     <div
-                                                                        className={`w-4 h-4 bg-white rounded-full mt-1 transition-transform ${!isRealtimeEnabled ? 'ml-5' : 'ml-1'
+                                                                        className={`w-3 h-3 bg-white rounded-full mt-1 transition-transform ${!isRealtimeEnabled ? 'ml-5' : 'ml-1'
                                                                             }`}
                                                                     ></div>
                                                                 </div>

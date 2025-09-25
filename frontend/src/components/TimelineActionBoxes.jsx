@@ -6,6 +6,8 @@ import timeIcon4 from '../Images/timeIcon4.svg'
 import timeIcon5 from '../Images/timeIcon5.svg'
 import timeIcon6 from '../Images/timeIcon5.svg'
 import { useTheme } from "../Utils/ThemeContext";
+import { LuAudioLines } from "react-icons/lu";
+import { IoMicOutline } from "react-icons/io5";
 
 const actions = [
   { label: "Browse loops", icon: timeIcon1 },
@@ -154,24 +156,27 @@ const TimelineActionBoxes = ({ onAction }) => {
 
         {/* Dropdown menu */}
         {menuOpen && (
-          <div ref={menuRef} style={{ position: "absolute", top: "100px", left: "200px", background: colors.cardBg, borderRadius: "6px", padding: "8px 0", boxShadow: colors.shadow, minWidth: "260px", zIndex: 1000,}}>
-            <div 
-              style={{ padding: "8px 12px", cursor: "pointer", color: colors.text,}} 
+          <div ref={menuRef} style={{ position: "absolute", top: "100px", left: "200px", background: colors.cardBg, borderRadius: "6px", padding: "8px 0", boxShadow: colors.shadow, minWidth: "260px", zIndex: 1000, }}>
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", cursor: "pointer", color: colors.text }}
               onClick={() => handleMenuClick("Import to Audio track")}
-            > 
-              🎵 Import to Audio track 
+            >
+              <LuAudioLines />
+              <span>Import to Audio track</span>
             </div>
-            <div 
-              style={{ padding: "8px 12px", cursor: "pointer", color: colors.text,}} 
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", cursor: "pointer", color: colors.text, }}
               onClick={() => handleMenuClick("Import to Voice & Mic track")}
-            > 
-              🎤 Import to Voice & Mic track 
+            >
+              <IoMicOutline />
+              <span>Import to Voice & Mic track</span>
             </div>
-            <div 
-              style={{ padding: "8px 12px", cursor: "pointer", color: colors.text,}} 
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", cursor: "pointer", color: colors.text, }}
               onClick={() => handleMenuClick("Open in sampler")}
-            > 
-              🎶 Open in sampler 
+            >
+              <LuAudioLines />
+              <span>Open in sampler</span>
             </div>
           </div>
         )}

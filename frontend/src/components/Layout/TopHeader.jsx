@@ -167,6 +167,38 @@ const TopHeader = () => {
     const [showAccessPopup, setShowAccessPopup] = useState(false);
     const [showTunerPopup, setShowTunerPopup] = useState(false);
 
+    // Function to check for live instruments connected to the setup
+    const checkForLiveInstruments = async () => {
+        try {
+            // Get available audio input devices
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const audioInputs = devices.filter(device => device.kind === 'audioinput');
+
+            // Check if there are audio input devices available
+            // This includes built-in microphones, external microphones, audio interfaces, etc.
+            if (audioInputs.length === 0) {
+                return false;
+            }
+
+            // Check for external audio devices (not just built-in microphone)
+            // External devices typically have more descriptive labels
+            const hasExternalDevices = audioInputs.some(device => 
+                device.label && 
+                device.label.toLowerCase().includes('external') ||
+                device.label.toLowerCase().includes('usb') ||
+                device.label.toLowerCase().includes('audio interface') ||
+                device.label.toLowerCase().includes('mixer') ||
+                device.label.toLowerCase().includes('interface')
+            );
+
+            // If we have external devices or multiple input sources, consider it as live instruments
+            return hasExternalDevices || audioInputs.length > 1;
+        } catch (error) {
+            console.error('Error checking for live instruments:', error);
+            return false;
+        }
+    };
+
     // Open AccessPopup if microphone permission is not granted, otherwise open TunerPopup
     const handleTunerClick = async () => {
         if (getTrackType !== 'Voice & Mic') return;
@@ -174,7 +206,13 @@ const TopHeader = () => {
             if (navigator.permissions && navigator.permissions.query) {
                 const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
                 if (permissionStatus.state === 'granted') {
-                    setShowTunerPopup(true);
+                    // Check for live instruments before opening TunerPopup
+                    const hasLiveInstruments = await checkForLiveInstruments();
+                    if (hasLiveInstruments) {
+                        setShowTunerPopup(true);
+                    } else {
+                        setShowAccessPopup(true);
+                    }
                 } else {
                     setShowAccessPopup(true);
                 }
