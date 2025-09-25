@@ -38,6 +38,26 @@ export const createMusic = createAsyncThunk(
     }
 );
 
+export const updateMusic = createAsyncThunk(           
+    "music/updateMusic",
+    async ({ id, data }, { dispatch, rejectWithValue }) => {
+        try {
+            const token = await sessionStorage.getItem("token");
+            const response = await axiosInstance.put(`${BASE_URL}/updateMusic/${id}`, data,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+            dispatch(setAlert({ text: response.data.message, color: 'success' }));
+            return response.data.music;
+        } catch (error) {
+            return handleErrors(error, dispatch, rejectWithValue);
+        }
+    }
+);
+
 export const getAllMusic = createAsyncThunk(
     "music/getAllMusic",
     async (_, { dispatch, rejectWithValue }) => {
@@ -276,6 +296,21 @@ const musicSlice = createSlice({
                 state.loading = false;
                 state.success = false;
                 state.message = action.payload?.message || 'Failed to create Music';
+            })
+            .addCase(updateMusic.pending, (state) => {
+                state.loading = true;
+                state.message = 'updating Music...';
+            })
+            .addCase(updateMusic.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = true;
+                state.message = 'Music updated successfully';
+                state.currentMusic = action.payload;
+            })
+            .addCase(updateMusic.rejected, (state, action) => {
+                state.loading = false;
+                state.success = false;
+                state.message = action.payload?.message || 'Failed to update Music';
             })
             .addCase(getAllMusic.pending, (state) => {
                 state.loading = true;
