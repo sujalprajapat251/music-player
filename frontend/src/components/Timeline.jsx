@@ -3,7 +3,7 @@ import { Player, start } from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
 import Soundfont from 'soundfont-player';
-import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio, setCurrentTrackId, setTrackType, triggerPatternDrumPlayback, clearTrackDeleted, setPianoNotes, setDrumRecordedData, setPianoRecordingClip, setDrumRecordingClip, setTracks, updateTrack, addPianoNote } from "../Redux/Slice/studio.slice";
+import { addTrack, addAudioClipToTrack, updateAudioClip, removeAudioClip, setPlaying, setCurrentTime, setAudioDuration, toggleMuteTrack, updateSectionLabel, removeSectionLabel, addSectionLabel, setTrackVolume, updateTrackAudio, resizeSectionLabel, moveSectionLabel, setRecordingAudio, setCurrentTrackId, setTrackType, triggerPatternDrumPlayback, clearTrackDeleted, setPianoNotes, setDrumRecordedData, setPianoRecordingClip, setDrumRecordingClip, setTracks, updateTrack, addPianoNote, createTrackWithDefaults } from "../Redux/Slice/studio.slice";
 import { selectStudioState } from "../Redux/rootReducer";
 import { createSynthSound, getAudioContext as getDrumAudioContext } from '../Utils/drumMachineUtils';
 import { selectGridSettings, setSelectedGrid, setSelectedTime, setSelectedRuler, setBPM, zoomIn, zoomOut, resetZoom } from "../Redux/Slice/grid.slice";
@@ -66,6 +66,8 @@ const Timeline = () => {
   const lastReduxUpdateRef = useRef(0);
   const lastPlayerUpdateRef = useRef(0);
   const fileInputRef = useRef(null);
+  const audioTrackFileInputRef = useRef(null);
+  const voiceMicFileInputRef = useRef(null);
   const timelineContainerRef = useRef(null);
   const isDragging = useRef(false);
   const animationFrameId = useRef(null);
@@ -2766,6 +2768,12 @@ const Timeline = () => {
       setShowAddTrackModal(true);
     } else if (action === "Import file") {
       fileInputRef.current && fileInputRef.current.click();
+    } else if (action === "Import to Audio track") {
+      audioTrackFileInputRef.current && audioTrackFileInputRef.current.click();
+    } else if (action === "Import to Voice & Mic track") {
+      voiceMicFileInputRef.current && voiceMicFileInputRef.current.click();
+    } else if (action === "Open in sampler") {
+      console.log("Open in sampler - not implemented yet");
     } else if (action === "Play the synth") {
       const newTrackId = Date.now() + Math.random();
       const newTrack = {
@@ -3478,6 +3486,142 @@ const Timeline = () => {
     }
   }, [projectId, allMusic, musicLoading, dispatch]);
 
+  // File import handlers
+  const handleAudioTrackFileImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Check if file is audio
+    if (!file.type.startsWith('audio/')) {
+      alert('Please select an audio file');
+      return;
+    }
+
+    try {
+      // Create object URL for the file
+      const url = URL.createObjectURL(file);
+
+      // Get audio duration
+      let duration = null;
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const arrayBuffer = await file.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        duration = audioBuffer.duration;
+      } catch (err) {
+        console.error('Error getting audio duration:', err);
+        duration = 0;
+      }
+
+      // If no current track, create a new audio track
+      let targetTrackId = currentTrackId;
+      if (!targetTrackId || !tracks.find(t => t.id === targetTrackId)) {
+        const newTrackId = Date.now();
+        dispatch(createTrackWithDefaults({
+          id: newTrackId,
+          name: 'Audio Track',
+          type: 'audio',
+          color: '#FFB6C1'
+        }));
+        targetTrackId = newTrackId;
+      }
+
+      // Create audio clip data
+      const audioClip = {
+        id: Date.now() + Math.random(),
+        url: url,
+        name: file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
+        duration: duration,
+        trimStart: 0,
+        trimEnd: duration,
+        startTime: 0,
+        color: '#FFB6C1',
+        type: 'audio',
+        fromImport: true
+      };
+
+      // Add the audio clip to the track
+      dispatch(addAudioClipToTrack({
+        trackId: targetTrackId,
+        audioClip: audioClip
+      }));
+
+      // Reset file input
+      e.target.value = '';
+      
+    } catch (error) {
+      console.error('Error importing audio file:', error);
+      alert('Failed to import audio file. Please try again.');
+    }
+  };
+
+  const handleVoiceMicFileImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Check if file is audio
+    if (!file.type.startsWith('audio/')) {
+      alert('Please select an audio file');
+      return;
+    }
+
+    try {
+      // Create object URL for the file
+      const url = URL.createObjectURL(file);
+
+      // Get audio duration
+      let duration = null;
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const arrayBuffer = await file.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        duration = audioBuffer.duration;
+      } catch (err) {
+        console.error('Error getting audio duration:', err);
+        duration = 0;
+      }
+
+      // Create a new Voice & Mic track
+      const newTrackId = Date.now();
+      dispatch(createTrackWithDefaults({
+        id: newTrackId,
+        name: 'Voice & Mic Track',
+        type: 'Voice & Mic',
+        color: '#FF6B6B' // Different color for Voice & Mic tracks
+      }));
+
+      // Create audio clip data
+      const audioClip = {
+        id: Date.now() + Math.random(),
+        url: url,
+        name: file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
+        duration: duration,
+        trimStart: 0,
+        trimEnd: duration,
+        startTime: 0,
+        color: '#FF6B6B',
+        type: 'voice_mic',
+        fromImport: true
+      };
+
+      // Add the audio clip to the Voice & Mic track
+      dispatch(addAudioClipToTrack({
+        trackId: newTrackId,
+        audioClip: audioClip
+      }));
+
+      // Set the track type to Voice & Mic to show the Voice & Mic interface
+      dispatch(setTrackType('Voice & Mic'));
+
+      // Reset file input
+      e.target.value = '';
+      
+    } catch (error) {
+      console.error('Error importing voice & mic file:', error);
+      alert('Failed to import voice & mic file. Please try again.');
+    }
+  };
+
   return (
     <>
       <EditTrackNameModal isOpen={edirNameModel} onClose={() => setEdirNameModel(false)} onSave={handleSave} />
@@ -3854,6 +3998,25 @@ const Timeline = () => {
           }
         }}
       />
+
+      {/* Audio track import */}
+      <input 
+        type="file" 
+        ref={audioTrackFileInputRef} 
+        style={{ display: "none" }}
+        accept="audio/*"
+        onChange={handleAudioTrackFileImport}
+      />
+
+      {/* Voice & Mic track import */}
+      <input 
+        type="file" 
+        ref={voiceMicFileInputRef} 
+        style={{ display: "none" }}
+        accept="audio/*"
+        onChange={handleVoiceMicFileImport}
+      />
+
       <MusicOff showOffcanvas={showOffcanvas} setShowOffcanvas={(v) => { setShowOffcanvas(v); dispatch(setShowLoopLibrary(Boolean(v))); }} />
       <Effects showOffcanvas={showOffcanvasEffects} setShowOffcanvas={setShowOffcanvasEffects} />
 

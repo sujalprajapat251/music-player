@@ -406,7 +406,9 @@ const TopHeader = () => {
 
     // Function to close all menus when nested option is selected
     const handleNestedOptionClick = (event) => {
+        if (event) {
         event.stopPropagation();
+        }
         // Close all submenus
         setShowSubmenu({
             import: false,
