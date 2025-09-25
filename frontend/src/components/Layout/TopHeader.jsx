@@ -452,6 +452,34 @@ const TopHeader = () => {
         setExportProjectModal(true);
     }
 
+    // Generate a MongoDB-like ObjectId (24-hex chars)
+    const generateObjectId = () => {
+        const timestamp = Math.floor(Date.now() / 1000).toString(16);
+        return (timestamp + 'xxxxxxxxxxxxxxxx'.replace(/x/g, () => (Math.random() * 16 | 0).toString(16))).toLowerCase();
+    }
+
+    // Navigate to a fresh timeline with a newly generated id
+    const handleNewProject = () => {
+        const newId = generateObjectId();
+        setIsActiveMenu("");
+        setShowSubmenu({
+            import: false,
+            navigator: false,
+            effects: false,
+            openrecentfolder: false,
+            keyboard: false,
+            soundquality: false,
+            language: false,
+            theme: false
+        });
+        setTimeout(() => {
+            try {
+                document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 27, which: 27, bubbles: true }));
+            } catch (_) {}
+        }, 10);
+        navigate(`/sidebar/timeline/${newId}`);
+    }
+
     const bpm = useSelector((state) => selectStudioState(state)?.bpm || 120);
 
     // Handle song name editing
@@ -978,7 +1006,7 @@ const TopHeader = () => {
                                 {/* First item: Print */}
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md600:py-2 flex md600:gap-3 outline-none transition-colors`}style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }}onClick={() => setNewProjectOpen(true)}>
+                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md600:py-2 flex md600:gap-3 outline-none transition-colors`}style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }}onClick={handleNewProject}>
                                             <NewFolderIcon className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }}/>  
                                             <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>New...</span>
                                         </p>
