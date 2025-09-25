@@ -25,6 +25,7 @@ import { selectStudioState } from '../Redux/rootReducer';
 import subscription from "../Images/subscriptionIcon.svg";
 import PricingModel from './PricingModel';
 import { ReactComponent as Track7 } from '../Images/track7.svg'
+import SimplePianoBar from './SimplePianoBar';
 
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
@@ -655,6 +656,7 @@ const NewSynth = ({ onClose }) => {
     // ****************** Chords *****************
 
     const highlightedPianoKeys = useSelector((state) => selectStudioState(state).highlightedPianoKeys || []);
+    const musicalTypingEnabled = useSelector((state) => state.ui?.musicalTypingEnabled !== false);
 
     const debugPlayNote = (midiNumber) => {
         playNote(midiNumber);
@@ -664,244 +666,6 @@ const NewSynth = ({ onClose }) => {
         stopNote(midiNumber);
     };
 
-    const SimplePiano = ({ noteRange, playNote, stopNote, keyboardShortcuts, sectionIndex }) => {
-        const pianoRef = useRef(null);
-        const isMouseDown = useRef(false);
-        const lastPlayedNote = useRef(null);
-        const mouseMoveHandler = useRef(null);
-
-        const highlightKeys = () => {
-            if (!pianoRef.current || highlightedPianoKeys.length === 0) return;
-
-            const allKeys = pianoRef.current.querySelectorAll('.ReactPiano__Key--natural, .ReactPiano__Key--accidental');
-            allKeys.forEach(key => key.classList.remove('highlighted'));
-
-            let highlightedCount = 0;
-            highlightedPianoKeys.forEach(midiNumber => {
-                if (midiNumber >= noteRange.first && midiNumber <= noteRange.last) {
-                    const keyIndex = midiNumber - noteRange.first;
-                    const keyElement = allKeys[keyIndex];
-                    if (keyElement) {
-                        keyElement.classList.add('highlighted');
-                        highlightedCount++;
-                    }
-                }
-            });
-        };
-
-        // Function to get MIDI number from mouse position
-        const getMidiNumberFromPosition = (clientX) => {
-            if (!pianoRef.current) return null;
-
-            const rect = pianoRef.current.getBoundingClientRect();
-            const relativeX = clientX - rect.left;
-            const pianoWidth = rect.width;
-
-            // Calculate which key the mouse is over based on position
-            const keyWidth = pianoWidth / (noteRange.last - noteRange.first + 1);
-            const keyIndex = Math.floor(relativeX / keyWidth);
-            const midiNumber = noteRange.first + keyIndex;
-
-            // Ensure the MIDI number is within the valid range
-            if (midiNumber >= noteRange.first && midiNumber <= noteRange.last) {
-                return midiNumber;
-            }
-            return null;
-        };
-
-        // Function to handle mouse movement for continuous play
-        const handleMouseMove = (e) => {
-            if (!isMouseDown.current) return;
-
-            const midiNumber = getMidiNumberFromPosition(e.clientX);
-            if (midiNumber && midiNumber !== lastPlayedNote.current) {
-                // Stop the previous note if it's different
-                if (lastPlayedNote.current !== null) {
-                    stopNote(lastPlayedNote.current);
-                }
-
-                // Play the new note
-                playNote(midiNumber);
-                lastPlayedNote.current = midiNumber;
-            }
-        };
-
-        // Debounced mouse move handler to prevent too many rapid note changes
-        const debouncedMouseMove = useRef(null);
-        const handleMouseMoveDebounced = (e) => {
-            if (debouncedMouseMove.current) {
-                clearTimeout(debouncedMouseMove.current);
-            }
-            debouncedMouseMove.current = setTimeout(() => {
-                handleMouseMove(e);
-            }, 10); // 10ms delay for smooth transitions
-        };
-
-        // Function to handle mouse down with smooth detection
-        const handleMouseDown = (e) => {
-            e.preventDefault(); // Prevent text selection
-            isMouseDown.current = true;
-            const midiNumber = getMidiNumberFromPosition(e.clientX);
-            if (midiNumber) {
-                playNote(midiNumber);
-                lastPlayedNote.current = midiNumber;
-            }
-
-            // Add mouse move listener for continuous play
-            if (!mouseMoveHandler.current) {
-                mouseMoveHandler.current = handleMouseMoveDebounced;
-                document.addEventListener('mousemove', mouseMoveHandler.current);
-            }
-        };
-
-        // Function to handle mouse up
-        const handleMouseUp = () => {
-            isMouseDown.current = false;
-            if (lastPlayedNote.current !== null) {
-                stopNote(lastPlayedNote.current);
-                lastPlayedNote.current = null;
-            }
-
-            // Remove mouse move listener
-            if (mouseMoveHandler.current) {
-                document.removeEventListener('mousemove', mouseMoveHandler.current);
-                mouseMoveHandler.current = null;
-            }
-        };
-
-        // Function to handle mouse leave
-        const handleMouseLeave = () => {
-            if (isMouseDown.current) {
-                handleMouseUp();
-            }
-        };
-
-        // Touch event handlers for mobile support
-        const handleTouchStart = (e) => {
-            e.preventDefault();
-            if (e.touches.length > 0) {
-                const touch = e.touches[0];
-                isMouseDown.current = true;
-                const midiNumber = getMidiNumberFromPosition(touch.clientX);
-                if (midiNumber) {
-                    playNote(midiNumber);
-                    lastPlayedNote.current = midiNumber;
-                }
-            }
-        };
-
-        const handleTouchMove = (e) => {
-            e.preventDefault();
-            if (isMouseDown.current && e.touches.length > 0) {
-                const touch = e.touches[0];
-                const midiNumber = getMidiNumberFromPosition(touch.clientX);
-                if (midiNumber && midiNumber !== lastPlayedNote.current) {
-                    if (lastPlayedNote.current !== null) {
-                        stopNote(lastPlayedNote.current);
-                    }
-                    playNote(midiNumber);
-                    lastPlayedNote.current = midiNumber;
-                }
-            }
-        };
-
-        const handleTouchEnd = () => {
-            handleMouseUp();
-        };
-
-        // Global mouse up handler to catch mouse release outside piano
-        useEffect(() => {
-            const handleGlobalMouseUp = () => {
-                if (isMouseDown.current) {
-                    handleMouseUp();
-                }
-            };
-
-            document.addEventListener('mouseup', handleGlobalMouseUp);
-            return () => {
-                document.removeEventListener('mouseup', handleGlobalMouseUp);
-            };
-        }, []);
-
-        useEffect(() => {
-            const timer = setTimeout(highlightKeys, 100);
-            return () => clearTimeout(timer);
-        }, [highlightedPianoKeys, noteRange]);
-
-        // Cleanup mouse event listeners on unmount
-        useEffect(() => {
-            return () => {
-                if (mouseMoveHandler.current) {
-                    document.removeEventListener('mousemove', mouseMoveHandler.current);
-                }
-                if (debouncedMouseMove.current) {
-                    clearTimeout(debouncedMouseMove.current);
-                }
-            };
-        }, []);
-
-        const handleLocalWheel = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-        };
-
-        useEffect(() => {
-            const el = pianoRef.current;
-            if (!el) return;
-            const blockWheel = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            };
-            el.addEventListener('wheel', blockWheel, { passive: false, capture: true });
-            return () => {
-                el.removeEventListener('wheel', blockWheel, { capture: true });
-            };
-        }, []);
-
-        const musicalTypingEnabled = useSelector((state) => state.ui?.musicalTypingEnabled !== false);
-
-        return (
-            <div
-                className="relative h-full overscroll-none"
-                ref={pianoRef}
-                onWheel={handleLocalWheel}
-                onMouseDown={handleMouseDown}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseLeave}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-                style={{ userSelect: 'none', touchAction: 'none' }}
-            >
-                <Piano noteRange={noteRange} playNote={playNote} stopNote={stopNote} keyboardShortcuts={keyboardShortcuts} />
-                {!musicalTypingEnabled && (
-                    <style jsx>{`
-            .ReactPiano__NoteLabel--natural,
-            .ReactPiano__NoteLabel--accidental {
-              display: none !important;
-            }
-          `}</style>
-                )}
-                <style jsx>{`
-                    .ReactPiano__Keyboard{
-                      background-color: #c7c7c7;
-                    }
-
-                    .ReactPiano__Key--natural:hover {
-                        background-color: #cececf !important;
-                    }
-                    
-                    .ReactPiano__Key--natural.highlighted {
-                        border-bottom: 9px solid #36075f !important;
-                    }
-
-                    .ReactPiano__Key--accidental.highlighted {
-                        border-bottom: 7px solid #8b5cf6 !important;
-                    }
-                `}</style>
-            </div>
-        );
-    };
 
     // ****************** Chords *****************
     const [isAudioReady, setIsAudioReady] = useState(false);
@@ -2115,7 +1879,14 @@ const NewSynth = ({ onClose }) => {
                                                         <div className="flex transition-transform duration-300 ease-in-out h-full" style={{ transform: `translateX(-${activePianoSection * 100}%)` }}>
                                                             {pianoSections.map((section, index) => (
                                                                 <div key={index} className="w-full flex-shrink-0">
-                                                                    <SimplePiano noteRange={{ first: section.first, last: section.last }} playNote={debugPlayNote} stopNote={debugStopNote} keyboardShortcuts={index === activePianoSection ? getKeyboardShortcutsForSection(index) : []} sectionIndex={index} />
+                                                                    <SimplePianoBar
+                                                                        noteRange={{ first: section.first, last: section.last }}
+                                                                        playNote={debugPlayNote}
+                                                                        stopNote={debugStopNote}
+                                                                        keyboardShortcuts={index === activePianoSection ? getKeyboardShortcutsForSection(index) : []}
+                                                                        highlightedPianoKeys={highlightedPianoKeys}
+                                                                        hideLabels={!musicalTypingEnabled}
+                                                                    />
                                                                 </div>
                                                             ))}
                                                         </div>
