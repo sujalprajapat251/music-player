@@ -47,7 +47,7 @@ import { setSoundQuality } from '../../Redux/Slice/audioSettings.slice';
 import audioQualityManager from '../../Utils/audioQualityManager';
 import ExportPopup from '../ExportProjectModel';
 import { useUndoRedo } from '../../hooks/useUndoRedo';
-import { createMusic, getAllMusic } from '../../Redux/Slice/music.slice';
+import { createMusic, updateMusic, getAllMusic } from '../../Redux/Slice/music.slice';
 import axiosInstance from '../../Utils/axiosInstance';
 import { selectStudioState } from '../../Redux/rootReducer';
 import WavEncoder from 'wav-encoder';
@@ -738,15 +738,34 @@ const TopHeader = () => {
 
         const mixdown = await renderProjectMixdown(serializedTracks);
        
-        const result = await dispatch(createMusic({
-            name: songName,
-            musicdata: serializedTracks,
-            userId: user,
-            url: mixdown.url,
-            drumRecordedData: Array.isArray(drumRecordedData) ? drumRecordedData : []
-        }));
-        if (result.payload) {
-            dispatch(setCurrentMusic(result.payload));
+        // Check if we have an existing music project to update
+        if (currentMusic && currentMusic._id) {
+            // Update existing music
+            const result = await dispatch(updateMusic({
+                id: currentMusic._id,
+                data: {
+                    name: songName,
+                    musicdata: serializedTracks,
+                    userId: user,
+                    url: mixdown.url,
+                    drumRecordedData: Array.isArray(drumRecordedData) ? drumRecordedData : []
+                }
+            }));
+            if (result.payload) {
+                dispatch(setCurrentMusic(result.payload));
+            }
+        } else {
+            // Create new music
+            const result = await dispatch(createMusic({
+                name: songName,
+                musicdata: serializedTracks,
+                userId: user,
+                url: mixdown.url,
+                drumRecordedData: Array.isArray(drumRecordedData) ? drumRecordedData : []
+            }));
+            if (result.payload) {
+                dispatch(setCurrentMusic(result.payload));
+            }
         }
             setSaveStatus('saved');
         } catch (e) {
