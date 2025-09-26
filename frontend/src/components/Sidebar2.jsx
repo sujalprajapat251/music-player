@@ -110,6 +110,7 @@ const Sidebar2 = () => {
     const isDrumTrack = track.name === 'Drums & Machines' || track.type === 'drum';
     const isPianoTrack = track.name === 'Keys' || track.type === 'piano';
     const isGuitarTrack = track.name === 'Guitar' || track.type === 'Guitar';
+    const isGuitarBassAmpTrack = track.name === 'Guitar/Bass Amp' || track.type === 'Guitar/Bass Amp';
     const isOrchestralTrack = track.name === 'Orchestral' || track.type === 'Orchestral';
     const isVoiceMicTrack = track.name === 'Voice & Mic' || track.type === 'Voice & Mic';
     const isSynthTrack = track.name === 'Synth' || track.type === 'Synth';
@@ -135,6 +136,12 @@ const Sidebar2 = () => {
     if (isGuitarTrack) {
       const isOpen = openTrackType === 'Guitar' && currentTrackId === track.id;
       dispatch(setTrackType(isOpen ? null : 'Guitar'));
+      return;
+    }
+
+    if (isGuitarBassAmpTrack) {
+      const isOpen = openTrackType === 'Guitar/Bass Amp' && currentTrackId === track.id;
+      dispatch(setTrackType(isOpen ? null : 'Guitar/Bass Amp'));
       return;
     }
 
@@ -261,12 +268,13 @@ const Sidebar2 = () => {
               const isDrumTrack = track.name === 'Drums & Machines' || track.type === 'drum';
               const isPianoTrack = track.name === 'Keys' || track.type === 'piano';
               const isGuitarTrack = track.name === 'Guitar' || track.type === 'Guitar';
+              const isGuitarBassAmpTrack = track.name === 'Guitar/Bass Amp' || track.type === 'Guitar/Bass Amp';
               const isOrchestralTrack = track.name === 'Orchestral' || track.type === 'Orchestral';
               const isVoiceMicTrack = track.name === 'Voice & Mic' || track.type === 'Voice & Mic';
               const isSynthTrack = track.name === 'Synth' || track.type === 'Synth';
               const isBass808 = track.name === 'Bass & 808' || track.type === 'Bass & 808';
 
-              const isComponentOpen = (track.id === currentTrackId) && ((openTrackType === 'Drums & Machines' && isDrumTrack) || (openTrackType === 'Keys' && isPianoTrack) || (openTrackType === 'Guitar' && isGuitarTrack) || (openTrackType === 'Orchestral' && isOrchestralTrack) || (openTrackType === 'Voice & Mic' && isVoiceMicTrack) || (openTrackType === 'Synth' && isSynthTrack) || (openTrackType === 'Bass & 808' && isBass808));
+              const isComponentOpen = (track.id === currentTrackId) && ((openTrackType === 'Drums & Machines' && isDrumTrack) || (openTrackType === 'Keys' && isPianoTrack) || (openTrackType === 'Guitar' && isGuitarTrack) || (openTrackType === 'Guitar/Bass Amp' && isGuitarBassAmpTrack) || (openTrackType === 'Orchestral' && isOrchestralTrack) || (openTrackType === 'Voice & Mic' && isVoiceMicTrack) || (openTrackType === 'Synth' && isSynthTrack) || (openTrackType === 'Bass & 808' && isBass808));
 
               return (
                 <div

@@ -56,6 +56,8 @@ import AccessPopup from "./AccessPopup";
 import { setAlert } from "../Redux/Slice/alert.slice";
 import NewSynth from "./NewSynth";
 import BassAnd808 from "./BassAnd808";
+import GuitarEffects from "./GuitarEffects";
+import NewProjectModel from "./NewProjectModel";
 
 const Timeline = () => {
   
@@ -87,6 +89,7 @@ const Timeline = () => {
   const [showPiano, setShowPiano] = useState(false);
   const [showSynth, setShowSynth] = useState(false);
   const [showBass808, setShowBass808] = useState(false);
+  const [showGuitarEffects, setShowGuitarEffects] = useState(false);
   const [showAccessPopup, setShowAccessPopup] = useState(false);
   const [micStream, setMicStream] = useState(null);
   const [micAccessDenied, setMicAccessDenied] = useState(false);
@@ -94,6 +97,7 @@ const Timeline = () => {
   const [showMicVoice, setShowMicVoice] = useState(false);
   const [showGuitar, setShowGuitar] = useState(false);
   const [showOrchestral, setShowOrchestral] = useState(false);
+  const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [renameSectionId, setRenameSectionId] = useState(null);
   const [renameValue, setRenameValue] = useState("");
   const [renameModal, setRenameModal] = useState(false);
@@ -3239,6 +3243,13 @@ const Timeline = () => {
   const allMusic = useSelector((state) => state.music?.allmusic || []);
   const musicLoading = useSelector((state) => state.music?.loading || false);
 
+  // Open New Project modal when visiting timeline with an id
+  useEffect(() => {
+    if (projectId) {
+      setShowNewProjectModal(true);
+    }
+  }, [projectId]);
+
   useEffect(() => {
     // If navigated with a demo sound from Home2, create a track and clip immediately
     const demoSound = location?.state?.demoSound;
@@ -3960,6 +3971,9 @@ const Timeline = () => {
         )}
       </AnimatePresence>
 
+      {/* New Project Modal */}
+      <NewProjectModel open={showNewProjectModal} setOpen={setShowNewProjectModal} showClose={false} />
+
       {/* Hidden file input for import */}
       <input type="file" ref={fileInputRef} style={{ display: "none" }}
         onChange={async (e) => {
@@ -4149,6 +4163,20 @@ const Timeline = () => {
             className="fixed bottom-0 left-0 right-0 bg-white shadow-lg rounded-t-lg p-4 z-50"
           >
             <BassAnd808 onClose={() => { setShowBass808(false); dispatch(setTrackType(null)); }} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {(showGuitarEffects || getTrackType === "Guitar/Bass Amp") && (
+          <motion.div
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: "0%", opacity: 1 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="fixed bottom-0 left-0 right-0 bg-white shadow-lg rounded-t-lg p-4 z-50"
+          >
+            <GuitarEffects onClose={() => { setShowGuitarEffects(false); dispatch(setTrackType(null)); }} />
           </motion.div>
         )}
       </AnimatePresence>
