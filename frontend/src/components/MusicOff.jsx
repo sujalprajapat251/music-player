@@ -16,6 +16,7 @@ import { IMAGE_URL } from '../Utils/baseUrl';
 import { addToWishList, removeFromWishList, getUserWishList } from '../Redux/Slice/user.slice';
 import { addTrack, addAudioClipToTrack, setCurrentTrackId } from '../Redux/Slice/studio.slice';
 import { createPortal } from "react-dom";
+import PricingModel from './PricingModel';
 
 const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
 
@@ -27,6 +28,8 @@ const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
     const audioRefs = useRef([]);
     const [playingIndex, setPlayingIndex] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
+    const [contextMenu, setContextMenu] = useState({ show: false, x: 0, y: 0, soundItem: null });
+    const [pricingModalOpen, setPricingModalOpen] = useState(false);
 
     const category = useSelector((state) => state.category?.category || []);
     const sound = useSelector((state) => state.sound?.allsounds || [])
@@ -182,6 +185,38 @@ const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
         }
     };
 
+    const handleContextMenuClick = (e, soundItem) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Get the bounding rect of the clicked element to position menu to the left
+        const rect = e.currentTarget.getBoundingClientRect();
+        const menuWidth = 150; // Approximate width of the context menu
+        
+        setContextMenu({
+            show: true,
+            x: rect.left - menuWidth - 5, // Position to the left of the icon
+            y: rect.top,
+            soundItem: soundItem
+        });
+    };
+
+    const handleContextMenuClose = () => {
+        setContextMenu({ show: false, x: 0, y: 0, soundItem: null });
+    };
+
+    const handleAddNewTrack = () => {
+        if (contextMenu.soundItem) {
+            handleAddToTimeline(contextMenu.soundItem);
+        }
+        handleContextMenuClose();
+    };
+
+    const handleOpenInSampler = () => {
+        setPricingModalOpen(true);
+        handleContextMenuClose();
+    };
+
     return (
         <>
             {showOffcanvas && (
@@ -205,6 +240,54 @@ const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
                     )}
                 </>
             )}
+            
+            {/* Context Menu */}
+            {contextMenu.show && (
+                createPortal(
+                    <div 
+                        className="fixed z-[1000] bg-[#2A2A2A] dark:bg-[#1A1A1A] border border-[#404040] dark:border-[#333333] rounded-[4px] shadow-lg"
+                        style={{
+                            left: contextMenu.x,
+                            top: contextMenu.y,
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="py-1">
+                            <button
+                                onClick={handleAddNewTrack}
+                                className="w-full px-4 py-2 text-left text-white hover:bg-[#404040] dark:hover:bg-[#333333] text-sm font-medium"
+                            >
+                                Add new track
+                            </button>
+                            <div className="border-t border-[#404040] dark:border-[#333333]"></div>
+                            <button
+                                onClick={handleOpenInSampler}
+                                className="w-full px-4 py-2 text-left text-white hover:bg-[#404040] dark:hover:bg-[#333333] text-sm font-medium"
+                            >
+                                Open in sampler
+                            </button>
+                        </div>
+                    </div>,
+                    document.body
+                )
+            )}
+            
+            {/* Backdrop to close context menu */}
+            {contextMenu.show && (
+                createPortal(
+                    <div 
+                        className="fixed inset-0 z-[999]"
+                        onClick={handleContextMenuClose}
+                    />,
+                    document.body
+                )
+            )}
+            
+            {/* Pricing Modal */}
+            <PricingModel 
+                pricingModalOpen={pricingModalOpen} 
+                setPricingModalOpen={setPricingModalOpen} 
+            />
         </>
     )
 
@@ -358,7 +441,7 @@ const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
                                                 ) : (
                                                     <FaRegHeart onClick={() => toggleWishlist(soundItem._id)} className={`text-secondary-light dark:text-secondary-dark text-[12px] xl:text-[14px] 3xl:text-[16px] me-1 md600:me-2 3xl:me-3`} />
                                                 )}
-                                                <FaPlus onClick={() => handleAddToTimeline(soundItem)} className='text-secondary-light dark:text-secondary-dark text-[12px] xl:text-[14px] 3xl:text-[16px]' />
+                                                <FaPlus onClick={(e) => handleContextMenuClick(e, soundItem)} className='text-secondary-light dark:text-secondary-dark text-[12px] xl:text-[14px] 3xl:text-[16px] cursor-pointer' />
                                             </div>
                                         </div>
                                     )

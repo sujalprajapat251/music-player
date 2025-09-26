@@ -6,16 +6,16 @@ export default function Tabs({ tabs }) {
   return (
     <>
       <div className="w-full flex justify-center">
-        <div className="flex rounded-full mx-auto justify-center gap-5 bg-[#c5c5c5]">
+        <div className="flex rounded-full mx-auto justify-center gap-5">
           {tabs.map((tab, idx) => (
             <button
               key={tab.label}
               onClick={() => setActiveTab(idx)}
-              className={`flex items-center space-x-2 px-12 py-2 rounded-full font-medium transition-all duration-300
+              className={`flex items-center space-x-2 px-12 sm:px-5 md:px-12 py-2 rounded-full font-medium transition-all duration-300
               ${
                 activeTab === idx
                   ? "bg-white text-black shadow-md"
-                  : "text-gray-400 hover:text-black"
+                  : "text-white"
               }`}
             >
               {tab.icon && <span className="w-5 h-5">{tab.icon}</span>}

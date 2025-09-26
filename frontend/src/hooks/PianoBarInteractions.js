@@ -8,20 +8,24 @@ export default function usePianoBarInteractions({ noteRange, playNote, stopNote,
   const debouncedMouseMove = useRef(null);
 
   const highlightKeys = () => {
-    if (!pianoRef.current || !Array.isArray(highlightedPianoKeys) || highlightedPianoKeys.length === 0) return;
+    if (!pianoRef.current) return;
 
     const allKeys = pianoRef.current.querySelectorAll('.ReactPiano__Key--natural, .ReactPiano__Key--accidental');
+    // Always clear previous highlights first
     allKeys.forEach(key => key.classList.remove('highlighted'));
 
-    highlightedPianoKeys.forEach(midiNumber => {
-      if (midiNumber >= noteRange.first && midiNumber <= noteRange.last) {
-        const keyIndex = midiNumber - noteRange.first;
-        const keyElement = allKeys[keyIndex];
-        if (keyElement) {
-          keyElement.classList.add('highlighted');
+    // If we have keys to highlight, apply them
+    if (Array.isArray(highlightedPianoKeys) && highlightedPianoKeys.length > 0) {
+      highlightedPianoKeys.forEach(midiNumber => {
+        if (midiNumber >= noteRange.first && midiNumber <= noteRange.last) {
+          const keyIndex = midiNumber - noteRange.first;
+          const keyElement = allKeys[keyIndex];
+          if (keyElement) {
+            keyElement.classList.add('highlighted');
+          }
         }
-      }
-    });
+      });
+    }
   };
 
   const getMidiNumberFromPosition = (clientX) => {
