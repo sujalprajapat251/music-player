@@ -48,7 +48,7 @@ import SDemo from './components/SDemo';
 // import JuicyDistrotion from './components/JuicyDistrotion';
 // import TapeWobble from './components/TapeWobble';
 import VoiceTransformer from './components/VoiceTransfrom';
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import * as soundtouch from 'soundtouchjs';
 import Guitar from './components/Guitar';
 import File from './components/File';
@@ -58,6 +58,8 @@ import FolderView from './components/FolderView';
 window.soundtouch = soundtouch;
 
 function App() {
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     // Prevent zoom with Ctrl + wheel
     const handleWheel = (e) => {
@@ -95,8 +97,27 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    // Simulate loading time and hide spinner
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 4000); // 2 seconds loading time
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const { store, persistor } = configureStore();
   return (
+  <>
+    {isLoading && (
+      <div className="spinner">
+        <div className="r1"></div>
+        <div className="r2"></div>
+        <div className="r3"></div>
+        <div className="r4"></div>
+        <div className="r5"></div>
+      </div>
+    )}
     <Provider store={store}>
       <SnackbarProvider
         maxSnack={3}
@@ -117,7 +138,7 @@ function App() {
               <Route path='/login' element={<Login />} />
             </Route>
 
-            <Route element={<RequireAuth />}>
+            {/* <Route element={<RequireAuth />}> */}
               <Route path="/" element={<Layout />} >
                 <Route path='project' element={<Home2 />} />
                 <Route path='project/folder/:id' element={<FolderView />} />
@@ -145,11 +166,12 @@ function App() {
                 <Route path="guitar" element={<Guitar />} />
                 <Route path="voice" element={<VoiceTransformer />} />
               </Route>
-            </Route>
+            {/* </Route> */}
           </Routes>
         </ThemeProvider>
       </SnackbarProvider>
     </Provider >
+  </>
   );
 }
 

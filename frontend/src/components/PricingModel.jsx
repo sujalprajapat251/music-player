@@ -62,9 +62,9 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                   {
                     label: "Monthly",
                     content: (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+                      <div className="grid grid-cols-1 md:grid-cols-3 md:gap-4 gap-8 w-full">
                         {/* Starter */}
-                        <div className="bg-[#14161c] border border-purple-400 rounded-2xl p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
+                        <div className="bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
                           <h3 className="text-xl font-semibold text-white mb-2">
                             Starter
                           </h3>
@@ -87,7 +87,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                         </div>
 
                         {/* Professional */}
-                        <div className="bg-[#14161c] border border-purple-400 rounded-2xl p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
+                        <div className="bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
                           <div className="flex justify-between items-center mb-2">
                             <h3 className="text-xl font-semibold text-white">
                               Professional
@@ -114,7 +114,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                         </div>
 
                         {/* Enterprise */}
-                        <div className="bg-[#14161c] border border-purple-400 rounded-2xl p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
+                        <div className="bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
                           <h3 className="text-xl font-semibold text-white mb-2">
                             Enterprise
                           </h3>
@@ -140,9 +140,9 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                   {
                     label: "Yearly",
                     content: (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+                      <div className="grid grid-cols-1 md:grid-cols-3 md:gap-4 gap-8 w-full">
                         {/* Starter */}
-                        <div className="bg-[#14161c] border border-purple-400 rounded-2xl p-8 text-left flex flex-col hover:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
+                        <div className="bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
                           <h3 className="text-xl font-semibold text-white mb-2">
                             Starter
                           </h3>
@@ -166,7 +166,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                         </div>
 
                         {/* Professional */}
-                        <div className="bg-[#14161c] border border-purple-400 rounded-2xl p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
+                        <div className="bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
                           <div className="flex justify-between items-center mb-2">
                             <h3 className="text-xl font-semibold text-white">
                               Professional
@@ -194,7 +194,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                         </div>
 
                         {/* Enterprise */}
-                        <div className="bg-[#14161c] border border-purple-400 rounded-2xl p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
+                        <div className="bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
                           <h3 className="text-xl font-semibold text-white mb-2">
                             Enterprise
                           </h3>
