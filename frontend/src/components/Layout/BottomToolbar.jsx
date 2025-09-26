@@ -614,7 +614,7 @@ const handleMoveBackwardSmall = () => {
                                 onClick={() => setIsOpen(!isOpen)}
                                 className="cursor-pointer outline-none focus:outline-none"
                             >
-                                <p className="sm:text-[8px] lg:text-[12px] text-[#14141499] dark:text-[#FFFFFF99] hidden sm:block">
+                                <p className="text-[10px] sm:text-[8px] lg:text-[12px] text-[#14141499] dark:text-[#FFFFFF99] block">
                                     Key <span className="text-secondary-light dark:text-secondary-dark">
                                         {appliedSelection ? `${appliedSelection.key} ${appliedSelection.scale}` : '-'}
                                     </span>

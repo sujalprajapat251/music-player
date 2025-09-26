@@ -15,7 +15,7 @@ import { X } from "lucide-react";
 import { IoIosArrowDown } from "react-icons/io";
 import { FiSearch } from "react-icons/fi";
 import { BsThreeDotsVertical } from 'react-icons/bs';
-import { IoClose } from 'react-icons/io5';
+import { IoClose, IoImageOutline, IoFolderOutline } from 'react-icons/io5';
 import { FaRegFolderOpen } from "react-icons/fa6";
 import { LuArrowDownToLine } from "react-icons/lu";
 import { RiDeleteBin5Line } from "react-icons/ri";
@@ -30,6 +30,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import NewProjectModel from './NewProjectModel';
 import { deleteMusic, getAllMusic, moveToFolderMusic, renameMusic, addCoverImage, removeCoverImage, createMusic, setCurrentMusic } from '../Redux/Slice/music.slice';
 import { log } from 'tone/build/esm/core/util/Debug';
+import { FaAngleRight } from "react-icons/fa";
+import { FaArrowDownLong } from "react-icons/fa6";
+import { MdDeleteOutline } from "react-icons/md";
 
 const AdaptiveMenu = ({ button, children, placement = 'bottom-end', widthClass = 'w-40 2xl:w-44' }) => {
     const {
@@ -1102,7 +1105,7 @@ const handleSaveCoverImage = async () => {
                                       <MenuItem>
                                           {({ active }) => (
                                               <button onClick={() => handleMusicRenameClick(ele._id, ele.name)} className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
-                                                  <span className="font-medium">A</span>
+                                                  <span className="font-[20px]">A</span>
                                                   Rename
                                               </button>
                                           )}
@@ -1111,7 +1114,8 @@ const handleSaveCoverImage = async () => {
                                       <MenuItem>
                                           {({ active }) => (
                                               <button type="button" onClick={() => { setSelectedMusicId(ele._id); setImage(coverUrl || null); setOpen(true);}} className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
-                                              🖼️ Change cover
+                                              <IoImageOutline size={20} /> 
+                                              Change cover
                                               </button>
                                           )}
                                       </MenuItem>
@@ -1119,8 +1123,8 @@ const handleSaveCoverImage = async () => {
                                       <MenuItem>
                                           {({ active }) => (
                                               <button type="button" onClick={() => { setMoveMusicId(ele._id); setMoveModalOpen(true); }} className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
-                                                  <span className="flex items-center gap-2">📁 Move to folder</span>
-                                                  <span>›</span>
+                                                  <span className="flex items-center gap-2"><IoFolderOutline size={20} /> Move to folder</span>
+                                                  <span><FaAngleRight size={20} /></span>
                                               </button>
                                           )}
                                       </MenuItem>
@@ -1130,8 +1134,8 @@ const handleSaveCoverImage = async () => {
                                       <MenuItem>
                                           {({ active }) => (
                                               <button type="button" onClick={() => handleExport(ele)} className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
-                                                  <span className="flex items-center gap-2">⬇ Export (MP3)</span>
-                                                  <span>›</span>
+                                                  <span className="flex items-center gap-2"><FaArrowDownLong size={20} /> Export (MP3)</span>
+                                                  <span><FaAngleRight size={20} /></span>
                                               </button>
                                           )}
                                       </MenuItem>
@@ -1141,7 +1145,7 @@ const handleSaveCoverImage = async () => {
                                       <MenuItem>
                                           {({ active }) => (
                                               <button type="button" onClick={() => { setSelectedProjectName(ele?.name || ''); setDeleteId(ele?._id || ele?.id); setDeleteProModal(true); }} className={`flex items-center gap-2 px-4 py-2 text-sm ${active ? "text-red-600" : "text-red-600"}`}>
-                                                  🗑️ Delete
+                                                  <MdDeleteOutline size={20} /> Delete
                                               </button>
                                           )}
                                       </MenuItem>

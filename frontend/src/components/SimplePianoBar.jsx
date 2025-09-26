@@ -4,6 +4,7 @@ import 'react-piano/dist/styles.css';
 import usePianoBarInteractions from '../hooks/PianoBarInteractions';
 
 export default function SimplePianoBar({ noteRange, playNote, stopNote, keyboardShortcuts, highlightedPianoKeys, hideLabels }) {
+  
   const {
     pianoRef,
     handleLocalWheel,
@@ -17,7 +18,7 @@ export default function SimplePianoBar({ noteRange, playNote, stopNote, keyboard
 
   return (
     <div
-      className="relative h-[99%] overscroll-none"
+      className={`relative h-full overscroll-none`}
       ref={pianoRef}
       onWheel={handleLocalWheel}
       onMouseDown={handleMouseDown}
@@ -48,17 +49,43 @@ export default function SimplePianoBar({ noteRange, playNote, stopNote, keyboard
         
         .ReactPiano__Key--natural.highlighted {
           border-bottom: 7px solid #36075f !important;
-          marg
         }
 
         .ReactPiano__Key--accidental.highlighted {
           border-bottom: 7px solid #8b5cf6 !important;
         }
+
+        /* Responsive label styling */
+        .ReactPiano__NoteLabel--natural,
+        .ReactPiano__NoteLabel--accidental {
+          font-size: 10px !important;
+        }
+
+        @media (min-width: 640px) {
+          .ReactPiano__NoteLabel--natural,
+          .ReactPiano__NoteLabel--accidental {
+            font-size: 10px !important;
+          }
+        }
+
+        @media (min-width: 768px) {
+          .ReactPiano__NoteLabel--natural,
+          .ReactPiano__NoteLabel--accidental {
+            font-size: 10px !important;
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .ReactPiano__NoteLabel--natural,
+          .ReactPiano__NoteLabel--accidental {
+            font-size: 12px !important;
+          }
+
+          .ReactPiano__NoteLabel--accidental {
+            padding: 6px 8px !important;
+          }
+        }
       `}</style>
     </div>
   );
 }
-
-
-
-

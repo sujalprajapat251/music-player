@@ -2284,15 +2284,15 @@ const PianoRolls = () => {
             </div>
 
             {/* Bottom-centered toolbar */}
-            <div className="absolute bottom-[100px] left-1/2 -translate-x-1/2 transform z-[10000]">
+            <div className="absolute left-[22%] sm:left-[26%] md:left-[36%] lg:left-[38%] xl:left-[35%] 2xl:left-[40%] bottom-[50%] sm:bottom-[45%] md:bottom-[40%] lg:bottom-[35%] xl:bottom-[35%] 2xl:bottom-[30%] translate-x-1/2 transform z-[10000]">
                 <div className="flex items-center gap-2 bg-[#1F1F1F] text-white px-2 py-1 rounded-full shadow-md">
                     {/* Cursor */}
                     <button className={`p-2 rounded hover:bg-gray-700 transition ${activeTool === 'cursor' ? 'bg-gray-600' : ''}`} onClick={() => handleToolChange('cursor')} title="Cursor (Ctrl+1)">
-                        <RxCursorArrow />
+                        <RxCursorArrow className='text-[13px]' />
                     </button>
                     {/* Pencil */}
                     <button className={`p-2 rounded hover:bg-gray-700 transition ${activeTool === 'pencil' ? 'bg-gray-600' : ''}`} onClick={() => handleToolChange('pencil')} title="Pencil (Ctrl+2)">
-                        <BsPencil />
+                        <BsPencil className='text-[13px]' />
                     </button>
                     {/* V letter */}
                     <button className={`p-2 rounded hover:bg-gray-700 transition font-bold ${activeTool === 'v' ? 'bg-gray-600' : ''}`} onClick={() => handleToolChange('v')} title="Select (Ctrl+3)">
@@ -2300,7 +2300,7 @@ const PianoRolls = () => {
                     </button>
                     {/* Trash */}
                     <button className={`p-2 rounded hover:bg-gray-700 transition ${activeTool === 'trash' ? 'bg-gray-600' : ''}`} onClick={() => handleToolChange('trash')} title="Delete (Ctrl+4)">
-                        <RiDeleteBin6Line />
+                        <RiDeleteBin6Line className='text-[13px]' />
                     </button>
                 </div>
             </div>

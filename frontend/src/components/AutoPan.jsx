@@ -213,7 +213,7 @@ const AutoPan = () => {
 
     return (
         <div className='bg-[#141414]'>
-            <div className={`flex justify-between items-center w-[150px] h-[40px] sm:w-[190px] sm:h-[50px] md600:w-[220px] md:w-[230px] md:h-[55px] lg:w-[240px] xl:h-[60px] 2xl:w-[256px] 2xl:h-[64px] rounded-t-lg px-2 md:px-3 transition-colors duration-300 ${isPoweredOn ? 'bg-[#409C9F]' : 'bg-gray-600'
+            <div className={`flex justify-between items-center w-[150px] h-[50px] sm:w-[190px] sm:h-[50px] md600:w-[220px] md:w-[230px] md:h-[55px] lg:w-[240px] xl:h-[60px] 2xl:w-[256px] 2xl:h-[64px] rounded-t-lg px-2 md:px-3 lg:px-8 xl:px-3 transition-colors duration-300 ${isPoweredOn ? 'bg-[#409C9F]' : 'bg-gray-600'
                 }`}>
                 <FaPowerOff
                     className={`text-[16px] md600:text-[20px] cursor-pointer transition-colors duration-200 ${isPoweredOn ? 'text-white hover:text-purple-400' : 'text-red-500 hover:text-red-400'
@@ -229,7 +229,7 @@ const AutoPan = () => {
                     onClick={() => handleRemoveEffect(currentInstanceId)}
                 />
             </div>
-            <div className={`w-[150px] h-[140px] sm:w-[190px] sm:h-[180px] md600:w-[220px] md600:h-[210px] md:w-[230px] md:h-[265px] lg:w-[240px] lg:h-[282px] xl:w-[240px] xl:h-[285px] 2xl:w-[256px] 2xl:h-[300px] bg-[#302f2f] relative ${!isPoweredOn ? 'opacity-50 pointer-events-none' : ''}`}>
+            <div className={`w-[150px] h-[185px] sm:w-[190px] sm:h-[193px] md600:w-[220px] md600:h-[210px] md:w-[230px] md:h-[265px] lg:w-[240px] lg:h-[282px] xl:w-[240px] xl:h-[285px] 2xl:w-[256px] 2xl:h-[300px] bg-[#302f2f] relative ${!isPoweredOn ? 'opacity-50 pointer-events-none' : ''}`}>
                 {/* Tone Knob - Top Right */}
                 <div className="absolute top-[30px] right-[30px] md600:top-[40px] md600:right-[40px] md:top-[50px] md:right-[40px]">
                     <Knob1 label="Depth" min={-135} max={135} defaultAngle={0} />
