@@ -490,7 +490,7 @@ function writeString(view, offset, string) {
 
 
   return (
-    <Dialog open={open} onClose={onClose} className="relative z-50">
+    <Dialog open={open} onClose={onClose} className="relative z-[99]">
       {/* Backdrop */}
       <DialogBackdrop className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
 

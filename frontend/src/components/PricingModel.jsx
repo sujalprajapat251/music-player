@@ -16,7 +16,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
     >
       <DialogBackdrop
         transition
-        className="fixed inset-0 bg-black/60 backdrop-blur-md transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
       />
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4 sm:p-0">
@@ -52,7 +52,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
               <p className="text-white text-3xl md:text-3xl font-extrabold tracking-wide">
                 Our Pricing Plans
               </p>
-              <div className="mt-2 h-1 w-20 mx-auto bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full"></div>
+              <div className="mt-2 h-1 w-20 mx-auto bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
             </div>
 
             {/* Tabs with Toggle */}
@@ -64,7 +64,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                     content: (
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
                         {/* Starter */}
-                        <div className="bg-[#14161c] border border-white/10 rounded-2xl p-8 text-left flex flex-col hover:border-emerald-400 transition">
+                        <div className="bg-[#14161c] border border-purple-400 rounded-2xl p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
                           <h3 className="text-xl font-semibold text-white mb-2">
                             Starter
                           </h3>
@@ -75,7 +75,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                           <p className="text-3xl font-bold text-white">
                             $9<span className="text-lg font-normal">/mo</span>
                           </p>
-                          <button className="mt-6 w-full py-2 rounded-lg border border-gray-600 text-white hover:bg-emerald-500 hover:border-emerald-500 transition">
+                          <button className="mt-6 w-full py-2 rounded-lg border border-gray-600 text-white hover:bg-violet-500 hover:border-violet-600 transition">
                             Get started →
                           </button>
                           <ul className="mt-6 space-y-2 text-sm text-gray-300">
@@ -87,12 +87,12 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                         </div>
 
                         {/* Professional */}
-                        <div className="bg-[#14161c] border-2 border-emerald-400 rounded-2xl p-8 text-left flex flex-col shadow-[0_0_20px_rgba(16,185,129,0.4)]">
+                        <div className="bg-[#14161c] border border-purple-400 rounded-2xl p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
                           <div className="flex justify-between items-center mb-2">
                             <h3 className="text-xl font-semibold text-white">
                               Professional
                             </h3>
-                            <span className="bg-emerald-500 text-xs px-2 py-1 rounded-full text-black font-semibold">
+                            <span className="bg-purple-400 text-xs px-2 py-1 rounded-full text-black font-semibold">
                               Bestseller
                             </span>
                           </div>
@@ -102,7 +102,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                           <p className="text-3xl font-bold text-white">
                             $15<span className="text-lg font-normal">/mo</span>
                           </p>
-                          <button className="mt-6 w-full py-2 rounded-lg bg-emerald-500 text-black font-semibold hover:bg-emerald-400 transition">
+                          <button className="mt-6 w-full py-2 rounded-lg bg-violet-500 text-black font-semibold hover:bg-violet-600 transition">
                             Get started →
                           </button>
                           <ul className="mt-6 space-y-2 text-sm text-gray-300">
@@ -114,7 +114,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                         </div>
 
                         {/* Enterprise */}
-                        <div className="bg-[#14161c] border border-white/10 rounded-2xl p-8 text-left flex flex-col hover:border-emerald-400 transition">
+                        <div className="bg-[#14161c] border border-purple-400 rounded-2xl p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
                           <h3 className="text-xl font-semibold text-white mb-2">
                             Enterprise
                           </h3>
@@ -124,7 +124,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                           <p className="text-3xl font-bold text-white">
                             $99<span className="text-lg font-normal">/mo</span>
                           </p>
-                          <button className="mt-6 w-full py-2 rounded-lg border border-gray-600 text-white hover:bg-emerald-500 hover:border-emerald-500 transition">
+                          <button className="mt-6 w-full py-2 rounded-lg border border-gray-600 text-white hover:bg-violet-500 hover:border-violet-600 transition">
                             Schedule a call
                           </button>
                           <ul className="mt-6 space-y-2 text-sm text-gray-300">
@@ -142,7 +142,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                     content: (
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
                         {/* Starter */}
-                        <div className="bg-[#14161c] border border-white/10 rounded-2xl p-8 text-left flex flex-col hover:border-emerald-400 transition">
+                        <div className="bg-[#14161c] border border-purple-400 rounded-2xl p-8 text-left flex flex-col hover:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
                           <h3 className="text-xl font-semibold text-white mb-2">
                             Starter
                           </h3>
@@ -154,7 +154,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                             $90
                             <span className="text-lg font-normal">/yr</span>
                           </p>
-                          <button className="mt-6 w-full py-2 rounded-lg border border-gray-600 text-white hover:bg-emerald-500 hover:border-emerald-500 transition">
+                          <button className="mt-6 w-full py-2 rounded-lg border border-gray-600 text-white hover:bg-violet-500 hover:border-violet-600 transition">
                             Get started →
                           </button>
                           <ul className="mt-6 space-y-2 text-sm text-gray-300">
@@ -166,12 +166,12 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                         </div>
 
                         {/* Professional */}
-                        <div className="bg-[#14161c] border-2 border-emerald-400 rounded-2xl p-8 text-left flex flex-col shadow-[0_0_20px_rgba(16,185,129,0.4)]">
+                        <div className="bg-[#14161c] border border-purple-400 rounded-2xl p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
                           <div className="flex justify-between items-center mb-2">
                             <h3 className="text-xl font-semibold text-white">
                               Professional
                             </h3>
-                            <span className="bg-emerald-500 text-xs px-2 py-1 rounded-full text-black font-semibold">
+                            <span className="bg-purple-400 text-xs px-2 py-1 rounded-full text-black font-semibold">
                               Bestseller
                             </span>
                           </div>
@@ -182,7 +182,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                             $150
                             <span className="text-lg font-normal">/yr</span>
                           </p>
-                          <button className="mt-6 w-full py-2 rounded-lg bg-emerald-500 text-black font-semibold hover:bg-emerald-400 transition">
+                          <button className="mt-6 w-full py-2 rounded-lg bg-violet-500 text-black font-semibold hover:bg-violet-600 transition">
                             Get started →
                           </button>
                           <ul className="mt-6 space-y-2 text-sm text-gray-300">
@@ -194,7 +194,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                         </div>
 
                         {/* Enterprise */}
-                        <div className="bg-[#14161c] border border-white/10 rounded-2xl p-8 text-left flex flex-col hover:border-emerald-400 transition">
+                        <div className="bg-[#14161c] border border-purple-400 rounded-2xl p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
                           <h3 className="text-xl font-semibold text-white mb-2">
                             Enterprise
                           </h3>
@@ -205,7 +205,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                             $999
                             <span className="text-lg font-normal">/yr</span>
                           </p>
-                          <button className="mt-6 w-full py-2 rounded-lg border border-gray-600 text-white hover:bg-emerald-500 hover:border-emerald-500 transition">
+                          <button className="mt-6 w-full py-2 rounded-lg border border-gray-600 text-white hover:bg-violet-500 hover:border-violet-600 transition">
                             Schedule a call
                           </button>
                           <ul className="mt-6 space-y-2 text-sm text-gray-300">
@@ -224,7 +224,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
 
             {/* Footer Button */}
             <div className="pri-next-btn text-center mt-10">
-              <button className="bg-gradient-to-r from-emerald-500 to-cyan-400 text-black font-semibold py-3 px-24 md:px-40 rounded-xl shadow-lg hover:scale-105 transition-transform">
+              <button className="bg-gradient-to-r from-indigo-500 to-purple-400 text-black font-semibold py-3 px-24 md:px-40 rounded-xl shadow-lg hover:scale-105 transition-transform">
                 Next
               </button>
             </div>
