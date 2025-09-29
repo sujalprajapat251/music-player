@@ -16,6 +16,7 @@ import { IMAGE_URL } from '../Utils/baseUrl';
 import { addToWishList, removeFromWishList, getUserWishList } from '../Redux/Slice/user.slice';
 import { addTrack, addAudioClipToTrack, setCurrentTrackId } from '../Redux/Slice/studio.slice';
 import { createPortal } from "react-dom";
+import PricingModel from './PricingModel';
 
 const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
 
@@ -27,6 +28,8 @@ const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
     const audioRefs = useRef([]);
     const [playingIndex, setPlayingIndex] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
+    const [contextMenu, setContextMenu] = useState({ show: false, x: 0, y: 0, soundItem: null });
+    const [pricingModalOpen, setPricingModalOpen] = useState(false);
 
     const category = useSelector((state) => state.category?.category || []);
     const sound = useSelector((state) => state.sound?.allsounds || [])
@@ -182,6 +185,38 @@ const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
         }
     };
 
+    const handleContextMenuClick = (e, soundItem) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Get the bounding rect of the clicked element to position menu to the left
+        const rect = e.currentTarget.getBoundingClientRect();
+        const menuWidth = 150; // Approximate width of the context menu
+        
+        setContextMenu({
+            show: true,
+            x: rect.left - menuWidth - 5, // Position to the left of the icon
+            y: rect.top,
+            soundItem: soundItem
+        });
+    };
+
+    const handleContextMenuClose = () => {
+        setContextMenu({ show: false, x: 0, y: 0, soundItem: null });
+    };
+
+    const handleAddNewTrack = () => {
+        if (contextMenu.soundItem) {
+            handleAddToTimeline(contextMenu.soundItem);
+        }
+        handleContextMenuClose();
+    };
+
+    const handleOpenInSampler = () => {
+        setPricingModalOpen(true);
+        handleContextMenuClose();
+    };
+
     return (
         <>
             {showOffcanvas && (
@@ -205,6 +240,54 @@ const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
                     )}
                 </>
             )}
+            
+            {/* Context Menu */}
+            {contextMenu.show && (
+                createPortal(
+                    <div 
+                        className="fixed z-[1000] bg-[#2A2A2A] dark:bg-[#1A1A1A] border border-[#404040] dark:border-[#333333] rounded-[4px] shadow-lg"
+                        style={{
+                            left: contextMenu.x,
+                            top: contextMenu.y,
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="py-1">
+                            <button
+                                onClick={handleAddNewTrack}
+                                className="w-full px-4 py-2 text-left text-white hover:bg-[#404040] dark:hover:bg-[#333333] text-sm font-medium"
+                            >
+                                Add new track
+                            </button>
+                            <div className="border-t border-[#404040] dark:border-[#333333]"></div>
+                            <button
+                                onClick={handleOpenInSampler}
+                                className="w-full px-4 py-2 text-left text-white hover:bg-[#404040] dark:hover:bg-[#333333] text-sm font-medium"
+                            >
+                                Open in sampler
+                            </button>
+                        </div>
+                    </div>,
+                    document.body
+                )
+            )}
+            
+            {/* Backdrop to close context menu */}
+            {contextMenu.show && (
+                createPortal(
+                    <div 
+                        className="fixed inset-0 z-[999]"
+                        onClick={handleContextMenuClose}
+                    />,
+                    document.body
+                )
+            )}
+            
+            {/* Pricing Modal */}
+            <PricingModel 
+                pricingModalOpen={pricingModalOpen} 
+                setPricingModalOpen={setPricingModalOpen} 
+            />
         </>
     )
 
@@ -640,6 +723,63 @@ const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
                                         )
                                     })}
                                 </div>
+                            </div>
+                        )}
+                        {!showAll && (
+                            <div className=' pt-[8px] md600:pt-[10px] lg:pt-[12px] xl:pt-[14px] 3xl:pt-[18px]'>
+                                <div className="flex justify-between items-center mb-1 lg:mb-2 3xl:mb-3">
+                                    <div className='flex items-center'>
+                                        <h6 className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] lg:text-[14px] xl:text-[16px] 3xl:text-[18px] font-[600] md600:me-2'>AnyScale</h6>
+                                        <Scale className='w-4 h-4 lg:w-full lg:h-full text-secondary-light dark:text-secondary-dark' />
+                                    </div>
+                                    {userWishList?.wishlist?.length > 0 && (
+                                        <label className="flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                name="rememberMe"
+                                                className="w-3 h-3 md600:w-4 md600:h-4 3xl:w-5 3xl:h-5 text-red-500 bg-transparent border-[1px] border-[#000] dark:border-[#fff] rounded-[2px] j_checkBox"
+                                                checked={showFavoritesOnly}
+                                                onChange={() => setShowFavoritesOnly(prev => !prev)}
+                                            />
+                                            <span className=" ml-1 md600:ml-2 text-[8px] md600:text-[10px] xl:text-[12px] 3xl:text-[14px] text-secondary-light dark:text-secondary-dark font-[400]">
+                                                Favorites
+                                            </span>
+                                        </label>
+                                    )}
+
+                                </div>
+                                {filteredSounds.map((soundItem, index) => {
+                                    const isWishlisted = isInWishlist(soundItem._id);
+                                    return (
+                                        <div key={index} className="flex justify-between items-center bg-[#E5E5E5] dark:bg-[#262529] p-[3px] md600:p-[4px] lg:p-[6px] xl:p-[8px] 3xl:p-[10px] w-full mb-1 md600:mb-2 cursor-pointer hover:bg-[#b8b8b8] dark:hover:bg-gray-600"
+                                            draggable={true}
+                                            onDragStart={(e) => handleDragStart(e, soundItem)}
+                                            onDragEnd={handleDragEnd}>
+                                            <div className="flex items-center">
+                                                <div className='w-[20px] h-[20px] lg:w-[26px] lg:h-[26px] 3xl:w-[30px] 3xl:h-[30px] rounded-[2px] relative me-1 md600:me-2 3xl:me-3'>
+                                                    <img src={`${IMAGE_URL}uploads/image/${soundItem?.image}`} alt="Album" className="w-[16px] h-[16px] lg:w-[20px} lg:h-[20px] xl:w-[24px] xl:h-[24px] 3xl:w-full 3xl:h-full object-cover" />
+                                                    <button onClick={() => handlePlayPause(index)} className='absolute top-[53%] left-[40%]  xl:top-[50%] xl:left-[50%] lg:w-[16px] lg:h-[16px] xl::w-[20px] xl:h-[20px] bg-[#FFFFFF33] rounded-full translate-x-[-50%] translate-y-[-50%] flex justify-center items-center'>
+                                                        <img src={playingIndex === index ? pauseblack : playblack} alt="" />
+                                                    </button>
+                                                    <audio
+                                                        ref={el => audioRefs.current[index] = el}
+                                                        src={`${IMAGE_URL}uploads/soundfile/${soundItem?.soundfile}`}
+                                                        onEnded={() => handleEnded(index)}
+                                                    />
+                                                </div>
+                                                <div className='text-secondary-light dark:text-secondary-dark text-[10px] xl:text-[12px] 3xl:text-[14px] font-[500]'>{soundItem?.soundname}</div>
+                                            </div>
+                                            <div className='flex justify-between'>
+                                                {isWishlisted ? (
+                                                    <FaHeart onClick={() => toggleWishlist(soundItem._id)} className={`text-red-500 text-[12px] xl:text-[14px] 3xl:text-[16px] me-1 md600:me-2 3xl:me-3`} />
+                                                ) : (
+                                                    <FaRegHeart onClick={() => toggleWishlist(soundItem._id)} className={`text-secondary-light dark:text-secondary-dark text-[12px] xl:text-[14px] 3xl:text-[16px] me-1 md600:me-2 3xl:me-3`} />
+                                                )}
+                                                <FaPlus onClick={(e) => handleContextMenuClick(e, soundItem)} className='text-secondary-light dark:text-secondary-dark text-[12px] xl:text-[14px] 3xl:text-[16px] cursor-pointer' />
+                                            </div>
+                                        </div>
+                                    )
+                                })}
                             </div>
                         )}
                     </div>

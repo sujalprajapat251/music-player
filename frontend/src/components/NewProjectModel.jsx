@@ -17,13 +17,13 @@ const NewProject = ({ open, setOpen, showClose = true }) => {
   const handleCreateNew = () => {
     try {
       dispatch(resetStudio());
-      // navigate('/sidebar/timeline');
+      navigate('/sidebar/timeline');
     } finally {
       setOpen(false);
     }
   };
   return (
-    <Dialog open={open} onClose={() => {}} className="relative z-[200]">
+    <Dialog open={open} onClose={() => {}} className="relative z-50">
       <DialogBackdrop className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4 text-center">
@@ -40,10 +40,10 @@ const NewProject = ({ open, setOpen, showClose = true }) => {
                     label: 'New Project',
                     content: (
                       <div className="flex flex-col items-center w-1/2">
-                        <div className="bg-[#322d3c] rounded-t-lg w-full flex flex-col items-center justify-center py-14 cursor-pointer" onClick={handleCreateNew}>
+                        <div className="bg-[#322d3c] rounded-t-lg w-full flex flex-col items-center justify-center py-14 sm:py-5 md:py-14 cursor-pointer" onClick={handleCreateNew}>
                           <img src={newProjectIcon} alt="Music Note" className="w-12 h-12 mb-2" />
                         </div>
-                        <button className="w-full bg-[#9b7ae7] text-white py-4 rounded-b-lg font-medium text-lg transition-colors" onClick={handleCreateNew}>Music</button>
+                        <button className="w-full bg-[#9b7ae7] text-white py-4 sm:py-2 md:py-4 rounded-b-lg font-medium text-lg transition-colors" onClick={handleCreateNew}>Music</button>
                       </div>
                     ),
                   },
@@ -51,50 +51,50 @@ const NewProject = ({ open, setOpen, showClose = true }) => {
                     label: 'Demos',
                     content: (
                       <div className="items-center justify-center text-white opacity-60">
-                        <div className="grid grid-cols-3 gap-6"> 
+                        <div className="grid grid-cols-3 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-4 md:gap-6"> 
                           <div className="flex flex-col items-center">
                             <img src={mm1} alt="Hyperpop" className="w-full h-full object-cover rounded-t-md" />
-                            <div className="border w-full text-center py-2 text-[#FFFFFF] text-[16px] font-medium">Hyperpop</div>
+                            <div className="border w-full text-center py-2 sm:py-1 md:py-2 text-[#FFFFFF] text-[16px] font-medium">Hyperpop</div>
                           </div>
 
                           <div className="flex flex-col items-center">
                             <img src={mm2} alt="Soul" className="w-full h-full object-cover rounded-t-md" />
-                            <div className="border w-full text-center py-2 text-[#FFFFFF] text-[16px] font-medium">Soul</div>
+                            <div className="border w-full text-center py-2 sm:py-1 md:py-2 text-[#FFFFFF] text-[16px] font-medium">Soul</div>
                           </div>
 
                           <div className="flex flex-col items-center">
                             <img src={mm3} alt="Pop" className="w-full object-cover rounded-t-md" />
-                            <div className="border w-full text-center py-2 text-[#FFFFFF] text-[16px] font-medium">Pop</div>
+                            <div className="border w-full text-center py-2 sm:py-1 md:py-2 text-[#FFFFFF] text-[16px] font-medium">Pop</div>
                           </div>
 
                           <div className="flex flex-col items-center">
                             <img src={mm1} alt="Hyperpop" className="w-full h-full object-cover rounded-t-md" />
-                            <div className="border w-full text-center py-2 text-[#FFFFFF] text-[16px] font-medium">Hyperpop</div>
+                            <div className="border w-full text-center py-2 sm:py-1 md:py-2 text-[#FFFFFF] text-[16px] font-medium">Hyperpop</div>
                           </div>
 
                           <div className="flex flex-col items-center">
                             <img src={mm2} alt="Soul" className="w-full h-full object-cover rounded-t-md" />
-                            <div className="border w-full text-center py-2 text-[#FFFFFF] text-[16px] font-medium">Soul</div>
+                            <div className="border w-full text-center py-2 sm:py-1 md:py-2 text-[#FFFFFF] text-[16px] font-medium">Soul</div>
                           </div>
 
                           <div className="flex flex-col items-center">
                             <img src={mm3} alt="Pop" className="w-full object-cover rounded-t-md" />
-                            <div className="border w-full text-center py-2 text-[#FFFFFF] text-[16px] font-medium">Pop</div>
+                            <div className="border w-full text-center py-2 sm:py-1 md:py-2 text-[#FFFFFF] text-[16px] font-medium">Pop</div>
                           </div>
 
                           <div className="flex flex-col items-center">
                             <img src={mm1} alt="Hyperpop" className="w-full h-full object-cover rounded-t-md" />
-                            <div className="border w-full text-center py-2 text-[#FFFFFF] text-[16px] font-medium">Hyperpop</div>
+                            <div className="border w-full text-center py-2 sm:py-1 md:py-2 text-[#FFFFFF] text-[16px] font-medium">Hyperpop</div>
                           </div>
 
                           <div className="flex flex-col items-center">
                             <img src={mm2} alt="Soul" className="w-full h-full object-cover rounded-t-md" />
-                            <div className="border w-full text-center py-2 text-[#FFFFFF] text-[16px] font-medium">Soul</div>
+                            <div className="border w-full text-center py-2 sm:py-1 md:py-2 text-[#FFFFFF] text-[16px] font-medium">Soul</div>
                           </div>
 
                           <div className="flex flex-col items-center">
                             <img src={mm3} alt="Pop" className="w-full object-cover rounded-t-md" />
-                            <div className="border w-full text-center py-2 text-[#FFFFFF] text-[16px] font-medium">Pop</div>
+                            <div className="border w-full text-center py-2 sm:py-1 md:py-2 text-[#FFFFFF] text-[16px] font-medium">Pop</div>
                           </div>
                         </div>
                       </div>

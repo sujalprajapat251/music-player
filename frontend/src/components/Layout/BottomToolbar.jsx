@@ -47,6 +47,7 @@ const BottomToolbar = () => {
     const tempoDropdownRef = useRef(null);
     const menuDropdownRef = useRef(null);
     const [appliedSelection, setAppliedSelection] = useState(null);
+    const [wasCleared, setWasCleared] = useState(false);
     const [tempo, setTempo] = useState(120);
     const [appliedTempo, setAppliedTempo] = useState(120);
     const [selectedMenuitems, setSelectedMenuitems] = useState('Click');
@@ -336,6 +337,14 @@ const BottomToolbar = () => {
     };
 
     const handleApply = () => {
+        // If user previously hit Clear, ensure applied selection is removed
+        if (wasCleared || (!selectedKey || !selectedMode)) {
+            dispatch(clearKeyScaleSelection());
+            setAppliedSelection(null);
+            setWasCleared(false);
+            setIsOpen(false);
+            return;
+        }
         if (selectedKey && selectedMode) {
             const highlightedKeys = calculateHighlightedKeys(selectedKey, selectedMode);
 
@@ -359,6 +368,7 @@ const BottomToolbar = () => {
         setSelectedKeyLocal(null);
         dispatch(clearKeyScaleSelection());
         setAppliedSelection(null); // Clear the applied selection too
+        setWasCleared(true);
     };
 
     const menu = [

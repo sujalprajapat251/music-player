@@ -16,7 +16,9 @@ import { drumMachineTypes } from "../Utils/drumMachineUtils";
 import settingIcon from "../Images/setting.svg";
 import reverceIcon from "../Images/reverce.svg";
 import fxIcon from "../Images/fx.svg";
+import fxIconblack from "../Images/fxblack.svg";
 import offce from "../Images/offce.svg";
+import offceblack from "../Images/offceblack.svg";
 import magnetIcon from "../Images/magnet.svg";
 import GridSetting from "./GridSetting";
 import MusicOff from "./MusicOff";
@@ -3907,19 +3909,27 @@ const Timeline = () => {
         {/* Right side controls */}
         <div className="absolute top-[60px] right-[0] -translate-x-1/2 z-30">
           <div
-            className="bg-[#FFFFFF] w-[40px] h-[40px] flex items-center justify-center rounded-full cursor-pointer"
+            className={`w-[40px] h-[40px] flex items-center justify-center rounded-full cursor-pointer ${showOffcanvas ? 'bg-[#FFFFFF]' : 'bg-[#3C3A40]'}`}
             onClick={() => { const next = !showOffcanvas; setShowOffcanvas(next); setShowOffcanvasEffects(false); dispatch(setShowLoopLibrary(next)); }}
           >
-            <img src={offce} alt="Off canvas" />
+            {showOffcanvas ? (
+              <img src={offceblack} alt="Off canvas" />
+            ) : (
+              <img src={offce} alt="Off canvas" />
+            )}
           </div>
-          <div className="bg-[#1F1F1F] w-[40px] h-[40px] flex items-center justify-center rounded-full mt-2 cursor-pointer"
+          <div className={`w-[40px] h-[40px] flex items-center justify-center rounded-full mt-2 cursor-pointer ${showOffcanvasEffects ? 'bg-[#FFFFFF]' : 'bg-[#3C3A40]'}`}
             onClick={() => {  
               setShowOffcanvasEffects((prev) => !prev);
               setShowOffcanvas(false);
               dispatch(setShowLoopLibrary(false));}}         
           >
             {/* <img src={fxIcon} alt="Effects" onClick={() => { setShowOffcanvasEffects((prev) => !prev); setShowOffcanvas(false); }} /> */}
-            <img src={fxIcon} alt="Effects" />
+            {showOffcanvasEffects ? (
+              <img src={fxIconblack} alt="Effects" />
+            ) : (
+              <img src={fxIcon} alt="Effects" />
+            )}
           </div>
         </div>
 
