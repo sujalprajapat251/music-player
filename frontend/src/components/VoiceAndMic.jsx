@@ -434,9 +434,9 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
         <>
             {showOffcanvas1 === true && (
                 <>
-                    <div className="fixed z-[12] w-full h-full transition-transform left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px] lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[516px]">
-                        <div className="border-b border-[#FFFFFF1A] h-full">
-                            <div className=" bg-[#1F1F1F] flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
+                    <div className="fixed z-[10] w-full h-full transition-transform left-0 right-0 translate-y-full bottom-[330px] sm:bottom-[351px] md:bottom-[400px] lg:bottom-[430px] xl:bottom-[433px] 2xl:bottom-[467px]">
+                        <div className="border-b border-gray-300 dark:border-[#FFFFFF1A] h-full">
+                            <div className="bg-white dark:bg-[#1F1F1F] flex items-center p-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                                 <div>
                                     <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => {
                                         setShowOffcanvas1(false);
@@ -457,7 +457,7 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                     })
                                     .map((tab) => (
                                         <button key={tab} onClick={() => setActiveTab(tab)}
-                                            className={`text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white ' : 'text-gray-400 hover:text-white'}`}>
+                                            className={`text-[10px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white ' : 'text-gray-400 hover:text-white'}`}>
                                             {tab}
                                         </button>
                                     ))}
@@ -467,24 +467,21 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                     <>
                                         <div className="min-h-screen text-white">
                                             {/* Header */}
-                                            <div className="flex items-center justify-between px-6 bg-[#1f1f1f]">
+                                            <div className="flex items-center justify-between px-2 md:px-6 py-1 bg-[#1f1f1f] gap-2 md:gap-0">
                                                 {/* Left Section */}
                                                 <div className="">
-                                                    <div className="relative w-64">
+                                                    <div className="relative w-40 md:w-64">
                                                         <button
                                                             onClick={() => setIsOpen(!isOpen)}
-                                                            className="w-full transition-colors duration-200 rounded-lg px-3 py-2 flex items-center justify-between text-white border border-gray-600"
+                                                            className="w-full transition-colors duration-200 rounded-lg px-2 lg:px-3 py-2 flex items-center justify-between text-white border border-gray-600"
                                                         >
                                                             <div className="flex items-center space-x-2 min-w-0">
-                                                                <Mic className="w-4 h-4 text-gray-300" />
-                                                                <span className="text-sm text-gray-300 truncate max-w-[11rem] sm:max-w-[14rem] md:max-w-[18rem] lg:max-w-[22rem]">
+                                                                <Mic className="w-4 sm:w-3 lg:w-7 h-4 sm:h-3 lg:h-7" />
+                                                                <span className="text-[10px] md:text-[12px] lg:text-sm text-gray-300 truncate w-[11rem] sm:w-[8rem] md:w-[10rem] lg:w-[22rem]">
                                                                     {selectedInput}
                                                                 </span>
                                                             </div>
-                                                            <FaChevronDown
-                                                                className={`w-4 h-4 text-gray-300 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''
-                                                                    }`}
-                                                            />
+                                                            <FaChevronDown className={`w-3 lg:w-4 h-3 lg:h-4 text-gray-300 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : '' }`} />
                                                         </button>
 
                                                         {isOpen && (
@@ -498,41 +495,42 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                                                 } ${index === 0 ? 'rounded-t-lg' : ''} ${index === audioInputs.length - 1 ? 'rounded-b-lg' : ''
                                                                                 }`}
                                                                         >
-                                                                            <Mic className="w-4 h-4" />
+                                                                            <Mic className="w-3 lg:w-4 h-3 lg:h-4" />
                                                                             <span className="truncate">{input}</span>
                                                                         </button>
                                                                     ))
                                                                 ) : (
-                                                                    <div className="px-3 py-2 text-sm text-gray-400">No instrument detected</div>
+                                                                    <div className="px-3 py-2 text-[9px] md:text-[12px] lg:text-sm text-gray-400">No instrument detected</div>
                                                                 )}
                                                             </div>
                                                         )}
                                                     </div>
                                                     <div className='flex items-center justify-between mt-3'>
-                                                        <div className="flex items-center space-x-2 border border-[#5d5d5d] py-1 px-3 rounded-full cursor-pointer" onClick={() => setPricingModalOpen(true)}>
-                                                            <Mic className="w-4 h-4" />
-                                                            <span className="text-sm">Calibrate</span>
+                                                        <div className="flex items-center space-x-2 border border-[#5d5d5d] py-1 px-1 sm:px-2 md:px-3 rounded-full cursor-pointer" onClick={() => setPricingModalOpen(true)}>
+                                                            <Mic className="w-3 lg:w-4 h-3 lg:h-4" />
+                                                            <span className="text-[9px] md:text-[12px] lg:text-sm">Calibrate</span>
                                                         </div>
 
                                                         <div className="flex items-center space-x-2">
-                                                            <span className="text-sm">Monitoring:</span>
-                                                            <div className="w-8 h-8 bg-[#525252] rounded-lg flex items-center justify-center">
-                                                                <LuHeadphoneOff className="w-4 h-4" />
+                                                            <span className="text-[9px] md:text-[12px] lg:text-sm">Monitoring:</span>
+                                                            <div className="w-5 md:w-8 h-5 md:h-8 bg-[#525252] rounded-lg flex items-center justify-center">
+                                                                <LuHeadphoneOff className="w-2 md:w-3 lg:w-4 h-2 md:h-3 lg:h-4" />
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 {/* Center Section */}
+                                                <div className="flex overflow-x-auto w-full max-w-[380px]">
                                                 <div>
                                                     <div className="flex items-center space-x-2 border border-[#5d5d5d] rounded-lg">
-                                                        <div className="flex items-center px-4 py-3 gap-4 border-r border-[#5d5d5d]">
-                                                            <FaChevronLeft className="w-4 h-4 cursor-pointer hover:text-purple-300" />
-                                                            <FaChevronRight className="w-4 h-4 cursor-pointer hover:text-purple-300" />
+                                                        <div className="flex items-center px-1 md:px-2 lg:px-4 py-2 lg:py-3 sm:gap-2 md:gap-4 border-r border-[#5d5d5d]">
+                                                            <FaChevronLeft className="w-2 sm:w-3 lg:w-4 h-2 sm:h-3 lg:h-4 cursor-pointer hover:text-purple-300" />
+                                                            <FaChevronRight className="w-2 sm:w-3 lg:w-4 h-2 sm:h-3 lg:h-4 cursor-pointer hover:text-purple-300" />
                                                         </div>
-                                                        <div className="flex items-center gap-8 px-4 py-3">
-                                                            <span className="text-sm">Load and Clear</span>
-                                                            <FaChevronDown className="w-4 h-4 transform cursor-pointer hover:text-purple-300" />
+                                                        <div className="flex items-center gap-3 md:gap-8 px-1 md:px-2 lg:px-4 py-1 md:py-2 lg:py-3">
+                                                            <span className="text-[9px] md:text-[12px] lg:text-sm">Load and Clear</span>
+                                                            <FaChevronDown className="w-3 lg:w-4 h-3 lg:h-4 transform cursor-pointer hover:text-purple-300" />
                                                         </div>
                                                     </div>
 
@@ -542,7 +540,6 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                 </div>
 
                                                 {/* Right Section */}
-                                                <div className="flex items-center space-x-6">
                                                     <div className="flex items-center space-x-6">
                                                         <div className="flex items-center justify-center px-2 md600:px-2 md600:pt-2 md600:pb-1 sm:gap-6 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
                                                             <div className="flex space-x-1 md600:space-x-2 lg:space-x-4 2xl:space-x-10">
@@ -564,16 +561,16 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                             </div>
 
                                             {/* Main Content */}
-                                            <div className="flex items-center justify-center px-12 py-8 bg-[#242424]">
-                                                <div className="flex items-center space-x-12">
+                                            <div className="flex items-center justify-center md:px-12 py-2 md:py-4 2xl:py-4 bg-[#242424]">
+                                                <div className="flex items-center md:space-x-12 flex-col md:flex-row h-[194px] overflow-auto">
 
                                                     {/* Vocal Cleanup Card */}
-                                                    <div className="bg-[#1f1f1f] backdrop-blur-sm border border-[#5d5d5d] rounded-xl p-6 w-80">
-                                                        <div className="flex items-center space-x-3 mb-6">
-                                                            <div className="w-8 h-8 bg-[#525252] rounded-lg flex items-center justify-center">
+                                                    <div className="bg-[#1f1f1f] backdrop-blur-sm border border-[#5d5d5d] rounded-xl p-2 2xl:p-5 w-64 sm:w-80 mb-3 md:mb-0">
+                                                        <div className="flex items-center space-x-3 mb-3 lg:mb-4">
+                                                            <div className="w-7 h-7 bg-[#525252] rounded-lg flex items-center justify-center">
                                                                 <img src={subscription} alt="subscription" className="w-4 h-4" />
                                                             </div>
-                                                            <h3 className="text-xl font-semibold">Vocal Cleanup</h3>
+                                                            <h3 className="text-md lg:text-lg font-semibold">Vocal Cleanup</h3>
                                                         </div>
 
                                                         <div className="flex flex-col items-center space-y-4 bg-[#333333] rounded-xl py-3">
@@ -587,13 +584,13 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                     </div>
 
                                                     {/* Vocal Tuner Card */}
-                                                    <div className="bg-[#1f1f1f] backdrop-blur-sm border border-[#5d5d5d] rounded-xl p-6 w-90">
-                                                        <div className="flex items-center justify-between mb-6">
+                                                    <div className="bg-[#1f1f1f] backdrop-blur-sm border border-[#5d5d5d] rounded-xl p-2 2xl:p-5 w-72 sm:w-96 ms-0 mb-3 md:mb-0">
+                                                        <div className="flex items-center justify-between mb-3 lg:mb-4">
                                                             <div className="flex items-center space-x-3">
-                                                                <div className="w-8 h-8 bg-[#525252] rounded-lg flex items-center justify-center">
+                                                                <div className="w-7 h-7 bg-[#525252] rounded-lg flex items-center justify-center">
                                                                     <img src={subscription} alt="subscription" className="w-4 h-4" />
                                                                 </div>
-                                                                <h3 className="text-xl font-semibold">Vocal Tuner</h3>
+                                                                <h3 className="text-md lg:text-lg font-semibold">Vocal Tuner</h3>
                                                             </div>
 
                                                             <div className="flex items-center space-x-4">

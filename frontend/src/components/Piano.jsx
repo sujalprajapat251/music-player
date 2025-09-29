@@ -1728,7 +1728,7 @@ const Pianodemo = ({ onClose }) => {
                               <GiPianoKeys className="text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[20px] 2xl:text-[20px]" />
                             </div>
                             <div className="">
-                              <div className="text-black dark:text-white font-bold text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[16px] 2xl:text-[16px]">
+                              <div className="text-black dark:text-white font-bold text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[16px] truncate whitespace-nowrap overflow-hidden max-w-[120px] sm:max-w-[150px] md:max-w-[180px] lg:max-w-[200px]">
                                 {INSTRUMENTS[currentInstrumentIndex].name}
                               </div>
                               <div className="text-gray-600 dark:text-gray-400 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[12px]">

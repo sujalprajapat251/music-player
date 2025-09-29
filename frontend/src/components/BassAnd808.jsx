@@ -12,6 +12,7 @@ import { selectStudioState } from '../Redux/rootReducer';
 import PricingModel from './PricingModel';
 import svg808 from '../Images/808-icon.svg'
 import SimplePianoBar from './SimplePianoBar';
+import { useResponsivePiano } from '../hooks/useResponsivePiano';
 
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
@@ -124,7 +125,7 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
                 </svg>
                 <div className={`absolute top-1.5 left-1/2 w-1 h-2 md600:h-3 lg:h-4 bg-[#ff780a] rounded-sm -translate-x-1/2 origin-bottom`} style={{ transform: `translateX(-50%) rotate(${angle}deg)`, }} />
             </div>
-            <div className='text-[8px] md600:text-[12px] md:text-[14px] 2xl:text-[16px] mt-1 items-center text-[#aaa]' style={{ fontFamily: "sans-serif" }}>{label}</div>
+            <div className='text-[8px] md600:text-[12px] md:text-[12px] 2xl:text-[15px] mt-1 items-center text-[#aaa]' style={{ fontFamily: "sans-serif" }}>{label}</div>
         </div>
     );
 }
@@ -163,6 +164,9 @@ const BassAnd808 = ({ onClose }) => {
     const [isDragOver, setIsDragOver] = useState(false);
     const [pricingModalOpen, setPricingModalOpen] = useState(false);
     const pianoSectionsRef = useRef(null);
+
+    // Responsive piano configuration
+    const { getNoteRange, getKeyboardShortcuts } = useResponsivePiano();
 
     // Get the selected instrument from Redux  
     const selectedInstrumentFromRedux = useSelector((state) =>
@@ -276,36 +280,14 @@ const BassAnd808 = ({ onClose }) => {
         return KeyboardShortcuts.create({
             firstNote: section.first,
             lastNote: section.last,
-            keyboardConfig: [
-                { natural: 'z', flat: 's', sharp: 's' },
-                { natural: 'x', flat: 'd', sharp: 'd' },
-                { natural: 'c', flat: 'f', sharp: 'f' },
-                { natural: 'v', flat: 'g', sharp: 'g' },
-                { natural: 'b', flat: 'h', sharp: 'h' },
-                { natural: 'n', flat: 'j', sharp: 'j' },
-                { natural: 'm', flat: 'k', sharp: 'k' },
-                { natural: ',', flat: 'l', sharp: 'l' },
-                { natural: '.', flat: ';', sharp: ';' },
-
-                { natural: 'q', flat: '1', sharp: '1' },
-                { natural: 'w', flat: '2', sharp: '2' },
-                { natural: 'e', flat: '3', sharp: '3' },
-                { natural: 'r', flat: '4', sharp: '4' },
-                { natural: 't', flat: '5', sharp: '5' },
-                { natural: 'y', flat: '6', sharp: '6' },
-                { natural: 'u', flat: '7', sharp: '7' },
-
-                { natural: 'i', flat: '8', sharp: '8' },
-                { natural: 'o', flat: '9', sharp: '9' },
-                { natural: 'p', flat: '0', sharp: '0' },
-            ],
+            keyboardConfig: getKeyboardShortcuts(section),
         });
     };
 
     const pianoSections = [
-        { first: MidiNumbers.fromNote('C0'), last: MidiNumbers.fromNote('B2') },
-        { first: MidiNumbers.fromNote('C3'), last: MidiNumbers.fromNote('B5') },
-        { first: MidiNumbers.fromNote('C5'), last: MidiNumbers.fromNote('C8') }
+        getNoteRange(0),
+        getNoteRange(1),
+        getNoteRange(2)
     ];
 
     const [recordedNotes, setRecordedNotes] = useState([]);
@@ -1653,17 +1635,17 @@ const BassAnd808 = ({ onClose }) => {
         <>
             {showOffcanvas1 === true && (
                 <>
-                    <div className="fixed z-[10] w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px]  lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[540px]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
-                        <div className="  border-b border-[#FFFFFF1A] h-full">
-                            <div className=" bg-[#1F1F1F] flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
+                    <div className="fixed z-[10] w-full h-full transition-transform left-0 right-0 translate-y-full bottom-[330px] sm:bottom-[351px] md:bottom-[403px] lg:bottom-[437px] xl:bottom-[441px] 2xl:bottom-[467px]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
+                        <div className="border-b border-gray-300 dark:border-[#FFFFFF1A] h-full">
+                            <div className="bg-white dark:bg-[#1F1F1F] flex items-center p-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                                 <div>
-                                    <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => {
+                                    <IoClose className='text-[14px] sm:text-[15px] md600:text-[16px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-gray-600 dark:text-[#FFFFFF99] cursor-pointer' onClick={() => {
                                         setShowOffcanvas1(false);
                                         onClose && onClose();
                                     }} />
                                 </div>
                             </div>
-                            <div className="bg-[#1F1F1F] flex space-x-2 sm:space-x-3 px-1 md600:space-x-4 md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3">
+                            <div className="bg-white dark:bg-[#1F1F1F] flex space-x-2 sm:space-x-3 px-1 md600:space-x-4 md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center lg:px-3">
                                 {['Instruments', 'Piano Roll', 'Effects']
                                     .filter(tab => {
                                         if (getTrackType === 'Bass & 808' || getTrackType === 'bass' || getTrackType === '808') {
@@ -1673,7 +1655,7 @@ const BassAnd808 = ({ onClose }) => {
                                     })
                                     .map((tab) => (
                                         <button key={tab} onClick={() => setActiveTab(tab)}
-                                            className={`text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white ' : 'text-gray-400 hover:text-white'}`}>
+                                            className={`text-[10px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white ' : 'text-gray-400 hover:text-white'}`}>
                                             {tab}
                                         </button>
                                     ))}
@@ -1682,62 +1664,60 @@ const BassAnd808 = ({ onClose }) => {
                             <div className=''>
                                 {activeTab === 'Instruments' && (
                                     <>
-                                        <div className="bg-[#1F1F1F] flex items-center justify-center pt-1 pb-1 px-2 md600:px-2 md600:pt-2 md600:pb-1 sm:gap-6 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
-                                            <div className="bg-[#353535] p-1 md600:p-2 lg:p-3 rounded-lg">
-                                                <div className="flex items-center justify-between">
-                                                    <button onClick={prevInstrument} className="text-gray-400 hover:text-white transition-colors p-1 md600:p-2">
-                                                        <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px]' />
+                                        <div className="bg-white dark:bg-[#1F1F1F] flex items-center justify-center py-1 px-2 md600:px-2 md600:pt-2 md600:pb-1 gap-4 sm:gap-6 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
+                                            <div className="bg-gray-200 dark:bg-[#353535] p-1 lg:p-2 rounded-lg cursor-pointer">
+                                                <div className="flex-shrink-0 bg-gray-200 dark:bg-[#353535] p-2 md:p-2 rounded-lg flex items-center justify-between min-w-[140px] sm:min-w-[180px] md:min-w-[220px] lg:min-w-[230px]">
+                                                    <button onClick={prevInstrument} className="text-gray-400 hover:text-white transition-colors p-1 md:p-2">
+                                                        <FaChevronLeft className="text-[10px] md:text-[14px] 2xl:text-[14px]" />
                                                     </button>
 
-                                                    <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-start 2xl:px-4 2xl:w-[250px]">
-                                                        <div className="text-white">
-                                                            <b>808</b>
-                                                        </div>
-                                                        <div className="">
-                                                            <div className="text-white fw-bolder text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[16px]">
+                                                    <div className="flex items-center gap-2 flex-1 justify-center">
+                                                        <div className="text-white font-bold text-[8px] sm:text-[10px] md:text-[14px] lg:text-[14px]">808</div>
+                                                        <div>
+                                                            <div className="text-white text-[8px] sm:text-[9px] md:text-[14px] lg:text-[14px]">
                                                                 {INSTRUMENTS[currentInstrumentIndex].name}
                                                             </div>
-                                                            <div className="text-gray-400 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px]">
+                                                            <div className="text-gray-400 text-[7px] sm:text-[8px] md:text-[12px] lg:text-[14px]">
                                                                 {INSTRUMENTS[currentInstrumentIndex].category}
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    <button onClick={nextInstrument} className="text-gray-400 hover:text-white transition-colors p-1 lg:p-2">
-                                                        <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] text-[#FFFFFF99]' />
+                                                    <button onClick={nextInstrument} className="text-gray-400 hover:text-white transition-colors p-1 md:p-2">
+                                                        <FaChevronRight className="text-[10px] md:text-[14px] 2xl:text-[14px]" />
                                                     </button>
                                                 </div>
                                             </div>
 
-                                            <div className="flex space-x-1 md600:space-x-2 lg:space-x-4 2xl:space-x-6">
-                                                <div className="flex items-center bg-[#353535] px-[25px] py-[10px] rounded-[7px]">
-                                                    <img src={svg808} alt="808 svg icon" />                                           
+                                            <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 lg:space-x-6 overflow-x-auto xl:overflow-x-visible no-scrollbar">
+                                                <div className="flex-shrink-0 flex items-center bg-[#353535] px-[25px] py-[10px] rounded-[7px]">
+                                                    <img src={svg808} alt="808 svg icon" className="w-20 sm:w-20 md:w-32 lg:w-36 xl:w-44" />
                                                 </div>
 
-                                                <div className="flex flex-col items-center bg-[#353535] px-[25px] py-[10px] rounded-[7px]">
-                                                    <Knob label="Glide" min={-135} max={135} defaultAngle={glide} onChange={(value) => setGlide(value)} />
+                                                <div className="flex-shrink-0 flex flex-col items-center bg-[#353535] px-3 py-1 rounded-[7px]">
+                                                    <Knob label="Glide" min={-135} max={135} defaultAngle={glide} onChange={setGlide} />
                                                 </div>
 
-                                                <div className="flex flex-col items-center bg-[#353535] px-[25px] py-[10px] rounded-[7px]">
-                                                    <Knob label="Saturation" min={-135} max={135} defaultAngle={saturation} onChange={(value) => setSaturation(value)} />
+                                                <div className="flex-shrink-0 flex flex-col items-center bg-[#353535] px-3 py-1 rounded-[7px]">
+                                                    <Knob label="Saturation" min={-135} max={135} defaultAngle={saturation} onChange={setSaturation} />
                                                 </div>
 
-                                                <div className="flex flex-row items-center gap-10 bg-[#353535] px-[25px] py-[10px] rounded-[7px]">
-                                                    <Knob label="Attack" min={-135} max={135} defaultAngle={attack} onChange={(value) => setAttack(value)} />
-                                                    <Knob label="Release" min={-135} max={135} defaultAngle={release} onChange={(value) => setRelease(value)} />
+                                                <div className="flex-shrink-0 flex flex-row items-center gap-4 md:gap-6 bg-[#353535] px-3 py-1 rounded-[7px]">
+                                                    <Knob label="Attack" min={-135} max={135} defaultAngle={attack} onChange={setAttack} />
+                                                    <Knob label="Release" min={-135} max={135} defaultAngle={release} onChange={setRelease} />
                                                 </div>
 
-                                                <div className="flex flex-col items-center bg-[#353535] px-[25px] py-[10px] rounded-[7px]">
-                                                    <Knob label="Volume" min={-135} max={135} defaultAngle={volume} onChange={(value) => setVolume(value)} />
+                                                <div className="flex-shrink-0 flex flex-col items-center bg-[#353535] px-3 py-1 rounded-[7px]">
+                                                    <Knob label="Volume" min={-135} max={135} defaultAngle={volume} onChange={setVolume} />
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="w-full h-[400px] md:h-[500px] lg:h-[250px]">
-                                            <div className="bg-[#1F1F1F] flex gap-1 md600:gap-2 md:gap-3 pb-1  lg:gap-4 lg:pb-2 2xl:gap-5 items-center justify-between 2xl:pb-3">
+                                        <div className="w-full h-[400px]">
+                                            <div className="bg-primary-light dark:bg-[#1F1F1F] flex gap-1 md600:gap-2 md:gap-3 pb-2 lg:gap-4 lg:pb-2 2xl:gap-5 items-center justify-between 2xl:pb-3">
                                                 <div className='flex gap-1 sm:gap-2 md600:gap-3 lg:gap-4  2xl:gap-5 items-center ms-1 md600:ms-2 lg:ms-3'>
-                                                    <div className='border rounded-3xl border-[#FFFFFF1A]'>
-                                                        <p className="text-[#FFFFFF99] text-[8px] md600:text-[10px] lg:text-[12px] px-1 sm:px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Sustain</p>
+                                                    <div className="border rounded-3xl border-secondary-light/10 dark:border-secondary-dark/10">
+                                                        <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[10px] md600:text-[10px] lg:text-[13px] px-2 sm:px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Sustain</p>
                                                     </div>
                                                     <div className="flex items-center justify-between ">
                                                         <button onClick={() => setActivePianoSection(prev => Math.max(prev - 1, 0))} disabled={activePianoSection === 0}
@@ -1747,7 +1727,7 @@ const BassAnd808 = ({ onClose }) => {
                                                         </button>
 
                                                         <div className="px-1 md600:px-2 lg:px-3 2xl:px-4 w-[50px] md600:w-[60px] lg:w-[80px] 2xl:w-[100px]">
-                                                            <div className="text-[#ed791c] text-center fw-bolder text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Octaves</div>
+                                                            <div className="text-[#ed791c] text-center fw-bolder text-[10px] md600:text-[10px] md:text-[12px] lg:text-[13px] 2xl:text-[16px]">Octaves</div>
                                                         </div>
 
                                                         <button onClick={() => setActivePianoSection(prev => Math.min(prev + 1, 2))} disabled={activePianoSection === 2}
@@ -1758,12 +1738,12 @@ const BassAnd808 = ({ onClose }) => {
                                                     </div>
                                                 </div>
                                                 <div onClick={() => setPricingModalOpen(true)} className='border rounded-lg border-[#FFFFFF1A] ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer'>
-                                                    <p className="text-[#FFFFFF] text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
+                                                    <p className="text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[10px] md:text-[12px] lg:text-[13px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
                                                 </div>
                                             </div>
 
-                                            <div className="flex gap-1 md600:gap-2 lg:gap-3 bg-[#141414]">
-                                                <div ref={pianoSectionsRef} className="w-full h-[105px] sm:h-[150px] md600:h-[140px] md:h-[290px] lg:h-[250px] overflow-x-hidden overscroll-none">
+                                            <div className="flex gap-1 md600:gap-2 lg:gap-3 bg-primary-light dark:bg-primary-dark">
+                                                <div ref={pianoSectionsRef} className="w-full h-[155px] sm:h-[180px] md:h-[186px] lg:h-[190px] overflow-x-hidden overscroll-none">
                                                     <div className="w-full h-full">
                                                         <div className="flex transition-transform duration-300 ease-in-out h-full" style={{ transform: `translateX(-${activePianoSection * 100}%)` }}>
                                                             {pianoSections.map((section, index) => (
@@ -1818,10 +1798,10 @@ const BassAnd808 = ({ onClose }) => {
                                             }
                                         }}
                                     >
-                                        <div className="flex items-center justify-center p-2 sm:p-4 min-w-max bg-[#1f1f1f]">
+                                        <div className="flex items-center justify-center p-2 sm:p-4 min-w-max bg-white dark:bg-[#1f1f1f]">
                                             <div className="flex gap-2 sm:gap-4 min-w-max">
                                                 {activeEffects.map((effect) => (
-                                                    <div key={effect.instanceId} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-white flex flex-col shrink-0">
+                                                    <div key={effect.instanceId} className="w-[150px] h-[235px] sm:w-[190px] sm:h-[243px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[280px] lg:w-[200px] lg:h-[300px] xl:w-[240px] xl:h-[310px] 2xl:w-[256px] 2xl:h-[330px] bg-gray-200 dark:bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-black dark:text-white flex flex-col shrink-0">
                                                         <div className="flex-1 w-full flex items-center justify-center">
                                                             {effect.component ? (
                                                                 <div className="w-full h-full flex items-center justify-center">
@@ -1836,7 +1816,7 @@ const BassAnd808 = ({ onClose }) => {
                                                     </div>
                                                 ))}
                                                 {activeEffects.length < effectsLibrary?.length && (
-                                                    <div className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-white cursor-pointer hover:bg-[#2a2a2a] transition-colors shrink-0 border-2 border-dashed border-gray-600"
+                                                    <div className="w-[150px] h-[235px] sm:w-[190px] sm:h-[243px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[280px] lg:w-[200px] lg:h-[300px] xl:w-[240px] xl:h-[310px] 2xl:w-[256px] 2xl:h-[330px] bg-gray-100 dark:bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-black dark:text-white cursor-pointer hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors shrink-0 border-2 border-dashed border-gray-400 dark:border-gray-600"
                                                         onClick={handlePlusButtonClick}
                                                         onDragOver={(e) => {
                                                             e.preventDefault();
@@ -1862,11 +1842,14 @@ const BassAnd808 = ({ onClose }) => {
                                                         }}
                                                     >
                                                         <div className="w-14 h-14 bg-white text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
-                                                        <p className="text-center text-sm leading-snug">Drop effects here or<br />select from library</p>
+                                                        <p className="text-center text-xs sm:text-sm leading-snug">Drop effects here or<br />select from library</p>
                                                     </div>
                                                 )}
                                                 {Array.from({ length: 4 - activeEffects.length - 1 }, (_, index) => (
-                                                    <div key={index} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl shrink-0 border-2 border-dashed border-gray-600"
+                                                    <div key={index} className="w-[150px] h-[235px] sm:w-[190px] sm:h-[243px] md600:w-[220px] md600:h-[250px]
+                                                        md:w-[230px] md:h-[280px] lg:w-[240px] lg:h-[300px] xl:w-[240px] xl:h-[310px] 2xl:w-[256px] 2xl:h-[330px]
+                                                        rounded-xl shrink-0 border-2 border-dashed bg-primary-light dark:bg-primary-dark border-gray-300 
+                                                        dark:border-gray-600 transition-colors"
                                                         onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; e.currentTarget.style.borderColor = '#409C9F'; e.currentTarget.style.backgroundColor = '#2a2a2a'; }}
                                                         onDragLeave={(e) => { e.currentTarget.style.borderColor = '#4B5563'; e.currentTarget.style.backgroundColor = '#1a1a1a'; }}
                                                         onDrop={(e) => {

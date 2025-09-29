@@ -26,6 +26,7 @@ import subscription from "../Images/subscriptionIcon.svg";
 import PricingModel from './PricingModel';
 import { ReactComponent as Track7 } from '../Images/track7.svg'
 import SimplePianoBar from './SimplePianoBar';
+import { useResponsivePiano } from '../hooks/useResponsivePiano';
 
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
@@ -244,6 +245,9 @@ const NewSynth = ({ onClose }) => {
     const [pricingModalOpen, setPricingModalOpen] = useState(false);
     const pianoSectionsRef = useRef(null);
 
+    // Responsive piano configuration
+    const { getNoteRange, getKeyboardShortcuts } = useResponsivePiano();
+
     // Get the selected instrument from Redux  
     const selectedInstrumentFromRedux = useSelector((state) => 
         selectStudioState(state)?.selectedInstrument || 'violin'
@@ -384,36 +388,14 @@ const NewSynth = ({ onClose }) => {
         return KeyboardShortcuts.create({
             firstNote: section.first,
             lastNote: section.last,
-            keyboardConfig: [
-                { natural: 'z', flat: 's', sharp: 's' },
-                { natural: 'x', flat: 'd', sharp: 'd' },
-                { natural: 'c', flat: 'f', sharp: 'f' },
-                { natural: 'v', flat: 'g', sharp: 'g' },
-                { natural: 'b', flat: 'h', sharp: 'h' },
-                { natural: 'n', flat: 'j', sharp: 'j' },
-                { natural: 'm', flat: 'k', sharp: 'k' },
-                { natural: ',', flat: 'l', sharp: 'l' },
-                { natural: '.', flat: ';', sharp: ';' },
-
-                { natural: 'q', flat: '1', sharp: '1' },
-                { natural: 'w', flat: '2', sharp: '2' },
-                { natural: 'e', flat: '3', sharp: '3' },
-                { natural: 'r', flat: '4', sharp: '4' },
-                { natural: 't', flat: '5', sharp: '5' },
-                { natural: 'y', flat: '6', sharp: '6' },
-                { natural: 'u', flat: '7', sharp: '7' },
-
-                { natural: 'i', flat: '8', sharp: '8' },
-                { natural: 'o', flat: '9', sharp: '9' },
-                { natural: 'p', flat: '0', sharp: '0' },
-            ],
+            keyboardConfig: getKeyboardShortcuts(section),
         });
     };
 
     const pianoSections = [
-        { first: MidiNumbers.fromNote('C0'), last: MidiNumbers.fromNote('B2') },
-        { first: MidiNumbers.fromNote('C3'), last: MidiNumbers.fromNote('B5') },
-        { first: MidiNumbers.fromNote('C5'), last: MidiNumbers.fromNote('C8') }
+        getNoteRange(0),
+        getNoteRange(1), 
+        getNoteRange(2)
     ];
 
     const [recordedNotes, setRecordedNotes] = useState([]);
@@ -1739,17 +1721,17 @@ const NewSynth = ({ onClose }) => {
         <>
             {showOffcanvas1 === true && (
                 <>
-                    <div className="fixed z-[10] w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[210px] sm:bottom-[260px] md600:bottom-[275px] md:bottom-[450px]  lg:bottom-[455px] xl:bottom-[465px] 2xl:bottom-[516px]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
-                        <div className="  border-b border-[#FFFFFF1A] h-full">
-                            <div className=" bg-[#1F1F1F] flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
+                    <div className="fixed z-[10] w-full h-full transition-transform left-0 right-0 translate-y-full bottom-[330px] sm:bottom-[351px] md:bottom-[403px] lg:bottom-[437px] xl:bottom-[441px] 2xl:bottom-[467px]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
+                        <div className="border-b border-gray-300 dark:border-[#FFFFFF1A] h-full">
+                            <div className="bg-white dark:bg-[#1F1F1F] flex items-center p-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                                 <div>
-                                    <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => {
+                                    <IoClose className='text-[14px] sm:text-[15px] md600:text-[16px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-gray-600 dark:text-[#FFFFFF99] cursor-pointer' onClick={() => {
                                         setShowOffcanvas1(false);
                                         onClose && onClose();
                                     }} />
                                 </div>
                             </div>
-                            <div className=" bg-[#1F1F1F] flex space-x-2 sm:space-x-3 px-1 md600:space-x-4  md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center  lg:px-3">
+                            <div className="bg-white dark:bg-[#1F1F1F] flex space-x-2 sm:space-x-3 px-1 md600:space-x-4 md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center lg:px-3">
                                 {['Instruments', 'Chords', 'Piano Roll', 'Effects']
                                     .filter(tab => {
                                         // Hide "Chords" if getTrackType is "bass" or "808"
@@ -1763,7 +1745,7 @@ const NewSynth = ({ onClose }) => {
                                     })
                                     .map((tab) => (
                                         <button key={tab} onClick={() => setActiveTab(tab)}
-                                            className={`text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white ' : 'text-gray-400 hover:text-white'}`}>
+                                            className={`text-[10px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white ' : 'text-gray-400 hover:text-white'}`}>
                                             {tab}
                                         </button>
                                     ))}
@@ -1772,34 +1754,34 @@ const NewSynth = ({ onClose }) => {
                             <div className=''>
                                 {activeTab === 'Instruments' && (
                                     <>
-                                        <div className=" bg-[#1F1F1F] flex items-center justify-center pt-1 pb-1 px-2 md600:px-2 md600:pt-2 md600:pb-1 sm:gap-6 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
-                                            <div className="bg-[#353535] p-1 md600:p-2 lg:p-3 rounded-lg">
+                                        <div className="bg-white dark:bg-[#1F1F1F] flex items-center justify-center py-2 px-2 md600:px-2 md600:pt-2 md600:pb-1 gap-4 sm:gap-6 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
+                                            <div className="bg-gray-200 dark:bg-[#353535] p-2 md600:p-2 lg:p-2 rounded-lg cursor-pointer">
                                                 <div className="flex items-center justify-between">
-                                                    <button onClick={prevInstrument} className="text-gray-400 hover:text-white transition-colors p-1 md600:p-2">
-                                                        <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px]' />
+                                                    <button onClick={prevInstrument} className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors p-1 md600:p-2">
+                                                        <FaChevronLeft className='text-[10px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]' />
                                                     </button>
 
-                                                    <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-start 2xl:px-4 2xl:w-[250px]">
-                                                        <div className="text-white">
-                                                            <Track7 className='text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
+                                                    <div className="flex items-center gap-2 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-start 2xl:px-4 2xl:w-[250px]">
+                                                        <div className="text-black dark:text-white">
+                                                            <Track7 className='text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[20px] 2xl:text-[20px]' />
                                                         </div>
                                                         <div className="">
-                                                            <div className="text-white fw-bolder text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[16px]">
+                                                            <div className="text-black dark:text-white font-bold text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[16px] truncate whitespace-nowrap overflow-hidden max-w-[120px] sm:max-w-[150px] md:max-w-[180px] lg:max-w-[200px]">
                                                                 {INSTRUMENTS[currentInstrumentIndex].name}
                                                             </div>
-                                                            <div className="text-gray-400 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px]">
+                                                            <div className="text-gray-600 dark:text-gray-400 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[12px]">
                                                                 {INSTRUMENTS[currentInstrumentIndex].category}
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    <button onClick={nextInstrument} className="text-gray-400 hover:text-white transition-colors p-1 lg:p-2">
-                                                        <FaChevronRight className='text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] text-[#FFFFFF99]' />
+                                                    <button onClick={nextInstrument} className="text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors p-1 lg:p-2">
+                                                        <FaChevronRight className='text-[10px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]' />
                                                     </button>
                                                 </div>
                                             </div>
 
-                                            <div className="flex space-x-1 md600:space-x-2 lg:space-x-4 2xl:space-x-6">
+                                            <div className="flex space-x-2 md600:space-x-2 lg:space-x-4 2xl:space-x-6">
                                                 <div className="flex flex-col items-center">
                                                     <Knob label="Reverb" min={-135} max={135} defaultAngle={reverb} onChange={(value) => setReverb(value)} />
                                                 </div>
@@ -1814,11 +1796,11 @@ const NewSynth = ({ onClose }) => {
                                             </div>
                                         </div>
 
-                                        <div className="w-full h-[400px] md:h-[500px] lg:h-[250px]">
-                                            <div className="bg-[#1F1F1F] flex gap-1 md600:gap-2 md:gap-3 pb-1  lg:gap-4 lg:pb-2 2xl:gap-5 items-center justify-between 2xl:pb-3">
-                                                <div className='flex gap-1 sm:gap-2 md600:gap-3 lg:gap-4  2xl:gap-5 items-center ms-1 md600:ms-2 lg:ms-3'>
-                                                    <div className='border rounded-3xl border-[#FFFFFF1A]'>
-                                                        <p className="text-[#FFFFFF99] text-[8px] md600:text-[10px] lg:text-[12px] px-1 sm:px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Sustain</p>
+                                        <div className="w-full h-[400px]">
+                                            <div className="bg-primary-light dark:bg-[#1F1F1F] flex gap-1 md600:gap-2 md:gap-3 pb-2 lg:gap-4 lg:pb-2 2xl:gap-5 items-center justify-between 2xl:pb-3">
+                                                <div className='flex gap-1 sm:gap-2 md600:gap-3 lg:gap-4 2xl:gap-5 items-center ms-1 md600:ms-2 lg:ms-3'>
+                                                    <div className='border rounded-3xl border-secondary-light/10 dark:border-secondary-dark/10'>
+                                                        <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[10px] md600:text-[10px] lg:text-[13px] px-2 sm:px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Sustain</p>
                                                     </div>
                                                     <div className="flex items-center justify-between ">
                                                         <button onClick={() => setActivePianoSection(prev => Math.max(prev - 1, 0))} disabled={activePianoSection === 0}
@@ -1828,7 +1810,7 @@ const NewSynth = ({ onClose }) => {
                                                         </button>
 
                                                         <div className="px-1 md600:px-2 lg:px-3 2xl:px-4 w-[50px] md600:w-[60px] lg:w-[80px] 2xl:w-[100px]">
-                                                            <div className="text-white text-center fw-bolder text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Octaves</div>
+                                                            <div className="text-secondary-light dark:text-secondary-dark text-center fw-bolder text-[10px] md600:text-[10px] md:text-[12px] lg:text-[13px] 2xl:text-[16px]">Octaves</div>
                                                         </div>
 
                                                         <button onClick={() => setActivePianoSection(prev => Math.min(prev + 1, 2))} disabled={activePianoSection === 2}
@@ -1837,16 +1819,16 @@ const NewSynth = ({ onClose }) => {
                                                             <FaChevronRight className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                                                         </button>
                                                     </div>
-                                                    <div className='border rounded-lg border-[#FFFFFF1A] ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer' onClick={() => setAutoChords(true)}>
-                                                        <p className="text-[#FFFFFF] text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Auto Chord</p>
+                                                    <div className='border rounded-lg border-secondary-light/10 dark:border-secondary-dark/10 ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer' onClick={() => setAutoChords(true)}>
+                                                        <p className="text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[10px] md:text-[12px] lg:text-[13px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Auto Chord</p>
                                                     </div>
                                                 </div>
-                                                <div onClick={() => setPricingModalOpen(true)} className='border rounded-lg border-[#FFFFFF1A] ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer'>
-                                                    <p className="text-[#FFFFFF] text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
+                                                <div onClick={() => setPricingModalOpen(true)} className='border rounded-lg border-secondary-light/10 dark:border-secondary-dark/10 ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer'>
+                                                    <p className="text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[10px] md:text-[12px] lg:text-[13px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
                                                 </div>
                                             </div>
 
-                                            <div className="flex gap-1 md600:gap-2 lg:gap-3 bg-[#141414]">
+                                            <div className="flex gap-1 md600:gap-2 lg:gap-3 bg-primary-light dark:bg-primary-dark">
                                                 {autoChords === true &&
                                                     <div className="w-[30%] sm:w-[40%] md600:w-[25%] md:w-[30%] lg:w-[20%] xl:w-[18%] bg-primary-light dark:bg-primary-dark md600:ms-2 md600:mt-2 lg:ms-3 lg:mt-3 mb-1">
                                                         <div className="w-full bg-primary-light dark:bg-[#1F1F1F] p-1 md600:p-2 lg:p-3">
@@ -1874,7 +1856,7 @@ const NewSynth = ({ onClose }) => {
                                                         </div>
                                                     </div>
                                                 }
-                                                <div ref={pianoSectionsRef} className="w-full h-[105px] sm:h-[150px] md600:h-[140px] md:h-[290px] lg:h-[250px] overflow-x-hidden overscroll-none">
+                                                <div ref={pianoSectionsRef} className="w-full h-[152px] sm:h-[177px] md:h-[193px] lg:h-[199px] overflow-x-hidden overscroll-none">
                                                     <div className="w-full h-full">
                                                         <div className="flex transition-transform duration-300 ease-in-out h-full" style={{ transform: `translateX(-${activePianoSection * 100}%)` }}>
                                                             {pianoSections.map((section, index) => (
@@ -1899,49 +1881,49 @@ const NewSynth = ({ onClose }) => {
 
                                 {getTrackType !== "Bass & 808" && activeTab === 'Chords' && (
                                     <>
-                                        <div className="bg-[#1F1F1F] max-h-[180px] sm:max-h-[235px] md600:max-h-[235px] md:max-h-[410px] overflow-auto xl:overflow-hidden">
+                                        <div className="bg-primary-light dark:bg-primary-dark h-[250px] sm:h-[275px] md:h-[308px] lg:h-[331px] xl:h-[335px] 2xl:h-[356px] overflow-auto">
                                             <div className="w-full flex items-center justify-center">
-                                                <div className="bg-[#FFFFFF1A] items-center mt-1 px-1 py-1 md:mt-2 md:px-2 md:py-2 lg:px-3 rounded-lg">
+                                                <div className="bg-secondary-light/10 dark:bg-secondary-dark/10 items-center mt-1 px-1 py-1 md:mt-2 md:px-2 md:py-2 lg:px-3 rounded-lg">
 
                                                     {/* === CHORD TYPE SELECTOR === */}
                                                     <div className="relative flex gap-1 px-1 md:gap-2 md:px-2 lg:gap-3 items-center lg:px-3 cursor-pointer" onClick={() => setToggle(!toggle)}>
                                                         <GiPianoKeys className='text-[10px] md600:text-[12px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
-                                                        <p className="text-white text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]">{chordType}</p>
-                                                        <HiMiniChevronUpDown className='text-[#FFFFFF99] text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]' />
+                                                        <p className="text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]">{chordType}</p>
+                                                        <HiMiniChevronUpDown className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]' />
 
                                                         {toggle && (
-                                                            <div className="absolute top-[25px] w-[170px] bg-[#1F1F1F] rounded-[5px] z-50">
+                                                            <div className="absolute top-[25px] w-[170px] bg-primary-light dark:bg-primary-dark rounded-[5px] z-50">
                                                                 <div>
-                                                                    <p className="text-[#aeacb4] text-[14px] px-3 pt-3">Chord set:</p>
+                                                                    <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[14px] px-3 pt-3">Chord set:</p>
 
                                                                     {/* Basic Chords */}
-                                                                    <div className="flex mt-3 items-center hover:bg-[#FFFFFF1A] py-1 cursor-pointer" onClick={() => handleChordTypeChange("Basic")}>
+                                                                    <div className="flex mt-3 items-center hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10 py-1 cursor-pointer" onClick={() => handleChordTypeChange("Basic")}>
                                                                         {chordType === "Basic" ? (
                                                                             <div className="text-[15px] ms-3">✓</div>
                                                                         ) : (
                                                                             <div className="text-[15px] ms-3 invisible">✓</div>
                                                                         )}
-                                                                        <div className="ms-3 text-[15px] text-white">Basic</div>
+                                                                        <div className="ms-3 text-[15px] text-secondary-light dark:text-secondary-dark">Basic</div>
                                                                     </div>
 
                                                                     {/* EDM Chords */}
-                                                                    <div className="flex mt-1 items-center hover:bg-[#FFFFFF1A] py-1 cursor-pointer" onClick={() => handleChordTypeChange("EDM")}>
+                                                                    <div className="flex mt-1 items-center hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10 py-1 cursor-pointer" onClick={() => handleChordTypeChange("EDM")}>
                                                                         {chordType === "EDM" ? (
                                                                             <div className="text-[15px] ms-3">✓</div>
                                                                         ) : (
                                                                             <div className="text-[15px] ms-3 invisible">✓</div>
                                                                         )}
-                                                                        <div className="ms-3 text-[15px] text-white">EDM</div>
+                                                                        <div className="ms-3 text-[15px] text-secondary-light dark:text-secondary-dark">EDM</div>
                                                                     </div>
 
                                                                     {/* Hip Hop Chords */}
-                                                                    <div className="flex mt-1 items-center hover:bg-[#FFFFFF1A] py-1 cursor-pointer pb-3" onClick={() => handleChordTypeChange("Hip Hop")}>
+                                                                    <div className="flex mt-1 items-center hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10 py-1 cursor-pointer pb-3" onClick={() => handleChordTypeChange("Hip Hop")}>
                                                                         {chordType === "Hip Hop" ? (
                                                                             <div className="text-[15px] ms-3">✓</div>
                                                                         ) : (
                                                                             <div className="text-[15px] ms-3 invisible">✓</div>
                                                                         )}
-                                                                        <div className="ms-3 text-[15px] text-white">Hip Hop</div>
+                                                                        <div className="ms-3 text-[15px] text-secondary-light dark:text-secondary-dark">Hip Hop</div>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -1958,15 +1940,15 @@ const NewSynth = ({ onClose }) => {
                                                                     key={name}
                                                                     onClick={() => { handleChordClick(name); setActiveChords(index) }}
                                                                     disabled={!isAudioReady}
-                                                                    className={`bg-[#1F1F1F] cursor-pointer text-white w-[90px] md600:w-[110px] p-1 md600:px-2 md600:py-2 md:w-[120px] lg:w-[130px] rounded-md ${activeChords === index ? 'border-[white] border-[1px]' : 'border-[#FFFFFF33] border-[1px]'
+                                                                    className={`cursor-pointer text-secondary-light dark:text-secondary-dark w-[90px] md600:w-[110px] p-1 md600:px-2 md600:py-2 md:w-[120px] lg:w-[110px] rounded-md ${activeChords === index ? 'border-[white] border-[1px]' : 'border-[#FFFFFF33] border-[1px]'
                                                                         } ${isPressed ? 'bg-[#FFFFFF20]' : ''} hover:bg-[#FFFFFF10] transition-colors`}
                                                                 >
-                                                                    <p className="text-white text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px] text-center mb-1 font-medium">
+                                                                    <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[13px] lg:text-[14px] text-center mb-1 font-medium">
                                                                         {name}
                                                                     </p>
                                                                     <div className="flex justify-between items-center">
                                                                         <img src={keyImage[index]?.image} alt="" className="w-2 h-2 md600:w-3 md600:h-3 lg:w-4 lg:h-4" />
-                                                                        <FaPlus className='text-[10px] md600:text-[12px] lg:text-[16px] text-[#FFFFFF99]' />
+                                                                        <FaPlus className='text-[10px] md600:text-[12px] lg:text-[14px] text-secondary-light/60 dark:text-secondary-dark/60' />
                                                                     </div>
                                                                 </div>
                                                             );
@@ -1976,26 +1958,26 @@ const NewSynth = ({ onClose }) => {
                                             </div>
 
                                             {/* === PLAYING SOUNDS SECTION === */}
-                                            <div className="max-w-full md600:w-full flex items-center md600:justify-center my-3 lg:my-0 overflow-auto">
-                                                <div className="bg-[#FFFFFF1A] items-center mt-1 px-1 md:mt-2 md:px-2 py-1 lg:px-3 lg:py-2 rounded-lg">
+                                            <div className="flex items-center justify-center mx-5 mt-2">
+                                                <div className="bg-secondary-light/10 dark:bg-secondary-dark/10 items-center mt-1 px-1 md:mt-2 md:px-2 md:py-3 py-1 lg:px-3 lg:py-2 rounded-lg">
                                                     <div className="flex gap-1 px-1 md:gap-2 md:px-2 lg:gap-3 items-center lg:px-3">
                                                         <img src={music} alt="" className="w-2 h-2 md600:w-3 md600:h-3 lg:w-4 lg:h-4" />
-                                                        <p className="text-white text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]">Playing Sounds</p>
+                                                        <p className="text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]">Playing Sounds</p>
                                                     </div>
 
-                                                    <div className="flex">
+                                                    <div className="flex flex-wrap">
                                                         {Object.entries(patternCategories).map(([category, patterns], categoryIndex) => {
                                                             const isWideCategory = categoryIndex === 1 || categoryIndex === 2;
                                                             const containerClasses = isWideCategory
-                                                                ? 'bg-[#1F1F1F] mx-1 mt-1 p-1 w-[315px] h-[120px] md600:w-[170px] md600:h-[155px] md:mx-2 lg:mx-3 md:mt-2 md:p-2 md:w-[200px] md:h-[180px] lg:w-[340px] lg:h-[150px]'
-                                                                : 'bg-[#1F1F1F] ms-1 mt-1 p-1 w-[110px] h-[120px] md600:w-[100px] md600:h-[155px] md:ms-2 md:mt-2 md:p-2 md:w-[110px] md:h-[180px] lg:ms-3 lg:w-[116px] lg:h-[150px]';
+                                                                ? 'bg-primary-light dark:bg-primary-dark mx-1 mt-1 p-1 w-[300px] sm:w-[368px] h-[120px] md600:w-[170px] md600:h-[155px] md:mx-2 lg:mx-3 md:mt-2 md:p-2 md:w-[200px] md:h-[180px] lg:w-[340px] lg:h-[150px] rounded-md'
+                                                                : 'bg-primary-light dark:bg-primary-dark ms-1 mt-1 p-2 w-[300px] sm:w-[368px] h-[60px] md600:w-[100px] md600:h-[155px] md:ms-2 md:mt-2 md:p-2 md:w-[110px] md:h-[180px] lg:ms-3 lg:w-[116px] lg:h-[150px] rounded-md';
 
                                                             return (
                                                                 <div key={category} className={containerClasses}>
-                                                                    <p className="text-[#FFFFFF99] text-[10px] md600:text-[12px] md:text-[14px] capitalize">
+                                                                    <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[10px] md600:text-[12px] md:text-[14px] capitalize">
                                                                         {category}
                                                                     </p>
-                                                                    <div className={isWideCategory ? 'grid grid-cols-3 pt-1 md600:grid-cols-2 md:gap-1 lg:grid-cols-3 lg:gap-0 md:pt-1' : ''}>
+                                                                    <div className={isWideCategory ? 'grid grid-cols-3 pt-1 md600:grid-cols-2 md:gap-1 lg:grid-cols-3 lg:gap-0 md:pt-1' : 'flex flex-wrap gap-2 sm:gap-5 lg:gap-0'}>
                                                                         {patterns.map((item, patternIndex) => {
                                                                             const key = `${category}-${patternIndex}`;
                                                                             const isSelected = activePatternKey === key;
@@ -2004,10 +1986,11 @@ const NewSynth = ({ onClose }) => {
                                                                                     <button
                                                                                         onClick={() => handlePatternSelect(key)}
                                                                                         disabled={!isAudioReady}
-                                                                                        className={`${isSelected
-                                                                                            ? "bg-white text-black"
-                                                                                            : "text-[#FFFFFF] bg-transparent hover:bg-[#FFFFFF10]"
-                                                                                            } border-[#FFFFFF1A] justify-center w-[100px] mt-1 h-[25px] lg:w-[100px] lg:h-[30px] md:mt-2 text-[8px] md600:text-[10px] rounded-md border transition-colors`}
+                                                                                        className={`border justify-center w-[88px] sm:w-[100px] mt-1 h-[25px] md:w-[90px] lg:w-[100px] lg:h-[30px] md:mt-[6px] lg:mt-2 text-[8px] md:text-[9px] lg:text-[10px] rounded-md transition-colors ${
+                                                                                            isSelected
+                                                                                            ? "bg-secondary-dark text-primary-dark dark:bg-secondary-light dark:text-primary-light"
+                                                                                            : "bg-transparent text-secondary-light dark:text-secondary-dark hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10 border-secondary-light/10 dark:border-secondary-dark/10"
+                                                                                        }`}
                                                                                     >
                                                                                         {item.name}
                                                                                     </button>
@@ -2024,10 +2007,10 @@ const NewSynth = ({ onClose }) => {
 
                                             {/* === STATUS AND TEST BUTTONS === */}
                                             <div className="text-center py-2">
-                                                <div className="text-[#FFFFFF99] text-[10px] mb-2">
+                                                <div className="text-secondary-light/60 dark:text-secondary-dark/60 text-[10px] mb-2">
                                                     Status: {loadingStatus} | Active: {chordType} | Pattern: {getPatternDisplayName() || "None"}
                                                 </div>
-                                                <button onClick={testAllSynths} disabled={!isAudioReady} className="bg-[#FFFFFF1A] text-white px-3 py-1 rounded text-[10px] hover:bg-[#FFFFFF33] transition-colors">Test All Synths</button>
+                                                <button onClick={testAllSynths} disabled={!isAudioReady} className="bg-secondary-light/10 dark:bg-secondary-dark/10 text-secondary-light dark:text-secondary-dark px-3 py-1 rounded text-[10px] hover:bg-secondary-light/20 dark:hover:bg-secondary-dark/20 transition-colors">Test All Synths</button>
                                             </div>
                                         </div>
                                     </>
@@ -2068,7 +2051,7 @@ const NewSynth = ({ onClose }) => {
                                         <div className="flex items-center justify-center p-2 sm:p-4 min-w-max bg-[#1f1f1f]">
                                             <div className="flex gap-2 sm:gap-4 min-w-max">
                                                 {activeEffects.map((effect) => (
-                                                    <div key={effect.instanceId} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-white flex flex-col shrink-0">
+                                                    <div key={effect.instanceId} className="w-[150px] h-[235px] sm:w-[190px] sm:h-[243px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[280px] lg:w-[200px] lg:h-[300px] xl:w-[240px] xl:h-[310px] 2xl:w-[256px] 2xl:h-[330px] bg-gray-200 dark:bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-black dark:text-white flex flex-col shrink-0">
                                                         <div className="flex-1 w-full flex items-center justify-center">
                                                             {effect.component ? (
                                                                 <div className="w-full h-full flex items-center justify-center">
@@ -2083,7 +2066,7 @@ const NewSynth = ({ onClose }) => {
                                                     </div>
                                                 ))}
                                                 {activeEffects.length < effectsLibrary?.length && (
-                                                    <div className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-white cursor-pointer hover:bg-[#2a2a2a] transition-colors shrink-0 border-2 border-dashed border-gray-600"
+                                                    <div className="w-[150px] h-[235px] sm:w-[190px] sm:h-[243px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[280px] lg:w-[200px] lg:h-[300px] xl:w-[240px] xl:h-[310px] 2xl:w-[256px] 2xl:h-[330px] bg-gray-100 dark:bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-black dark:text-white cursor-pointer hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors shrink-0 border-2 border-dashed border-gray-400 dark:border-gray-600"
                                                         onClick={handlePlusButtonClick}
                                                         onDragOver={(e) => {
                                                             e.preventDefault();
@@ -2109,11 +2092,14 @@ const NewSynth = ({ onClose }) => {
                                                         }}
                                                     >
                                                         <div className="w-14 h-14 bg-white text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
-                                                        <p className="text-center text-sm leading-snug">Drop effects here or<br />select from library</p>
+                                                        <p className="text-center text-xs sm:text-sm leading-snug">Drop effects here or<br />select from library</p>
                                                     </div>
                                                 )}
                                                 {Array.from({ length: 4 - activeEffects.length - 1 }, (_, index) => (
-                                                    <div key={index} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-[#1a1a1a] rounded-xl shrink-0 border-2 border-dashed border-gray-600"
+                                                    <div key={index} className="w-[150px] h-[235px] sm:w-[190px] sm:h-[243px] md600:w-[220px] md600:h-[250px]
+                                                        md:w-[230px] md:h-[280px] lg:w-[240px] lg:h-[300px] xl:w-[240px] xl:h-[310px] 2xl:w-[256px] 2xl:h-[330px]
+                                                        rounded-xl shrink-0 border-2 border-dashed bg-primary-light dark:bg-primary-dark border-gray-300 
+                                                        dark:border-gray-600 transition-colors"
                                                         onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; e.currentTarget.style.borderColor = '#409C9F'; e.currentTarget.style.backgroundColor = '#2a2a2a'; }}
                                                         onDragLeave={(e) => { e.currentTarget.style.borderColor = '#4B5563'; e.currentTarget.style.backgroundColor = '#1a1a1a'; }}
                                                         onDrop={(e) => {
