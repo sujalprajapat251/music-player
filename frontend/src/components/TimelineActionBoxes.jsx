@@ -60,23 +60,85 @@ const TimelineActionBoxes = ({ onAction }) => {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "800px",
-        width: "calc(100vw - 300px)",
-        gap: "15px",
-      }}
-    >
+    <>
+      <style>
+        {`
+          @media (max-width: 768px) {
+            .timeline-container {
+            justify-content: flex-start !important;
+            }
+          }
+          @media (max-width: 425px) {
+            .timeline-container {
+              width: 100vw !important;
+              padding: 5px !important;
+              gap: 0px !important;
+              min-height: auto !important;
+              align-items: flex-start !important;
+            }
+            .timeline-row {
+              gap: 8px !important;
+              flex-wrap: wrap !important;
+              justify-content: center !important;
+            }
+            .action-card {
+              width: 100px !important;
+              height: 90px !important;
+              font-size: 16px !important;
+              margin-bottom: 10px !important;
+            }
+            .action-image {
+              width: 28px !important;
+              height: 28px !important;
+              margin-bottom: 6px !important;
+            }
+            .action-image-small {
+              width: 24px !important;
+              height: 24px !important;
+              margin-bottom: 6px !important;
+            }
+            .action-text {
+              font-size: 12px !important;
+              line-height: 1.2 !important;
+            }
+            .dropdown-menu {
+              position: fixed !important;
+              top: 50% !important;
+              left: 50% !important;
+              transform: translate(-50%, -50%) !important;
+              width: 90vw !important;
+              max-width: 280px !important;
+            }
+            .dropdown-item {
+              padding: 12px 16px !important;
+              font-size: 14px !important;
+            }
+            .timeline-row{
+              display: block !important;
+            }
+          }
+        `}
+      </style>
+      <div
+        className="timeline-container"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "800px",
+          width: "calc(100vw - 300px)",
+          gap: "15px",
+          padding: "10px",
+        }}
+      >
       {/* Row 1 */}
-      <div style={{ display: "flex", gap: "15px" }}>
+      <div className="timeline-row" style={{ display: "flex", gap: "15px" }}>
         {row1.map((action) => (
           <div
             key={action.label}
             onClick={(e) => handleActionClick(action, e)}
+            className="action-card"
             style={{
               width: "130px",
               height: "120px",
@@ -101,12 +163,12 @@ const TimelineActionBoxes = ({ onAction }) => {
             }
           >
             <img
+              className="action-image"
               style={{ width: "40px", height: "40px" }}
               src={action.icon}
               alt={action.label}
-              className="mb-2"
             />
-            <p style={{ fontSize: "14px", textAlign: "center" }}>
+            <p className="action-text" style={{ fontSize: "14px", textAlign: "center" }}>
               {action.label}
             </p>
           </div>
@@ -114,11 +176,12 @@ const TimelineActionBoxes = ({ onAction }) => {
       </div>
 
       {/* Row 2 */}
-      <div style={{ display: "flex", gap: "15px", position: "relative" }}>
+      <div className="timeline-row" style={{ display: "flex", gap: "15px", position: "relative" }}>
         {row2.map((action) => (
           <div
             key={action.label}
             onClick={(e) => handleActionClick(action, e)}
+            className="action-card"
             style={{
               width: "130px",
               height: "120px",
@@ -143,12 +206,12 @@ const TimelineActionBoxes = ({ onAction }) => {
             }
           >
             <img
+              className="action-image-small"
               style={{ width: "30px", height: "30px" }}
               src={action.icon}
               alt={action.label}
-              className="mb-2"
             />
-            <p style={{ fontSize: "14px", textAlign: "center" }}>
+            <p className="action-text" style={{ fontSize: "14px", textAlign: "center" }}>
               {action.label}
             </p>
           </div>
@@ -156,8 +219,23 @@ const TimelineActionBoxes = ({ onAction }) => {
 
         {/* Dropdown menu */}
         {menuOpen && (
-          <div ref={menuRef} style={{ position: "absolute", top: "100px", left: "200px", background: colors.cardBg, borderRadius: "6px", padding: "8px 0", boxShadow: colors.shadow, minWidth: "260px", zIndex: 1000, }}>
+          <div 
+            ref={menuRef} 
+            className="dropdown-menu"
+            style={{ 
+              position: "absolute", 
+              top: "100px", 
+              left: "200px", 
+              background: colors.cardBg, 
+              borderRadius: "6px", 
+              padding: "8px 0", 
+              boxShadow: colors.shadow, 
+              minWidth: "260px", 
+              zIndex: 1000, 
+            }}
+          >
             <div
+              className="dropdown-item"
               style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", cursor: "pointer", color: colors.text }}
               onClick={() => handleMenuClick("Import to Audio track")}
             >
@@ -165,14 +243,16 @@ const TimelineActionBoxes = ({ onAction }) => {
               <span>Import to Audio track</span>
             </div>
             <div
-              style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", cursor: "pointer", color: colors.text, }}
+              className="dropdown-item"
+              style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", cursor: "pointer", color: colors.text }}
               onClick={() => handleMenuClick("Import to Voice & Mic track")}
             >
               <IoMicOutline />
               <span>Import to Voice & Mic track</span>
             </div>
             <div
-              style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", cursor: "pointer", color: colors.text, }}
+              className="dropdown-item"
+              style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", cursor: "pointer", color: colors.text }}
               onClick={() => handleMenuClick("Open in sampler")}
             >
               <LuAudioLines />
@@ -182,6 +262,7 @@ const TimelineActionBoxes = ({ onAction }) => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

@@ -2,8 +2,12 @@ import React from 'react';
 import { Piano } from 'react-piano';
 import 'react-piano/dist/styles.css';
 import usePianoBarInteractions from '../hooks/PianoBarInteractions';
+import { useSelector } from 'react-redux';
+import { selectStudioState } from '../Redux/rootReducer';
 
 export default function SimplePianoBar({ noteRange, playNote, stopNote, keyboardShortcuts, highlightedPianoKeys, hideLabels }) {
+
+  const getTrackType = useSelector((state) => selectStudioState(state).newtrackType);
   
   const {
     pianoRef,
@@ -86,6 +90,13 @@ export default function SimplePianoBar({ noteRange, playNote, stopNote, keyboard
           }
         }
       `}</style>
+      {getTrackType === 'Bass & 808' && (
+        <style jsx>{`
+          .ReactPiano__Key--active {
+            background: #f69e2b !important;
+          }
+        `}</style>
+      )}
     </div>
   );
 }

@@ -168,7 +168,7 @@ function RecentlyDeleted() {
 	};
 
 	return (
-		<div className="px-12 pt-10 pb-4 min-h-screen bg-[#141414]">
+		<div className="p-3 lg:p-5 xl:p-6 2xl:p-8 3xl:p-10 bg-[#141414]">
 			<div className="mb-8 flex items-center gap-2">
 				<button onClick={() => navigate(-1)} className="text-gray-200 text-2xl font-medium mr-2">&lt; Projects</button>
 			</div>
@@ -349,18 +349,18 @@ function RecentlyDeleted() {
 							return (
 								<div key={idx} className="flex items-center justify-between py-4 border-b border-gray-200">
 									<div className="flex items-center gap-4">
-										<span className="font-semibold text-lg text-gray-200">{audio.name}</span>
-										<span className="text-gray-300 text-sm">{daysLeft} days left</span>
+									<span className="font-semibold text-lg text-gray-200 md:text-base sm:text-xs md:max-w-[15ch] sm:max-w-[15ch] lg:max-w-none break-words whitespace-normal inline-block">{audio.name}</span>
+										<span className="text-gray-300 text-sm md:text-sm sm:text-xs">{daysLeft} days left</span>
 									</div>
 									<div className="flex gap-2">
 										<button
-											className="px-4 py-2 rounded border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-200"
+											className="px-4 py-2 rounded border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-200 md:px-4 sm:px-1 md:py-2 sm:py-1 md:text-sm sm:text-xs"
 											onClick={() => handleRestoreClick(idx)}
 										>
 											Restore
 										</button>
 										<button
-											className="px-4 py-2 rounded bg-red-500 text-white font-medium hover:bg-red-600"
+											className="px-4 py-2 rounded bg-red-500 text-white font-medium hover:bg-red-600 md:px-4 sm:px-1 md:py-2 sm:py-1 md:text-sm sm:text-xs"
 											onClick={() => handlePermanentDeleteClick(idx)}
 										>
 											Permanently delete

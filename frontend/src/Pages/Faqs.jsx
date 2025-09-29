@@ -20,7 +20,7 @@ const Faqs = () => {
 
       {/* FAQs section start */}
       <div className="faqs-heading text-center my-10">
-        <p className='text-[#FFFFFF] text-[36px] font-bold'>FAQs</p>
+        <p className='text-[#FFFFFF] text-[35px] font-bold md:text-[35px] sm:text-[30px]'>FAQs</p>
         <p className='text-[#FFFFFF99]'>Your questions, answered simply.</p>
       </div>
       <section className='container my-10'>

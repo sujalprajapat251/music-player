@@ -1026,7 +1026,6 @@ const handleSaveCoverImage = async () => {
               return (
                   <div className="w-full mx-auto" key={ele._id}>
                       <div className="flex items-center gap-4 p-4 rounded-xl shadow-sm">
-                          {audioUrl ? (
                               <audio 
                               ref={el => musicAudioRefs.current[index] = el} 
                               src={audioUrl} 
@@ -1039,9 +1038,6 @@ const handleSaveCoverImage = async () => {
                               }}
                               onLoadStart={() => console.log(`Loading audio for ${ele.name}:`, audioUrl)}
                           />
-                          ) : (
-                              <div className="text-red-500 text-xs p-2">No audio file available</div>
-                          )}
                           <div className='w-12 h-12 bg-white rounded overflow-hidden flex items-center justify-center'>
                               {coverUrl ? (
                                   <img src={coverUrl} alt={ele?.name || 'cover'} className="w-full h-full object-cover" />
