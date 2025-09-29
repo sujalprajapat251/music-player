@@ -66,22 +66,25 @@ const TimelineActionBoxes = ({ onAction }) => {
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-        minHeight: "800px",
-        width: "calc(100vw - 300px)",
-        gap: "15px",
+        position: "fixed",
+        left: "45%",
+        top: "50%",
+        // minHeight: "800px",
+        // width: "calc(100vw - 300px)",
+        gap: "10px",
       }}
     >
       {/* Row 1 */}
-      <div style={{ display: "flex", gap: "15px" }}>
+      <div style={{ display: "flex", gap: "10px" }}>
         {row1.map((action) => (
           <div
             key={action.label}
             onClick={(e) => handleActionClick(action, e)}
             style={{
-              width: "130px",
-              height: "120px",
+              width: "110px",
+              height: "110px",
               background: colors.cardBg,
-              borderRadius: "8px",
+              borderRadius: "6px",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -101,12 +104,12 @@ const TimelineActionBoxes = ({ onAction }) => {
             }
           >
             <img
-              style={{ width: "40px", height: "40px" }}
+              style={{ width: "35px", height: "35px" }}
               src={action.icon}
               alt={action.label}
               className="mb-2"
             />
-            <p style={{ fontSize: "14px", textAlign: "center" }}>
+            <p style={{ fontSize: "12px", textAlign: "center" }}>
               {action.label}
             </p>
           </div>
@@ -114,16 +117,16 @@ const TimelineActionBoxes = ({ onAction }) => {
       </div>
 
       {/* Row 2 */}
-      <div style={{ display: "flex", gap: "15px", position: "relative" }}>
+      <div style={{ display: "flex", gap: "10px", position: "relative" }}>
         {row2.map((action) => (
           <div
             key={action.label}
             onClick={(e) => handleActionClick(action, e)}
             style={{
-              width: "130px",
-              height: "120px",
+              width: "110px",
+              height: "110px",
               background: colors.cardBg,
-              borderRadius: "8px",
+              borderRadius: "6px",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -143,12 +146,12 @@ const TimelineActionBoxes = ({ onAction }) => {
             }
           >
             <img
-              style={{ width: "30px", height: "30px" }}
+              style={{ width: "35px", height: "35px" }}
               src={action.icon}
               alt={action.label}
               className="mb-2"
             />
-            <p style={{ fontSize: "14px", textAlign: "center" }}>
+            <p style={{ fontSize: "12px", textAlign: "center" }}>
               {action.label}
             </p>
           </div>
