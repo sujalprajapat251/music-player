@@ -781,21 +781,21 @@ const InstrumentPresets = ({ onClose }) => {
       {/* Overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-50" />
       {/* Modal Box Centered */}
-      <div className="relative bg-[#262529] rounded-lg border border-[#23232A] shadow-2xl w-full sm:max-w-[415px] md:max-w-2xl lg:max-w-3xl 2xl:max-w-3xl  3xl:max-w-3xl mx-auto flex flex-col" style={{ height: '660px', width: '900px' }}>
+      <div className="relative bg-[#262529] rounded-lg border border-[#23232A] shadow-2xl w-full sm:max-w-[420px] md:max-w-2xl lg:max-w-3xl 2xl:max-w-3xl 3xl:max-w-3xl mx-auto flex flex-col h-[400px] w-[900px] sm:h-[590px] md:h-[600px] lg:h-[650px]">
         {/* Header and Close */}
         <div className="flex items-center justify-between p-5 border-b border-[#36363C]">
-          <h2 className="text-2xl sm:text-[16px] sm:ml-1 font-semibold text-white ml-5">Instrument presets</h2>
-          <div className="relative w-full max-w-xs sm:max-w-[160px] ml-auto">
+          <h2 className="text-2xl sm:text-[17px] md:text-xl sm:ml-0 md:ml-5 font-semibold text-white">Instrument presets</h2>
+          <div className="relative w-full max-w-xs sm:max-w-[150px] md:max-w-[240px] lg:max-w-[260px] ml-auto">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#c0c0c0] w-4 h-4" />
             <input
               type="text"
               placeholder="Search"
-              className="w-full bg-[#1e1d20] border border-[#343238] rounded-full pl-10 pr-4 py-2 text-sm text-white placeholder-[#c0c0c0] focus:outline-none focus:border-[#a78ae6]"
+              className="w-full bg-[#1e1d20] border border-[#343238] rounded-md pl-10 pr-4 py-2 text-sm text-white placeholder-[#c0c0c0] focus:outline-none focus:border-[#a78ae6]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="ml-4 mb-6 sm:ml-2 text-gray-400 hover:text-white transition-colors" onClick={onClose}>
+          <button className="ml-4 mb-6 sm:ml-3 md:ml-8 lg:ml-12 text-gray-400 hover:text-white transition-colors" onClick={onClose}>
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -804,11 +804,11 @@ const InstrumentPresets = ({ onClose }) => {
         {/* Three Columns */}
         <div className="flex flex-1 min-h-[400px]">
           {/* Left Sidebar */}
-          <div className="w-64 bg-[#262529] border-r border-[#37363a]"> 
+          <div className="w-64 bg-[#262529] sm:w-36 md:w-56 lg:w-64 border-r border-[#37363a]"> 
             {categories.map((category, index) => (
               <div
                 key={index}
-                className={`flex items-center gap-3 px-3 py-3 rounded-md cursor-pointer border-b border-[#36363c] hover:bg-[#2c2b2f] transition-colors ${
+                className={`flex items-center gap-3 px-3 py-3 rounded-sm cursor-pointer border-b border-[#36363c] hover:bg-[#2c2b2f] transition-colors ${
                   category.name === selectedCategory ? 'bg-[#2f2e31]' : ''
                 }`}
                 onClick={() => {
@@ -823,10 +823,10 @@ const InstrumentPresets = ({ onClose }) => {
                   }
                 }}
               >
-                <div className={`w-8 h-8 rounded-full ${category.color} flex items-center justify-center`}>
+                <div className={`w-8 h-8 sm:w-6 sm:h-6 md:w-8 md:h-8 rounded-full ${category.color} flex items-center justify-center`}>
                   {category.icon}
                 </div>
-                <span className="text-sm font-medium">{category.name}</span>
+                <span className="text-sm sm:text-[12px] md:text-[14px] font-medium">{category.name}</span>
               </div>
             ))}
           </div>
@@ -840,7 +840,7 @@ const InstrumentPresets = ({ onClose }) => {
                   {[1, 2, 3].map((item) => (
                     <div
                       key={item}
-                      className="flex items-center bg-[#262529] w-80 h-12 rounded px-3 space-x-3"
+                      className="flex items-center bg-[#262529] w-80 h-12 sm:w-56 sm:h-10 md:w-80 md:h-12 rounded px-3 space-x-3"
                     >
                       {/* Play button */}
                       <div className="w-0 h-0 border-t-[8px] border-b-[8px] border-l-[12px] border-t-transparent border-b-transparent border-l-white" />
@@ -854,8 +854,8 @@ const InstrumentPresets = ({ onClose }) => {
                   ))}
                 </div>
 
-                <p>Your custom presets will end up here.</p>
-                <a href="#" className="text-[#a78ae6] text-sm mt-2 underline">
+                <p className='text-md sm:text-[14px]'>Your custom presets will end up here.</p>
+                <a href="#" className="text-[#a78ae6] text-sm sm:text-[14px] mt-2 underline">
                   Learn how
                 </a>
               </div>
@@ -863,20 +863,20 @@ const InstrumentPresets = ({ onClose }) => {
             ) : (
               <>
                 {/* Middle Panel - Subcategories */}
-                <div className="w-64 bg-[#262529] border-r border-[#37363a] overflow-y-auto">
+                <div className="w-64 sm:w-32 md:w-52 lg:w-60 bg-[#262529] border-r border-[#37363a] overflow-y-auto">
                   {subCategories.map((sub, idx) => {
                     const isActive = sub === selectedSubCategory;
                     return (
                       <div
                         key={idx}
-                        className={`px-3 py-3 border-b border-[#36363c] rounded-md cursor-pointer transition-colors ${
+                        className={`px-3 py-3 border-b border-[#36363c] rounded-sm cursor-pointer transition-colors ${
                           isActive
                             ? 'bg-[#2f2e31] text-white font-semibold'
                             : 'text-gray-300 hover:bg-[#2c2b2f] hover:text-white'
                         }`}
                         onClick={() => setSelectedSubCategory(sub)}
                       >
-                        <span className="text-sm">{sub}</span>
+                        <span className="text-sm sm:text-[12px] md:text-[14px]">{sub}</span>
                       </div>
                     );
                   })}
@@ -893,22 +893,22 @@ const InstrumentPresets = ({ onClose }) => {
                     if (filtered.length === 0) return null;
                     return (
                       <div key={sub} ref={(el) => { if (el) sectionRefs.current[sub] = el; }} className="">
-                        <div className="flex items-center justify-between px-3 py-3 border-b border-[#36363c] bg-[#37363a] z-10">
-                          <div className="font-semibold text-white">{sub} <span className="text-gray-400">({filtered.length})</span></div>
+                        <div className="flex items-center justify-between px-3 py-3 sm:px-3 sm:py-2 md:px-3 md:py-3 border-b border-[#36363c] bg-[#37363a] z-10">
+                          <div className="font-semibold text-white sm:text-[13px] md:text-[15px]">{sub} <span className="text-gray-400">({filtered.length})</span></div>
                         </div>
                         {filtered.map((preset, index) => (
                           <div
                             key={index}
-                            className="flex items-center justify-between px-3 py-3 rounded-md hover:bg-[#2c2b2f] cursor-pointer transition-colors group border-b border-[#36363c]"
+                            className="flex items-center justify-between px-3 py-3 sm:px-3 sm:py-2 md:px-3 md:py-3 rounded-sm hover:bg-[#2c2b2f] cursor-pointer transition-colors group border-b border-[#36363c]"
                           >
                             <div className="flex items-center gap-3">
                               <Play className="w-4 h-4 text-white" />
                               <div>
-                                <div className="text-white font-medium text-sm">
+                                <div className="text-white font-medium text-sm sm:text-[12px] md:text-sm">
                                   {preset.name}
                                 </div>
                                 {preset.trial && (
-                                  <div className="text-gray-400 text-xs">
+                                  <div className="text-gray-400 text-xs sm:text-[11px] md:text-xs">
                                     Start free {preset.trialType}
                                   </div>
                                 )}
