@@ -68,7 +68,7 @@ const getTopHeaderColors = (isDark) => ({
   // Border colors
   border: isDark ? '#FFFFFF1A' : '#1414141A',
   borderHover: isDark ? '#FFFFFF4D' : '#1414144D',
-  borderStrong: isDark ? '#333333' : '#d0d0d0',
+  borderStrong: isDark ? '#a6a3ac' : '#d0d0d0',
   
   // Text colors
   textPrimary: isDark ? '#ffffff' : '#141414',
@@ -94,9 +94,9 @@ const getTopHeaderColors = (isDark) => ({
   
   // Theme toggle colors
   toggleBackground: isDark ? '#1F1F1F' : '#f0f0f0',
-  toggleSlider: isDark ? '#1F1F1F' : '#ffffff',
+  toggleSlider: isDark ? '#a6a3ac' : '#5c5c5c',
   toggleIcon: isDark ? '#ffffff' : '#141414',
-  toggleBorder: isDark ? '#333333' : '#d0d0d0',
+  toggleBorder: isDark ? '#a6a3ac' : '#d0d0d0',
   
   // Status colors
   success: '#357935',
@@ -1050,11 +1050,11 @@ const TopHeader = () => {
             <OpenProjectModal open={openProjectModal} onClose={() => setOpenProjectModal(false)} />
             <div className="flex justify-between border-b px-2 py-2 sm:px-3 sm:py-1 md:px-5 md:py-2 xl:px-7"style={{ backgroundColor: colors.background, borderColor: colors.border}}>
                 <div className="flex gap-1 sm:gap-2 md:gap-3 lg:gap-5 xl:gap-7 items-center">
-                    <p className="text-[12px] md:text-[14px] lg:text-[16px] xl:text-[18px]"style={{ color: colors.textSecondary }}>LOGO</p>
+                    <p className="text-[12px] sm:text-[14px] md:text-[14px] lg:text-[16px] xl:text-[18px]"style={{ color: colors.textSecondary }}>LOGO</p>
                     <Menu as="div" className="relative inline-block text-left">
                         <div>
                             <MenuButton className="outline-none" >
-                                <p className='text-[10px] md:text-[12px] lg:text-[14px]'style={{ color: colors.textSecondary }}> File </p>
+                                <p className='text-[10px] sm:text-[12px] md:text-[12px] lg:text-[14px]'style={{ color: colors.textSecondary }}> File </p>
                             </MenuButton>
                         </div>
 
@@ -1271,7 +1271,7 @@ const TopHeader = () => {
                         <div>
                             <MenuButton className="outline-none" >
                                 <p 
-                                    className='text-[10px] md:text-[12px] lg:text-[14px]'
+                                    className='text-[10px] sm:text-[12px] md:text-[12px] lg:text-[14px]'
                                     style={{ color: colors.textSecondary }}
                                 > 
                                     Edit 
@@ -1462,7 +1462,7 @@ const TopHeader = () => {
                         <div >
                             <MenuButton className="outline-none" >
                                 <p 
-                                    className='text-[10px] md:text-[12px] lg:text-[14px]'
+                                    className='text-[10px] sm:text-[12px] md:text-[12px] lg:text-[14px]'
                                     style={{ color: colors.textSecondary }}
                                 > 
                                     Setting 
@@ -1766,11 +1766,11 @@ const TopHeader = () => {
                     </button>
                 </div >
 
-                <div className="flex gap-2 md:gap-3 lg:gap-5 xl:gap-7 items-center" >
+                <div className="flex gap-2 md:gap-3 lg:gap-5 xl:gap-4 items-center" >
                     <div className="flex gap-2 items-center cursor-pointer" onClick={handleSaved}>
-                        <img src={saveStatus === 'saved' ? greenSave : graySave} alt="" className='w-[16px] h-[16px] md:h-full' />
+                        <img src={saveStatus === 'saved' ? greenSave : graySave} alt="" className='w-[14px] h-[14px] md:h-full' />
                         <p 
-                            className="text-[16px] hidden md600:block"
+                            className="text-[14px] hidden md600:block"
                             style={{ 
                                 color: saveStatus === 'saved' ? colors.success : colors.textSecondary 
                             }}
@@ -1808,7 +1808,7 @@ const TopHeader = () => {
                     )}
                 </div>
 
-                <div className="flex gap-2 md:gap-3 lg:gap-5 xl:gap-7">
+                <div className="flex gap-2 md:gap-3 lg:gap-5 xl:gap-3">
                     <button 
                         onClick={toggleTheme} 
                         className="relative w-[60px] h-[30px] rounded-full p-1 transition-colors duration-300 outline-none focus:outline-none hidden md:block"
@@ -1838,7 +1838,7 @@ const TopHeader = () => {
                     </button>
                     <div 
                         onClick={handleExportModal} 
-                        className="flex xl:gap-2 md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full cursor-pointer items-center transition-colors duration-200 hover:opacity-80"
+                        className="flex xl:gap-2 sm:p-1 md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full cursor-pointer items-center transition-colors duration-200 hover:opacity-80"
                         style={{ 
                             border: `1px solid ${colors.borderStrong}`,
                             backgroundColor: colors.background
@@ -1857,7 +1857,7 @@ const TopHeader = () => {
                     </div>
 
                     <div 
-                        className="flex xl:gap-2 justify-center items-center md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full cursor-pointer hover:opacity-80 transition-all"
+                        className="flex xl:gap-2 justify-center items-center sm:p-1 md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full cursor-pointer hover:opacity-80 transition-all"
                         style={{border: `1px solid ${colors.borderStrong}`, backgroundColor: colors.upgradeBackground }}
                         onClick={() => setPricingModalOpen(true)}
                     >
@@ -1871,7 +1871,7 @@ const TopHeader = () => {
                     </div>
 
                     <div 
-                        className="flex md:gap-2 md:px-2 xl:px-3 md:py-1 rounded-full cursor-pointer hover:opacity-80 transition-all"
+                        className="flex md:gap-2 sm:p-1 md:px-2 xl:px-3 md:py-1 rounded-full cursor-pointer hover:opacity-80 transition-all"
                         style={{ 
                             backgroundColor: colors.shareBackground,
                             border: `1px solid ${colors.borderStrong}`

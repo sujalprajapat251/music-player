@@ -6,7 +6,7 @@ export default function Tabs({ tabs }) {
   return (
     <>
       <div className="w-full flex justify-center">
-        <div className="flex rounded-full mx-auto justify-center gap-5">
+        <div className="flex rounded-full mx-auto justify-center gap-5 bg-[#8b5cf6]">
           {tabs.map((tab, idx) => (
             <button
               key={tab.label}
@@ -15,7 +15,7 @@ export default function Tabs({ tabs }) {
               ${
                 activeTab === idx
                   ? "bg-white text-black shadow-md"
-                  : "text-white"
+                  : "text-white hover:text-black"
               }`}
             >
               {tab.icon && <span className="w-5 h-5">{tab.icon}</span>}
