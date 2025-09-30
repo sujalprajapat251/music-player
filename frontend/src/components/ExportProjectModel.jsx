@@ -496,12 +496,12 @@ function writeString(view, offset, string) {
 
       {/* Panel */}
       <div className="fixed inset-0 flex items-center justify-center p-4">
-        <DialogPanel className="bg-neutral-900 text-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+        <DialogPanel className="bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-secondary-dark rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-neutral-200 dark:border-neutral-800">
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-800">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-200 dark:border-neutral-800">
             <h2 className="text-lg font-semibold">Export</h2>
             <button
-              className="p-2 hover:bg-neutral-800 rounded-lg"
+              className="p-2 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-800"
               onClick={onClose}
             >
               <X size={20} />
@@ -510,12 +510,12 @@ function writeString(view, offset, string) {
 
           {/* Tabs */}
           <div className="flex items-center justify-center py-4">
-            <div className="flex bg-neutral-800 rounded-full p-1">
+            <div className="flex bg-neutral-200 dark:bg-neutral-800 rounded-full p-1">
               <button
                 onClick={() => setActiveTab("audio")}
                 className={`px-5 py-1.5 text-sm font-medium rounded-full transition ${activeTab === "audio"
-                  ? "bg-neutral-700 text-white"
-                  : "text-neutral-400 hover:text-white"
+                  ? "bg-neutral-300 text-black dark:bg-neutral-700 dark:text-white"
+                  : "text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white"
                   }`}
               >
                 Audio
@@ -523,8 +523,8 @@ function writeString(view, offset, string) {
               <button
                 onClick={() => setActiveTab("note")}
                 className={`px-5 py-1.5 text-sm font-medium rounded-full transition ${activeTab === "note"
-                  ? "bg-neutral-700 text-white"
-                  : "text-neutral-400 hover:text-white"
+                  ? "bg-neutral-300 text-black dark:bg-neutral-700 dark:text-white"
+                  : "text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white"
                   }`}
               >
                 Note
@@ -549,7 +549,7 @@ function writeString(view, offset, string) {
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <button className="flex items-center bg-neutral-900/70 hover:bg-neutral-800 px-3 py-1 rounded-lg text-sm">
+                    <button className="flex items-center bg-neutral-200 dark:bg-neutral-900/70 hover:bg-neutral-300 dark:hover:bg-neutral-800 px-3 py-1 rounded-lg text-sm">
                       <SlidersHorizontal size={16} className="mr-1" />
                       Edit
                     </button>
@@ -572,14 +572,14 @@ function writeString(view, offset, string) {
               {/* Export Mode Selection */}
               {audioFormats.some(f => f.name === "MP3") && (
                 <div className="px-5 pb-3">
-                  <div className="flex justify-between items-center bg-neutral-800 p-3 rounded-lg">
+                  <div className="flex justify-between items-center bg-neutral-200 dark:bg-neutral-800 p-3 rounded-lg">
                     <span className="text-sm font-medium">Export Mode:</span>
-                    <div className="flex bg-neutral-700 rounded-full p-1">
+                    <div className="flex bg-neutral-300 dark:bg-neutral-700 rounded-full p-1">
                       <button
                         onClick={() => setExportMode("individual")}
                         className={`px-3 py-1 text-xs font-medium rounded-full transition ${exportMode === "individual"
-                          ? "bg-neutral-600 text-white"
-                          : "text-neutral-400 hover:text-white"
+                          ? "bg-neutral-400 text-black dark:bg-neutral-600 dark:text-white"
+                          : "text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white"
                           }`}
                       >
                         Individual Tracks
@@ -587,8 +587,8 @@ function writeString(view, offset, string) {
                       <button
                         onClick={() => setExportMode("combined")}
                         className={`px-3 py-1 text-xs font-medium rounded-full transition ${exportMode === "combined"
-                          ? "bg-neutral-600 text-white"
-                          : "text-neutral-400 hover:text-white"
+                          ? "bg-neutral-400 text-black dark:bg-neutral-600 dark:text-white"
+                          : "text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white"
                           }`}
                       >
                         Combined Mix
@@ -603,7 +603,7 @@ function writeString(view, offset, string) {
                 {audioFormats.map((f, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between bg-neutral-800 p-4 rounded-lg hover:bg-neutral-700 transition"
+                    className="flex items-center justify-between bg-neutral-200 dark:bg-neutral-800 p-4 rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-700 transition"
                     onClick={() => !isExporting && handleMusicType(f.name)}
                   >
                     <div>
@@ -611,17 +611,17 @@ function writeString(view, offset, string) {
                         {f.icon && <span className="text-lg">{f.icon}</span>}
                         <span className="font-medium">{f.name}</span>
                         {f.tag && (
-                          <span className="ml-2 text-xs bg-green-600 px-2 py-0.5 rounded">
+                          <span className="ml-2 text-xs bg-green-600 px-2 py-0.5 rounded text-white">
                             {f.tag}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-neutral-400 mt-1">{f.desc}</p>
+                      <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">{f.desc}</p>
                     </div>
                     <button
                       className={`p-2 rounded-lg ${isExporting && f.name === 'MP3'
-                        ? "bg-neutral-600 opacity-50"
-                        : "hover:bg-neutral-600"
+                        ? "bg-neutral-400 dark:bg-neutral-600 opacity-50"
+                        : "hover:bg-neutral-300 dark:hover:bg-neutral-600"
                         }`}
                       disabled={isExporting && f.name === 'MP3'}
                     >
@@ -642,7 +642,7 @@ function writeString(view, offset, string) {
               {noteFormats.map((f, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between bg-neutral-800 p-4 rounded-lg hover:bg-neutral-700 transition"
+                  className="flex items-center justify-between bg-neutral-200 dark:bg-neutral-800 p-4 rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-700 transition"
                   onClick={() => handleMusicType(f.name)}
                 >
                   <div>
@@ -650,9 +650,9 @@ function writeString(view, offset, string) {
                       {f.icon && <span className="text-lg">{f.icon}</span>}
                       <span className="font-medium">{f.name}</span>
                     </div>
-                    <p className="text-xs text-neutral-400 mt-1">{f.desc}</p>
+                    <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">{f.desc}</p>
                   </div>
-                  <button className="p-2 hover:bg-neutral-600 rounded-lg">
+                  <button className="p-2 rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-600">
                     <Download size={20} />
                   </button>
                 </div>
