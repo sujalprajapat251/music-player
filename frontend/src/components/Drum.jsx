@@ -10,7 +10,7 @@ import {
   createSynthSound,
   createDrumData
 } from '../Utils/drumMachineUtils';
-import { IoClose } from 'react-icons/io5';
+import { IoClose, IoInformationCircleOutline } from 'react-icons/io5';
 import PianoRolls from './PianoRolls';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { GiPianoKeys } from 'react-icons/gi';
@@ -1255,7 +1255,7 @@ const DrumPadMachine = ({ onClose }) => {
       )}
       {showOffcanvas3 === true && (
         <>
-          <div className="fixed z-[26] w-full h-full  transition-transform  left-0 right-0 translate-y-full bottom-[390px] sm:bottom-[390px] md600:bottom-[450px]  lg:bottom-[530px] xl:bottom-[545px] 2xl:bottom-[563px] 3xl:bottom-[610px]"
+          <div className="fixed z-[10] w-full h-full transition-transform left-0 right-0 translate-y-full bottom-[330px] sm:bottom-[351px] md:bottom-[403px] lg:bottom-[437px] xl:bottom-[441px] 2xl:bottom-[467px] shadow-[0_-2px_11px_rgba(0,0,0,0.08)]"
             tabIndex="-1"
             aria-labelledby="drawer-swipe-label"
             onDragOver={(e) => {
@@ -1281,8 +1281,8 @@ const DrumPadMachine = ({ onClose }) => {
               }
             }}>
             {/* Static Navbar with Tabs */}
-            <div className="  border-b border-[#FFFFFF1A] h-full">
-              <div className="bg-primary-light dark:bg-primary-dark flex items-center px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
+            <div className="border-b border-[#FFFFFF1A] h-full">
+              <div className="bg-white dark:bg-[#1F1F1F] flex items-center pt-1 px-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                 {/* Close Button */}
                 <div>
                   <IoClose
@@ -1296,12 +1296,12 @@ const DrumPadMachine = ({ onClose }) => {
                 </div>
               </div>
               {/* Tabs */}
-              <div className="bg-primary-light dark:bg-primary-dark flex space-x-2 sm:space-x-3 px-1 md600:space-x-4 md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center lg:px-3 pb-4">
+              <div className="bg-white dark:bg-[#1F1F1F] flex space-x-2 sm:space-x-3 px-1 md600:space-x-4 md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center lg:px-3 pb-1">
                 {["Instruments", "Patterns", "Piano Roll", "Effects"].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveView(tab)}
-                    className={`text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] font-medium transition-colors
+                    className={`text-[10px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] font-medium transition-colors
                       ${activeView === tab
                         ? "text-secondary-light dark:text-secondary-dark border-b-2 border-secondary-light dark:border-secondary-dark"
                         : "text-gray-400 dark:text-gray-500 hover:text-secondary-light dark:hover:text-secondary-dark"
@@ -1316,7 +1316,7 @@ const DrumPadMachine = ({ onClose }) => {
               <div className=''>
                 {activeView === 'Instruments' && (
                   <>
-                    <div className="bg-primary-light dark:bg-primary-dark flex items-center justify-center pt-1 pb-1 md600:px-2 md600:pt-2 md600:pb-1 gap-2 sm:gap-2  md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
+                    <div className="bg-white dark:bg-[#1F1F1F] flex items-center justify-center pt-1 pb-1 md600:px-2 md600:pb-1 gap-2 sm:gap-2 md600:gap-12 md:gap-16 lg:pb-2 lg:px-3 lg:gap-20 2xl:pb-3 2xl:px-3 2xl:gap-24">
                       {/* Instrument Selector */}
                       <div className="bg-secondary-light/10 dark:bg-secondary-dark/10 p-1 md600:p-2 lg:p-3 rounded-lg">
                         <div className="flex items-center justify-between">
@@ -1331,10 +1331,10 @@ const DrumPadMachine = ({ onClose }) => {
                             <FaChevronLeft className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                           </button>
 
-                          <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-center 2xl:px-4 2xl:w-[250px]">
+                          <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-start 2xl:px-4 2xl:w-[250px]">
                             <Track5 className="text-secondary-light dark:text-secondary-dark text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[20px]" />
                             <div>
-                              <div className="text-secondary-light dark:text-secondary-dark font-semibold text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[16px]">
+                              <div className="text-secondary-light dark:text-secondary-dark font-semibold text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px] 2xl:text-[15px]">
                                 {currentTypeData.name}
                               </div>
                               <div className="text-secondary-light/60 dark:text-secondary-dark/60 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px] max-w-20 sm:max-w-32 truncate">
@@ -1384,19 +1384,22 @@ const DrumPadMachine = ({ onClose }) => {
                         </div>
 
                         {/* Auto-quantize */}
-                        <p className="text-secondary-light dark:text-secondary-dark text-center text-[8px] sm:text-[10px] px-2 md600:px-3 md:px-4 lg:px-4 py-1 mt-1 lg:mt-2">
-                          Auto-quantize
-                        </p>
+                        <div className="flex items-center">
+                          <p className="text-secondary-light dark:text-secondary-dark text-center text-[8px] sm:text-[10px] px-2 py-1 mt-1 lg:mt-2">
+                            Auto-quantize
+                          </p>
+                          <IoInformationCircleOutline className='text-secondary-light dark:text-secondary-dark text-[10px] sm:text-[15px]' />
+                        </div>
 
                         {/* Dropdown */}
                         <div
-                          className="border border-secondary-light/20 dark:border-secondary-dark/20 mt-1 px-1 sm:px-2 md:px-3 lg:px-4 xl:px-5 2xl:px-6"
+                          className="border border-secondary-light/20 dark:border-secondary-dark/20 mt-1 px-1 sm:px-2 md:px-3 lg:px-4 xl:px-5 2xl:px-3"
                           onClick={() => {
                             setIsIconDropdownOpen(!isIconDropdownOpen);
                             setIsOpen2(!isOpen2);
                           }}
                         >
-                          <div className="relative flex gap-1 sm:gap-2 md:gap-3" ref={menuDropdownRef}>
+                          <div className="relative flex gap-1 sm:gap-2 md:gap-3 justify-between" ref={menuDropdownRef}>
                             <span className="text-secondary-light/60 dark:text-secondary-dark/60 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px]">
                               {selectedMenuitems}
                             </span>
@@ -1428,11 +1431,11 @@ const DrumPadMachine = ({ onClose }) => {
                     </div>
 
                     {/* Drum Pad Area */}
-                    <div className="flex-1 flex items-center justify-center 3xl:p-4 relative bg-primary-light dark:bg-black">
+                    <div className="flex-1 flex items-center justify-center 3xl:p-4 relative bg-[#ebebeb] dark:bg-black">
                       {/* Scrollable wrapper for small screens */}
                       <div className="w-full h-full md:h-auto justify-center overflow-auto md:overflow-auto">
                         <div
-                          className="md:p-6 xl:p-8 rounded-2xl relative w-[800px] h-[800px] md:w-full md:h-[400px]"
+                          className="md:p-6 xl:p-8 rounded-2xl relative w-[800px] h-[800px] md:w-full md:h-[300px]"
                         >
                           <div
                             className="absolute left-[34%] top-[6%] sm:left-[32%] sm:top-[6%] md600:left-[28%] md600:top-[7%] md:left-[32%] md:top-[12%] lg:left-[20%] lg:top-[12%] xl:left-[25%] xl:top-[15%] 2xl:left-[23%] 2xl:top-[15%] 3xl:left-[30%] 3xl:top-[16%] cursor-pointer z-20"
@@ -1464,7 +1467,7 @@ const DrumPadMachine = ({ onClose }) => {
 
                           {/* Snare - Medium-large disk */}
                           <div
-                            className="absolute left-[44%] top-[8%] sm:left-[42%] sm:top-[8%] md600:left-[41%] md600:top-[10%] md:left-[45%] md:top-[16%] lg:left-[30%] lg:top-[18%] xl:left-[34%] xl:top-[20%] 2xl:left-[31%] 2xl:top-[20%] 3xl:left-[37%] 3xl:top-[25%] cursor-pointer z-10"
+                            className="absolute left-[44%] top-[8%] sm:left-[42%] sm:top-[8%] md600:left-[41%] md600:top-[10%] md:left-[45%] md:top-[16%] lg:left-[30%] lg:top-[18%] xl:left-[34%] xl:top-[17%] 2xl:left-[31%] 2xl:top-[20%] 3xl:left-[37%] 3xl:top-[25%] cursor-pointer z-10"
 
                             style={pressedKeys.has('W') ? styles.pressedButton : {}}
                             onClick={() => handlePadPress(currentTypeData.pads[1])}
@@ -1481,7 +1484,7 @@ const DrumPadMachine = ({ onClose }) => {
 
                           {/* Hi-hat - Small disk */}
                           <div
-                            className="absolute right-[43%] top-[8%] sm:right-[45%] sm:top-[8%] md600:right-[43%] md600:top-[10%] md:right-[39%] md:top-[17%] lg:right-[55%] lg:top-[18%] xl:right-[55%] xl:top-[20%] 2xl:right-[59%] 2xl:top-[20%] 3xl:right-[53.5%] 3xl:top-[25%] cursor-pointer z-20"
+                            className="absolute right-[43%] top-[8%] sm:right-[45%] sm:top-[8%] md600:right-[43%] md600:top-[10%] md:right-[39%] md:top-[17%] lg:right-[55%] lg:top-[18%] xl:right-[55%] xl:top-[17%] 2xl:right-[59%] 2xl:top-[20%] 3xl:right-[53.5%] 3xl:top-[25%] cursor-pointer z-20"
                             style={pressedKeys.has('E') ? styles.pressedButton : {}}
                             onClick={() => handlePadPress(currentTypeData.pads[2])}
                           >
@@ -1658,10 +1661,10 @@ const DrumPadMachine = ({ onClose }) => {
                       }
                     }}
                   >
-                    <div className="flex items-center justify-center p-16 sm:p-11 md600:p-14 md:p-3 lg:p-10 3xl:p-16 min-w-max bg-white dark:bg-[#1f1f1f]">
+                    <div className="flex items-center justify-center p-2 min-w-max bg-white dark:bg-[#1f1f1f]">
                       <div className="flex gap-2 sm:gap-4 min-w-max">
                         {activeEffects.map((effect) => (
-                          <div key={effect.instanceId} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px]bg-gray-200 dark:bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-white dark:text-white flex flex-col shrink-0">
+                          <div key={effect.instanceId} className="w-[150px] h-[240px] sm:w-[190px] sm:h-[263px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[292px] lg:w-[240px] lg:h-[315px] xl:w-[240px] xl:h-[320px] 2xl:w-[256px] 2xl:h-[341px] bg-gray-200 dark:bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-white dark:text-white flex flex-col shrink-0">
                             <div className="flex-1 w-full flex items-center justify-center">
                               {effect.component ? (
                                 <div className="w-full h-full flex items-center justify-center">
@@ -1676,7 +1679,7 @@ const DrumPadMachine = ({ onClose }) => {
                           </div>
                         ))}
                         {activeEffects.length < effectsLibrary?.length && (
-                          <div className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] bg-gray-100 dark:bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-black dark:text-white cursor-pointer hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors shrink-0 border-2 border-dashed border-gray-400 dark:border-gray-600"
+                          <div className="w-[150px] h-[240px] sm:w-[190px] sm:h-[263px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[292px] lg:w-[240px] lg:h-[315px] xl:w-[240px] xl:h-[320px] 2xl:w-[256px] 2xl:h-[341px] bg-gray-100 dark:bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-black dark:text-white cursor-pointer hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors shrink-0 border-2 border-dashed border-gray-400 dark:border-gray-600"
                             onClick={handlePlusButtonClick}
                             onDragOver={(e) => {
                               e.preventDefault();
@@ -1709,7 +1712,7 @@ const DrumPadMachine = ({ onClose }) => {
                           const aeLen = (activeEffects || []).length;
                           const count = Math.max(0, 4 - aeLen - 1);
                           return Array.from({ length: count }, (_, index) => (
-                            <div key={index} className="w-[150px] h-[180px]  sm:w-[190px] sm:h-[234px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[320px] lg:w-[240px] lg:h-[337px] xl:w-[240px] xl:h-[345px] 2xl:w-[256px] 2xl:h-[364px] rounded-xl shrink-0 border-2 border-dashed bg-primary-light dark:bg-primary-dark 
+                            <div key={index} className="w-[150px] h-[240px] sm:w-[190px] sm:h-[263px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[292px] lg:w-[240px] lg:h-[315px] xl:w-[240px] xl:h-[320px] 2xl:w-[256px] 2xl:h-[341px] rounded-xl shrink-0 border-2 border-dashed bg-primary-light dark:bg-primary-dark 
                           border-gray-300 dark:border-gray-600"
                           onDragOver={(e) => {
                             e.preventDefault();

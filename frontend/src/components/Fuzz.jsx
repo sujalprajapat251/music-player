@@ -422,7 +422,7 @@ const Fuzz = () => {
                     onClick={() => handleRemoveEffect(currentInstanceId)}
                 />
             </div>
-            <div className={`w-[150px] h-[185px] sm:w-[190px] sm:h-[193px] md600:w-[220px] md600:h-[210px] md:w-[230px] md:h-[265px] lg:w-[240px] lg:h-[282px] xl:w-[240px] xl:h-[285px] 2xl:w-[256px] 2xl:h-[300px] bg-[#302f2f] relative transition-opacity duration-300 ${!isPoweredOn ? 'opacity-50 pointer-events-none' : ''}`}>
+            <div className={`w-[150px] h-[190px] sm:w-[190px] sm:h-[213px] md600:w-[220px] md600:h-[210px] md:w-[230px] md:h-[265px] lg:w-[240px] lg:h-[282px] xl:w-[240px] xl:h-[285px] 2xl:w-[256px] 2xl:h-[300px] bg-[#302f2f] relative transition-opacity duration-300 ${!isPoweredOn ? 'opacity-50 pointer-events-none' : ''}`}>
                 {/* Drive Knob - Top Left */}
                 <div className="absolute top-[20px] left-[30px] sm:top-[30px] sm:left-[40px] md600:top-[25px] md600:left-[40px] md:top-[25px] md:left-[40px]">
                     <Knob 
@@ -448,7 +448,7 @@ const Fuzz = () => {
                 </div>
 
                 {/* Mix Knob - Bottom Center */}
-                <div className="absolute bottom-[15px] left-[30px] sm:bottom-[25px] sm:left-[40px] md600:left-[40px] md600:bottom-[45px] md:left-[40px] md:bottom-[45px]">
+                <div className="absolute bottom-[15px] left-[30px] sm:bottom-[25px] sm:left-[40px] md600:left-[40px] md600:bottom-[45px] md:left-[40px] md:bottom-[73px]">
                     <Knob1 
                         label="Low Cut" 
                         min={-135} 

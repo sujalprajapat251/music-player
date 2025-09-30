@@ -1678,7 +1678,7 @@ const Guitar = ({ onClose }) => {
         <>
             {showOffcanvas1 === true && (
                 <>
-                    <div className="fixed z-[10] w-full h-full transition-transform left-0 right-0 translate-y-full bottom-[330px] sm:bottom-[351px] md:bottom-[403px] lg:bottom-[437px] xl:bottom-[441px] 2xl:bottom-[467px]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
+                    <div className="fixed z-[10] w-full h-full transition-transform left-0 right-0 translate-y-full bottom-[330px] sm:bottom-[351px] md:bottom-[403px] lg:bottom-[437px] xl:bottom-[441px] 2xl:bottom-[467px] shadow-[0_-2px_11px_rgba(0,0,0,0.08)]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
                         <div className="border-b border-gray-300 dark:border-[#FFFFFF1A] h-full">
                             <div className="bg-white dark:bg-[#1F1F1F] flex items-center p-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                                 <div>

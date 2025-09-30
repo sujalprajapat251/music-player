@@ -365,7 +365,7 @@ const Sidebar2 = () => {
                         />
                       ) : (
                         <span
-                        className={`font-bold text-sm truncate flex-[0_0_auto] overflow-hidden whitespace-normal break-all w-[120px] [display:-webkit-box] [-webkit-line-clamp:1] [-webkit-box-orient:vertical]`}
+                        className={`hidden sm:block font-bold text-sm flex-[0_0_auto] w-[120px] sm:[display:-webkit-box] sm:[-webkit-line-clamp:1] sm:[-webkit-box-orient:vertical] overflow-hidden`}
                         style={{ color: track.frozen ? colors.frozenText : colors.textPrimary }}
                       >
                         { track.nametype || track.name || `Track ${idx + 1}` }
@@ -375,7 +375,7 @@ const Sidebar2 = () => {
                         <img src={FreezeIcon} alt="Frozen" className="w-4 h-4 opacity-80" style={{ filter: isDark ? "invert(1) brightness(1.5)" : "none" }}/>
                       )}
                     </div>
-                    <div className="flex flex-row items-center justify-around gap-x-2 mt-1">
+                    <div className="hidden sm:flex flex-row items-center justify-around gap-x-2 mt-1">
                     <span
                         className={`w-6 h-6 rounded text-xs font-bold flex items-center justify-center`}
                         style={{
@@ -394,7 +394,7 @@ const Sidebar2 = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col justify-between items-end h-full w-20">
+                  <div className="hidden sm:flex flex-col justify-between items-end h-full w-20">
                     <TrackMenu
                       trackId={track.id}
                       color={track.color}
@@ -433,7 +433,7 @@ const Sidebar2 = () => {
               style={{ height: `${trackHeight + 8}px`, borderTopColor: colors.addRowBorder, borderBottomColor: colors.addRowBorder, color: colors.addRowText }}
             >
               <span className="text-xl font-bold">+</span>
-              <span className="sm:text-xs md:text-sm lg:text-base">Add New Track</span>
+              <span className="hidden sm:block sm:text-xs md:text-sm lg:text-base">Add New Track</span>
             </div>
           </div>
         </div>

@@ -464,7 +464,7 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
         <>
             {showOffcanvas1 === true && (
                 <>
-                    <div className="fixed z-[10] w-full h-full transition-transform left-0 right-0 translate-y-full bottom-[330px] sm:bottom-[351px] md:bottom-[400px] lg:bottom-[430px] xl:bottom-[433px] 2xl:bottom-[467px]">
+                    <div className="fixed z-[10] w-full h-full transition-transform left-0 right-0 translate-y-full bottom-[330px] sm:bottom-[351px] md:bottom-[400px] lg:bottom-[430px] xl:bottom-[433px] 2xl:bottom-[467px] shadow-[0_-2px_11px_rgba(0,0,0,0.08)]">
                         <div className="border-b border-gray-300 dark:border-[#FFFFFF1A] h-full">
                             <div className="bg-white dark:bg-[#1F1F1F] flex items-center p-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                                 <div>
@@ -500,7 +500,7 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                             <div className="flex items-center justify-between px-2 md:px-6 py-1 bg-[#1f1f1f] gap-2 md:gap-0">
                                                 {/* Left Section */}
                                                 <div className="">
-                                                    <div className="relative w-40 md:w-64">
+                                                    <div className="relative w-32 sm:w-40 md:w-64">
                                                         <button
                                                             onClick={() => setIsOpen(!isOpen)}
                                                             className="w-full transition-colors duration-200 rounded-lg px-2 lg:px-3 py-2 flex items-center justify-between text-white border border-gray-600"
@@ -530,7 +530,7 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                                         </button>
                                                                     ))
                                                                 ) : (
-                                                                    <div className="px-3 py-2 text-[9px] md:text-[12px] lg:text-sm text-gray-400">No instrument detected</div>
+                                                                    <div className="px-3 py-2 text-[7px] sm:text-[9px] md:text-[12px] lg:text-sm text-gray-400">No instrument detected</div>
                                                                 )}
                                                             </div>
                                                         )}
@@ -538,11 +538,11 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                     <div className='flex items-center justify-between mt-3'>
                                                         <div className="flex items-center space-x-2 border border-[#5d5d5d] py-1 px-1 sm:px-2 md:px-3 rounded-full cursor-pointer" onClick={() => setPricingModalOpen(true)}>
                                                             <Mic className="w-3 lg:w-4 h-3 lg:h-4" />
-                                                            <span className="text-[9px] md:text-[12px] lg:text-sm">Calibrate</span>
+                                                            <span className="text-[7px] sm:text-[9px] md:text-[12px] lg:text-sm">Calibrate</span>
                                                         </div>
 
                                                         <div className="flex items-center space-x-2">
-                                                            <span className="text-[9px] md:text-[12px] lg:text-sm">Monitoring:</span>
+                                                            <span className="text-[7px] sm:text-[9px] md:text-[12px] lg:text-sm">Monitoring:</span>
                                                             <div className="w-5 md:w-8 h-5 md:h-8 bg-[#525252] rounded-lg flex items-center justify-center">
                                                                 <LuHeadphoneOff className="w-2 md:w-3 lg:w-4 h-2 md:h-3 lg:h-4" />
                                                             </div>
@@ -551,15 +551,15 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                 </div>
 
                                                 {/* Center Section */}
-                                                <div className="flex overflow-x-auto w-full max-w-[380px]">
+                                                {/* <div className="flex overflow-x-auto sm:max-w-[380px] md:w-full"> */}
                                                 <div>
-                                                    <div className="flex items-center space-x-2 border border-[#5d5d5d] rounded-lg">
+                                                    <div className="flex items-center sm:space-x-2 border border-[#5d5d5d] rounded-lg">
                                                         <div className="flex items-center px-1 md:px-2 lg:px-4 py-2 lg:py-3 sm:gap-2 md:gap-4 border-r border-[#5d5d5d]">
                                                             <FaChevronLeft className="w-2 sm:w-3 lg:w-4 h-2 sm:h-3 lg:h-4 cursor-pointer hover:text-purple-300" />
                                                             <FaChevronRight className="w-2 sm:w-3 lg:w-4 h-2 sm:h-3 lg:h-4 cursor-pointer hover:text-purple-300" />
                                                         </div>
-                                                        <div className="flex items-center gap-3 md:gap-8 px-1 md:px-2 lg:px-4 py-1 md:py-2 lg:py-3">
-                                                            <span className="text-[9px] md:text-[12px] lg:text-sm">Load and Clear</span>
+                                                        <div className="flex items-center gap-1 sm:gap-3 md:gap-8 ms-1 sm:px-1 md:px-2 lg:px-4 p-1 sm:py-1 md:py-2 lg:py-3">
+                                                            <span className="text-[7px] sm:text-[9px] md:text-[12px] lg:text-sm">Load and Clear</span>
                                                             <FaChevronDown className="w-3 lg:w-4 h-3 lg:h-4 transform cursor-pointer hover:text-purple-300" />
                                                         </div>
                                                     </div>
@@ -581,18 +581,18 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                                     <Knob label="Pan" min={-135} max={135} defaultAngle={pan} onChange={(value) => setPan(value)} />
                                                                 </div>
 
-                                                                <div className="flex flex-col items-center">
+                                                                <div className="flex flex-col items-center hidden sm:block">
                                                                     <Knob label="Volume" min={-135} max={135} defaultAngle={volume} onChange={(value) => setVolume(value)} />
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            {/* </div> */}
 
                                             {/* Main Content */}
                                             <div className="flex items-center justify-center md:px-12 py-2 md:py-4 2xl:py-4 bg-[#242424]">
-                                                <div className="flex items-center md:space-x-12 flex-col md:flex-row h-[194px] overflow-auto">
+                                                <div className="flex items-center md:space-x-12 flex-col md:flex-row h-[194px] 2xl:h-[214px] overflow-auto">
 
                                                     {/* Vocal Cleanup Card */}
                                                     <div className="bg-[#1f1f1f] backdrop-blur-sm border border-[#5d5d5d] rounded-xl p-2 2xl:p-5 w-64 sm:w-80 mb-3 md:mb-0">
@@ -741,7 +741,7 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                         <div className="flex items-center justify-center p-2 sm:p-4 min-w-max bg-white dark:bg-[#1f1f1f]">
                                             <div className="flex gap-2 sm:gap-4 min-w-max">
                                             {activeEffects.map((effect) => (
-                                                <div key={effect.instanceId} className="w-[150px] h-[235px] sm:w-[190px] sm:h-[243px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[280px] lg:w-[200px] lg:h-[300px] xl:w-[240px] xl:h-[310px] 2xl:w-[256px] 2xl:h-[330px] bg-gray-200 dark:bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-black dark:text-white flex flex-col shrink-0">
+                                                <div key={effect.instanceId} className="w-[150px] h-[238px] sm:w-[190px] sm:h-[250px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[280px] lg:w-[200px] lg:h-[300px] xl:w-[240px] xl:h-[310px] 2xl:w-[256px] 2xl:h-[330px] bg-gray-200 dark:bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-black dark:text-white flex flex-col shrink-0">
                                                 <div className="flex-1 w-full flex items-center justify-center">
                                                     {effect.component ? (
                                                     <div className="w-full h-full flex items-center justify-center">
@@ -756,7 +756,7 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                 </div>
                                             ))}
                                             {activeEffects.length < effectsLibrary?.length && (
-                                                <div className="w-[150px] h-[235px] sm:w-[190px] sm:h-[243px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[280px] lg:w-[200px] lg:h-[300px] xl:w-[240px] xl:h-[310px] 2xl:w-[256px] 2xl:h-[330px] bg-gray-100 dark:bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-black dark:text-white cursor-pointer hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors shrink-0 border-2 border-dashed border-gray-400 dark:border-gray-600"
+                                                <div className="w-[150px] h-[238px] sm:w-[190px] sm:h-[250px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[280px] lg:w-[200px] lg:h-[300px] xl:w-[240px] xl:h-[310px] 2xl:w-[256px] 2xl:h-[330px] bg-gray-100 dark:bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-black dark:text-white cursor-pointer hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors shrink-0 border-2 border-dashed border-gray-400 dark:border-gray-600"
                                                 onClick={handlePlusButtonClick}
                                                 onDragOver={(e) => {
                                                     e.preventDefault();
@@ -787,7 +787,7 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                             )}
                                             {Array.from({ length: 4 - activeEffects.length - 1 }, (_, index) => (
                                                 <div key={index} className="
-                                                w-[150px] h-[235px] sm:w-[190px] sm:h-[243px] md600:w-[220px] md600:h-[250px]
+                                                w-[150px] h-[238px] sm:w-[190px] sm:h-[250px] md600:w-[220px] md600:h-[250px]
                                                 md:w-[230px] md:h-[280px] lg:w-[240px] lg:h-[300px] xl:w-[240px] xl:h-[310px] 
                                                 2xl:w-[256px] 2xl:h-[330px]
                                                 rounded-xl shrink-0 border-2 border-dashed

@@ -14,6 +14,7 @@ import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { GiPianoKeys } from 'react-icons/gi';
 import { toggleLoopEnabled } from '../Redux/Slice/loop.slice';
 // import { handleBeatToggleSync } from '../Utils/patternTimelineBridge';
+import { ReactComponent as Track5 } from '../Images/track5.svg'
 
 function polarToCartesian(cx, cy, r, angle) {
   const a = (angle - 90) * Math.PI / 180.0;
@@ -786,9 +787,9 @@ const Pattern = () => {
 
   return (
     <>
-    <div className="bg-primary-light dark:bg-primary-dark flex items-center justify-center pt-1 pb-1 md600:px-2 md600:pt-2 md600:pb-1 gap-2 sm:gap-2  md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
+    <div className="bg-white dark:bg-[#1F1F1F] flex items-center justify-center pt-1 pb-1 md600:px-2 gap-2 sm:gap-2 md600:gap-12 md:gap-16 lg:px-3 lg:gap-20 2xl:px-3 2xl:gap-24">
         {/* Instrument Selector */}
-        <div className="bg-secondary-light/10 dark:bg-secondary-dark/10 p-1 md600:p-2 lg:p-3 rounded-lg">
+        <div className="bg-secondary-light/10 dark:bg-secondary-dark/10 p-1 md600:p-2 lg:p-2 rounded-lg">
           <div className="flex items-center justify-between">
             <button
               onClick={() => {
@@ -801,10 +802,10 @@ const Pattern = () => {
               <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px]' />
             </button>
 
-            <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-center 2xl:px-4 2xl:w-[250px]">
-              <GiPianoKeys className="text-secondary-light dark:text-secondary-dark text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[20px]" />
+            <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-start 2xl:px-4 2xl:w-[250px]">
+              <Track5 className="text-secondary-light dark:text-secondary-dark text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[20px]" />
               <div>
-                <div className="text-secondary-light dark:text-secondary-dark font-semibold text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[16px]">
+                <div className="text-secondary-light dark:text-secondary-dark font-semibold text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px] 2xl:text-[15px]">
                   {currentTypeData.name}
                 </div>
                 <div className="text-secondary-light/60 dark:text-secondary-dark/60 text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px] max-w-20 sm:max-w-32 truncate">
@@ -844,43 +845,43 @@ const Pattern = () => {
           </div>
         </div>
       </div>
-      <div className="bg-black min-h-screen p-6 text-white">
-        <div className="m-5 mx-auto">
+      <div className="bg-[#ebebeb] dark:bg-black p-4 xl:p-3 text-secondary-light dark:text-secondary-dark h-[210px] sm:h-[237px] lg:h-[270px] overflow-scroll">
+        <div className="m-1 mx-auto">
 
           {/* Header Controls */}
-          <div className="flex justify-between items-center mb-2">
-            <div className="flex items-center gap-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-1 sm:gap-4">
               <button
                 onClick={togglePlay}
-                className="bg-[#1F1F1F] p-3 rounded-lg transition-colors flex items-center gap-2"
+                className="bg-[#626262] dark:bg-[#1F1F1F] p-2 rounded-lg transition-colors flex items-center gap-2 text-[12px]"
               >
-                {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+                {isPlaying ? <Pause size={13} /> : <Play size={13} />}
                 {isPlaying ? 'Pause' : 'Play'}
               </button>
 
               <button
                 onClick={stopAndReset}
-                className="bg-[#1F1F1F] p-3 rounded-lg transition-colors flex items-center gap-2"
+                className="bg-[#626262] dark:bg-[#1F1F1F] p-2 rounded-lg transition-colors flex items-center gap-2 text-[12px]"
               >
-                <RotateCcw size={20} />
+                <RotateCcw size={13} />
                 Stop
               </button>
             </div>
 
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 sm:gap-3 md:gap-6">
               <div onClick={() => dispatch(toggleLoopEnabled())} className="flex items-center gap-1 cursor-pointer">
-                <div className={`border rounded-full p-2 ${isLoopEnabled ? 'bg-[#FF8014]' : 'hover:bg-[#1F1F1F]'}`}>
+                <div className={`border border-[#1F1F1F] dark:border-[#FFFFFF] rounded-full p-1 md:p-2 ${isLoopEnabled ? 'bg-[#FF8014]' : 'hover:bg-[#cecece]'}`}>
                   <RotateCcw size={16} />
                 </div>
-                <button className={`p-2 rounded-lg transition-colors flex items-center gap-2`}>Cycle</button>
+                <button className={`p-2 rounded-lg transition-colors flex items-center gap-2 text-[12px] md:text-[16px]`}>Cycle</button>
               </div>
 
               <div onClick={() => setFollowBeat(!followBeat)} className="flex items-center gap-1 cursor-pointer">
-                <div className={`border rounded-full p-2 ${followBeat ? 'bg-[#FF8014]' : 'bg-[#1F1F1F]'}`}>
+                <div className={`border border-[#1F1F1F] dark:border-[#FFFFFF] rounded-full p-1 md:p-2 ${followBeat ? 'bg-[#FF8014]' : 'hover:bg-[#cecece]'}`}>
                   <Volume2 size={16} />
                 </div>
                 <button 
-                  className={`p-2 rounded-lg transition-colors flex items-center gap-2`}>Follow beat</button>
+                  className={`p-2 rounded-lg transition-colors flex items-center gap-2 text-[12px] md:text-[16px]`}>Follow beat</button>
               </div>
             </div>
           </div>
@@ -889,12 +890,12 @@ const Pattern = () => {
           <div className="relative mt-5 max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-[#474747] scrollbar-track-transparent">
             <div className="flex">
               {/* Fixed Labels Column */}
-              <div className="w-32 flex-shrink-0 z-10 bg-black">
+              <div className="w-32 flex-shrink-0 z-10">
                 {/* Empty spacer for beat dots alignment */}
                 <div className="h-3 mb-2"></div>
 
                 {/* Empty spacer for section numbers alignment */}
-                <div className="h-6 mb-4"></div>
+                <div className="h-6 mb-2"></div>
 
                 {/* Fixed Track Labels */}
                 <div className="space-y-3">
@@ -990,7 +991,7 @@ const Pattern = () => {
                   </div>
 
                   {/* Section Numbers */}
-                  <div className="flex items-center gap-2 h-6 mb-4">
+                  <div className="flex items-center gap-2 h-6 mb-1">
                     <div className="flex gap-1">
                       {Array.from({ length: Math.ceil(patternLength / 16) }, (_, sectionIndex) => (
                         <div key={sectionIndex} className="flex justify-center items-center mx-2" style={{ width: `${16 * 36}px` }}>
