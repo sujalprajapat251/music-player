@@ -21,7 +21,7 @@ const TearmsOfUse = () => {
 
       <section className="container px-4 my-10">
         <div className="terms-heading">
-          <p className="text-[#FFFFFF] text-[30px] font-bold">
+          <p className="text-[#FFFFFF] text-[35px] md:text-[35px] sm:text-[30px] font-bold">
             Terms & Conditions
           </p>
         </div>

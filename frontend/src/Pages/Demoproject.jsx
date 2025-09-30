@@ -57,7 +57,7 @@ const Demoproject = () => {
 
     return (
         <>
-            <div className=" bg-[#141414] p-8">
+            <div className="p-3 lg:p-5 xl:p-6 2xl:p-8 3xl:p-10 bg-[#141414]">
                 <div className='sticky top-0 left-0 bg-[#141414]'>
                     <div className="flex gap-3 text-white items-center">
                         <div className="md:hidden mb-4">
@@ -77,7 +77,7 @@ const Demoproject = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 3xl:grid-cols-7 gap-6 max-h-[70vh] overflow-auto d_customscrollbar">
                     {sounds.map((sound, index) => (
                         <div key={sound._id || index} className="bg-[#14141480] rounded-[4px] overflow-hidden d_customborder" onClick={() => navigate('/sidebar/timeline', { state: { demoSound: { _id: sound?._id, soundname: sound?.soundname, image: sound?.image, soundfile: sound?.soundfile } } })}>
-                            <div className='w-full h-[160px]'>
+                            <div className='w-full h-[105px] sm:h-[135px] md600:h-[105px] lg:h-[131px] xl:h-[125px] 2xl:h-[124px] 3xl:h-[135px]'>
                                 <img src={`${IMAGE_URL}uploads/image/${sound?.image}`} alt="Album" className="w-full h-full object-cover" />
                             </div>
                             <div className="py-[8px] px-[12px]">

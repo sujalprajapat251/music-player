@@ -149,7 +149,7 @@ function App() {
               </Route>
 
               {/* Standalone feature routes (protected) */}
-              <Route path='piano' element={<Piano />} />
+              <Route path='piano' element={<Piano />} />  
               <Route path='effcts2' element={<Effects2 />} />
               <Route path='file' element={<File />} />
               <Route path='sound' element={<Sound />} />

@@ -15,7 +15,7 @@ const Footer = () => {
 
   return (
     <>
-      <section className="container mt-20 px-4">
+      <section className="container mt-20 px-4 lg:mt-20 md:mt-10 sm:mt-5">
         <div className="k-footer flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
           <div>
             <div className="logo">

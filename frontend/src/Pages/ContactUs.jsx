@@ -50,7 +50,7 @@ const ContactUs = () => {
         <div className="bg-[#232323] rounded-lg p-6 md:p-10 flex flex-col lg:flex-row gap-8 items-stretch">
           {/* Left: Form */}
           <div className="flex-1">
-            <h3 className="text-white text-[30px] font-semibold mb-1">
+            <h3 className="text-white text-[30px] font-semibold mb-1 sm:text-[25px] md:text-[25px] lg:text-[30px]">
               Let's connect constellations
             </h3>
             <p className="text-white/70 mb-6 text-sm">
@@ -60,7 +60,7 @@ const ContactUs = () => {
             <form className="space-y-4" onSubmit={formik.handleSubmit}>
               <div className="flex justify-between gap-8">
                 <div className="flex flex-col flex-1">
-                  <label className="text-[#FFFFFF] mb-2">First name</label>
+                  <label className="text-[#FFFFFF] mb-2 md:mb-2 sm:mb-1">First name</label>
                   <input
                     type="text"
                     name="firstName"
@@ -75,7 +75,7 @@ const ContactUs = () => {
                   )}
                 </div>
                 <div className="flex flex-col flex-1">
-                  <label className="text-[#FFFFFF] mb-2">Last name</label>
+                  <label className="text-[#FFFFFF] mb-2 md:mb-2 sm:mb-1">Last name</label>
                   <input
                     type="text"
                     name="lastName"
@@ -96,7 +96,7 @@ const ContactUs = () => {
                   type="email"
                   name="email"
                   placeholder="Email"
-                  className="w-full h-[44px] px-4 py-2 bg-[#181818] my-3 text-white rounded-md focus:outline-none"
+                  className="w-full h-[44px] px-4 py-2 bg-[#181818] my-3 text-white rounded-md focus:outline-none md:my-3 sm:my-2"
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   value={formik.values.email}
@@ -120,7 +120,7 @@ const ContactUs = () => {
               )}
               <button
                 type="submit"
-                className="bg-white text-black px-6 py-2 rounded-md font-medium hover:bg-gray-200 transition"
+                className="bg-white text-black px-6 py-2 rounded-md font-medium hover:bg-gray-200 transition sm:text-sm md:text-base lg:text-lg"
                 disabled={loading}
               >
                 {loading ? 'Sending...' : 'Send Message'}
