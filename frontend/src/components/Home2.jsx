@@ -135,7 +135,7 @@ const Home2 = () => {
 
     const handleCreateNewProject = async () => {
         try {
-            const uniqueName = `Untitled Song ${new Date().toISOString().replace(/[:.]/g, '-')}`;
+            const uniqueName = 'Untitled Song';
             const created = await dispatch(createMusic({
                 name: uniqueName,
                 musicdata: {},

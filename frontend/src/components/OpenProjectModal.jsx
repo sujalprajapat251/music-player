@@ -278,7 +278,7 @@ const drawWaveform = useCallback((musicId, idx) => {
 
             {/* Header */}
             <div className="flex items-center justify-between mt-2 mb-4">
-              <h2 className="font-bold text-2xl mb-1 ml-10" style={{ color: colors.textPrimary }}>
+              <h2 className="font-bold text-2xl mb-1" style={{ color: colors.textPrimary }}>
                 Open project
               </h2>
               <input
@@ -286,14 +286,14 @@ const drawWaveform = useCallback((musicId, idx) => {
                 placeholder="Search projects"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="px-4 py-2 w-56 mr-8 rounded border focus:outline-none"
+                className="px-4 py-2 w-56 rounded border focus:outline-none"
                 style={{ backgroundColor: colors.inputBg, color: colors.textPrimary, borderColor: colors.inputBorder }}
               />
             </div>
 
             {/* Exclude toggle */}
             <div className="flex items-center gap-2 mb-3">
-              <label className="flex items-center gap-3 text-sm ml-10" style={{ color: colors.textSecondary }}>
+              <label className="flex items-center gap-3 text-sm" style={{ color: colors.textSecondary }}>
                 <span className="relative inline-block w-10 h-5">
                   <input
                     type="checkbox"
@@ -318,8 +318,8 @@ const drawWaveform = useCallback((musicId, idx) => {
             <hr className="my-1" style={{ borderColor: colors.divider }} />
 
             {/* Table Header */}
-            <div className="flex justify-between px-6 py-1">
-              <span className="text-md ml-36" style={{ color: colors.textSecondary }}>Project</span>
+            <div className="flex justify-between">
+              <span className="text-md" style={{ color: colors.textSecondary }}>Project</span>
               <button
                 type="button"
                 className="text-md focus:outline-none"
@@ -358,7 +358,7 @@ const drawWaveform = useCallback((musicId, idx) => {
                   return (
                     <div
                       key={project._id}
-                      className={`flex justify-between items-center px-6 py-4 border-b cursor-pointer`}
+                      className={`flex justify-between items-center border-b gap-8 cursor-pointer`}
                       style={{ 
                         borderColor: colors.divider,
                         backgroundColor: selectedProject === absIdx ? colors.rowSelected : "transparent",
@@ -388,7 +388,8 @@ const drawWaveform = useCallback((musicId, idx) => {
                             }}
                           />
                         ) : (
-                          <span className="text-red-400 text-xs">⚠ No audio found</span>
+                          // <span className="text-red-400 text-xs">⚠ No audio found</span>
+                          ""
                         )}
 
                         <button
@@ -438,12 +439,12 @@ const drawWaveform = useCallback((musicId, idx) => {
                 Projects 1 - {filteredProjects.length} of{" "}
                 {filteredProjects.length}
               </span> */}
-              <span className="text-sm ml-6" style={{ color: colors.textSecondary }}>
+              <span className="text-sm" style={{ color: colors.textSecondary }}>
                 Project {currentPage} - {Math.min(indexOfLast, filteredProjects.length)} of {filteredProjects.length}
               </span>
 
 
-              <div className="flex gap-2 mr-32">
+              <div className="flex gap-2">
                 <button 
                   className="w-8 h-8 rounded flex items-center justify-center"
                   style={{ backgroundColor: colors.buttonBg, color: colors.buttonText, border: `1px solid ${colors.buttonBorder}` }}

@@ -140,10 +140,10 @@ const TimelineActionBoxes = ({ onAction }) => {
             onClick={(e) => handleActionClick(action, e)}
             className="action-card"
             style={{
-              width: "130px",
-              height: "120px",
+              width: "110px",
+              height: "110px",
               background: colors.cardBg,
-              borderRadius: "8px",
+              borderRadius: "6px",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -183,10 +183,10 @@ const TimelineActionBoxes = ({ onAction }) => {
             onClick={(e) => handleActionClick(action, e)}
             className="action-card"
             style={{
-              width: "130px",
-              height: "120px",
+              width: "110px",
+              height: "110px",
               background: colors.cardBg,
-              borderRadius: "8px",
+              borderRadius: "6px",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",

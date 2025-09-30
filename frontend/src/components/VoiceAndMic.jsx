@@ -13,6 +13,7 @@ import { PiWaveformBold } from "react-icons/pi";
 import PricingModel from './PricingModel';
 import { LiaWaveSquareSolid } from "react-icons/lia";
 import { FaChevronDown } from "react-icons/fa";
+import { addEffect, setShowEffectsLibrary, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
 
 
 function polarToCartesian(cx, cy, r, angle) {
@@ -146,6 +147,12 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
     const [pan, setPan] = useState(0);
     const [pricingModalOpen, setPricingModalOpen] = useState(false);
 
+    const [isDragOver, setIsDragOver] = useState(false);
+    const [isProcessingDrop, setIsProcessingDrop] = useState(false);
+    const [effectsSearchTerm, setEffectsSearchTerm] = useState('');
+    const [selectedEffectCategory, setSelectedEffectCategory] = useState(null);
+
+    const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas, showEffectsTwo } = useSelector((state) => state.effects);
 
     const getTrackType = useSelector((state) => selectStudioState(state).newtrackType);
     const getIsRecording = useSelector((state) => selectStudioState(state).isRecording);
@@ -430,6 +437,29 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
         setPricingModalOpen(true);
     };
 
+    const handleAddEffectFromLibrary = (effect) => {
+        console.log('handleAddEffectFromLibrary called with:', effect);
+    
+        if (isProcessingDrop) {
+          console.log('Already processing a drop, skipping duplicate');
+          return;
+        }
+    
+        setIsProcessingDrop(true);
+        dispatch(addEffect(effect));
+        dispatch(setShowEffectsLibrary(false));
+        setEffectsSearchTerm('');
+        setSelectedEffectCategory(null);
+    
+        setTimeout(() => {
+          setIsProcessingDrop(false);
+        }, 100);
+      };
+
+      const handlePlusButtonClick = () => {
+        dispatch(toggleEffectsOffcanvas());
+      };
+
     return (
         <>
             {showOffcanvas1 === true && (
@@ -678,16 +708,135 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
 
                                 {activeTab === 'Effects' && (
                                     <>
-                                        {/* Header */}
-                                        <div className="bg-gray-800 rounded-lg p-4 mb-4 h-full">
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center space-x-4">
-                                                    <div className="flex items-center space-x-2">
-                                                        <span className="text-xl font-semibold">Effects Section</span>
+                                    {/* Header */}
+                                    <div className={`w-full overflow-x-auto transition-all duration-200 ${
+                                        isDragOver ? "bg-[#409C9F] bg-opacity-10" : ""
+                                        }`}
+                                        onDragOver={(e) => {
+                                        e.preventDefault();
+                                        e.dataTransfer.dropEffect = 'copy';
+                                        setIsDragOver(true);
+                                        console.log('Drag over Effects tab');
+                                        }}
+                                        onDragLeave={(e) => {
+                                        if (!e.currentTarget.contains(e.relatedTarget)) {
+                                            setIsDragOver(false);
+                                            console.log('Drag leave Effects tab');
+                                        }
+                                        }}
+                                        onDrop={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setIsDragOver(false);
+                                        console.log('Drop on Effects tab');
+                                        try {
+                                            const effectData = JSON.parse(e.dataTransfer.getData('application/json'));
+                                            console.log('Dropped effect data:', effectData);
+                                            handleAddEffectFromLibrary(effectData);
+                                        } catch (error) {
+                                            console.error('Error parsing dropped effect data:', error);
+                                        }
+                                        }}
+                                    >
+                                        <div className="flex items-center justify-center p-2 sm:p-4 min-w-max bg-white dark:bg-[#1f1f1f]">
+                                            <div className="flex gap-2 sm:gap-4 min-w-max">
+                                            {activeEffects.map((effect) => (
+                                                <div key={effect.instanceId} className="w-[150px] h-[235px] sm:w-[190px] sm:h-[243px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[280px] lg:w-[200px] lg:h-[300px] xl:w-[240px] xl:h-[310px] 2xl:w-[256px] 2xl:h-[330px] bg-gray-200 dark:bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-black dark:text-white flex flex-col shrink-0">
+                                                <div className="flex-1 w-full flex items-center justify-center">
+                                                    {effect.component ? (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        {React.createElement(effect.component)}
                                                     </div>
+                                                    ) : (
+                                                    <div className="flex items-center justify-center h-full">
+                                                        <p className="text-gray-500 dark:text-gray-400 text-sm">No component available</p>
+                                                    </div>
+                                                    )}
                                                 </div>
+                                                </div>
+                                            ))}
+                                            {activeEffects.length < effectsLibrary?.length && (
+                                                <div className="w-[150px] h-[235px] sm:w-[190px] sm:h-[243px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[280px] lg:w-[200px] lg:h-[300px] xl:w-[240px] xl:h-[310px] 2xl:w-[256px] 2xl:h-[330px] bg-gray-100 dark:bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center text-black dark:text-white cursor-pointer hover:bg-gray-200 dark:hover:bg-[#2a2a2a] transition-colors shrink-0 border-2 border-dashed border-gray-400 dark:border-gray-600"
+                                                onClick={handlePlusButtonClick}
+                                                onDragOver={(e) => {
+                                                    e.preventDefault();
+                                                    e.dataTransfer.dropEffect = 'copy';
+                                                    e.currentTarget.style.borderColor = '#409C9F';
+                                                    e.currentTarget.style.backgroundColor = '#2a2a2a';
+                                                }}
+                                                onDragLeave={(e) => {
+                                                    e.currentTarget.style.borderColor = '#6B7280';
+                                                    e.currentTarget.style.backgroundColor = '#1a1a1a';
+                                                }}
+                                                onDrop={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    e.currentTarget.style.borderColor = '#6B7280';
+                                                    e.currentTarget.style.backgroundColor = '#1a1a1a';
+                                                    try {
+                                                    const effectData = JSON.parse(e.dataTransfer.getData('application/json'));
+                                                    handleAddEffectFromLibrary(effectData);
+                                                    } catch (error) {
+                                                    console.error('Error parsing dropped effect data:', error);
+                                                    }
+                                                }}
+                                                >
+                                                <div className="w-14 h-14 bg-black dark:bg-white text-white dark:text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
+                                                <p className="text-center text-xs sm:text-sm leading-snug">Drop effects here or<br />select from library</p>
+                                                </div>
+                                            )}
+                                            {Array.from({ length: 4 - activeEffects.length - 1 }, (_, index) => (
+                                                <div key={index} className="
+                                                w-[150px] h-[235px] sm:w-[190px] sm:h-[243px] md600:w-[220px] md600:h-[250px]
+                                                md:w-[230px] md:h-[280px] lg:w-[240px] lg:h-[300px] xl:w-[240px] xl:h-[310px] 
+                                                2xl:w-[256px] 2xl:h-[330px]
+                                                rounded-xl shrink-0 border-2 border-dashed
+                                                bg-primary-light dark:bg-primary-dark 
+                                                border-gray-300 dark:border-gray-600
+                                                transition-colors
+                                            "
+                                            onDragOver={(e) => {
+                                                e.preventDefault();
+                                                e.dataTransfer.dropEffect = "copy";
+                                                e.currentTarget.style.borderColor = "#409C9F";
+                                                e.currentTarget.style.backgroundColor =
+                                                document.documentElement.classList.contains("dark")
+                                                    ? "#2a2a2a"
+                                                    : "#f3f4f6"; // light gray for light mode
+                                            }}
+                                            onDragLeave={(e) => {
+                                                e.currentTarget.style.borderColor =
+                                                document.documentElement.classList.contains("dark")
+                                                    ? "#4B5563"
+                                                    : "#D1D5DB"; // gray-300 for light
+                                                e.currentTarget.style.backgroundColor =
+                                                document.documentElement.classList.contains("dark")
+                                                    ? "#1a1a1a"
+                                                    : "#ffffff";
+                                            }}
+                                            onDrop={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                e.currentTarget.style.borderColor =
+                                                document.documentElement.classList.contains("dark")
+                                                    ? "#4B5563"
+                                                    : "#D1D5DB";
+                                                e.currentTarget.style.backgroundColor =
+                                                document.documentElement.classList.contains("dark")
+                                                    ? "#1a1a1a"
+                                                    : "#ffffff";
+                                                    try {
+                                                    const effectData = JSON.parse(e.dataTransfer.getData('application/json'));
+                                                    handleAddEffectFromLibrary(effectData);
+                                                    } catch (error) {
+                                                    console.error('Error parsing dropped effect data:', error);
+                                                    }
+                                                }}
+                                                ></div>
+                                            ))}
                                             </div>
                                         </div>
+                                    </div>
                                     </>
                                 )}
                             </div>
