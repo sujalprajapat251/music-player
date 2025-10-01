@@ -127,7 +127,7 @@ const Knob = ({
           }}
         />
       </div>
-      <div className='mt-4' style={{ color: "#fff", fontSize: 12, marginLeft: 4, fontFamily: "sans-serif" }}>
+      <div className='mt-4 text-black dark:text-white' style={{ fontSize: 12, marginLeft: 4, fontFamily: "sans-serif" }}>
         {label}
       </div>
     </div>

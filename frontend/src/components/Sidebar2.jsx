@@ -29,6 +29,8 @@ import NewProject from "./NewProjectModel";
 import { setShowLoopLibrary } from "../Redux/Slice/ui.slice";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../Utils/ThemeContext";
+import { FaVolumeMute } from "react-icons/fa";
+import { MdHeadset } from "react-icons/md";
 
 const getSidebarColors = (isDark) => ({
   background: isDark ? '#141414' : '#ffffff',
@@ -404,16 +406,18 @@ const Sidebar2 = () => {
                       }}
                     />
                     <div className="flex items-center justify-center gap-x-2 w-full pb-4">
-                      <img src={headphone} alt="Headphone" 
-                        className="rounded-[20px] p-1"
+                      <MdHeadset 
+                        src={headphone} alt="Headphone" 
+                        className="rounded-[20px] w-5 h-5 text-[#656565]"
                         style={soloTrackId === track.id ? { backgroundColor: colors.soloActiveBg } : {}}
                         onClick={e => {
                           e.stopPropagation();
                           handleSoloTrack(track.id);
                         }}
                       />
-                      <img src={mute} alt="Mute" 
-                        className="rounded-[20px] p-1"
+                      <FaVolumeMute 
+                        src={mute} alt="Mute" 
+                        className="rounded-[20px] w-5 h-5 text-[#656565]"
                         style={isMuted ? { backgroundColor: colors.muteActiveBg } : {}}
                         onClick={e => {
                           e.stopPropagation();

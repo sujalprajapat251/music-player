@@ -58,6 +58,7 @@ import { setCurrentMusic } from '../../Redux/Slice/music.slice';
 import AccessPopup from '../AccessPopup';
 import { addAudioClipToTrack, createTrackWithDefaults, updateAudioClip, setTrackType } from '../../Redux/Slice/studio.slice';
 import TunerPopup from '../TunerPopup';
+import { CloudCog } from 'lucide-react';
 
 const getTopHeaderColors = (isDark) => ({
   // Background colors
@@ -123,6 +124,7 @@ const TopHeader = () => {
 
     // Get theme colors
     const { isDark } = useTheme();
+    console.log("isDark", isDark);
     const colors = getTopHeaderColors(isDark);
     
     // Get current track ID and tracks from Redux
@@ -166,6 +168,7 @@ const TopHeader = () => {
     const [saveStatus, setSaveStatus] = useState('idle');
     const [showAccessPopup, setShowAccessPopup] = useState(false);
     const [showTunerPopup, setShowTunerPopup] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     // Function to check for live instruments connected to the setup
     const checkForLiveInstruments = async () => {
@@ -1048,8 +1051,23 @@ const TopHeader = () => {
             <NewProject open={newProjectOpen} setOpen={setNewProjectOpen} />
             {/* OpenProjectModal integration */}
             <OpenProjectModal open={openProjectModal} onClose={() => setOpenProjectModal(false)} />
-            <div className="flex justify-between border-b px-2 py-2 sm:px-3 sm:py-1 md:px-5 md:py-2 xl:px-7"style={{ backgroundColor: colors.background, borderColor: colors.border}}>
-                <div className="flex gap-1 sm:gap-2 md:gap-3 lg:gap-5 xl:gap-7 items-center">
+            <div className="flex justify-between items-center border-b px-2 py-2 sm:px-3 sm:py-1 md:px-5 md:py-2 xl:px-7"style={{ backgroundColor: colors.background, borderColor: colors.border}}>
+                {/* Mobile Menu Button - Only visible on screens < 768px */}
+                <button
+                    onClick={() => setMobileMenuOpen(true)}
+                    className="md:hidden p-2 rounded-md transition-colors"
+                    style={{ 
+                        color: colors.iconSecondary,
+                        backgroundColor: 'transparent'
+                    }}
+                    aria-label="Open menu"
+                >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+
+                <div className="flex gap-1 sm:gap-2 md:gap-3 lg:gap-5 xl:gap-7 items-center hidden md:flex">
                     <p className="text-[12px] sm:text-[14px] md:text-[14px] lg:text-[16px] xl:text-[18px]"style={{ color: colors.textSecondary }}>LOGO</p>
                     <Menu as="div" className="relative inline-block text-left">
                         <div>
@@ -1808,7 +1826,7 @@ const TopHeader = () => {
                     )}
                 </div>
 
-                <div className="flex gap-2 md:gap-3 lg:gap-5 xl:gap-3">
+                <div className="flex gap-2 md:gap-3 lg:gap-5 xl:gap-3" style={{height:"max-content"}}>
                     <button 
                         onClick={toggleTheme} 
                         className="relative w-[60px] h-[30px] rounded-full p-1 transition-colors duration-300 outline-none focus:outline-none hidden md:block"
@@ -1838,7 +1856,7 @@ const TopHeader = () => {
                     </button>
                     <div 
                         onClick={handleExportModal} 
-                        className="flex xl:gap-2 sm:p-1 md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full cursor-pointer items-center transition-colors duration-200 hover:opacity-80"
+                        className="flex xl:gap-2 sm:p-2 md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full cursor-pointer items-center transition-colors duration-200 hover:opacity-80"
                         style={{ 
                             border: `1px solid ${colors.borderStrong}`,
                             backgroundColor: colors.background
@@ -1857,7 +1875,7 @@ const TopHeader = () => {
                     </div>
 
                     <div 
-                        className="flex xl:gap-2 justify-center items-center sm:p-1 md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full cursor-pointer hover:opacity-80 transition-all"
+                        className="flex xl:gap-2 justify-center items-center sm:p-2 md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full cursor-pointer hover:opacity-80 transition-all"
                         style={{border: `1px solid ${colors.borderStrong}`, backgroundColor: colors.upgradeBackground }}
                         onClick={() => setPricingModalOpen(true)}
                     >
@@ -1871,7 +1889,7 @@ const TopHeader = () => {
                     </div>
 
                     <div 
-                        className="flex md:gap-2 sm:p-1 md:px-2 xl:px-3 md:py-1 rounded-full cursor-pointer hover:opacity-80 transition-all"
+                        className="flex md:gap-2 sm:p-2 md:px-2 xl:px-3 md:py-1 rounded-full cursor-pointer hover:opacity-80 transition-all"
                         style={{ 
                             backgroundColor: colors.shareBackground,
                             border: `1px solid ${colors.borderStrong}`
@@ -1902,6 +1920,247 @@ const TopHeader = () => {
                             Exit
                         </p>
                     </Link>
+                </div>
+            </div>
+
+            {/* Mobile Offcanvas Menu */}
+            <div 
+                className={`fixed inset-0 z-[999] md:hidden transition-opacity duration-300 ${
+                    mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+            >
+                {/* Backdrop */}
+                <div 
+                    className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+                />
+                
+                {/* Offcanvas Panel */}
+                <div 
+                    className={`absolute top-0 left-0 h-full w-80 max-w-[85vw] transform transition-transform duration-300 ${
+                        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+                    }`}
+                    style={{ backgroundColor: colors.menuBackground }}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {/* Header */}
+                    <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: colors.menuBorder }}>
+                        <h2 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>LOGO</h2>
+                        <button
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="p-2 rounded-md hover:bg-opacity-10"
+                            style={{ color: colors.iconSecondary }}
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* Menu Content */}
+                    <div className="p-4 space-y-2 overflow-y-auto h-full">
+                        {/* File Menu */}
+                        <div className="space-y-1">
+                            <h3 className="text-sm font-medium mb-2 px-2" style={{ color: colors.textPrimary }}>File</h3>
+                            <button 
+                                className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
+                                style={{ color: colors.textSecondary }}
+                                onClick={() => {
+                                    handleNewProject();
+                                    setMobileMenuOpen(false);
+                                }}
+                            >
+                                <NewFolderIcon className='w-4 h-4' style={{ color: colors.iconSecondary }} />
+                                <span className='text-sm'>New...</span>
+                            </button>
+                            <button 
+                                className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
+                                style={{ color: colors.textSecondary }}
+                                onClick={() => {
+                                    setOpenProjectModal(true);
+                                    setMobileMenuOpen(false);
+                                }}
+                            >
+                                <OpenFolderIcon className='w-4 h-4' style={{ color: colors.iconSecondary }} />
+                                <span className='text-sm'>Open...</span>
+                            </button>
+                            <button 
+                                className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
+                                style={{ color: colors.textSecondary }}
+                                onClick={() => {
+                                    setPricingModalOpen(true);
+                                    setMobileMenuOpen(false);
+                                }}
+                            >
+                                <Previous className='w-4 h-4' style={{ color: colors.iconSecondary }} />
+                                <span className='text-sm'>Previous versions</span>
+                            </button>
+                            <button 
+                                className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
+                                style={{ color: colors.textSecondary }}
+                                onClick={() => {
+                                    handleExportModal();
+                                    setMobileMenuOpen(false);
+                                }}
+                            >
+                                <Exports className='w-4 h-4' style={{ color: colors.iconSecondary }} />
+                                <span className='text-sm'>Export</span>
+                            </button>
+                            <button 
+                                className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
+                                style={{ color: colors.textSecondary }}
+                                onClick={() => {
+                                    setShareModalOpen(true);
+                                    setMobileMenuOpen(false);
+                                }}
+                            >
+                                <Shareproject className='w-4 h-4' style={{ color: colors.iconSecondary }} />
+                                <span className='text-sm'>Share Project</span>
+                            </button>
+                        </div>
+
+                        {/* Edit Menu */}
+                        <div className="space-y-1">
+                            <h3 className="text-sm font-medium mb-2 px-2" style={{ color: colors.textPrimary }}>Edit</h3>
+                            <button 
+                                className={`w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3 ${
+                                    !canUndo ? 'opacity-50 cursor-not-allowed' : ''
+                                }`}
+                                style={{ color: colors.textSecondary }}
+                                onClick={canUndo ? () => {
+                                    handleUndo();
+                                    setMobileMenuOpen(false);
+                                } : undefined}
+                                disabled={!canUndo}
+                            >
+                                <Undo className='w-4 h-4' style={{ color: colors.iconSecondary }} />
+                                <span className='text-sm'>Undo</span>
+                                <span className="text-xs ml-auto" style={{ color: colors.textMuted }}>Ctrl+Z</span>
+                            </button>
+                            <button 
+                                className={`w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3 ${
+                                    !canRedo ? 'opacity-50 cursor-not-allowed' : ''
+                                }`}
+                                style={{ color: colors.textSecondary }}
+                                onClick={canRedo ? () => {
+                                    handleRedo();
+                                    setMobileMenuOpen(false);
+                                } : undefined}
+                                disabled={!canRedo}
+                            >
+                                <Redo className='w-4 h-4' style={{ color: colors.iconSecondary }} />
+                                <span className='text-sm'>Redo</span>
+                                <span className="text-xs ml-auto" style={{ color: colors.textMuted }}>Ctrl+Y</span>
+                            </button>
+                        </div>
+
+                        {/* Settings Menu */}
+                        <div className="space-y-1">
+                            <h3 className="text-sm font-medium mb-2 px-2" style={{ color: colors.textPrimary }}>Settings</h3>
+                            <button 
+                                className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
+                                style={{ color: colors.textSecondary }}
+                                onClick={() => {
+                                    setMidiKeyboardModel(true);
+                                    setMobileMenuOpen(false);
+                                }}
+                            >
+                                <Midisetting className='w-4 h-4' style={{ color: colors.iconSecondary }} />
+                                <span className='text-sm'>MIDI Settings...</span>
+                            </button>
+                            <button 
+                                className={`w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3 ${
+                                    getTrackType !== 'Voice & Mic' ? 'opacity-50 cursor-not-allowed' : ''
+                                }`}
+                                style={{ color: colors.textSecondary }}
+                                onClick={getTrackType === 'Voice & Mic' ? () => {
+                                    handleTunerClick();
+                                    setMobileMenuOpen(false);
+                                } : undefined}
+                            >
+                                <Tuner className='w-4 h-4' style={{ color: colors.iconSecondary }} />
+                                <span className='text-sm'>Tuner</span>
+                            </button>
+                            <button 
+                                className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
+                                style={{ color: colors.textSecondary }}
+                                onClick={() => {
+                                    setLowLatencyModel(true);
+                                    setMobileMenuOpen(false);
+                                }}
+                            >
+                                <Lowlatancy className='w-4 h-4' style={{ color: colors.iconSecondary }} />
+                                <span className='text-sm'>Low latency...</span>
+                            </button>
+                            <button 
+                                className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
+                                style={{ color: colors.textSecondary }}
+                                onClick={() => {
+                                    dispatch(setIsSongSection(!isSongSection));
+                                    setMobileMenuOpen(false);
+                                }}
+                            >
+                                <Songsections className='w-4 h-4' style={{ color: colors.iconSecondary }} />
+                                <span className='text-sm'>Song Sections</span>
+                            </button>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="space-y-1 pt-4 border-t" style={{ borderColor: colors.menuBorder }}>
+                            <button 
+                                className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
+                                style={{ color: colors.textSecondary }}
+                                onClick={() => {
+                                    handleExportModal();
+                                    setMobileMenuOpen(false);
+                                }}
+                            >
+                                <HiDownload className='w-4 h-4' style={{ color: colors.iconSecondary }} />
+                                <span className='text-sm'>Export</span>
+                            </button>
+                            <button 
+                                className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
+                                style={{ color: colors.textSecondary }}
+                                onClick={() => {
+                                    setPricingModalOpen(true);
+                                    setMobileMenuOpen(false);
+                                }}
+                            >
+                                <img src={subscription} alt="" className='w-4 h-4' />
+                                <span className='text-sm'>Upgrade Now</span>
+                            </button>
+                            <button 
+                                className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
+                                style={{ color: colors.textSecondary }}
+                                onClick={() => {
+                                    setShareModalOpen(true);
+                                    setMobileMenuOpen(false);
+                                }}
+                            >
+                                <IoIosShareAlt className='w-4 h-4' style={{ color: colors.iconSecondary }} />
+                                <span className='text-sm'>Share</span>
+                            </button>
+                            <Link 
+                                to='/profile' 
+                                className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3 block"
+                                style={{ color: colors.textSecondary }}
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                <Gotoprofile className='w-4 h-4' style={{ color: colors.iconSecondary }} />
+                                <span className='text-sm'>Go to profile</span>
+                            </Link>
+                            <Link 
+                                to='/project' 
+                                className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3 block"
+                                style={{ color: colors.textSecondary }}
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                <RxExit className='w-4 h-4' style={{ color: colors.iconSecondary }} />
+                                <span className='text-sm'>Exit</span>
+                            </Link>
+                        </div>
+                    </div>
                 </div>
             </div>
 

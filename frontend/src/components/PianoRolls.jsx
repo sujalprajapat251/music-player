@@ -80,6 +80,14 @@ const PianoRolls = () => {
     const audioDuration = useSelector((state) => selectStudioState(state)?.audioDuration || 150);
     const PIANO_KEYS_WIDTH = 96;
 
+    // Re-render D3 grids when Tailwind dark class toggles
+    const [themeKey, setThemeKey] = useState(0);
+    useEffect(() => {
+        const observer = new MutationObserver(() => setThemeKey((k) => k + 1));
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        return () => observer.disconnect();
+    }, []);
+
     // get data from redux
     const track = useSelector((state)=>selectStudioState(state).tracks)
     const tracks = useSelector((state)=>selectStudioState(state).tracks || [])
@@ -477,7 +485,8 @@ const PianoRolls = () => {
         
         // Use the exact same grid spacing calculation as Timeline.jsx
         const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
-        const gridColor = "#FFFFFF";
+        const isDark = document.documentElement.classList.contains('dark');
+        const gridColor = isDark ? "#FFFFFF" : "#000000";
 
         let labelInterval;
         if (selectedRuler === "Beats") {
@@ -576,7 +585,7 @@ const PianoRolls = () => {
                   .append("text")
                   .attr("x", x + 4)
                   .attr("y", axisY - tickHeight - 5)
-                  .attr("fill", "white")
+                  .attr("fill", isDark ? "#ffffff" : "#000000")
                   .attr("font-size", 12)
                   .attr("text-anchor", "start")
                   .attr("cursor", "pointer")
@@ -618,7 +627,7 @@ const PianoRolls = () => {
               }
             }
           }
-    }, [audioDuration, selectedGrid, selectedTime, selectedRuler, timelineWidthPerSecond]);
+    }, [audioDuration, selectedGrid, selectedTime, selectedRuler, timelineWidthPerSecond, themeKey]);
 
     useEffect(() => {
         renderRuler();
@@ -644,6 +653,9 @@ const PianoRolls = () => {
         // Use shared X position function
         const xForTime = (t) => getXForTime(t, duration, width);
 
+        const isDark = document.documentElement.classList.contains('dark');
+        const chooseShade = (hex) => (isDark ? `#ffffff${hex}` : `#000000${hex}`);
+
         // Vertical lines - aligned with timeline tick marks
         for (let time = 0; time <= duration; time += gridSpacing) {
             const x = xForTime(time);
@@ -661,17 +673,17 @@ const PianoRolls = () => {
             const isMainBeat = !isBarStart && timeInBeat < tolerance;
             const isSubdivision = !isBarStart && !isMainBeat;
 
-            let strokeColor = '#ffffff15';
+            let strokeColor = chooseShade('15');
             let strokeWidth = 1;
 
             if (isBarStart) {
-                strokeColor = '#ffffff44';
+                strokeColor = chooseShade('44');
                 strokeWidth = 1.5;
             } else if (isMainBeat) {
-                strokeColor = '#ffffff30';
+                strokeColor = chooseShade('30');
                 strokeWidth = 1.2;
             } else if (isSubdivision) {
-                strokeColor = '#ffffff20';
+                strokeColor = chooseShade('20');
                 strokeWidth = 1;
             }
 
@@ -691,7 +703,7 @@ const PianoRolls = () => {
                 .attr('y1', y)
                 .attr('x2', width)
                 .attr('y2', y)
-                .attr('stroke', '#ffffff10')
+                .attr('stroke', chooseShade('10'))
                 .attr('stroke-width', 1);
         }
 
@@ -705,12 +717,12 @@ const PianoRolls = () => {
                     .text(Math.round(time).toString())
                     .attr('x', x)
                     .attr('y', height - 5)
-                    .attr('fill', '#fff')
+                    .attr('fill', isDark ? '#ffffff' : '#000000')
                     .attr('font-size', 10)
                     .attr('text-anchor', 'middle');
             }
         }
-    }, [audioDuration, selectedGrid, selectedTime, timelineWidthPerSecond]);
+    }, [audioDuration, selectedGrid, selectedTime, timelineWidthPerSecond, themeKey]);
 
     useEffect(() => {
         drawGrid();
@@ -1916,11 +1928,10 @@ const PianoRolls = () => {
     return (
         <>
         <div className='relative'>
-            <div className={`relative w-full h-[490px] bg-[#1e1e1e] text-white ${selectedNoteIndex || pasteMenu ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'}  pb-12`} onWheel={handleWheel}>
+            <div className={`relative w-full h-[490px] bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-secondary-dark ${selectedNoteIndex || pasteMenu ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'}  pb-12`} onWheel={handleWheel}>
                 <div
                     ref={timelineContainerRef}
-                    className="fixed left-0 right-0 h-[80px] overflow-x-auto overflow-y-hidden z-[5] hover:bg-[#2a2a2a] transition-colors duration-150"
-                    style={{ background: "#1F1F1F", cursor: 'pointer' }}
+                    className="fixed left-0 right-0 h-[80px] overflow-x-auto overflow-y-hidden z-[5] transition-colors duration-150 bg-primary-light dark:bg-primary-dark cursor-pointer"
                     onClick={handleTimelineClick}
                     onMouseDown={onHeaderMouseDown}
                     onScroll={handleScroll}
@@ -1936,13 +1947,14 @@ const PianoRolls = () => {
                     }}
                 >
                     <div style={{ width: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`, height: "100%", position: "relative", minWidth: "100%", transition: "width 0.2s ease-in-out"}}>
-                        <svg ref={timelineHeaderRef} width="100%" height="100%" style={{ color: "white", width: "100%", transition: "width 0.2s ease-in-out"}}/>
+                        <svg ref={timelineHeaderRef} width="100%" height="100%" style={{ width: "100%", transition: "width 0.2s ease-in-out"}}/>
                     </div>
                 </div>
 
                 <div
                     ref={playheadRef}
-                    style={{ position: "fixed", top: "110px", left: `${PIANO_KEYS_WIDTH}px`, height: "100%", width: "2px", background: "#AD00FF", zIndex: 25, pointerEvents: "auto", cursor: "pointer", transform: `translateX(${localPlayheadTime * timelineWidthPerSecond - (timelineContainerRef.current?.scrollLeft || 0)}px)`, willChange: "transform"}}
+                    className="bg-fuchsia-600 dark:bg-fuchsia-400"
+                    style={{ position: "fixed", top: "110px", left: `${PIANO_KEYS_WIDTH}px`, height: "100%", width: "2px", zIndex: 25, pointerEvents: "auto", cursor: "pointer", transform: `translateX(${localPlayheadTime * timelineWidthPerSecond - (timelineContainerRef.current?.scrollLeft || 0)}px)`, willChange: "transform"}}
                     onClick={(e) => {
                         const rect = playheadRef.current.getBoundingClientRect();
                         const x = e.clientX - rect.left + (timelineContainerRef.current?.scrollLeft || 0);
@@ -1966,9 +1978,9 @@ const PianoRolls = () => {
                     <div style={{ position: "absolute", top: "0px", left: "-6px", width: "16px", height: "5px", borderLeft: "0px solid transparent", borderRight: "0px solid transparent", borderTop: "15px solid #AD00FF", borderRadius: "3px",}}/>
                 </div>
 
-                <div className="absolute left-0 top-[80px] w-24 h-[560px] bg-[#1a1a1a] border-r border-gray-700" style={{zIndex: 3}}>
+                <div className="absolute left-0 top-[80px] w-24 h-[560px] bg-primary-light dark:bg-primary-dark border-r border-gray-700" style={{zIndex: 3}}>
                     {NOTES.map((note) => (
-                        <button key={note} onMouseDown={() => handleKeyDown(note)} onMouseUp={() => handleKeyUp(note)} onMouseLeave={() => handleKeyUp(note)} className={`h-[30px] min-h-[30px] text-xs ${note.includes('#') ? 'bg-black text-white w-[50%]' : 'bg-white w-full'} border`}>
+                        <button key={note} onMouseDown={() => handleKeyDown(note)} onMouseUp={() => handleKeyUp(note)} onMouseLeave={() => handleKeyUp(note)} className={`h-[30px] min-h-[30px] text-xs ${note.includes('#') ? 'bg-black dark:bg-neutral-900 text-white w-[50%]' : 'bg-white dark:bg-neutral-200 text-black w-full'} border`}>
                             {note}
                         </button>
                     ))}
@@ -1976,8 +1988,8 @@ const PianoRolls = () => {
 
                 <div
                     ref={wrapperRef}
-                    className={`absolute left-24 top-[80px] right-0 ${selectedNoteIndex || pasteMenu ? 'overflow-hidden' : ' overflow-x-auto overflow-y-auto'}`}
-                    style={{ background: "#1e1e1e", zIndex: 2 }}
+                    className={`absolute left-24 top-[80px] right-0 ${selectedNoteIndex || pasteMenu ? 'overflow-hidden' : ' overflow-x-auto overflow-y-auto'} bg-primary-light dark:bg-primary-dark`}
+                    style={{ zIndex: 2 }}
                     onScroll={handleScroll}
                     onMouseDown={handleMouseDown}
                     onMouseUp={(e) => {
@@ -2059,7 +2071,7 @@ const PianoRolls = () => {
                             const left = (activeClip.start || 0) * timelineWidthPerSecond;
                             const width = Math.max(0, (activeClip.end - activeClip.start)) * timelineWidthPerSecond;
                             return (
-                                <div className="note-bg-div border border-[#E44F65] " style={{ position: 'absolute', left: `${left}px`, top: 0, width: `${width}px`, height: '100%', background: 'rgba(255, 0, 0, 0.1)', zIndex: 2, opacity: 1, borderRadius: '5px', transition: "left 0.2s ease-in-out, width 0.2s ease-in-out"}}
+                                <div className="note-bg-div border border-[#E44F65] bg-red-500/10" style={{ position: 'absolute', left: `${left}px`, top: 0, width: `${width}px`, height: '100%', zIndex: 2, opacity: 1, borderRadius: '5px', transition: "left 0.2s ease-in-out, width 0.2s ease-in-out"}}
                                     onMouseDown={handleMouseDown}
                                     onMouseUp={handleMouseUp}
                                 />
@@ -2071,8 +2083,8 @@ const PianoRolls = () => {
                             const left = minStart * timelineWidthPerSecond;
                             const width = (maxEnd - minStart) * timelineWidthPerSecond;
                             return (
-                                <div className="note-bg-div border border-[#E44F65] "
-                                    style={{ position: 'absolute', left: `${left}px`, top: 0, width: `${width}px`, height: '100%', background: 'rgba(255, 0, 0, 0.1)', zIndex: 2, opacity: 1, borderRadius: '5px', transition: "left 0.2s ease-in-out, width 0.2s ease-in-out"}}
+                                <div className="note-bg-div border border-[#E44F65] bg-red-500/10"
+                                    style={{ position: 'absolute', left: `${left}px`, top: 0, width: `${width}px`, height: '100%', zIndex: 2, opacity: 1, borderRadius: '5px', transition: "left 0.2s ease-in-out, width 0.2s ease-in-out"}}
                                     onMouseDown={handleMouseDown}
                                     onMouseUp={handleMouseUp}
                                 />
@@ -2256,10 +2268,10 @@ const PianoRolls = () => {
                                     )}
                                     
                                     {(menuVisible && selectedNoteIndex === i) ? (
-                                        <ul className="absolute bg-[#1F1F1F] text-black border border-[#1F1F1F] shadow rounded flex" style={{ top: '100%', right: 0, zIndex: 1000, listStyle: 'none', padding: '0px   ',}}>
-                                            <li className="hover:bg-gray-200 hover:text-[#1F1F1F] cursor-pointer text-sm p-3 text-white" onClick={() => { handleCut() }}><IoCutOutline className='text-[16px]' /></li>
-                                            <li className="hover:bg-gray-200 hover:text-[#1F1F1F] cursor-pointer text-sm p-3 text-white" onClick={() => { handleCopy() }}><FaRegCopy className='text-[16px]' /></li>
-                                            <li className="hover:bg-gray-200 hover:text-[#1F1F1F] cursor-pointer text-sm p-3 text-white" onClick={() => { handleDelete() }}><MdDelete className='text-[16px]' /></li>
+                                        <ul className="absolute bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-secondary-dark border border-primary-light dark:border-neutral-800 shadow rounded flex" style={{ top: '100%', right: 0, zIndex: 1000, listStyle: 'none', padding: '0px   ',}}>
+                                            <li className="hover:bg-gray-200 dark:hover:bg-neutral-700 cursor-pointer text-sm p-3" onClick={() => { handleCut() }}><IoCutOutline className='text-[16px]' /></li>
+                                            <li className="hover:bg-gray-200 dark:hover:bg-neutral-700 cursor-pointer text-sm p-3" onClick={() => { handleCopy() }}><FaRegCopy className='text-[16px]' /></li>
+                                            <li className="hover:bg-gray-200 dark:hover:bg-neutral-700 cursor-pointer text-sm p-3" onClick={() => { handleDelete() }}><MdDelete className='text-[16px]' /></li>
                                         </ul>
                                     ): null}
                                 </div>
@@ -2271,7 +2283,7 @@ const PianoRolls = () => {
                         <g />
                     </svg>
                     {(pasteMenu && clipboardNote) ? (
-                        <span className='bg-[#1F1F1F] text-white hover:bg-gray-200 hover:text-[#1F1F1F] absolute cursor-pointer text-sm p-3' ref={pasteMenuRef} style={{ top: position.y, left: position.x, zIndex: 9999, listStyle: 'none', padding: '4px', }}
+                        <span className='bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-secondary-dark hover:bg-gray-200 dark:hover:bg-neutral-700 absolute cursor-pointer text-sm p-3' ref={pasteMenuRef} style={{ top: position.y, left: position.x, zIndex: 9999, listStyle: 'none', padding: '4px', }}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 handlePaste();
@@ -2285,21 +2297,21 @@ const PianoRolls = () => {
 
             {/* Bottom-centered toolbar */}
             <div className="absolute left-[22%] sm:left-[26%] md:left-[36%] lg:left-[38%] xl:left-[35%] 2xl:left-[40%] bottom-[50%] sm:bottom-[45%] md:bottom-[40%] lg:bottom-[35%] xl:bottom-[35%] 2xl:bottom-[30%] translate-x-1/2 transform z-[10000]">
-                <div className="flex items-center gap-2 bg-[#1F1F1F] text-white px-2 py-1 rounded-full shadow-md">
+                <div className="flex items-center gap-2 bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-secondary-dark px-2 py-1 rounded-full shadow-md border border-neutral-300 dark:border-neutral-700">
                     {/* Cursor */}
-                    <button className={`p-2 rounded hover:bg-gray-700 transition ${activeTool === 'cursor' ? 'bg-gray-600' : ''}`} onClick={() => handleToolChange('cursor')} title="Cursor (Ctrl+1)">
+                    <button className={`p-2 rounded transition hover:bg-gray-200 dark:hover:bg-neutral-700 ${activeTool === 'cursor' ? 'bg-gray-300 dark:bg-neutral-600' : ''}`} onClick={() => handleToolChange('cursor')} title="Cursor (Ctrl+1)">
                         <RxCursorArrow className='text-[13px]' />
                     </button>
                     {/* Pencil */}
-                    <button className={`p-2 rounded hover:bg-gray-700 transition ${activeTool === 'pencil' ? 'bg-gray-600' : ''}`} onClick={() => handleToolChange('pencil')} title="Pencil (Ctrl+2)">
+                    <button className={`p-2 rounded transition hover:bg-gray-200 dark:hover:bg-neutral-700 ${activeTool === 'pencil' ? 'bg-gray-300 dark:bg-neutral-600' : ''}`} onClick={() => handleToolChange('pencil')} title="Pencil (Ctrl+2)">
                         <BsPencil className='text-[13px]' />
                     </button>
                     {/* V letter */}
-                    <button className={`p-2 rounded hover:bg-gray-700 transition font-bold ${activeTool === 'v' ? 'bg-gray-600' : ''}`} onClick={() => handleToolChange('v')} title="Select (Ctrl+3)">
+                    <button className={`p-2 rounded transition font-bold hover:bg-gray-200 dark:hover:bg-neutral-700 ${activeTool === 'v' ? 'bg-gray-300 dark:bg-neutral-600' : ''}`} onClick={() => handleToolChange('v')} title="Select (Ctrl+3)">
                         V
                     </button>
                     {/* Trash */}
-                    <button className={`p-2 rounded hover:bg-gray-700 transition ${activeTool === 'trash' ? 'bg-gray-600' : ''}`} onClick={() => handleToolChange('trash')} title="Delete (Ctrl+4)">
+                    <button className={`p-2 rounded transition hover:bg-gray-200 dark:hover:bg-neutral-700 ${activeTool === 'trash' ? 'bg-gray-300 dark:bg-neutral-600' : ''}`} onClick={() => handleToolChange('trash')} title="Delete (Ctrl+4)">
                         <RiDeleteBin6Line className='text-[13px]' />
                     </button>
                 </div>

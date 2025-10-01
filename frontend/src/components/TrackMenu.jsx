@@ -10,6 +10,7 @@ import waveIcon from '../Images/wave.svg'
 import { useDispatch, useSelector } from "react-redux";
 import { updateTrack, renameTrack, removeTrack, freezeTrack, duplicateTrack, updateTrackAudio, exportTrack, exportTrackAudio, deleteTrackWithCleanup, setTrackType } from "../Redux/Slice/studio.slice";
 import { selectStudioState } from "../hooks/useUndoRedo";
+import { BsThreeDots } from "react-icons/bs";
 const MENU_COLORS = [
   "#F05959", "#49B1A5", "#C579C8", "#5572F9",
   "#25A6CA", "#C059F0", "#4CAA47", "#F0F059",
@@ -176,10 +177,10 @@ const TrackMenu = ({ trackId, color, onRename }) => {
 
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
-      <img
+      <BsThreeDots
         src={more}
         alt="Menu"
-        className="w-5 h-5 cursor-pointer hover:opacity-80 transition-opacity"
+        className="w-5 h-5 cursor-pointer hover:opacity-80 transition-opacity text-black dark:text-white"
         onClick={handleMenuClick}
         data-track-menu-button
       />
