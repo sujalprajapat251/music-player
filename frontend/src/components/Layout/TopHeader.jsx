@@ -38,6 +38,7 @@ import { ReactComponent as Songsections } from "../../Images/sondsections.svg";
 import { ReactComponent as Language } from "../../Images/language.svg";
 import { ReactComponent as Theme } from "../../Images/themes.svg";
 import { useTheme } from '../../Utils/ThemeContext';
+import { useI18n } from '../../Utils/i18n';
 import { ReactComponent as Close } from '../../Images/closeicon.svg';
 import midi from '../../Images/midi.svg';
 import { Link, useNavigate } from 'react-router-dom';
@@ -119,6 +120,7 @@ const getTopHeaderColors = (isDark) => ({
 
 const TopHeader = () => {
     const dispatch = useDispatch();
+    const { t, language, setLanguage } = useI18n();
     const isSongSection = useSelector((state) => state.ui.isSongSection);
     const currentSoundQuality = useSelector((state) => state.audioSettings?.soundQuality || 'High');
 
@@ -340,7 +342,7 @@ const TopHeader = () => {
         }, 10);
     };
 
-    const [selectedLanguage, setSelectedLanguage] = useState('English');
+    const [selectedLanguage, setSelectedLanguage] = useState(language || 'English');
 
     const languageOptions = [
         { id: 'Deutsch', label: 'Deutsch' },
@@ -363,6 +365,7 @@ const TopHeader = () => {
 
     const handleLanguage = (languageId, LanguageName) => {
         setSelectedLanguage(LanguageName);
+        try { setLanguage(LanguageName); } catch (_) {}
         // Close all submenus
         setShowSubmenu(prev => ({
             ...prev,
@@ -1072,7 +1075,7 @@ const TopHeader = () => {
                     <Menu as="div" className="relative inline-block text-left">
                         <div>
                             <MenuButton className="outline-none" >
-                                <p className='text-[10px] sm:text-[12px] md:text-[12px] lg:text-[14px]'style={{ color: colors.textSecondary }}> File </p>
+                                <p className='text-[10px] sm:text-[12px] md:text-[12px] lg:text-[14px]'style={{ color: colors.textSecondary }}> {t('file')} </p>
                             </MenuButton>
                         </div>
 
@@ -1083,7 +1086,7 @@ const TopHeader = () => {
                                     {({ active }) => (
                                         <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md600:py-2 flex md600:gap-3 outline-none transition-colors`}style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }}onClick={handleNewProject}>
                                             <NewFolderIcon className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }}/>  
-                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>New...</span>
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('new')}</span>
                                         </p>
                                     )}
                                 </Menu.Item>
@@ -1091,7 +1094,7 @@ const TopHeader = () => {
                                     {({ active }) => (
                                         <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3 outline-none transition-colors`} style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }} onClick={() => setOpenProjectModal(true)}>
                                             <OpenFolderIcon className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }}/>  
-                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Open...</span>
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('open')}</span>
                                         </p>
                                     )}
                                 </Menu.Item>
@@ -1106,7 +1109,7 @@ const TopHeader = () => {
                                             className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
                                             style={{ color: colors.iconSecondary }}
                                         />
-                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Open Recent</span>
+                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('openRecent')}</span>
                                         <MdOutlineKeyboardArrowRight 
                                             className="text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" 
                                             style={{ color: colors.iconSecondary }}
@@ -1146,7 +1149,7 @@ const TopHeader = () => {
                                     {({ active }) => (
                                         <p className={`px-3 pt-1 pb-2 gap-2 md600:px-4 lg:px-6 md600:pt-2 md600:pb-3 lg:pb-4 flex md600:gap-3 outline-none transition-colors`}style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary,borderBottom: `1px solid ${colors.menuBorder}`}} onClick={() => setPricingModalOpen(true)}>
                                             <Previous className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }}/>  
-                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Previous versions</span>
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('previousVersions')}</span>
                                         </p>
                                     )}
                                 </Menu.Item>
@@ -1161,7 +1164,7 @@ const TopHeader = () => {
                                     {({ active }) => (
                                         <p className={`px-3 py-1 md600:px-4 lg:px-6 md600:py-2 flex gap-2 md600:gap-3 outline-none transition-colors`} style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }} onClick={handleExportModal} >
                                             <Exports className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }}/> 
-                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Export</span>
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('export')}</span>
                                         </p>
                                     )}
                                 </Menu.Item>
@@ -1255,7 +1258,7 @@ const TopHeader = () => {
                                                 className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
                                                 style={{ color: colors.iconSecondary }}
                                             />  
-                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Share Project</span>
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('shareProject')}</span>
                                         </p>
                                     )}
                                 </Menu.Item>
@@ -1275,7 +1278,7 @@ const TopHeader = () => {
                                                     className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
                                                     style={{ color: colors.iconSecondary }}
                                                 />  
-                                                <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Go to profile</span>
+                                                <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('goToProfile')}</span>
                                             </p>
                                         </Link>
                                     )}
@@ -1292,7 +1295,7 @@ const TopHeader = () => {
                                     className='text-[10px] sm:text-[12px] md:text-[12px] lg:text-[14px]'
                                     style={{ color: colors.textSecondary }}
                                 > 
-                                    Edit 
+                                    {t('edit')}
                                 </p>
                             </MenuButton>
                         </div>
@@ -1318,7 +1321,7 @@ const TopHeader = () => {
                                                 className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
                                                 style={{ color: colors.iconSecondary }}
                                             />
-                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]' style={{ color: colors.textSecondary }}>Undo</span>
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]' style={{ color: colors.textSecondary }}>{t('undo')}</span>
                                             <p 
                                                 className="text-[10px] md:text-[12px] ms-auto"
                                                 style={{ color: colors.textMuted }}
@@ -1342,7 +1345,7 @@ const TopHeader = () => {
                                                 className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
                                                 style={{ color: colors.iconSecondary }}
                                             />
-                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]' style={{ color: colors.textSecondary }}>Redo</span>
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]' style={{ color: colors.textSecondary }}>{t('redo')}</span>
                                             <p 
                                                 className="text-[10px] md:text-[12px] ms-auto"
                                                 style={{ color: colors.textMuted }}
@@ -1362,7 +1365,7 @@ const TopHeader = () => {
                                                 color: colors.textSecondary
                                             }}
                                         >
-                                            <span className='ps-5 md600:ps-7 lg:ps-8 text-[10px] md600:text-[12px] lg:text-[14px]'>Cut</span>
+                                            <span className='ps-5 md600:ps-7 lg:ps-8 text-[10px] md600:text-[12px] lg:text-[14px]'>{t('cut')}</span>
                                             <p className="text-[10px] md:text-[12px] ms-auto">Ctrl+X</p>
                                         </p>
                                     )}
@@ -1377,7 +1380,7 @@ const TopHeader = () => {
                                             }}
                                         >
                                             <Copy className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
-                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Copy</span>
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('copy')}</span>
                                             <p className="text-[10px] md:text-[12px] ms-auto">Ctrl+C</p>
                                         </p>
                                     )}
@@ -1392,7 +1395,7 @@ const TopHeader = () => {
                                             }}
                                         >
                                             <Paste className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
-                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Paste</span>
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('paste')}</span>
                                             <p className="text-[10px] md:text-[12px] ms-auto">Ctrl+V</p>
                                         </p>
                                     )}
@@ -1407,7 +1410,7 @@ const TopHeader = () => {
                                             }}
                                         >
                                             <Delete className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
-                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Delete</span>
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('delete')}</span>
                                             <p className="text-[10px] md:text-[12px] ms-auto">Backspace</p>
                                         </p>
                                     )}
@@ -1425,7 +1428,7 @@ const TopHeader = () => {
                                                 onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                                             >
                                                 <Effect className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
-                                                <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Effects</span>
+                                                <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('effects')}</span>
                                                 <MdOutlineKeyboardArrowRight className="text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" style={{ color: colors.iconSecondary }} />
                                             </p>
 
@@ -1467,7 +1470,7 @@ const TopHeader = () => {
                                             }}
                                         >
                                             <Region className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
-                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Create region</span>
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('createRegion')}</span>
                                         </p>
                                     )}
                                 </Menu.Item>
@@ -1483,7 +1486,7 @@ const TopHeader = () => {
                                     className='text-[10px] sm:text-[12px] md:text-[12px] lg:text-[14px]'
                                     style={{ color: colors.textSecondary }}
                                 > 
-                                    Setting 
+                                    {t('settings')} 
                                 </p>
                             </MenuButton>
                         </div>
@@ -1501,7 +1504,7 @@ const TopHeader = () => {
                                             onClick={() => setMidiKeyboardModel(true)}
                                         >
                                             <Midisetting className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />  
-                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>MIDI Settings...</span>
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('midiSettings')}</span>
                                         </p>
                                     )}
                                 </Menu.Item>
@@ -1515,7 +1518,7 @@ const TopHeader = () => {
                                         }}
                                         onClick={handleTunerClick}>
                                         <Tuner className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />  
-                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Tuner</span>
+                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('tuner')}</span>
                                       </p>
                                     )}
                                 </Menu.Item>
@@ -1530,7 +1533,7 @@ const TopHeader = () => {
                                         onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                                     >
                                         <Keyboard className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
-                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]' onMouseEnter={(e) => e.target.style.backgroundColor = 'transparent'}>Keyboard</span>
+                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]' onMouseEnter={(e) => e.target.style.backgroundColor = 'transparent'}>{t('keyboard')}</span>
                                         <MdOutlineKeyboardArrowRight className="text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" style={{ color: colors.iconSecondary }} />
                                     </div>
 
@@ -1546,7 +1549,7 @@ const TopHeader = () => {
                                                 style={{ color: colors.textSecondary }}
                                                 onClick={handleNestedOptionClick}                                                
                                             >
-                                                Musical Typing
+                                                {t('musicalTyping')}
                                             </p>
                                             <div className='ms-auto '>
                                                 <label className="inline-flex cursor-pointer" onClick={e => e.stopPropagation()}>
@@ -1568,7 +1571,7 @@ const TopHeader = () => {
                                             }}
                                         >
                                             <Lowlatancy className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
-                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Low latency... </span>
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('lowLatency')} </span>
                                             <div className='ms-auto '>
                                                 <label className="inline-flex cursor-pointer" onClick={e => e.stopPropagation()}>
                                                     <input type="checkbox" className="sr-only peer" checked={isLowLatency}
@@ -1642,7 +1645,7 @@ const TopHeader = () => {
                                             }}
                                         >
                                             <Songsections className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
-                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Song Sections</span>
+                                            <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('songSections')}</span>
                                             <div className='ms-auto '>
                                                 <label className="inline-flex cursor-pointer" onClick={e => e.stopPropagation()}>
                                                     <input type="checkbox" className="sr-only peer" checked={isSongSection} onChange={() => dispatch(setIsSongSection(!isSongSection))} />
@@ -1661,7 +1664,7 @@ const TopHeader = () => {
                                         onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                                     >
                                         <Language className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
-                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]' onMouseEnter={(e) => e.target.style.backgroundColor = 'transparent'}>Language</span>
+                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]' onMouseEnter={(e) => e.target.style.backgroundColor = 'transparent'}>{t('language')}</span>
                                         <MdOutlineKeyboardArrowRight className="text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" style={{ color: colors.iconSecondary }} />
                                     </div>
 
@@ -1706,7 +1709,7 @@ const TopHeader = () => {
                                         onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                                     >
                                         <Theme className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
-                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>Themes</span>
+                                        <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('themes')}</span>
                                         <MdOutlineKeyboardArrowRight className="text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" style={{ color: colors.iconSecondary }} />
                                     </div>
 
@@ -1870,7 +1873,7 @@ const TopHeader = () => {
                             className="text-[12px] hidden xl:block"
                             style={{ color: colors.textSecondary }}
                         > 
-                            Export
+                            {t('exportBtn')}
                         </p>
                     </div>
 
@@ -1884,7 +1887,7 @@ const TopHeader = () => {
                             className="text-[12px] font-semibold hidden xl:block"
                             style={{ color: colors.upgradeText }}
                         >
-                            Upgrade Now
+                            {t('upgradeNow')}
                         </p>
                     </div>
 
@@ -1904,7 +1907,7 @@ const TopHeader = () => {
                             className="text-[12px] hidden md:block"
                             style={{ color: colors.shareText }}
                         >
-                            Share
+                            {t('share')}
                         </p>
                     </div>
 
@@ -1917,7 +1920,7 @@ const TopHeader = () => {
                             className="text-[10px]"
                             style={{ color: colors.textSecondary }}
                         >
-                            Exit
+                            {t('exit')}
                         </p>
                     </Link>
                 </div>

@@ -144,6 +144,7 @@ const TimelineActionBoxes = ({ onAction }) => {
               height: "110px",
               background: colors.cardBg,
               borderRadius: "6px",
+              gap: "10px",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -164,7 +165,11 @@ const TimelineActionBoxes = ({ onAction }) => {
           >
             <img
               className="action-image"
-              style={{ width: "40px", height: "40px" }}
+              style={{ 
+                width: "30px", 
+                height: "30px",
+                filter: isDark ? "none" : "invert(0.7)"
+              }}
               src={action.icon}
               alt={action.label}
             />
@@ -187,6 +192,7 @@ const TimelineActionBoxes = ({ onAction }) => {
               height: "110px",
               background: colors.cardBg,
               borderRadius: "6px",
+              gap: "10px",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -207,7 +213,11 @@ const TimelineActionBoxes = ({ onAction }) => {
           >
             <img
               className="action-image-small"
-              style={{ width: "30px", height: "30px" }}
+              style={{ 
+                width: "30px", 
+                height: "30px",
+                filter: isDark ? "none" : "invert(0.7)"
+              }}
               src={action.icon}
               alt={action.label}
             />
@@ -239,7 +249,7 @@ const TimelineActionBoxes = ({ onAction }) => {
               style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", cursor: "pointer", color: colors.text }}
               onClick={() => handleMenuClick("Import to Audio track")}
             >
-              <LuAudioLines />
+              <LuAudioLines style={{ filter: isDark ? "none" : "invert(1)" }} />
               <span>Import to Audio track</span>
             </div>
             <div
@@ -247,7 +257,7 @@ const TimelineActionBoxes = ({ onAction }) => {
               style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", cursor: "pointer", color: colors.text }}
               onClick={() => handleMenuClick("Import to Voice & Mic track")}
             >
-              <IoMicOutline />
+              <IoMicOutline style={{ filter: isDark ? "none" : "invert(1)" }} />
               <span>Import to Voice & Mic track</span>
             </div>
             <div
@@ -255,7 +265,7 @@ const TimelineActionBoxes = ({ onAction }) => {
               style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 12px", cursor: "pointer", color: colors.text }}
               onClick={() => handleMenuClick("Open in sampler")}
             >
-              <LuAudioLines />
+              <LuAudioLines style={{ filter: isDark ? "none" : "invert(1)" }} />
               <span>Open in sampler</span>
             </div>
           </div>
