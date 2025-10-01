@@ -6,12 +6,19 @@ export default function Tabs({ tabs }) {
   return (
     <>
       <div className="w-full flex justify-center">
-        <div className="flex rounded-full mx-auto justify-center gap-5 bg-white">
+        <div className="relative flex rounded-full mx-auto justify-center gap-5 bg-white p-1">
+          <div
+            className="absolute top-1 bottom-1 rounded-full bg-[#8b5cf6] shadow-md transition-all duration-300"
+            style={{
+              // width: "10%", // since you have 2 tabs: Monthly & Yearly
+              transform: `translateX(${activeTab * 100}%)`,
+            }}
+          ></div>
           {tabs.map((tab, idx) => (
             <button
               key={tab.label}
               onClick={() => setActiveTab(idx)}
-              className={`flex items-center space-x-2 px-12 sm:px-5 md:px-12 py-2 rounded-full font-medium transition-all duration-300
+              className={`relative flex items-center space-x-2 w-1/2 px-10 sm:px-10 md:px-12 py-2 rounded-full font-medium transition-all duration-300
               ${
                 activeTab === idx
                   ? "bg-[#8b5cf6] text-white shadow-md"
