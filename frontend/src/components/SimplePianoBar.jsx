@@ -95,6 +95,9 @@ export default function SimplePianoBar({ noteRange, playNote, stopNote, keyboard
           .ReactPiano__Key--active {
             background: #f69e2b !important;
           }
+          .ReactPiano__Key--natural:hover {
+            background-color: #f69e2b !important;
+          }
         `}</style>
       )}
     </div>

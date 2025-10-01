@@ -34,6 +34,28 @@ import { FaAngleRight } from "react-icons/fa";
 import { FaArrowDownLong } from "react-icons/fa6";
 import { MdDeleteOutline } from "react-icons/md";
 
+// Function to generate random colors
+const generateRandomColor = (seed) => {
+    const colors = [
+        '#AA005B', 
+        '#611364', 
+        '#F59B23', 
+        '#E33751', 
+        '#14833B', 
+        '#1A8CDE', 
+        '#FA6033', 
+        '#2D46B9',
+    ];
+    
+    // Use seed to get consistent color for same item
+    const index = Math.abs(seed.split('').reduce((a, b) => {
+        a = ((a << 5) - a) + b.charCodeAt(0);
+        return a & a;
+    }, 0)) % colors.length;
+    
+    return colors[index];
+};
+
 const AdaptiveMenu = ({ button, children, placement = 'bottom-end', widthClass = 'w-40 2xl:w-44' }) => {
     const {
         refs,
@@ -1038,11 +1060,15 @@ const handleSaveCoverImage = async () => {
                               }}
                               onLoadStart={() => console.log(`Loading audio for ${ele.name}:`, audioUrl)}
                           />
-                          <div className='w-12 h-12 bg-white rounded overflow-hidden flex items-center justify-center'>
+                          <div className='w-12 h-12 bg-white rounded-sm overflow-hidden flex items-center justify-center'>
                               {coverUrl ? (
                                   <img src={coverUrl} alt={ele?.name || 'cover'} className="w-full h-full object-cover" />
                               ) : (
-                                  <img src="" alt="" className="w-full h-full object-cover" />
+                                  <div 
+                                      className="w-full h-full"
+                                      style={{ backgroundColor: generateRandomColor(ele?._id || ele?.name || 'default') }}
+                                  >
+                                  </div>
                               )}
                           </div>
                           {/* Add waveform analysis indicators */}

@@ -551,11 +551,12 @@ const  MusicOff = ({ showOffcanvas, setShowOffcanvas }) => {
                                                             text-xs sm:text-sm cursor-pointer' 
                                                         />
                                                     )}
-                                                    <FaPlus 
+                                                    {/* <FaPlus 
                                                         onClick={() => handleAddToTimeline(soundItem)} 
                                                         className='text-secondary-light dark:text-secondary-dark 
                                                         text-xs sm:text-sm cursor-pointer' 
-                                                    />
+                                                    /> */}
+                                                    <FaPlus onClick={(e) => handleContextMenuClick(e, soundItem)} className='text-secondary-light dark:text-secondary-dark text-[12px] xl:text-[14px] 3xl:text-[16px] cursor-pointer' />
                                                 </div>
                                             </div>
                                         )
