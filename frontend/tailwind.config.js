@@ -27,6 +27,37 @@ module.exports = {
           light: "#141414",
           dark: "#fff",
         },
+        // New Project Modal specific colors
+        modal: {
+          background: {
+            light: "#ffffff",
+            dark: "#232323",
+          },
+          card: {
+            light: "#f8f9fa",
+            dark: "#322d3c",
+          },
+          text: {
+            light: "#1a1a1a",
+            dark: "#ffffff",
+          },
+          textSecondary: {
+            light: "#6b7280",
+            dark: "#bdbdbd",
+          },
+          border: {
+            light: "#e5e7eb",
+            dark: "#374151",
+          },
+          button: {
+            light: "#9b7ae7",
+            dark: "#9b7ae7",
+          },
+          backdrop: {
+            light: "rgba(0, 0, 0, 0.4)",
+            dark: "rgba(0, 0, 0, 0.6)",
+          },
+        },
       },
     },
     container: {

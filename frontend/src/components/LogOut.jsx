@@ -9,13 +9,22 @@ const LogOut = ({ logoutModalOpen, setLogoutModalOpen }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     const userId = sessionStorage.getItem('userId');
-    if (userId) {
-      dispatch(logoutUser(userId));
+    try {
+      if (userId) {
+        // Dispatch logout action and wait for it to complete
+        await dispatch(logoutUser(userId)).unwrap();
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      sessionStorage.removeItem('userId');
+      sessionStorage.removeItem('token');
+      localStorage.clear();
+    } finally {
+      setLogoutModalOpen(false);
+      navigate('/login', { replace: true });
     }
-    setLogoutModalOpen(false);
-    navigate('/login', { replace: true });
   };
 
   return (

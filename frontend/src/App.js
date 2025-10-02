@@ -25,6 +25,7 @@ import Piano from './components/Piano';
 import Profile from './Pages/Profile';
 import Timeline from './components/Timeline';
 import { ThemeProvider } from './Utils/ThemeContext';
+import { I18nProvider } from './Utils/i18n';
 import RequireAuth from './Utils/RequireAuth';
 import GuestOnly from './Utils/GuestOnly';
 // import Loops from './components/Loops';
@@ -125,6 +126,7 @@ function App() {
       >
         <Alert />
         <ThemeProvider>
+          <I18nProvider>
           <Routes>
             <Route path='/' element={<Home />} />
             <Route path='contact' element={<ContactUs />} />
@@ -168,6 +170,7 @@ function App() {
               </Route>
             {/* </Route> */}
           </Routes>
+          </I18nProvider>
         </ThemeProvider>
       </SnackbarProvider>
     </Provider >

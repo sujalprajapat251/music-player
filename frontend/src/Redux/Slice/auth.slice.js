@@ -113,17 +113,28 @@ export const googleLogin = createAsyncThunk(
 export const logoutUser = createAsyncThunk(
     'auth/logout',
     async (id, { dispatch, rejectWithValue }) => {
-        console.log(id);
+        console.log('Logging out user:', id);
         try {
             const response = await axios.post(`${BASE_URL}/logout/${id}`);
             if (response.status === 200) {
-                sessionStorage.removeItem('userId')
-                sessionStorage.removeItem('token')
+                // Clear all session storage
+                sessionStorage.removeItem('userId');
+                sessionStorage.removeItem('token');
+                localStorage.clear();
+                
                 dispatch(setAlert({ text: response.data.message, color: 'success' }));
                 return response.data;
             }
         } catch (error) {
-            return handleErrors(error, dispatch, rejectWithValue);
+            console.error('Logout API error:', error);
+            // Even if API fails, clear local storage
+            sessionStorage.removeItem('userId');
+            sessionStorage.removeItem('token');
+            localStorage.clear();
+            
+            // Don't show error alert for logout failures, just log it
+            console.warn('Logout API failed, but local session cleared');
+            return rejectWithValue(error.response?.data || { message: 'Logout failed' });
         }
     }
 );
@@ -153,6 +164,8 @@ const authSlice = createSlice({
             state.isAuthenticated = false;
             state.loggedIn = false;
             state.isLoggedOut = true;
+            state.loading = false;
+            state.error = null;
             state.message = action.payload?.message || "Logged out successfully";
             window.localStorage.clear();
             window.sessionStorage.clear();
@@ -259,12 +272,23 @@ const authSlice = createSlice({
                 state.isAuthenticated = false;
                 state.loggedIn = false;
                 state.isLoggedOut = true;
+                state.loading = false;
+                state.error = null;
                 window.sessionStorage.clear();
+                window.localStorage.clear();
                 state.message = action.payload?.message || "Logged out successfully";
             })
             .addCase(logoutUser.rejected, (state, action) => {
-                state.error = action.payload.message;
-                state.message = action.payload?.message || "Logout Failed";
+                // Even if logout API fails, we should still clear the local state
+                state.user = null;
+                state.isAuthenticated = false;
+                state.loggedIn = false;
+                state.isLoggedOut = true;
+                state.loading = false;
+                state.error = null;
+                window.sessionStorage.clear();
+                window.localStorage.clear();
+                state.message = "Logged out successfully";
             })
     },
 });

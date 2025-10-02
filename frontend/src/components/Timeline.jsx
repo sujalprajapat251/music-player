@@ -3648,6 +3648,10 @@ const Timeline = () => {
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
           >
 
             <div
