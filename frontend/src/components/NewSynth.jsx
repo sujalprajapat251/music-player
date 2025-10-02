@@ -1745,7 +1745,7 @@ const NewSynth = ({ onClose }) => {
                                     })
                                     .map((tab) => (
                                         <button key={tab} onClick={() => setActiveTab(tab)}
-                                            className={`text-[10px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white ' : 'text-gray-400 hover:text-white'}`}>
+                                            className={`text-[10px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-black dark:text-white border-b-2 border-black dark:border-white ' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'}`}>
                                             {tab}
                                         </button>
                                     ))}
@@ -1887,9 +1887,9 @@ const NewSynth = ({ onClose }) => {
 
                                                     {/* === CHORD TYPE SELECTOR === */}
                                                     <div className="relative flex gap-1 px-1 md:gap-2 md:px-2 lg:gap-3 items-center lg:px-3 cursor-pointer" onClick={() => setToggle(!toggle)}>
-                                                        <GiPianoKeys className='text-[10px] md600:text-[12px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
+                                                        <GiPianoKeys className='text-[10px] md600:text-[12px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px] text-secondary-light dark:text-secondary-dark' />
                                                         <p className="text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]">{chordType}</p>
-                                                        <HiMiniChevronUpDown className='text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]' />
+                                                        <HiMiniChevronUpDown className='text-secondary-light/60 dark:text-secondary-dark/60 text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]' />
 
                                                         {toggle && (
                                                             <div className="absolute top-[25px] w-[170px] bg-primary-light dark:bg-primary-dark rounded-[5px] z-50">
@@ -1940,15 +1940,15 @@ const NewSynth = ({ onClose }) => {
                                                                     key={name}
                                                                     onClick={() => { handleChordClick(name); setActiveChords(index) }}
                                                                     disabled={!isAudioReady}
-                                                                    className={`cursor-pointer text-secondary-light dark:text-secondary-dark w-[90px] md600:w-[110px] p-1 md600:px-2 md600:py-2 md:w-[120px] lg:w-[110px] rounded-md ${activeChords === index ? 'border-[white] border-[1px]' : 'border-[#FFFFFF33] border-[1px]'
-                                                                        } ${isPressed ? 'bg-[#FFFFFF20]' : ''} hover:bg-[#FFFFFF10] transition-colors`}
+                                                                    className={`cursor-pointer text-secondary-light dark:text-secondary-dark w-[90px] md600:w-[110px] p-1 md600:px-2 md600:py-2 md:w-[120px] lg:w-[110px] rounded-md border ${activeChords === index ? 'border-secondary-light dark:border-secondary-dark' : 'border-secondary-light/20 dark:border-secondary-dark/20'
+                                                                        } ${isPressed ? 'bg-secondary-light/20 dark:bg-secondary-dark/20' : 'bg-primary-light dark:bg-primary-dark hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10'}  transition-colors`}
                                                                 >
                                                                     <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[13px] lg:text-[14px] text-center mb-1 font-medium">
                                                                         {name}
                                                                     </p>
                                                                     <div className="flex justify-between items-center">
                                                                         <img src={keyImage[index]?.image} alt="" className="w-2 h-2 md600:w-3 md600:h-3 lg:w-4 lg:h-4" />
-                                                                        <FaPlus className='text-[10px] md600:text-[12px] lg:text-[14px] text-secondary-light/60 dark:text-secondary-dark/60' />
+                                                                        <FaPlus onClick={() => setPricingModalOpen(true)} className='text-[10px] md600:text-[12px] lg:text-[14px] text-secondary-light/60 dark:text-secondary-dark/60' />
                                                                     </div>
                                                                 </div>
                                                             );
@@ -2048,7 +2048,7 @@ const NewSynth = ({ onClose }) => {
                                             }
                                         }}
                                     >
-                                        <div className="flex items-center justify-center p-2 sm:p-4 min-w-max bg-[#1f1f1f]">
+                                        <div className="flex items-center justify-center p-2 sm:p-4 min-w-max bg-white dark:bg-[#1f1f1f]">
                                             <div className="flex gap-2 sm:gap-4 min-w-max">
                                                 {activeEffects.map((effect) => (
                                                     <div key={effect.instanceId} className="w-[150px] h-[235px] sm:w-[190px] sm:h-[243px] md600:w-[220px] md600:h-[250px] md:w-[230px] md:h-[280px] lg:w-[200px] lg:h-[300px] xl:w-[240px] xl:h-[310px] 2xl:w-[256px] 2xl:h-[330px] bg-gray-200 dark:bg-[#1a1a1a] rounded-xl overflow-hidden shadow-lg text-black dark:text-white flex flex-col shrink-0">

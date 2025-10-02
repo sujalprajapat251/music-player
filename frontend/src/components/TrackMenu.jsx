@@ -187,35 +187,43 @@ const TrackMenu = ({ trackId, color, onRename }) => {
       {open && (
         <div
           ref={menuRef}
-          style={{
-            position: "absolute",
-            top: "100%",
-            left: 0,
-            background: "#1F1F1F",
-            color: "#fff",
-            borderRadius: "4px",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-            minWidth: 300,
-            zIndex: 9999,
-            // padding: 8,
-            fontFamily: "inherit",
-            marginTop: 4
-          }}
+          // style={{
+          //   position: "absolute",
+          //   top: "100%",
+          //   left: 0,
+          //   background: "#1F1F1F",
+          //   color: "#fff",
+          //   borderRadius: "4px",
+          //   boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+          //   minWidth: 300,
+          //   zIndex: 9999,
+          //   // padding: 8,
+          //   fontFamily: "inherit",
+          //   marginTop: 4
+          // }}
+          className="absolute top-full left-0 mt-1 min-w-[300px] rounded-md shadow-lg z-[9999]
+             bg-white text-black dark:bg-[#232323] dark:text-white font-inherit"
         >
           <MenuItem
-            icon={<img src={PencilIcon} alt="Rename" style={{ width: 16, height: 16, filter: "invert(1)" }} />}
+            icon={<img src={PencilIcon} alt="Rename" className="w-4 h-4 dark:invert" />}
             label="Rename"
             onClick={onRename}
             className="py-2 px-3"
           />
-          <MenuItem
+          {/* <MenuItem
             icon={<img src={DuplicateIcon} alt="Duplicate track" style={{ width: 16, height: 16, filter: "invert(1)" }} />}
+            label="Duplicate track"
+            onClick={handleDuplicateTrack}
+            className="py-2 px-3"
+          /> */}
+          <MenuItem
+            icon={<img src={DuplicateIcon} alt="Duplicate track" className="w-4 h-4 dark:invert" />}
             label="Duplicate track"
             onClick={handleDuplicateTrack}
             className="py-2 px-3"
           />
           <MenuItem
-            icon={<img src={TrashIcon} alt="Delete track" style={{ width: 16, height: 16, filter: "invert(1)" }} />}
+            icon={<img src={TrashIcon} alt="Delete track" className="w-4 h-4 dark:invert" />}
             label="Delete track"
             onClick={(e) => {
               // Ensure track exists before removing
@@ -237,25 +245,26 @@ const TrackMenu = ({ trackId, color, onRename }) => {
               <img
                 src={FreezeIcon}
                 alt="Freeze track"
-                style={{
-                  width: 16,
-                  height: 16,
-                  filter: isFrozen ? "invert(1) brightness(1.5)" : "invert(1)",
-                  opacity: isFrozen ? 1 : 0.7
-                }}
+                // style={{
+                //   width: 16,
+                //   height: 16,
+                //   filter: isFrozen ? "invert(1) brightness(1.5)" : "invert(1)",
+                //   opacity: isFrozen ? 1 : 0.7
+                // }}
+                className={`w-4 h-4 dark:invert ${isFrozen ? "brightness-150 opacity-100" : "opacity-70"}`}
               />
             }
             label={`${isFrozen ? 'Unfreeze' : 'Freeze'} track (Free up CPU)`}
             onClick={handleFreezeTrack}
-            style={{
-              color: "#fff",
-              fontWeight:"normal"
-            }}
-            className="py-2 px-3"
+            // style={{
+            //   color: "#fff",
+            //   fontWeight:"normal"
+            // }}
+            className="py-2 px-3 text-white font-normal"
           />
           <div style={{ borderTop: "1px solid #333", margin: "8px 0" }} />
           <MenuItem
-            icon={<img src={importIcon} alt="Import" style={{ width: 16, height: 16, filter: "invert(1)" }} />}
+            icon={<img src={importIcon} alt="Import" className="w-4 h-4 dark:invert" />}
             label="Import"
             onClick={handleImportAudio}
             className="py-2 px-3"
@@ -268,14 +277,14 @@ const TrackMenu = ({ trackId, color, onRename }) => {
             onChange={handleFileChange}
           />
           <MenuItem
-            icon={<img src={importIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)", transform: "rotate(90deg)" }} />}
+            icon={<img src={importIcon} alt="Export" className="w-4 h-4 dark:invert rotate-90"  />}
             label="Export"
             onClick={() => setSubmenu(submenu === "export" ? null : "export")}
             hasArrow
             className="py-2 px-3"
           />
           <MenuItem
-            icon={<span style={{ display: "inline-block", width: 12, height: 12, background: color, borderRadius: 2 }} />}
+            icon={<span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />}
             label="Color"
             onClick={() => setSubmenu(submenu === "color" ? null : "color")}
             hasArrow
@@ -284,39 +293,58 @@ const TrackMenu = ({ trackId, color, onRename }) => {
 
           {/* Export Submenu */}
           {submenu === "export" && (
-            <div style={{
-              position: "absolute", left: "100%", top: 250, background: "#232323", minWidth: 300, zIndex: 10000, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", marginLeft: 4
-            }}>
+            <div 
+              // style={{
+              //   position: "absolute", left: "100%", top: 250, background: "#232323", minWidth: 300, zIndex: 10000, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", marginLeft: 4
+              // }}
+              className="absolute left-full top-[250px] ml-1 min-w-[300px] bg:white dark:bg-[#232323] z-[10000] shadow-lg rounded-md" 
+            >
               <MenuItem
-                icon={<img src={waveIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)" }} />}
+                icon={<img src={waveIcon} alt="Export" className="w-4 h-4 dark:invert"  />}
                 label="WAV audio file"
                 onClick={() => handleExportTrack(true)}
               />
               <MenuItem
-                icon={<img src={waveIcon} alt="Export" style={{ width: 16, height: 16, filter: "invert(1)" }} />}
+                icon={<img src={waveIcon} alt="Export" className="w-4 h-4 dark:invert" />}
                 label="WAV audio file (no effects)"
                 onClick={() => handleExportTrack(false)}
               />
             </div>
-          )}
+          )}  
 
           {/* Color Submenu */}
           {submenu === "color" && (
-            <div style={{
-              position: "absolute", left: "100%", top: 280, background: "#232323", minWidth: 200, zIndex: 10000, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", padding: 12, marginLeft: 4
-            }}>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <div 
+              // style={{
+              //   position: "absolute", left: "100%", top: 280, background: "#232323", minWidth: 200, zIndex: 10000, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", padding: 12, marginLeft: 4
+              // }}
+              className="absolute left-full top-[280px] ml-1 min-w-[200px] bg:white dark:bg-[#232323] text-black dark:text-white z-[10000] shadow-lg p-3 rounded-md" 
+              style={{
+                backgroundColor: document.documentElement.classList.contains("dark") 
+                  ? "#232323"  
+                  : "#ffffff", 
+                opacity: 1
+              }}
+            >
+              <div className="flex flex-wrap gap-2"
+                // style={{ display: "flex", flexWrap: "wrap", gap: 8 }}
+              >
                 {MENU_COLORS.map((menuColor) => (
                   <div
                     key={menuColor}
+                    // style={{
+                    //   width: 28,
+                    //   height: 28,
+                    //   background: menuColor, 
+                    //   borderRadius: 4,
+                    //   cursor: "pointer",
+                    //   border: `2px solid ${color === menuColor ? "#fff" : "#232323"}`,
+                    //   boxSizing: "border-box"
+                    // }}
+                    className={`w-7 h-7 rounded cursor-pointer border-2 box-border`}
                     style={{
-                      width: 28,
-                      height: 28,
-                      background: menuColor,
-                      borderRadius: 4,
-                      cursor: "pointer",
-                      border: `2px solid ${color === menuColor ? "#fff" : "#232323"}`,
-                      boxSizing: "border-box"
+                      backgroundColor: menuColor,
+                      borderColor: color === menuColor ? (document.documentElement.classList.contains("dark") ? "#fff" : "#000")  : (document.documentElement.classList.contains("dark") ? "#232323" : "#e5e7eb")
                     }}
                     onClick={() => {
                       dispatch(updateTrack({ id: trackId, updates: { color: menuColor } }));
@@ -349,7 +377,8 @@ const MenuItem = ({ icon, label, onMouseEnter, onMouseLeave, hasArrow, onClick, 
       position: "relative",
       ...style
     }}
-    className="hover:bg-[#333]"
+    // className="hover:bg-[#333]"
+    className="flex items-center px-3 py-2 cursor-pointer rounded-md transition-colors bg-white dark:bg-[#232323] hover:bg-gray-200 dark:hover:bg-[#333]"
   >
     <span style={{ marginRight: 12, display: "flex", alignItems: "center" }}>
       {typeof icon === 'string' ? (

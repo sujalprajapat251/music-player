@@ -1655,7 +1655,7 @@ const BassAnd808 = ({ onClose }) => {
                                     })
                                     .map((tab) => (
                                         <button key={tab} onClick={() => setActiveTab(tab)}
-                                            className={`text-[10px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white ' : 'text-gray-400 hover:text-white'}`}>
+                                            className={`text-[10px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'}`}>
                                             {tab}
                                         </button>
                                     ))}
@@ -1665,25 +1665,25 @@ const BassAnd808 = ({ onClose }) => {
                                 {activeTab === 'Instruments' && (
                                     <>
                                         <div className="bg-white dark:bg-[#1F1F1F] flex items-center justify-center py-1 px-2 md600:px-2 md600:pt-2 md600:pb-1 gap-4 sm:gap-6 md600:gap-12 md:gap-16 lg:pt-4 lg:pb-2 lg:px-3 lg:gap-20 2xl:pt-5 2xl:pb-3 2xl:px-3 2xl:gap-24">
-                                            <div className="bg-gray-200 dark:bg-[#353535] p-1 lg:p-2 rounded-lg cursor-pointer">
-                                                <div className="flex-shrink-0 bg-gray-200 dark:bg-[#353535] p-2 md:p-2 rounded-lg flex items-center justify-between min-w-[140px] sm:min-w-[180px] md:min-w-[220px] lg:min-w-[230px]">
-                                                    <button onClick={prevInstrument} className="text-gray-400 hover:text-white transition-colors p-1 md:p-2">
+                                            <div className="bg-[#e7e7e7] dark:bg-[#353535] p-1 lg:p-2 rounded-lg cursor-pointer">
+                                                <div className="flex-shrink-0 bg-[#e7e7e7] dark:bg-[#353535] p-2 md:p-2 rounded-lg flex items-center justify-between min-w-[140px] sm:min-w-[180px] md:min-w-[220px] lg:min-w-[230px]">
+                                                    <button onClick={prevInstrument} className="text-gray-600 dark:text-gray-400 hover:text-white transition-colors p-1 md:p-2">
                                                         <FaChevronLeft className="text-[10px] md:text-[14px] 2xl:text-[14px]" />
                                                     </button>
 
                                                     <div className="flex items-center gap-2 flex-1 justify-center">
-                                                        <div className="text-white font-bold text-[8px] sm:text-[10px] md:text-[14px] lg:text-[14px]">808</div>
+                                                        <div className="text-black dark:text-white font-bold text-[8px] sm:text-[10px] md:text-[14px] lg:text-[14px]">808</div>
                                                         <div>
-                                                            <div className="text-white text-[8px] sm:text-[9px] md:text-[14px] lg:text-[14px]">
+                                                            <div className="text-black dark:text-white text-[8px] sm:text-[9px] md:text-[14px] lg:text-[14px]">
                                                                 {INSTRUMENTS[currentInstrumentIndex].name}
                                                             </div>
-                                                            <div className="text-gray-400 text-[7px] sm:text-[8px] md:text-[12px] lg:text-[14px]">
+                                                            <div className="text-gray-500 dark:text-gray-400 text-[7px] sm:text-[8px] md:text-[12px] lg:text-[14px]">
                                                                 {INSTRUMENTS[currentInstrumentIndex].category}
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    <button onClick={nextInstrument} className="text-gray-400 hover:text-white transition-colors p-1 md:p-2">
+                                                    <button onClick={nextInstrument} className="text-gray-600 dark:text-gray-400 hover:text-white transition-colors p-1 md:p-2">
                                                         <FaChevronRight className="text-[10px] md:text-[14px] 2xl:text-[14px]" />
                                                     </button>
                                                 </div>
@@ -1716,7 +1716,7 @@ const BassAnd808 = ({ onClose }) => {
                                         <div className="w-full h-[400px]">
                                             <div className="bg-primary-light dark:bg-[#1F1F1F] flex gap-1 md600:gap-2 md:gap-3 pb-2 lg:gap-4 lg:pb-2 2xl:gap-5 items-center justify-between 2xl:pb-3">
                                                 <div className='flex gap-1 sm:gap-2 md600:gap-3 lg:gap-4  2xl:gap-5 items-center ms-1 md600:ms-2 lg:ms-3'>
-                                                    <div className="border rounded-3xl border-secondary-light/10 dark:border-secondary-dark/10">
+                                                    <div className="border rounded-3xl border-secondary-light/30 dark:border-secondary-dark/20">
                                                         <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[10px] md600:text-[10px] lg:text-[13px] px-2 sm:px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Sustain</p>
                                                     </div>
                                                     <div className="flex items-center justify-between ">
@@ -1737,7 +1737,7 @@ const BassAnd808 = ({ onClose }) => {
                                                         </button>
                                                     </div>
                                                 </div>
-                                                <div onClick={() => setPricingModalOpen(true)} className='border rounded-lg border-[#FFFFFF1A] ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer'>
+                                                <div onClick={() => setPricingModalOpen(true)} className='border rounded-lg border-secondary-light/30 dark:border-secondary-dark/20 ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer'>
                                                     <p className="text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[10px] md:text-[12px] lg:text-[13px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
                                                 </div>
                                             </div>

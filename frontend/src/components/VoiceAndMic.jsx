@@ -468,13 +468,13 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                         <div className="border-b border-gray-300 dark:border-[#FFFFFF1A] h-full">
                             <div className="bg-white dark:bg-[#1F1F1F] flex items-center p-1 md600:px-2 md600:pt-2 lg:px-3 lg:pt-3">
                                 <div>
-                                    <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => {
+                                    <IoClose className='text-[10px] sm:text-[12px] md600:text-[14px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-gray-600 dark:text-[#FFFFFF99] cursor-pointer justify-start' onClick={() => {
                                         setShowOffcanvas1(false);
                                         onClose && onClose();
                                     }} />
                                 </div>
                             </div>
-                            <div className="bg-[#1F1F1F] flex space-x-2 sm:space-x-3 px-1 md600:space-x-4 md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center lg:px-3">
+                            <div className="bg-white dark:bg-[#1F1F1F] flex space-x-2 sm:space-x-3 px-1 md600:space-x-4 md600:px-2 lg:space-x-6 2xl:space-x-8 justify-center lg:px-3">
                                 {['Audio', 'Effects']
                                     .filter(tab => {
                                         if (
@@ -487,7 +487,7 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                     })
                                     .map((tab) => (
                                         <button key={tab} onClick={() => setActiveTab(tab)}
-                                            className={`text-[10px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-white border-b-2 border-white ' : 'text-gray-400 hover:text-white'}`}>
+                                            className={`text-[10px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px] font-medium transition-colors ${activeTab === tab ? 'text-black dark:text-white border-b-2 border-black dark:border-white ' : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'}`}>
                                             {tab}
                                         </button>
                                     ))}
@@ -497,7 +497,7 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                     <>
                                         <div className="min-h-screen text-white">
                                             {/* Header */}
-                                            <div className="flex items-center justify-between px-2 md:px-6 py-1 bg-[#1f1f1f] gap-2 md:gap-0">
+                                            <div className="flex items-center justify-between px-2 md:px-6 py-1 bg-white dark:bg-[#1F1F1F] gap-2 md:gap-0">
                                                 {/* Left Section */}
                                                 <div className="">
                                                     <div className="relative w-32 sm:w-40 md:w-64">
@@ -505,17 +505,17 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                             onClick={() => setIsOpen(!isOpen)}
                                                             className="w-full transition-colors duration-200 rounded-lg px-2 lg:px-3 py-2 flex items-center justify-between text-white border border-gray-600"
                                                         >
-                                                            <div className="flex items-center space-x-2 min-w-0">
+                                                            <div className="flex items-center space-x-2 min-w-0 text-black dark:text-white">
                                                                 <Mic className="w-4 sm:w-3 lg:w-7 h-4 sm:h-3 lg:h-7" />
-                                                                <span className="text-[10px] md:text-[12px] lg:text-sm text-gray-300 truncate w-[11rem] sm:w-[8rem] md:w-[10rem] lg:w-[22rem]">
+                                                                <span className="text-[10px] md:text-[12px] lg:text-sm text-gray-600 dark:text-gray-300 truncate w-[11rem] sm:w-[8rem] md:w-[10rem] lg:w-[22rem]">
                                                                     {selectedInput}
                                                                 </span>
                                                             </div>
-                                                            <FaChevronDown className={`w-3 lg:w-4 h-3 lg:h-4 text-gray-300 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : '' }`} />
+                                                            <FaChevronDown className={`w-3 lg:w-4 h-3 lg:h-4 text-black dark:text-gray-300 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : '' }`} />
                                                         </button>
 
                                                         {isOpen && (
-                                                            <div className="absolute top-full left-0 right-0 mt-1 bg-[#1f1f1f] border border-gray-600 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                                                            <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#1F1F1F] border border-gray-600 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
                                                                 {audioInputs.length > 0 ? (
                                                                     audioInputs.map((input, index) => (
                                                                         <button
@@ -530,20 +530,20 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                                         </button>
                                                                     ))
                                                                 ) : (
-                                                                    <div className="px-3 py-2 text-[7px] sm:text-[9px] md:text-[12px] lg:text-sm text-gray-400">No instrument detected</div>
+                                                                    <div className="px-3 py-2 text-[7px] sm:text-[9px] md:text-[12px] lg:text-sm text-black dark:text-gray-400">No instrument detected</div>
                                                                 )}
                                                             </div>
                                                         )}
                                                     </div>
                                                     <div className='flex items-center justify-between mt-3'>
-                                                        <div className="flex items-center space-x-2 border border-[#5d5d5d] py-1 px-1 sm:px-2 md:px-3 rounded-full cursor-pointer" onClick={() => setPricingModalOpen(true)}>
+                                                        <div className="text-black dark:text-white flex items-center space-x-2 border border-[#5d5d5d] py-1 px-1 sm:px-2 md:px-3 rounded-full cursor-pointer" onClick={() => setPricingModalOpen(true)}>
                                                             <Mic className="w-3 lg:w-4 h-3 lg:h-4" />
                                                             <span className="text-[7px] sm:text-[9px] md:text-[12px] lg:text-sm">Calibrate</span>
                                                         </div>
 
-                                                        <div className="flex items-center space-x-2">
+                                                        <div className="flex items-center space-x-2 text-black dark:text-white">
                                                             <span className="text-[7px] sm:text-[9px] md:text-[12px] lg:text-sm">Monitoring:</span>
-                                                            <div className="w-5 md:w-8 h-5 md:h-8 bg-[#525252] rounded-lg flex items-center justify-center">
+                                                            <div className="w-5 md:w-8 h-5 md:h-8 bg-[#525252] text-white rounded-lg flex items-center justify-center">
                                                                 <LuHeadphoneOff className="w-2 md:w-3 lg:w-4 h-2 md:h-3 lg:h-4" />
                                                             </div>
                                                         </div>
@@ -554,17 +554,17 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                 {/* <div className="flex overflow-x-auto sm:max-w-[380px] md:w-full"> */}
                                                 <div>
                                                     <div className="flex items-center sm:space-x-2 border border-[#5d5d5d] rounded-lg">
-                                                        <div className="flex items-center px-1 md:px-2 lg:px-4 py-2 lg:py-3 sm:gap-2 md:gap-4 border-r border-[#5d5d5d]">
+                                                        <div className="flex items-center px-1 md:px-2 lg:px-4 py-2 lg:py-3 sm:gap-2 md:gap-4 border-r border-[#5d5d5d] text-gray-600 dark:text-gray-200">
                                                             <FaChevronLeft className="w-2 sm:w-3 lg:w-4 h-2 sm:h-3 lg:h-4 cursor-pointer hover:text-purple-300" />
                                                             <FaChevronRight className="w-2 sm:w-3 lg:w-4 h-2 sm:h-3 lg:h-4 cursor-pointer hover:text-purple-300" />
                                                         </div>
-                                                        <div className="flex items-center gap-1 sm:gap-3 md:gap-8 ms-1 sm:px-1 md:px-2 lg:px-4 p-1 sm:py-1 md:py-2 lg:py-3">
-                                                            <span className="text-[7px] sm:text-[9px] md:text-[12px] lg:text-sm">Load and Clear</span>
+                                                        <div className="flex items-center gap-1 sm:gap-3 md:gap-8 ms-1 sm:px-1 md:px-2 lg:px-4 p-1 sm:py-1 md:py-2 lg:py-3 text-gray-600 dark:text-gray-200">
+                                                            <span className="text-[7px] sm:text-[9px] md:text-[12px] lg:text-sm text-black dark:text-gray-200">Load and Clear</span>
                                                             <FaChevronDown className="w-3 lg:w-4 h-3 lg:h-4 transform cursor-pointer hover:text-purple-300" />
                                                         </div>
                                                     </div>
 
-                                                    <div className="inline-block mt-2 border rounded-lg border-secondary-light/10 dark:border-secondary-dark/10 ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer" onClick={() => setPricingModalOpen(true)}>
+                                                    <div className="inline-block mt-2 border rounded-lg border-secondary-light/30 dark:border-secondary-dark/20 ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer" onClick={() => setPricingModalOpen(true)}>
                                                         <p className="text-secondary-light dark:text-secondary-dark text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Save Preset</p>
                                                     </div>
                                                 </div>
@@ -591,40 +591,40 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                             {/* </div> */}
 
                                             {/* Main Content */}
-                                            <div className="flex items-center justify-center md:px-12 py-2 md:py-4 2xl:py-4 bg-[#242424]">
+                                            <div className="flex items-center justify-center md:px-12 py-2 md:py-4 2xl:py-4 bg-[#e7e7e7] dark:bg-[#242424]">
                                                 <div className="flex items-center md:space-x-12 flex-col md:flex-row h-[194px] 2xl:h-[214px] overflow-auto">
 
                                                     {/* Vocal Cleanup Card */}
-                                                    <div className="bg-[#1f1f1f] backdrop-blur-sm border border-[#5d5d5d] rounded-xl p-2 2xl:p-5 w-64 sm:w-80 mb-3 md:mb-0">
+                                                    <div className="bg-white dark:bg-[#1F1F1F] backdrop-blur-sm border border-[#5d5d5d] rounded-xl p-2 2xl:p-5 w-64 sm:w-80 mb-3 md:mb-0">
                                                         <div className="flex items-center space-x-3 mb-3 lg:mb-4">
                                                             <div className="w-7 h-7 bg-[#525252] rounded-lg flex items-center justify-center">
                                                                 <img src={subscription} alt="subscription" className="w-4 h-4" />
                                                             </div>
-                                                            <h3 className="text-md lg:text-lg font-semibold">Vocal Cleanup</h3>
+                                                            <h3 className="text-md lg:text-lg font-semibold text-black dark:text-white">Vocal Cleanup</h3>
                                                         </div>
 
-                                                        <div className="flex flex-col items-center space-y-4 bg-[#333333] rounded-xl py-3">
+                                                        <div className="flex flex-col items-center space-y-4 bg-[#e7e7e7] dark:bg-[#333333] rounded-xl py-3">
                                                             <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg flex items-center justify-center">
                                                                 <PiWaveformBold className='w-12 h-12' />
                                                             </div>
-                                                            <p className="text-[#ffffff] text-sm text-center">
+                                                            <p className="text-black dark:text-[#ffffff] text-sm text-center">
                                                                 Select an audio region to apply
                                                             </p>
                                                         </div>
                                                     </div>
 
                                                     {/* Vocal Tuner Card */}
-                                                    <div className="bg-[#1f1f1f] backdrop-blur-sm border border-[#5d5d5d] rounded-xl p-2 2xl:p-5 w-72 sm:w-96 ms-0 mb-3 md:mb-0">
+                                                    <div className="bg-white dark:bg-[#1F1F1F] backdrop-blur-sm border border-[#5d5d5d] rounded-xl p-2 2xl:p-5 w-72 sm:w-96 ms-0 mb-3 md:mb-0">
                                                         <div className="flex items-center justify-between mb-3 lg:mb-4">
                                                             <div className="flex items-center space-x-3">
                                                                 <div className="w-7 h-7 bg-[#525252] rounded-lg flex items-center justify-center">
                                                                     <img src={subscription} alt="subscription" className="w-4 h-4" />
                                                                 </div>
-                                                                <h3 className="text-md lg:text-lg font-semibold">Vocal Tuner</h3>
+                                                                <h3 className="text-md lg:text-lg font-semibold text-black dark:text-white">Vocal Tuner</h3>
                                                             </div>
 
                                                             <div className="flex items-center space-x-4">
-                                                                <span className="text-sm text-[#ffffff]">Realtime</span>
+                                                                <span className="text-sm text-[#ffffff] text-black dark:text-white">Realtime</span>
                                                                 {/* onClick={() => setIsRealtimeEnabled(!isRealtimeEnabled) */}
                                                                 <div
                                                                     className={`w-8 h-5 rounded-full cursor-pointer transition-colors ${isRealtimeEnabled ? 'bg-purple-500' : 'bg-gray-600'
@@ -642,8 +642,8 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                             {/* Key Selection */}
                                                             <div>
                                                                 <div className="flex justify-center items-center gap-1 mb-3 cursor-pointer" onClick={() => setPricingModalOpen(true)}>
-                                                                    <span className="text-lg text-[#ffffff]">Key</span>
-                                                                    <span className="text-lg font-semibold">{selectedKey}</span>
+                                                                    <span className="text-lg text-[#ffffff] text-black dark:text-white">Key</span>
+                                                                    <span className="text-lg font-semibold text-black dark:text-white">{selectedKey}</span>
                                                                 </div>
 
                                                                 {/* Piano Keys */}
@@ -686,7 +686,7 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                                     ></div>
 
                                                                     {/* Waveform icon in center */}
-                                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                                    <div className="absolute inset-0 flex items-center justify-center text-black dark:text-white">
                                                                         <div className="space-y-0.5">
                                                                             <LiaWaveSquareSolid className='w-10 h-10' />
                                                                         </div>
@@ -694,7 +694,7 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                                 </div>
 
                                                                 <div className="flex items-center justify-between">
-                                                                    <span className="text-sm text-[#ffffff]">Amount</span>
+                                                                    <span className="text-sm text-[#ffffff] text-black dark:text-white">Amount</span>
                                                                 </div>
                                                             </div>
                                                         </div>
