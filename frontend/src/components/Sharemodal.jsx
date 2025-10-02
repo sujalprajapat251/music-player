@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Copy, Check, Share2 } from 'lucide-react';
 import { useTheme } from '../Utils/ThemeContext';
+import { useI18n } from '../Utils/i18n';
 const getModalColors = (isDark) => ({
   overlayBg: 'bg-black bg-opacity-50',
 
@@ -31,6 +32,7 @@ const ShareModal = ({ isOpen, onClose, projectId }) => {
   const [invited, setInvited] = useState(false);
 
   const { isDark } = useTheme();
+  const { t } = useI18n();
   const colors = getModalColors(isDark);
   useEffect(() => {
     const origin = window?.location?.origin || '';
@@ -44,8 +46,8 @@ const ShareModal = ({ isOpen, onClose, projectId }) => {
       console.log('Sharing URL:', shareLink);
       if (navigator.share) {
         await navigator.share({
-          title: 'Join my Soundtrap project',
-          text: 'Check out my music project on Soundtrap!',
+          title: t('joinMyProject'),
+          text: t('checkOutProject'),
           url: shareLink,
         });
         setShared(true);
@@ -110,7 +112,7 @@ const ShareModal = ({ isOpen, onClose, projectId }) => {
           className="text-lg font-semibold mb-3"
           style={{ color: colors.modalText }}
         >
-          Share via link
+          {t('shareViaLink')}
         </h3>
 
         <div className="flex gap-2 mb-2">
@@ -135,16 +137,16 @@ const ShareModal = ({ isOpen, onClose, projectId }) => {
             }}
           >
             {shared ? <Check size={16} /> : <Share2 size={16} />}
-            {shared ? 'Shared!' : 'Share'}
+            {shared ? t('shared') : t('share')}
           </button>
         </div>
 
         <p style={{ color: colors.modalSubText }} className="text-sm">
-          People with this link can directly join and make changes to your project.
+          {t('peopleCanJoin')}
         </p>
         {!projectId && (
           <p style={{ color: colors.warningText }} className="text-xs mt-1">
-            ⚠️ No project ID available. Please save your project first.
+            ⚠️ {t('noProjectId')}
           </p>
         )}
       </div>

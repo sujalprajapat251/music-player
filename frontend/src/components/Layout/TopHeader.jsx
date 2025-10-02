@@ -344,6 +344,11 @@ const TopHeader = () => {
 
     const [selectedLanguage, setSelectedLanguage] = useState(language || 'English');
 
+    // Synchronize selectedLanguage with language from i18n context
+    useEffect(() => {
+        setSelectedLanguage(language || 'English');
+    }, [language]);
+
     const languageOptions = [
         { id: 'Deutsch', label: 'Deutsch' },
         { id: 'English', label: 'English' },
@@ -359,7 +364,6 @@ const TopHeader = () => {
         { id: 'Português(Brasil)', label: 'Português(Brasil)' },
         { id: 'Русский язык', label: 'Русский язык' },
         { id: 'Svenska', label: 'Svenska' },
-        { id: 'low', label: 'Low' },
         { id: 'Türkçe', label: 'Türkçe' }
     ];
 
@@ -1965,7 +1969,7 @@ const TopHeader = () => {
                     <div className="p-4 space-y-2 overflow-y-auto h-full">
                         {/* File Menu */}
                         <div className="space-y-1">
-                            <h3 className="text-sm font-medium mb-2 px-2" style={{ color: colors.textPrimary }}>File</h3>
+                            <h3 className="text-sm font-medium mb-2 px-2" style={{ color: colors.textPrimary }}>{t('file')}</h3>
                             <button 
                                 className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
                                 style={{ color: colors.textSecondary }}
@@ -1975,7 +1979,7 @@ const TopHeader = () => {
                                 }}
                             >
                                 <NewFolderIcon className='w-4 h-4' style={{ color: colors.iconSecondary }} />
-                                <span className='text-sm'>New...</span>
+                                <span className='text-sm'>{t('new')}</span>
                             </button>
                             <button 
                                 className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
@@ -1986,7 +1990,7 @@ const TopHeader = () => {
                                 }}
                             >
                                 <OpenFolderIcon className='w-4 h-4' style={{ color: colors.iconSecondary }} />
-                                <span className='text-sm'>Open...</span>
+                                <span className='text-sm'>{t('open')}</span>
                             </button>
                             <button 
                                 className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
@@ -1997,7 +2001,7 @@ const TopHeader = () => {
                                 }}
                             >
                                 <Previous className='w-4 h-4' style={{ color: colors.iconSecondary }} />
-                                <span className='text-sm'>Previous versions</span>
+                                <span className='text-sm'>{t('previousVersions')}</span>
                             </button>
                             <button 
                                 className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
@@ -2008,7 +2012,7 @@ const TopHeader = () => {
                                 }}
                             >
                                 <Exports className='w-4 h-4' style={{ color: colors.iconSecondary }} />
-                                <span className='text-sm'>Export</span>
+                                <span className='text-sm'>{t('export')}</span>
                             </button>
                             <button 
                                 className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
@@ -2019,13 +2023,13 @@ const TopHeader = () => {
                                 }}
                             >
                                 <Shareproject className='w-4 h-4' style={{ color: colors.iconSecondary }} />
-                                <span className='text-sm'>Share Project</span>
+                                <span className='text-sm'>{t('shareProject')}</span>
                             </button>
                         </div>
 
                         {/* Edit Menu */}
                         <div className="space-y-1">
-                            <h3 className="text-sm font-medium mb-2 px-2" style={{ color: colors.textPrimary }}>Edit</h3>
+                            <h3 className="text-sm font-medium mb-2 px-2" style={{ color: colors.textPrimary }}>{t('edit')}</h3>
                             <button 
                                 className={`w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3 ${
                                     !canUndo ? 'opacity-50 cursor-not-allowed' : ''
@@ -2038,7 +2042,7 @@ const TopHeader = () => {
                                 disabled={!canUndo}
                             >
                                 <Undo className='w-4 h-4' style={{ color: colors.iconSecondary }} />
-                                <span className='text-sm'>Undo</span>
+                                <span className='text-sm'>{t('undo')}</span>
                                 <span className="text-xs ml-auto" style={{ color: colors.textMuted }}>Ctrl+Z</span>
                             </button>
                             <button 
@@ -2053,14 +2057,14 @@ const TopHeader = () => {
                                 disabled={!canRedo}
                             >
                                 <Redo className='w-4 h-4' style={{ color: colors.iconSecondary }} />
-                                <span className='text-sm'>Redo</span>
+                                <span className='text-sm'>{t('redo')}</span>
                                 <span className="text-xs ml-auto" style={{ color: colors.textMuted }}>Ctrl+Y</span>
                             </button>
                         </div>
 
                         {/* Settings Menu */}
                         <div className="space-y-1">
-                            <h3 className="text-sm font-medium mb-2 px-2" style={{ color: colors.textPrimary }}>Settings</h3>
+                            <h3 className="text-sm font-medium mb-2 px-2" style={{ color: colors.textPrimary }}>{t('settings')}</h3>
                             <button 
                                 className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
                                 style={{ color: colors.textSecondary }}
@@ -2070,7 +2074,7 @@ const TopHeader = () => {
                                 }}
                             >
                                 <Midisetting className='w-4 h-4' style={{ color: colors.iconSecondary }} />
-                                <span className='text-sm'>MIDI Settings...</span>
+                                <span className='text-sm'>{t('midiSettings')}</span>
                             </button>
                             <button 
                                 className={`w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3 ${
@@ -2083,7 +2087,7 @@ const TopHeader = () => {
                                 } : undefined}
                             >
                                 <Tuner className='w-4 h-4' style={{ color: colors.iconSecondary }} />
-                                <span className='text-sm'>Tuner</span>
+                                <span className='text-sm'>{t('tuner')}</span>
                             </button>
                             <button 
                                 className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
@@ -2094,7 +2098,7 @@ const TopHeader = () => {
                                 }}
                             >
                                 <Lowlatancy className='w-4 h-4' style={{ color: colors.iconSecondary }} />
-                                <span className='text-sm'>Low latency...</span>
+                                <span className='text-sm'>{t('lowLatency')}</span>
                             </button>
                             <button 
                                 className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
@@ -2105,7 +2109,7 @@ const TopHeader = () => {
                                 }}
                             >
                                 <Songsections className='w-4 h-4' style={{ color: colors.iconSecondary }} />
-                                <span className='text-sm'>Song Sections</span>
+                                <span className='text-sm'>{t('songSections')}</span>
                             </button>
                         </div>
 
@@ -2120,7 +2124,7 @@ const TopHeader = () => {
                                 }}
                             >
                                 <HiDownload className='w-4 h-4' style={{ color: colors.iconSecondary }} />
-                                <span className='text-sm'>Export</span>
+                                <span className='text-sm'>{t('export')}</span>
                             </button>
                             <button 
                                 className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
@@ -2131,7 +2135,7 @@ const TopHeader = () => {
                                 }}
                             >
                                 <img src={subscription} alt="" className='w-4 h-4' />
-                                <span className='text-sm'>Upgrade Now</span>
+                                <span className='text-sm'>{t('upgradeNow')}</span>
                             </button>
                             <button 
                                 className="w-full text-left px-3 py-2 rounded-md hover:bg-opacity-10 transition-colors flex items-center gap-3"
@@ -2142,7 +2146,7 @@ const TopHeader = () => {
                                 }}
                             >
                                 <IoIosShareAlt className='w-4 h-4' style={{ color: colors.iconSecondary }} />
-                                <span className='text-sm'>Share</span>
+                                <span className='text-sm'>{t('share')}</span>
                             </button>
                             <Link 
                                 to='/profile' 
@@ -2151,7 +2155,7 @@ const TopHeader = () => {
                                 onClick={() => setMobileMenuOpen(false)}
                             >
                                 <Gotoprofile className='w-4 h-4' style={{ color: colors.iconSecondary }} />
-                                <span className='text-sm'>Go to profile</span>
+                                <span className='text-sm'>{t('goToProfile')}</span>
                             </Link>
                             <Link 
                                 to='/project' 
@@ -2160,7 +2164,7 @@ const TopHeader = () => {
                                 onClick={() => setMobileMenuOpen(false)}
                             >
                                 <RxExit className='w-4 h-4' style={{ color: colors.iconSecondary }} />
-                                <span className='text-sm'>Exit</span>
+                                <span className='text-sm'>{t('exit')}</span>
                             </Link>
                         </div>
                     </div>

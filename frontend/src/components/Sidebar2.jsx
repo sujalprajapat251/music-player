@@ -29,6 +29,7 @@ import NewProject from "./NewProjectModel";
 import { setShowLoopLibrary } from "../Redux/Slice/ui.slice";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../Utils/ThemeContext";
+import { useI18n } from "../Utils/i18n";
 import { FaVolumeMute } from "react-icons/fa";
 import { MdHeadset } from "react-icons/md";
 
@@ -65,6 +66,7 @@ const Sidebar2 = () => {
   const tracks = useSelector((state) => selectStudioState(state).tracks);
   // console.log("tracks ::::: > ", tracks)
   const { isDark } = useTheme();
+  const { t } = useI18n();
   const colors = getSidebarColors(isDark);
  
   const trackHeight = useSelector((state) => selectStudioState(state).trackHeight);
@@ -374,18 +376,18 @@ const Sidebar2 = () => {
                       </span>
                     )}
                       {track.frozen && (
-                        <img src={FreezeIcon} alt="Frozen" className="w-4 h-4 opacity-80" style={{ filter: isDark ? "invert(1) brightness(1.5)" : "none" }}/>
+                        <img src={FreezeIcon} alt={t('frozen')} className="w-4 h-4 opacity-80" style={{ filter: isDark ? "invert(1) brightness(1.5)" : "none" }}/>
                       )}
                     </div>
                     <div className="hidden sm:flex flex-row items-center justify-around gap-x-2 mt-1">
-                    <span
+                      <span
                         className={`w-6 h-6 rounded text-xs font-bold flex items-center justify-center`}
                         style={{
                           backgroundColor: (currentTrackId === track.id) ? colors.recordBgActive : colors.recordBg,
                           color: colors.textPrimary
                         }}
                       >
-                        R
+                        {t('record')}
                       </span>
                       <span className="w-8 h-8 rounded-full bg-transparent">
                         <img src={tk} alt="" className={`w-full h-full opacity-60`} />
@@ -407,7 +409,7 @@ const Sidebar2 = () => {
                     />
                     <div className="flex items-center justify-center gap-x-2 w-full pb-4">
                       <MdHeadset 
-                        src={headphone} alt="Headphone" 
+                        src={headphone} alt={t('headphone')} 
                         className="rounded-[20px] w-5 h-5 text-[#656565]"
                         style={soloTrackId === track.id ? { backgroundColor: colors.soloActiveBg } : {}}
                         onClick={e => {
@@ -416,7 +418,7 @@ const Sidebar2 = () => {
                         }}
                       />
                       <FaVolumeMute 
-                        src={mute} alt="Mute" 
+                        src={mute} alt={t('mute')} 
                         className="rounded-[20px] w-5 h-5 text-[#656565]"
                         style={isMuted ? { backgroundColor: colors.muteActiveBg } : {}}
                         onClick={e => {
@@ -437,7 +439,7 @@ const Sidebar2 = () => {
               style={{ height: `${trackHeight + 8}px`, borderTopColor: colors.addRowBorder, borderBottomColor: colors.addRowBorder, color: colors.addRowText }}
             >
               <span className="text-xl font-bold">+</span>
-              <span className="hidden sm:block sm:text-xs md:text-sm lg:text-base">Add New Track</span>
+              <span className="hidden sm:block sm:text-xs md:text-sm lg:text-base">{t('addNewTrack')}</span>
             </div>
           </div>
         </div>
