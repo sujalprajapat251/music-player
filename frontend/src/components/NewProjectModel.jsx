@@ -9,6 +9,8 @@ import { useDispatch } from 'react-redux';
 import { resetStudio } from '../Redux/Slice/studio.slice';
 import { ReactComponent as Close } from '../Images/closeicon.svg';
 import { useNavigate } from 'react-router-dom';
+import { Transition } from "@headlessui/react";
+
 
 const NewProject = ({ open, setOpen, showClose = true }) => {
   const dispatch = useDispatch();
@@ -50,6 +52,17 @@ const NewProject = ({ open, setOpen, showClose = true }) => {
                   {
                     label: 'Demos',
                     content: (
+                      <Transition
+                        appear
+                        show={true}
+                        enter="transition-opacity transition-transform duration-700 ease-out"
+                        enterFrom="opacity-0 translate-y-5"
+                        enterTo="opacity-100 translate-y-0"
+                        leave="transition-opacity duration-500 ease-in"
+                        leaveFrom="opacity-100 translate-y-0"
+                        leaveTo="opacity-0 translate-y-5"
+                      >
+
                       <div className="items-center justify-center text-gray-800 dark:text-white opacity-60">
                         <div className="grid grid-cols-3 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-4 md:gap-6"> 
                           <div className="flex flex-col items-center">
@@ -98,6 +111,7 @@ const NewProject = ({ open, setOpen, showClose = true }) => {
                           </div>
                         </div>
                       </div>
+                      </Transition>
                     ),
                   },
                 ]}

@@ -4,9 +4,35 @@ import p1 from "../Images/p1.svg";
 import p2 from "../Images/p2.svg";
 import p3 from "../Images/p3.svg";
 import Tabs from "./Tabs";
+import OpenPayment from "./OpenPayment";
 
 const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
+
   const [plan, setPlan] = useState("yearly");
+  const [openPayment, setOpenPayment] = useState(false);
+
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [cvv, setCvv] = useState("");
+  const [country, setCountry] = useState("India");
+  const [agree, setAgree] = useState(false);
+  const [cardError, setCardError] = useState(false);
+
+  const handleCardInput = (e) => {
+    setCardNumber(e.target.value);
+    setCardError(false);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (cardNumber.length < 16) {
+      setCardError(true);
+      return;
+    }
+    alert("Payment submitted!");
+    setOpenPayment(false);
+    // Optionally reset form here
+  };
 
   return (
     <Dialog
@@ -221,10 +247,34 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                 ]}
               />
             </div>
+      
+      {openPayment && (
+        <OpenPayment
+          open={openPayment}
+          onClose={() => setOpenPayment(false)}
+          handleSubmit={handleSubmit}
+          cardNumber={cardNumber}
+          handleCardInput={handleCardInput}
+          expiry={expiry}
+          setExpiry={setExpiry}
+          cvv={cvv}
+          setCvv={setCvv}
+          country={country}
+          setCountry={setCountry}
+          agree={agree}
+          setAgree={setAgree}
+          cardError={cardError}
+        />
+      )}
 
             {/* Footer Button */}
             <div className="pri-next-btn text-center mt-10">
-              <button className="bg-gradient-to-r from-indigo-500 to-purple-400 text-black font-semibold py-3 px-24 md:px-40 rounded-xl shadow-lg hover:scale-105 transition-transform">
+              <button className="bg-gradient-to-r from-indigo-500 to-purple-400 text-black font-semibold py-3 px-24 md:px-40 rounded-xl shadow-lg hover:scale-105 transition-transform"
+                onClick={() => {
+                  setOpenPayment(true);
+                  setPricingModalOpen(false);
+                }}
+              >
                 Next
               </button>
             </div>

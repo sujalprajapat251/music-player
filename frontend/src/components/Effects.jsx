@@ -303,7 +303,7 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
                                             />
                                             <div className="flex gap-1 justify-center my-2">
                                                 <button onClick={() => handleEffectPlayPause(effect.id)}
-                                                    className={`flex justify-center p-2 bg-[#2c2c2c] rounded-full items-center transition-all duration-200 ${playingEffectId === effect.id && isPlaying ? 'bg-[#FFFFFF1A]' : 'bg-[#FFFFFF1A]'
+                                                    className={`flex justify-center p-2 bg-[#2c2c2c] rounded-full items-center transition-all duration-200 ${playingEffectId === effect.id && isPlaying ? 'bg-[#2c2c2c] text-white' : 'bg-[#2c2c2c] text-black'
                                                         }`}
                                                     draggable={false} disabled={isPlaying && playingEffectId !== effect.id} title={`${playingEffectId === effect.id && isPlaying ? 'Stop' : 'Play'} ${effect.name} demo`}>
                                                     {playingEffectId === effect.id && isPlaying ? <MdOutlinePause className='text-white text-[12px] lg:text-[10px] xl:text-[12px]' /> : <FaPlay className='text-white text-[12px] lg:text-[10px] xl:text-[12px]' />}
