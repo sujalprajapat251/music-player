@@ -126,7 +126,7 @@ const TopHeader = () => {
 
     // Get theme colors
     const { isDark } = useTheme();
-    console.log("isDark", isDark);
+    // console.log("isDark", isDark);
     const colors = getTopHeaderColors(isDark);
     
     // Get current track ID and tracks from Redux
@@ -236,7 +236,7 @@ const TopHeader = () => {
     const currentMusic = useSelector((state) => state.music?.currentMusic);
     const allMusic = useSelector((state) => state?.music?.allmusic || []);
     const getTrackType = useSelector((state) => selectStudioState(state).newtrackType);
-    console.log(".... > ", allMusic);
+    // console.log(".... > ", allMusic);
     
     const navigate = useNavigate();
     useEffect(() => {
@@ -1863,7 +1863,7 @@ const TopHeader = () => {
                     </button>
                     <div 
                         onClick={handleExportModal} 
-                        className="flex xl:gap-2 sm:p-2 md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full cursor-pointer items-center transition-colors duration-200 hover:opacity-80"
+                        className="flex xl:gap-2 p-1 sm:p-2 md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full cursor-pointer items-center transition-colors duration-200 hover:opacity-80"
                         style={{ 
                             border: `1px solid ${colors.borderStrong}`,
                             backgroundColor: colors.background
@@ -1882,7 +1882,7 @@ const TopHeader = () => {
                     </div>
 
                     <div 
-                        className="flex xl:gap-2 justify-center items-center sm:p-2 md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full cursor-pointer hover:opacity-80 transition-all"
+                        className="flex xl:gap-2 justify-center items-center p-1 sm:p-2 md:p-1 lg:px-2 xl:px-3 lg:py-1 rounded-full cursor-pointer hover:opacity-80 transition-all"
                         style={{border: `1px solid ${colors.borderStrong}`, backgroundColor: colors.upgradeBackground }}
                         onClick={() => setPricingModalOpen(true)}
                     >
@@ -1896,7 +1896,7 @@ const TopHeader = () => {
                     </div>
 
                     <div 
-                        className="flex md:gap-2 sm:p-2 md:px-2 xl:px-3 md:py-1 rounded-full cursor-pointer hover:opacity-80 transition-all"
+                        className="flex md:gap-2 p-1 sm:p-2 md:px-2 xl:px-3 md:py-1 rounded-full cursor-pointer hover:opacity-80 transition-all"
                         style={{ 
                             backgroundColor: colors.shareBackground,
                             border: `1px solid ${colors.borderStrong}`

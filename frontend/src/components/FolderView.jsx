@@ -9,6 +9,7 @@ import { IMAGE_URL } from '../Utils/baseUrl';
 import { getAllMusic, renameMusic, moveToFolderMusic, deleteMusic, addCoverImage, removeCoverImage } from '../Redux/Slice/music.slice';
 import { getFolderByUserId } from '../Redux/Slice/folder.slice';
 import close from '../Images/close.svg';
+import { IoArrowBackOutline } from "react-icons/io5";
 
 const FolderView = () => {
   const { id } = useParams();
@@ -437,10 +438,10 @@ const FolderView = () => {
   return (
     <>
       <div className="p-3 lg:p-5 xl:p-6 2xl:p-8 3xl:p-10 bg-[#141414]">
-        <div className="flex gap-3 text-white">
-          <button className="py-1 px-3 border rounded-3xl border-[#FFFFFF1A] hover:bg-gray-600" onClick={() => navigate('/project')}>
-            Back
-          </button>
+        <div className="flex items-center gap-3 text-white cursor-pointer">
+          <div className="py-1 px-2" onClick={() => navigate('/project')}>
+            <IoArrowBackOutline className='w-5 h-5' />
+          </div>
           <h1 className="text-[16px] md:text-[18px] lg:text-[20px] 2xl:text-[24px] 3xl:text-[30px] font-bold">{folderName}</h1>
         </div>
 

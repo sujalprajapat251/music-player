@@ -69,6 +69,15 @@ const Timeline = () => {
   const svgRef = useRef(null);
   const lastReduxUpdateRef = useRef(0);
   const lastPlayerUpdateRef = useRef(0);
+  
+  // Throttling function for Redux updates during drag operations
+  const throttleReduxUpdate = useCallback((updateFn) => {
+    const now = Date.now();
+    if (!lastReduxUpdateRef.current || now - lastReduxUpdateRef.current > 100) {
+      updateFn();
+      lastReduxUpdateRef.current = now;
+    }
+  }, []);
   const fileInputRef = useRef(null);
   const audioTrackFileInputRef = useRef(null);
   const voiceMicFileInputRef = useRef(null);
@@ -1002,7 +1011,16 @@ const Timeline = () => {
       finalTime = snapToGrid(rawTime, selectedGrid, duration);
     }
 
-    dispatch(setCurrentTime(finalTime));
+    // Update local state immediately for smooth cursor movement
+    setLocalCurrentTime(finalTime);
+    
+    // Update Redux state only when dragging stops or at reduced frequency
+    if (isDragging.current) {
+      // Throttle Redux updates during drag for performance
+      throttleReduxUpdate(() => dispatch(setCurrentTime(finalTime)));
+    } else {
+      dispatch(setCurrentTime(finalTime));
+    }
 
     // Update wavesurfer visual progress
     waveSurfers.forEach((ws) => {
@@ -1480,9 +1498,12 @@ const Timeline = () => {
     }
   }, [audioDuration, selectedGrid, selectedTime, selectedRuler, timelineWidthPerSecond, zoomLevel]);
 
-  // Sync local state with Redux state
+  // Sync local state with Redux state (but not during drag operations)
   useEffect(() => {
-    setLocalCurrentTime(currentTime);
+    // Don't update local state during drag to prevent infinite loops
+    if (!isDragging.current) {
+      setLocalCurrentTime(currentTime);
+    }
   }, [currentTime]);
 
   // Handle Redux play/pause state changes
@@ -1601,8 +1622,26 @@ const Timeline = () => {
   }, []);
 
   const handleMouseUp = useCallback(() => {
+    // Update Redux state one final time when dragging stops
+    if (isDragging.current && localCurrentTime !== currentTime) {
+      dispatch(setCurrentTime(localCurrentTime));
+    }
     isDragging.current = false;
-  }, []);
+  }, [dispatch, localCurrentTime, currentTime]);
+
+  // Add global mouse up listener to handle dragging outside component
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (isDragging.current) {
+        handleMouseUp();
+      }
+    };
+
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => {
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [handleMouseUp]);
 
   // Handle wheel zoom
   const handleWheel = useCallback((e) => {
@@ -3827,7 +3866,7 @@ const Timeline = () => {
               zIndex: 10,
               transform: `translateX(${playheadPosition}px)`,
               willChange: "transform",
-              transition: (isMagnetEnabled && isDragging.current) ? "none" : "transform 0.05s linear" // Only disable during mouse drag with magnet
+              transition: isDragging.current ? "none" : "transform 0.05s linear" // Disable transition during any drag operation for instant response
             }}>
               <div style={{
                 position: "absolute",

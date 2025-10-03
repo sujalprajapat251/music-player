@@ -79,12 +79,6 @@ const BottomToolbar = () => {
     const reduxSelectedKey = useSelector((state) => selectStudioState(state)?.selectedKey || null);
     const reduxSelectedScale = useSelector((state) => selectStudioState(state)?.selectedScale || null);
 
-    const { selectedGrid, zoomLevel } = useSelector(selectGridSettings);
-    // BottomToolbar.jsx – add this small helper near your handlers
-    const requestCenterAnchor = () => {
-        window.dispatchEvent(new CustomEvent('timeline:anchor', { detail: { type: 'center' } }));
-    };
-
     // Then update your existing zoom handlers:
     const handleZoomIn = () => {
         // Dispatch anchor event before zooming
@@ -100,14 +94,6 @@ const BottomToolbar = () => {
             detail: { type: 'center' }
         }));
         dispatch(zoomOut());
-    };
-
-    const handleResetZoom = () => {
-        // Dispatch anchor event before zooming
-        window.dispatchEvent(new CustomEvent('timeline:anchor', {
-            detail: { type: 'center' }
-        }));
-        dispatch(resetZoom());
     };
 
     // Sync local state with Redux state
@@ -524,18 +510,6 @@ const BottomToolbar = () => {
         }
     }, [isRecording, recordedData]);
 
-    // Handle move 0.1 second ahead
-const handleMoveForwardSmall = () => {
-    const newTime = Math.min(currentTime + 0.1, audioDuration);
-    dispatch(setCurrentTime(Math.round(newTime * 10) / 10));
-};
-
-// Handle move 0.1 second behind
-const handleMoveBackwardSmall = () => {
-    const newTime = Math.max(currentTime - 0.1, 0);
-    dispatch(setCurrentTime(Math.round(newTime * 10) / 10));
-};
-
 
     return (
         <>
@@ -591,7 +565,7 @@ const handleMoveBackwardSmall = () => {
                                 }
                             }} className="cursor-pointer">
                                 <div className="flex gap-1 sm:gap-2 items-center rounded-2xl bg-[#1414141A] dark:bg-[#1F1F1F] py-[1px] px-2 md:py-[4px] md:px-2 lg:py-[6px] lg:px-3">
-                                    <p className="rounded-full p-[3px] sm:p-[3px] lg:p-2 bg-[#FF6767]"></p>
+                                    <p className="rounded-full p-[4px] sm:p-[4px] md:p-[6px] lg:p-2 bg-[#FF6767]"></p>
                                     <p className="text-secondary-light dark:text-secondary-dark text-[10px] md:text-[12px]">Rec</p>
                                 </div>
                             </button>

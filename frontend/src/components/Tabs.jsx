@@ -4,31 +4,44 @@ import { motion } from "framer-motion";
 // Reusable Tabs component
 export default function Tabs({ tabs }) {
   const [activeTab, setActiveTab] = useState(0);
+  const [tabWidths, setTabWidths] = useState([]);
+  const tabRefs = React.useRef([]);
+
+  React.useEffect(() => {
+    const widths = tabRefs.current.map(ref => ref?.offsetWidth || 0);
+    setTabWidths(widths);
+  }, [tabs]);
+
+  const getLeftPosition = () => {
+    let position = 0;
+    for (let i = 0; i < activeTab; i++) {
+      position += (tabWidths[i] || 0) + 20; // 20 is the gap (gap-5 = 1.25rem = 20px)
+    }
+    return position;
+  };
+
   return (
     <>
       <div className="w-full flex justify-center">
-        <div className="relative flex rounded-full mx-auto justify-center gap-5 bg-gray-200 dark:bg-white p-1.5">
+        <div className="relative flex rounded-full mx-auto justify-center gap-5 bg-gray-200 dark:bg-white p-2">
           <motion.div
-            layout
-            className="absolute top-1 bottom-1 rounded-full bg-[#8b5cf6] shadow-md"
-            transition={{
-              duration: 0.4,         // slightly slower for smoothness
-              ease: [0.25, 0.1, 0.25, 1], // ease-in-out cubic bezier
-            }}
+            className="absolute top-2 bottom-2 left-2 rounded-full bg-[#8b5cf6] shadow-md"
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
             animate={{
-              x: `${activeTab * 100}%`,
+              x: getLeftPosition(),
+              width: tabWidths[activeTab] || 0,
             }}
-              
           />
           {tabs.map((tab, idx) => (
             <button
               key={tab.label}
+              ref={el => tabRefs.current[idx] = el}
               onClick={() => setActiveTab(idx)}
-              className={`relative flex items-center space-x-2 px-10 sm:px-10 md:px-12 py-2 rounded-full font-medium transition-all duration-300
+              className={`relative flex items-center space-x-2 px-8 sm:px-10 md:px-12 py-2 rounded-full text-[12px] md:text-[16px] font-medium transition-colors duration-300 z-10
               ${
                 activeTab === idx
-                  ? "bg-[#8b5cf6] text-white shadow-md"
-                  : "text-black hover:text-black"
+                  ? "text-white"
+                  : "text-black hover:text-gray-700"
               }`}
             >
               {tab.icon && <span className="w-5 h-5">{tab.icon}</span>}

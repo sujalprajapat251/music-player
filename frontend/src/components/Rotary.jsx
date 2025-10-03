@@ -176,7 +176,7 @@ function Knob3({ label = "Bite", min = -135, max = 135, defaultAngle }) {
                 </svg>
                 {/* Indicator line */}
                 <div
-                    className={`absolute top-1.5 left-1/2 w-0.5 h-4 bg-gray-400 rounded-sm -translate-x-1/2 origin-bottom`}
+                    className={`absolute top-1.5 left-1/2 w-0.5 h-8 bg-gray-400 rounded-sm -translate-x-1/2 origin-bottom`}
                     style={{
                         transform: `translateX(-50%) rotate(${angle}deg)`,
                     }}
