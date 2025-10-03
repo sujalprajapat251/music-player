@@ -6,6 +6,7 @@ import { PiWaveformLight } from "react-icons/pi";
 import { useDispatch, useSelector } from "react-redux";
 import { setMusicTypeExtention } from "../Redux/Slice/sound.slice";
 import { selectStudioState } from "../Redux/rootReducer";
+import { useI18n } from "../Utils/i18n";
 
 export default function ExportPopup({ open, onClose }) {
   const [activeTab, setActiveTab] = useState("audio");
@@ -14,22 +15,23 @@ export default function ExportPopup({ open, onClose }) {
   const [isExporting, setIsExporting] = useState(false);
 
   const dispatch = useDispatch();
+  const { t } = useI18n();
 
   // Get tracks from Redux store
   const tracks = useSelector((state) => selectStudioState(state)?.tracks || []);
 
   // Audio export formats
   const audioFormats = [
-    { name: "WAV", desc: "Great sounding, uncompressed", tag: "Best quality", icon: <img src={subscription} alt="subscription" className="w-4 h-4" /> },
-    { name: "OGG", desc: "High quality, some compression", icon: <img src={subscription} alt="subscription" className="w-4 h-4" /> },
-    { name: "MP3", desc: "Smaller size, compressed", icon: null },
+    { name: "WAV", desc: t('greatSounding'), tag: t('bestQuality'), icon: <img src={subscription} alt="subscription" className="w-4 h-4" /> },
+    { name: "OGG", desc: t('highQuality'), icon: <img src={subscription} alt="subscription" className="w-4 h-4" /> },
+    { name: "MP3", desc: t('smallerSize'), icon: null },
   ];
 
-  // Note export formats
+  // Note export formats with translations
   const noteFormats = [
-    { name: "MIDI", desc: "Note and instrument data only", icon: <img src={subscription} alt="subscription" className="w-4 h-4" /> },
-    { name: "Flat.io", desc: "Notation for Flat.io", icon: <img src={subscription} alt="subscription" className="w-4 h-4" /> },
-    { name: "Noteflight", desc: "Notation for Noteflight", icon: <img src={subscription} alt="subscription" className="w-4 h-4" /> },
+    { name: "MIDI", desc: t('noteAndInstrument'), icon: <img src={subscription} alt="subscription" className="w-4 h-4" /> },
+    { name: "Flat.io", desc: t('notationForFlat'), icon: <img src={subscription} alt="subscription" className="w-4 h-4" /> },
+    { name: "Noteflight", desc: t('notationForNoteflight'), icon: <img src={subscription} alt="subscription" className="w-4 h-4" /> },
   ];
 
   // Function to download a single track
@@ -499,7 +501,7 @@ function writeString(view, offset, string) {
         <DialogPanel className="bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-secondary-dark rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-neutral-200 dark:border-neutral-800">
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-200 dark:border-neutral-800">
-            <h2 className="text-lg font-semibold">Export</h2>
+            <h2 className="text-lg font-semibold">{t('export')}</h2>
             <button
               className="p-2 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-800"
               onClick={onClose}
@@ -518,7 +520,7 @@ function writeString(view, offset, string) {
                   : "text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white"
                   }`}
               >
-                Audio
+                {t('audio')}
               </button>
               <button
                 onClick={() => setActiveTab("note")}
@@ -527,7 +529,7 @@ function writeString(view, offset, string) {
                   : "text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white"
                   }`}
               >
-                Note
+                {t('note')}
               </button>
             </div>
           </div>
@@ -543,15 +545,15 @@ function writeString(view, offset, string) {
                       <PiWaveformLight />
                     </div>
                     <div>
-                      <p className="font-semibold">Classic</p>
-                      <p className="text-xs text-neutral-300">Mastering</p>
+                      <p className="font-semibold">{t('classic')}</p>
+                      <p className="text-xs text-neutral-300">{t('mastering')}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-2">
                     <button className="flex items-center bg-neutral-200 dark:bg-neutral-900/70 hover:bg-neutral-300 dark:hover:bg-neutral-800 px-3 py-1 rounded-lg text-sm">
                       <SlidersHorizontal size={16} className="mr-1" />
-                      Edit
+                      {t('edit')}
                     </button>
 
                     {/* Toggle Switch */}
@@ -573,7 +575,7 @@ function writeString(view, offset, string) {
               {audioFormats.some(f => f.name === "MP3") && (
                 <div className="px-5 pb-3">
                   <div className="flex justify-between items-center bg-neutral-200 dark:bg-neutral-800 p-3 rounded-lg">
-                    <span className="text-sm font-medium">Export Mode:</span>
+                    <span className="text-sm font-medium">{t('exportMode')}:</span>
                     <div className="flex bg-neutral-300 dark:bg-neutral-700 rounded-full p-1">
                       <button
                         onClick={() => setExportMode("individual")}
@@ -582,7 +584,7 @@ function writeString(view, offset, string) {
                           : "text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white"
                           }`}
                       >
-                        Individual Tracks
+                        {t('individualTracks')}
                       </button>
                       <button
                         onClick={() => setExportMode("combined")}
@@ -591,7 +593,7 @@ function writeString(view, offset, string) {
                           : "text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white"
                           }`}
                       >
-                        Combined Mix
+                        {t('combinedMix')}
                       </button>
                     </div>
                   </div>
@@ -626,7 +628,7 @@ function writeString(view, offset, string) {
                       disabled={isExporting && f.name === 'MP3'}
                     >
                       {isExporting && f.name === 'MP3' ? (
-                        <span className="text-xs">Exporting...</span>
+                        <span className="text-xs">{t('exporting')}</span>
                       ) : (
                         <Download size={20} />
                       )}

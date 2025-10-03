@@ -6,20 +6,9 @@ import timeIcon4 from '../Images/timeIcon4.svg'
 import timeIcon5 from '../Images/timeIcon5.svg'
 import timeIcon6 from '../Images/timeIcon5.svg'
 import { useTheme } from "../Utils/ThemeContext";
+import { useI18n } from "../Utils/i18n";
 import { LuAudioLines } from "react-icons/lu";
 import { IoMicOutline } from "react-icons/io5";
-
-const actions = [
-  { label: "Browse loops", icon: timeIcon1 },
-  { label: "Patterns Beatmaker", icon: timeIcon2},
-  { label: "Play the synth", icon: timeIcon3 },
-  { label: "Add new track", icon: timeIcon4 },
-  { label: "Import file", icon: timeIcon5 },
-  // { label: "Invite Friend", icon: timeIcon6}
-];
-
-const row1 = actions.slice(0, 3);
-const row2 = actions.slice(3);
 
 const getActionCardColors = (isDark) => ({
   cardBg: isDark ? "#232323" : "#dfdfdf",
@@ -32,9 +21,23 @@ const getActionCardColors = (isDark) => ({
 
 const TimelineActionBoxes = ({ onAction }) => {
   const { isDark } = useTheme();
+  const { t } = useI18n();
   const colors = getActionCardColors(isDark);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+
+  // Create actions array with translated labels
+  const actions = [
+    { label: t('browseLoops'), icon: timeIcon1 },
+    { label: t('patternsBeatmaker'), icon: timeIcon2},
+    { label: t('playTheSynth'), icon: timeIcon3 },
+    { label: t('addNewTrack'), icon: timeIcon4 },
+    { label: t('importFile'), icon: timeIcon5 },
+    // { label: "Invite Friend", icon: timeIcon6}
+  ];
+
+  const row1 = actions.slice(0, 3);
+  const row2 = actions.slice(3);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -47,10 +50,21 @@ const TimelineActionBoxes = ({ onAction }) => {
   }, []);
 
   const handleActionClick = (action, e) => {
-    if (action.label === "Import file") {
+    // Use original English labels for functionality, but display translated labels
+    const originalLabels = {
+      [t('browseLoops')]: "Browse loops",
+      [t('patternsBeatmaker')]: "Patterns Beatmaker", 
+      [t('playTheSynth')]: "Play the synth",
+      [t('addNewTrack')]: "Add new track",
+      [t('importFile')]: "Import file"
+    };
+    
+    const originalLabel = originalLabels[action.label] || action.label;
+    
+    if (originalLabel === "Import file") {
       setMenuOpen(!menuOpen);
     } else {
-      onAction && onAction(action.label);
+      onAction && onAction(originalLabel);
     }
   };
 
@@ -250,7 +264,7 @@ const TimelineActionBoxes = ({ onAction }) => {
               onClick={() => handleMenuClick("Import to Audio track")}
             >
               <LuAudioLines style={{ filter: isDark ? "none" : "invert(1)" }} />
-              <span>Import to Audio track</span>
+              <span>{t('importToAudioTrack')}</span>
             </div>
             <div
               className="dropdown-item"
@@ -258,7 +272,7 @@ const TimelineActionBoxes = ({ onAction }) => {
               onClick={() => handleMenuClick("Import to Voice & Mic track")}
             >
               <IoMicOutline style={{ filter: isDark ? "none" : "invert(1)" }} />
-              <span>Import to Voice & Mic track</span>
+              <span>{t('importToVoiceMicTrack')}</span>
             </div>
             <div
               className="dropdown-item"
@@ -266,7 +280,7 @@ const TimelineActionBoxes = ({ onAction }) => {
               onClick={() => handleMenuClick("Open in sampler")}
             >
               <LuAudioLines style={{ filter: isDark ? "none" : "invert(1)" }} />
-              <span>Open in sampler</span>
+              <span>{t('openInSampler')}</span>
             </div>
           </div>
         )}

@@ -14,6 +14,7 @@ import { addTrack, setCurrentTrackId, setTrackType, createTrackWithDefaults, set
 import { getNextTrackColor } from "../Utils/colorUtils";
 import { selectStudioState } from "../Redux/rootReducer";
 import PricingModel from './PricingModel'
+import { useI18n } from "../Utils/i18n";
 
 const instrumentOptions = [
   {
@@ -63,6 +64,8 @@ const AddNewTrackModel = ({ onClose, onOpenLoopLibrary }) => {
   const [pricingModalOpen, setPricingModalOpen] = useState(false);
   const [hideSelf, setHideSelf] = useState(false);
   const trackHeight = 80; // or get from redux
+
+  const { t } = useI18n();
 
   // For file input
   const fileInputRef = React.useRef();
@@ -155,7 +158,7 @@ const AddNewTrackModel = ({ onClose, onOpenLoopLibrary }) => {
         <div className="bg-primary-light dark:bg-[#262529] rounded-sm shadow-lg w-full max-w-xl mx-4 p-6 relative sm:p-4 md:p-6">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-[#1414141A] dark:border-[#FFFFFF1A] pb-6 mb-6 sm:pb-4 md:pb-6 sm:mb-4 md:mb-6">
-            <h2 className="text-secondary-light dark:text-secondary-dark text-lg font-semibold">Add New Track</h2>
+            <h2 className="text-secondary-light dark:text-secondary-dark text-lg font-semibold">{t('addNewTrack')}</h2>
             <button onClick={onClose} className="text-[#262529] dark:text-[#FFFFFF99]  text-2xl font-bold focus:outline-none">
               &times;
             </button>
