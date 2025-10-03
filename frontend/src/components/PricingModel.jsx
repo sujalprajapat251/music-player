@@ -35,6 +35,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
   };
 
   return (
+    <>
     <Dialog
       open={pricingModalOpen}
       onClose={setPricingModalOpen}
@@ -248,24 +249,14 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
               />
             </div>
       
-      {openPayment && (
+      {/* {openPayment && (
         <OpenPayment
-          open={openPayment}
-          onClose={() => setOpenPayment(false)}
-          handleSubmit={handleSubmit}
-          cardNumber={cardNumber}
-          handleCardInput={handleCardInput}
-          expiry={expiry}
-          setExpiry={setExpiry}
-          cvv={cvv}
-          setCvv={setCvv}
-          country={country}
-          setCountry={setCountry}
-          agree={agree}
-          setAgree={setAgree}
-          cardError={cardError}
+          backToPricing={() => {
+            setOpenPayment(false);
+            setPricingModalOpen(true); // reopen Pricing modal
+          }}
         />
-      )}
+      )} */}
 
             {/* Footer Button */}
             <div className="pri-next-btn text-center mt-10">
@@ -282,6 +273,35 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
         </div>
       </div>
     </Dialog>
+
+    <Dialog
+        open={openPayment}
+        onClose={() => setOpenPayment(false)}
+        className="relative z-[200]"
+      >
+        <DialogBackdrop className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
+        <div className="fixed inset-0 z-10 w-screen ">
+          <div className="flex min-h-full items-center justify-center p-4 sm:p-0">
+            <DialogPanel className="relative z-[210] transform overflow-hidden p-1 rounded-[8px] bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-secondary-dark border border-neutral-200 dark:border-neutral-800 text-left shadow-xl w-[1000px] max-w-full max-h-[80vh] mx-4 overflow-y-auto">
+              
+              {/* Back Button */}
+              <button
+                onClick={() => {
+                  setOpenPayment(false);
+                  setPricingModalOpen(true); // reopen pricing
+                }}
+                className="absolute top-4 left-4 text-white font-bold hover:text-purple-500 transition-colors"
+              >
+                ← Back
+              </button>
+
+              {/* Payment Component */}
+              <OpenPayment />
+            </DialogPanel>
+          </div>
+        </div>
+      </Dialog>
+    </>
   );
 };
 

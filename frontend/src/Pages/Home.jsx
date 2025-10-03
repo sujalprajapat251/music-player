@@ -7,8 +7,8 @@ import rightBottom from "../Images/rightBottom.png";
 import Homepage from "../Images/Homepage.png";
 import pianoImg from "../Images/piyano.png";
 import playButtonSvg from "../Images/play.png";
-import playButtonSvg_1 from "../Images/play.svg";
-import pauseButtonSvg from "../Images/pause.svg";
+import playButtonSvg_1 from "../Images/playwhite.svg";
+import pausewhiteSvg from "../Images/pausewhite.svg";
 import f1 from "../Images/f1.svg";
 import f2 from "../Images/f2.svg";
 import f3 from "../Images/f3.svg";
@@ -65,18 +65,40 @@ const Home = () => {
   ];
 
   // export default function PianoVideo() {
+  // const videoRef = useRef(null);
+  // const [isPlaying, setIsPlaying] = useState(false);
+
+  // const togglePlay = () => {
+  //   if (!videoRef.current) return;
+  //   if (videoRef.current.paused) {
+  //     videoRef.current.play();
+  //     setIsPlaying(true);
+  //   } else {
+  //     videoRef.current.pause();
+  //     setIsPlaying(false);
+  //   }
+  // };
+  
   const videoRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true); // autoplay mate true
+  const [showControls, setShowControls] = useState(false);
 
   const togglePlay = () => {
-    if (!videoRef.current) return;
-    if (videoRef.current.paused) {
-      videoRef.current.play();
-      setIsPlaying(true);
-    } else {
-      videoRef.current.pause();
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (isPlaying) {
+      video.pause();
       setIsPlaying(false);
+      setShowControls(true); // pause par controls show thase
+    } else {
+      video.play();
+      setIsPlaying(true);
+      setShowControls(false); // play par controls hide thase
     }
+
+    // click par controls show/hide toggle thase
+    setShowControls((prev) => !prev);
   };
 
   // useEffect(() => {
@@ -297,9 +319,11 @@ const Home = () => {
                 {<video
                   ref={videoRef}
                   src="https://cdn.pixabay.com/video/2017/11/28/13097-244835884_tiny.mp4"
-                  controls
-                  muted
-                  playsInline
+                  // controls
+                  // muted
+                  // playsInline
+                  autoPlay
+                  loop
                   className="rounded-xl w-full max-w-[800px] sm:max-w-[400px] md:max-w-[600px] lg:max-w-[800px] h-auto object-cover"
                   // poster={pianoImg}
                 >
@@ -317,7 +341,7 @@ const Home = () => {
                   "
                 >
                   <img
-                    src={isPlaying ? pauseButtonSvg : playButtonSvg_1}
+                    src={isPlaying ? pausewhiteSvg : playButtonSvg_1}
                     alt="play/pause"
                     className="h-1/2 w-1/2"
                   />
