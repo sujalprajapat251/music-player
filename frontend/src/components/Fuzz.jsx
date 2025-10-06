@@ -384,6 +384,29 @@ const Fuzz = () => {
     const currentEffect = activeEffects.find(effect => effect.name === "Fuzz");
     const currentInstanceId = currentEffect?.instanceId;
 
+    useEffect(() => {
+        if (currentInstanceId) {
+            const savedValues = localStorage.getItem(`fuzz_${currentInstanceId}_values`);
+            if (savedValues) {
+                try {
+                    const parsedValues = JSON.parse(savedValues);
+                    // Update Redux with saved values
+                    parsedValues.forEach((value, index) => {
+                        if (value !== null && value !== undefined) {
+                            dispatch(updateEffectParameter({
+                                instanceId: currentInstanceId,
+                                parameterIndex: index,
+                                value: value
+                            }));
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error loading saved Fuzz values:', error);
+                }
+            }
+        }
+    }, [currentInstanceId, dispatch]);
+
     // Handle knob value changes
     const handleKnobChange = (parameterIndex, value) => {
         if (currentInstanceId) {
@@ -392,6 +415,11 @@ const Fuzz = () => {
                 parameterIndex: parameterIndex,
                 value: value
             }));
+
+            const storageKey = `fuzz_${currentInstanceId}_values`;
+            const existingValues = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            existingValues[parameterIndex] = value;
+            localStorage.setItem(storageKey, JSON.stringify(existingValues));
         }
     };
 
@@ -400,11 +428,24 @@ const Fuzz = () => {
         if (currentEffect && currentEffect.parameters && currentEffect.parameters[parameterIndex]) {
             return currentEffect.parameters[parameterIndex].value;
         }
+        if (currentInstanceId) {
+            const savedValues = localStorage.getItem(`fuzz_${currentInstanceId}_values`);
+            if (savedValues) {
+                try {
+                    const parsedValues = JSON.parse(savedValues);
+                    if (parsedValues[parameterIndex] !== null && parsedValues[parameterIndex] !== undefined) {
+                        return parsedValues[parameterIndex];
+                    }
+                } catch (error) {
+                    console.error('Error parsing saved Fuzz values:', error);
+                }
+            }
+        }
         // Return default values based on parameter index
         switch (parameterIndex) {
-            case 0: return -90; // Drive
-            case 1: return 0;   // Tone
-            case 2: return 90;  // Mix
+            case 0: return -90; // Grain
+            case 1: return 0;   // Bite
+            case 2: return 90;  // Low Cut
             default: return 0;
         }
     };
