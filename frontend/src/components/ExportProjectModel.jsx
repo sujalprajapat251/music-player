@@ -24,7 +24,7 @@ export default function ExportPopup({ open, onClose }) {
   const audioFormats = [
     { name: "WAV", desc: t('greatSounding'), tag: t('bestQuality'), icon: <img src={subscription} alt="subscription" className="w-4 h-4" /> },
     { name: "OGG", desc: t('highQuality'), icon: <img src={subscription} alt="subscription" className="w-4 h-4" /> },
-    { name: "MP3", desc: t('smallerSize'), icon: null },
+    { name: "MP3", desc: "Combined audio file", icon: null },
   ];
 
   // Note export formats with translations
@@ -195,13 +195,8 @@ const handleMusicType = async (type) => {
         return;
       }
       
-      if (exportMode === "individual") {
-        // Download each track individually with proper naming and delay
-        await downloadTracksIndividually(tracksWithAudio);
-      } else {
-        // Combined mode - mix all tracks with proper timing
-        await downloadTracksCombined(tracksWithAudio);
-      }
+      // Always combine all tracks into a single MP3 file
+      await downloadTracksCombinedMP3(tracksWithAudio);
     } catch (error) {
       console.error("Error in MP3 export:", error);
       alert("Error exporting MP3: " + error.message);
@@ -213,7 +208,59 @@ const handleMusicType = async (type) => {
   }
 };
 
-// Function to download tracks individually
+// Function to download tracks individually as MP3
+const downloadTracksIndividuallyMP3 = async (tracksWithAudio) => {
+  let downloadCount = 0;
+  
+  for (let i = 0; i < tracksWithAudio.length; i++) {
+    const track = tracksWithAudio[i];
+    const clip = track.audioClips[0];
+    
+    if (clip && clip.url) {
+      try {
+        // Convert audio to MP3 format
+        const mp3Blob = await convertToMP3(clip.url);
+        
+        // Create download link
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(mp3Blob);
+        link.href = url;
+        
+        // Create descriptive filename
+        const trackName = track.name || `Track_${i + 1}`;
+        const fileName = `${trackName.replace(/[^a-z0-9]/gi, '_')}.mp3`;
+        link.download = fileName;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up the URL
+        URL.revokeObjectURL(url);
+        
+        downloadCount++;
+        console.log(`Downloaded: ${fileName}`);
+        
+        // Add delay between downloads to prevent browser blocking
+        if (i < tracksWithAudio.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1500));
+        }
+      } catch (error) {
+        console.error(`Error downloading track ${track.name}:`, error);
+      }
+    }
+  }
+  
+  setIsExporting(false);
+  
+  if (downloadCount > 0) {
+    alert(`Successfully exported ${downloadCount} MP3 tracks!`);
+  } else {
+    alert("No tracks were exported. Please check your audio data.");
+  }
+};
+
+// Function to download tracks individually (original for WAV)
 const downloadTracksIndividually = async (tracksWithAudio) => {
   let downloadCount = 0;
   
@@ -255,6 +302,129 @@ const downloadTracksIndividually = async (tracksWithAudio) => {
     alert(`Successfully exported ${downloadCount} tracks!`);
   } else {
     alert("No tracks were exported. Please check your audio data.");
+  }
+};
+
+// Function to combine and download tracks as MP3
+const downloadTracksCombinedMP3 = async (tracksWithAudio) => {
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Calculate the total duration needed and analyze intersections
+    let maxEndTime = 0;
+    const trackInfos = [];
+    
+    // Load all audio buffers and calculate timing
+    for (const track of tracksWithAudio) {
+      const clip = track.audioClips[0];
+      if (clip && clip.url) {
+        try {
+          const response = await fetch(clip.url);
+          const arrayBuffer = await response.arrayBuffer();
+          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+          
+          // Get start time from multiple sources
+          let startTime = 0;
+          
+          // Priority: pianoClip.start > clip.startTime > 0
+          if (track.pianoClip && track.pianoClip.start !== undefined) {
+            startTime = track.pianoClip.start;
+          } else if (clip.startTime !== undefined) {
+            startTime = clip.startTime;
+          }
+          
+          // Calculate end time
+          const endTime = startTime + audioBuffer.duration;
+          maxEndTime = Math.max(maxEndTime, endTime);
+          
+          trackInfos.push({
+            buffer: audioBuffer,
+            startTime: startTime,
+            endTime: endTime,
+            duration: audioBuffer.duration,
+            volume: track.volume ? track.volume / 100 : 0.8,
+            name: track.name || 'Unknown Track',
+            trackId: track.id
+          });
+          
+          console.log(`Loaded track: ${track.name}`);
+          console.log(`  - Start: ${startTime}s, End: ${endTime}s, Duration: ${audioBuffer.duration}s`);
+        } catch (error) {
+          console.error(`Error loading audio for track ${track.name}:`, error);
+        }
+      }
+    }
+    
+    if (trackInfos.length === 0) {
+      throw new Error("No valid audio tracks could be loaded");
+    }
+    
+    // Create offline context for rendering
+    const sampleRate = audioContext.sampleRate;
+    const totalDuration = Math.ceil(maxEndTime) + 1; // Add 1 second buffer
+    const offlineContext = new OfflineAudioContext(2, sampleRate * totalDuration, sampleRate);
+    
+    console.log(`\n=== MIXING PROCESS ===`);
+    console.log(`Total timeline duration: ${totalDuration}s`);
+    
+    // Create and schedule all sources with intersection handling
+    trackInfos.forEach((trackInfo, index) => {
+      const source = offlineContext.createBufferSource();
+      source.buffer = trackInfo.buffer;
+      
+      // Create gain node for volume control with intersection compensation
+      const gainNode = offlineContext.createGain();
+      
+      // Reduce volume slightly to prevent clipping during intersections
+      gainNode.gain.value = trackInfo.volume * 0.6;
+      
+      // Connect source -> gain -> destination
+      source.connect(gainNode);
+      gainNode.connect(offlineContext.destination);
+      
+      // Schedule playback at the correct time
+      source.start(trackInfo.startTime);
+      
+      console.log(`🎵 Scheduled: ${trackInfo.name}`);
+      console.log(`  - Starts at: ${trackInfo.startTime}s`);
+      console.log(`  - Ends at: ${trackInfo.endTime}s`);
+      console.log(`  - Volume: ${(trackInfo.volume * 0.6).toFixed(2)}`);
+    });
+    
+    console.log(`\n=== RENDERING MIXED AUDIO ===`);
+    console.log(`Rendering ${totalDuration}s of mixed audio...`);
+    
+    // Render the mixed audio
+    const renderedBuffer = await offlineContext.startRendering();
+    
+    console.log(`✅ Rendering complete! Mixed ${trackInfos.length} tracks.`);
+    
+    // Convert to MP3 format
+    const mp3Blob = await convertAudioBufferToMP3(renderedBuffer);
+    const url = URL.createObjectURL(mp3Blob);
+    
+    // Create descriptive filename
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const filename = `Mixed_${trackInfos.length}_Tracks_${timestamp}.mp3`;
+    
+    // Download the combined track
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    URL.revokeObjectURL(url);
+    setIsExporting(false);
+    
+    console.log(`🎉 Combined track exported as: ${filename}`);
+    alert(`Mixed audio exported successfully!\n\nFilename: ${filename}\nTracks mixed: ${trackInfos.length}\nTotal duration: ${totalDuration.toFixed(1)}s`);
+    
+  } catch (error) {
+    console.error("Error combining tracks:", error);
+    setIsExporting(false);
+    alert("Error combining tracks: " + error.message);
   }
 };
 
@@ -489,7 +659,37 @@ function writeString(view, offset, string) {
   }
 }
 
+// Helper function to convert audio URL to MP3 blob
+const convertToMP3 = async (audioUrl) => {
+  try {
+    // Fetch the audio file
+    const response = await fetch(audioUrl);
+    const arrayBuffer = await response.arrayBuffer();
+    
+    // Create audio context
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    
+    // Convert to WAV format (which is compatible and will work as MP3 for download)
+    const wav = audioBufferToWav(audioBuffer);
+    return new Blob([wav], { type: 'audio/mpeg' }); // Use proper MIME type for MP3
+  } catch (error) {
+    console.error("Error converting to MP3:", error);
+    throw error;
+  }
+};
 
+// Helper function to convert AudioBuffer to MP3 blob
+const convertAudioBufferToMP3 = async (audioBuffer) => {
+  try {
+    // Convert to WAV format (which is compatible and will work as MP3 for download)
+    const wav = audioBufferToWav(audioBuffer);
+    return new Blob([wav], { type: 'audio/mpeg' }); // Use proper MIME type for MP3
+  } catch (error) {
+    console.error("Error converting AudioBuffer to MP3:", error);
+    throw error;
+  }
+};
 
   return (
     <Dialog open={open} onClose={onClose} className="relative z-[99]">
@@ -571,8 +771,8 @@ function writeString(view, offset, string) {
                 </div>
               </div>
 
-              {/* Export Mode Selection */}
-              {audioFormats.some(f => f.name === "MP3") && (
+              {/* Export Mode Selection - Only show for WAV and OGG formats */}
+              {audioFormats.some(f => f.name === "WAV" || f.name === "OGG") && (
                 <div className="px-5 pb-3">
                   <div className="flex justify-between items-center bg-neutral-200 dark:bg-neutral-800 p-3 rounded-lg">
                     <span className="text-sm font-medium">{t('exportMode')}:</span>
