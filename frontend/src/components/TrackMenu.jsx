@@ -187,21 +187,7 @@ const TrackMenu = ({ trackId, color, onRename }) => {
       {open && (
         <div
           ref={menuRef}
-          // style={{
-          //   position: "absolute",
-          //   top: "100%",
-          //   left: 0,
-          //   background: "#1F1F1F",
-          //   color: "#fff",
-          //   borderRadius: "4px",
-          //   boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-          //   minWidth: 300,
-          //   zIndex: 9999,
-          //   // padding: 8,
-          //   fontFamily: "inherit",
-          //   marginTop: 4
-          // }}
-          className="absolute top-full left-0 mt-1 min-w-[300px] rounded-md shadow-lg z-[9999]
+          className="absolute top-full left-0 sm:mt-4 md:mt-1 sm:ml-[-500%] sm:min-w-[250px] md:ml-[-80%] lg:ml-0 md:min-w-[300px] rounded-md shadow-lg z-[9999]
              bg-white text-black dark:bg-[#232323] dark:text-white font-inherit"
         >
           <MenuItem
@@ -210,12 +196,7 @@ const TrackMenu = ({ trackId, color, onRename }) => {
             onClick={onRename}
             className="py-2 px-3"
           />
-          {/* <MenuItem
-            icon={<img src={DuplicateIcon} alt="Duplicate track" style={{ width: 16, height: 16, filter: "invert(1)" }} />}
-            label="Duplicate track"
-            onClick={handleDuplicateTrack}
-            className="py-2 px-3"
-          /> */}
+        
           <MenuItem
             icon={<img src={DuplicateIcon} alt="Duplicate track" className="w-4 h-4 dark:invert" />}
             label="Duplicate track"
@@ -245,21 +226,11 @@ const TrackMenu = ({ trackId, color, onRename }) => {
               <img
                 src={FreezeIcon}
                 alt="Freeze track"
-                // style={{
-                //   width: 16,
-                //   height: 16,
-                //   filter: isFrozen ? "invert(1) brightness(1.5)" : "invert(1)",
-                //   opacity: isFrozen ? 1 : 0.7
-                // }}
                 className={`w-4 h-4 dark:invert ${isFrozen ? "brightness-150 opacity-100" : "opacity-70"}`}
               />
             }
             label={`${isFrozen ? 'Unfreeze' : 'Freeze'} track (Free up CPU)`}
             onClick={handleFreezeTrack}
-            // style={{
-            //   color: "#fff",
-            //   fontWeight:"normal"
-            // }}
             className="py-2 px-3 text-white font-normal"
           />
           <div style={{ borderTop: "1px solid #333", margin: "8px 0" }} />
@@ -294,10 +265,7 @@ const TrackMenu = ({ trackId, color, onRename }) => {
           {/* Export Submenu */}
           {submenu === "export" && (
             <div 
-              // style={{
-              //   position: "absolute", left: "100%", top: 250, background: "#232323", minWidth: 300, zIndex: 10000, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", marginLeft: 4
-              // }}
-              className="absolute left-full top-[250px] ml-1 min-w-[300px] bg:white dark:bg-[#232323] z-[10000] shadow-lg rounded-md" 
+              className="absolute left-full top-[250px] sm:mt-10 sm:ml-[-110%] md:ml-[-30%] lg:mt-1 lg:ml-1 min-w-[300px] bg:white dark:bg-[#232323] z-[10000] shadow-lg rounded-md" 
             >
               <MenuItem
                 icon={<img src={waveIcon} alt="Export" className="w-4 h-4 dark:invert"  />}
@@ -315,10 +283,7 @@ const TrackMenu = ({ trackId, color, onRename }) => {
           {/* Color Submenu */}
           {submenu === "color" && (
             <div 
-              // style={{
-              //   position: "absolute", left: "100%", top: 280, background: "#232323", minWidth: 200, zIndex: 10000, boxShadow: "0 4px 20px rgba(0,0,0,0.3)", padding: 12, marginLeft: 4
-              // }}
-              className="absolute left-full top-[280px] ml-1 min-w-[200px] bg:white dark:bg-[#232323] text-black dark:text-white z-[10000] shadow-lg p-3 rounded-md" 
+              className="absolute left-full top-[280px] sm:mt-2 sm:ml-[-75%] md:mt-0 md:ml-1 min-w-[200px] bg:white dark:bg-[#232323] text-black dark:text-white z-[10000] shadow-lg p-3 rounded-md" 
               style={{
                 backgroundColor: document.documentElement.classList.contains("dark") 
                   ? "#232323"  
@@ -326,21 +291,11 @@ const TrackMenu = ({ trackId, color, onRename }) => {
                 opacity: 1
               }}
             >
-              <div className="flex flex-wrap gap-2"
-                // style={{ display: "flex", flexWrap: "wrap", gap: 8 }}
-              >
+              <div className="flex flex-wrap gap-2">
+                
                 {MENU_COLORS.map((menuColor) => (
                   <div
                     key={menuColor}
-                    // style={{
-                    //   width: 28,
-                    //   height: 28,
-                    //   background: menuColor, 
-                    //   borderRadius: 4,
-                    //   cursor: "pointer",
-                    //   border: `2px solid ${color === menuColor ? "#fff" : "#232323"}`,
-                    //   boxSizing: "border-box"
-                    // }}
                     className={`w-7 h-7 rounded cursor-pointer border-2 box-border`}
                     style={{
                       backgroundColor: menuColor,
@@ -377,7 +332,6 @@ const MenuItem = ({ icon, label, onMouseEnter, onMouseLeave, hasArrow, onClick, 
       position: "relative",
       ...style
     }}
-    // className="hover:bg-[#333]"
     className="flex items-center px-3 py-2 cursor-pointer rounded-md transition-colors bg-white dark:bg-[#232323] hover:bg-gray-200 dark:hover:bg-[#333]"
   >
     <span style={{ marginRight: 12, display: "flex", alignItems: "center" }}>

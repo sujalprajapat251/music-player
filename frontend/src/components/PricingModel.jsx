@@ -10,6 +10,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
 
   const [plan, setPlan] = useState("yearly");
   const [openPayment, setOpenPayment] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState({ name: "Professional", price: 15 },{ name: "Professional", price: 150 }); // NEW
 
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
@@ -32,6 +33,12 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
     alert("Payment submitted!");
     setOpenPayment(false);
     // Optionally reset form here
+  };
+
+  const handleSelectPlan = (plan) => {
+    setSelectedPlan(plan);
+    setOpenPayment(true);
+    setPricingModalOpen(false);
   };
 
   return (
@@ -91,7 +98,12 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                     content: (
                       <div className="grid grid-cols-1 md:grid-cols-3 md:gap-4 gap-8 w-full">
                         {/* Starter */}
-                        <div className="bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
+                        <div
+                        //  className="bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition"
+                        className={`bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col transition 
+                          ${selectedPlan?.name === "Starter" ? "shadow-[0_0_20px_rgba(168,85,247,0.9)]" : "hover:shadow-[0_0_20px_rgba(168,85,247,0.3)]"}`}
+                        onClick={() => setSelectedPlan({ name: "Starter", price: 9 })}
+                        >
                           <h3 className="text-xl font-semibold text-secondary-light dark:text-white mb-2">
                             Starter
                           </h3>
@@ -102,7 +114,9 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                           <p className="text-3xl font-bold text-secondary-light dark:text-white">
                             $9<span className="text-lg font-normal">/mo</span>
                           </p>
-                          <button className="mt-6 w-full py-2 rounded-lg border border-neutral-400 dark:border-gray-600 text-secondary-light dark:text-white hover:bg-violet-500 hover:border-violet-600 transition">
+                          <button className="mt-6 w-full py-2 rounded-lg border border-neutral-400 dark:border-gray-600 text-secondary-light dark:text-white hover:bg-violet-500 hover:border-violet-600 transition"
+                            // onClick={() => handleSelectPlan({ name: "Starter", price: 9 })}
+                          >
                             Get started →
                           </button>
                           <ul className="mt-6 space-y-2 text-sm text-neutral-700 dark:text-gray-300">
@@ -114,7 +128,12 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                         </div>
 
                         {/* Professional */}
-                        <div className="bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
+                        <div 
+                        // className="bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition"
+                        className={`bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col transition 
+                          ${selectedPlan?.name === "Professional" ? "shadow-[0_0_20px_rgba(168,85,247,0.9)]" : "hover:shadow-[0_0_20px_rgba(168,85,247,0.3)]"}`}
+                        onClick={() => setSelectedPlan({ name: "Professional", price: 15 })}
+                        >
                           <div className="flex justify-between items-center mb-2">
                             <h3 className="text-xl font-semibold text-secondary-light dark:text-white">
                               Professional
@@ -129,7 +148,9 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                           <p className="text-3xl font-bold text-secondary-light dark:text-white">
                             $15<span className="text-lg font-normal">/mo</span>
                           </p>
-                          <button className="mt-6 w-full py-2 rounded-lg bg-violet-500 text-black font-semibold hover:bg-violet-600 transition">
+                          <button className="mt-6 w-full py-2 rounded-lg bg-violet-500 text-black font-semibold hover:bg-violet-600 transition"
+                            // onClick={() => handleSelectPlan({ name: "Professional", price: 15 })}
+                          >
                             Get started →
                           </button>
                           <ul className="mt-6 space-y-2 text-sm text-neutral-700 dark:text-gray-300">
@@ -141,7 +162,12 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                         </div>
 
                         {/* Enterprise */}
-                        <div className="bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
+                        <div 
+                        // className="bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition"
+                        className={`bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col transition 
+                          ${selectedPlan?.name === "Enterprise" ? "shadow-[0_0_20px_rgba(168,85,247,0.9)]" : "hover:shadow-[0_0_20px_rgba(168,85,247,0.3)]"}`}
+                        onClick={() => setSelectedPlan({ name: "Enterprise", price: 99 })}
+                        >
                           <h3 className="text-xl font-semibold text-secondary-light dark:text-white mb-2">
                             Enterprise
                           </h3>
@@ -151,7 +177,9 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                           <p className="text-3xl font-bold text-secondary-light dark:text-white">
                             $99<span className="text-lg font-normal">/mo</span>
                           </p>
-                          <button className="mt-6 w-full py-2 rounded-lg border border-neutral-400 dark:border-gray-600 text-secondary-light dark:text-white hover:bg-violet-500 hover:border-violet-600 transition">
+                          <button className="mt-6 w-full py-2 rounded-lg border border-neutral-400 dark:border-gray-600 text-secondary-light dark:text-white hover:bg-violet-500 hover:border-violet-600 transition"
+                            // onClick={() => handleSelectPlan({ name: "Enterprise", price: 99 })}
+                          >
                             Schedule a call
                           </button>
                           <ul className="mt-6 space-y-2 text-sm text-neutral-700 dark:text-gray-300">
@@ -169,7 +197,12 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                     content: (
                       <div className="grid grid-cols-1 md:grid-cols-3 md:gap-4 gap-8 w-full">
                         {/* Starter */}
-                        <div className="bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
+                        <div 
+                        // className="bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition"
+                          className={`bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col transition 
+                            ${selectedPlan?.name === "Starter" ? "shadow-[0_0_20px_rgba(168,85,247,0.9)]" : "hover:shadow-[0_0_20px_rgba(168,85,247,0.3)]"}`}
+                          onClick={() => setSelectedPlan({ name: "Starter", price: 90 })}
+                        >
                           <h3 className="text-xl font-semibold text-secondary-light dark:text-white mb-2">
                             Starter
                           </h3>
@@ -181,7 +214,9 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                             $90
                             <span className="text-lg font-normal">/yr</span>
                           </p>
-                          <button className="mt-6 w-full py-2 rounded-lg border border-neutral-400 dark:border-gray-600 text-secondary-light dark:text-white hover:bg-violet-500 hover:border-violet-600 transition">
+                          <button className="mt-6 w-full py-2 rounded-lg border border-neutral-400 dark:border-gray-600 text-secondary-light dark:text-white hover:bg-violet-500 hover:border-violet-600 transition"
+                            // onClick={() => handleSelectPlan({ name: "Starter", price: 90 })}
+                          >
                             Get started →
                           </button>
                           <ul className="mt-6 space-y-2 text-sm text-neutral-700 dark:text-gray-300">
@@ -193,7 +228,12 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                         </div>
 
                         {/* Professional */}
-                        <div className="bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
+                        <div 
+                        // className="bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition"
+                          className={`bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col transition 
+                            ${selectedPlan?.name === "Professional" ? "shadow-[0_0_20px_rgba(168,85,247,0.9)]" : "hover:shadow-[0_0_20px_rgba(168,85,247,0.3)]"}`}
+                          onClick={() => setSelectedPlan({ name: "Professional", price: 150 })}
+                        >
                           <div className="flex justify-between items-center mb-2">
                             <h3 className="text-xl font-semibold text-secondary-light dark:text-white">
                               Professional
@@ -209,7 +249,9 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                             $150
                             <span className="text-lg font-normal">/yr</span>
                           </p>
-                          <button className="mt-6 w-full py-2 rounded-lg bg-violet-500 text-black font-semibold hover:bg-violet-600 transition">
+                          <button className="mt-6 w-full py-2 rounded-lg bg-violet-500 text-black font-semibold hover:bg-violet-600 transition"
+                            // onClick={() => handleSelectPlan({ name: "Professional", price: 150 })}
+                          >
                             Get started →
                           </button>
                           <ul className="mt-6 space-y-2 text-sm text-neutral-700 dark:text-gray-300">
@@ -221,7 +263,12 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                         </div>
 
                         {/* Enterprise */}
-                        <div className="bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition">
+                        <div 
+                        // className="bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition"
+                          className={`bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col transition 
+                            ${selectedPlan?.name === "Enterprise" ? "shadow-[0_0_20px_rgba(168,85,247,0.9)]" : "hover:shadow-[0_0_20px_rgba(168,85,247,0.3)]"}`}
+                          onClick={() => setSelectedPlan({ name: "Enterprise", price: 999 })}
+                        >
                           <h3 className="text-xl font-semibold text-secondary-light dark:text-white mb-2">
                             Enterprise
                           </h3>
@@ -232,7 +279,9 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                             $999
                             <span className="text-lg font-normal">/yr</span>
                           </p>
-                          <button className="mt-6 w-full py-2 rounded-lg border border-neutral-400 dark:border-gray-600 text-secondary-light dark:text-white hover:bg-violet-500 hover:border-violet-600 transition">
+                          <button className="mt-6 w-full py-2 rounded-lg border border-neutral-400 dark:border-gray-600 text-secondary-light dark:text-white hover:bg-violet-500 hover:border-violet-600 transition"
+                            // onClick={() => handleSelectPlan({ name: "Enterprise", price: 999 })}
+                          >
                             Schedule a call
                           </button>
                           <ul className="mt-6 space-y-2 text-sm text-neutral-700 dark:text-gray-300">
@@ -248,20 +297,15 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                 ]}
               />
             </div>
-      
-      {/* {openPayment && (
-        <OpenPayment
-          backToPricing={() => {
-            setOpenPayment(false);
-            setPricingModalOpen(true); // reopen Pricing modal
-          }}
-        />
-      )} */}
 
             {/* Footer Button */}
             <div className="pri-next-btn text-center mt-10">
               <button className="bg-gradient-to-r from-indigo-500 to-purple-400 text-black font-semibold py-3 px-24 md:px-40 rounded-xl shadow-lg hover:scale-105 transition-transform"
                 onClick={() => {
+                  if (!selectedPlan) {
+                    alert("Please select a plan first!");
+                    return;
+                  }
                   setOpenPayment(true);
                   setPricingModalOpen(false);
                 }}
@@ -282,10 +326,10 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
         <DialogBackdrop className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
         <div className="fixed inset-0 z-10 w-screen ">
           <div className="flex min-h-full items-center justify-center p-4 sm:p-0">
-            <DialogPanel className="relative z-[210] transform overflow-hidden p-1 rounded-[8px] bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-secondary-dark border border-neutral-200 dark:border-neutral-800 text-left shadow-xl w-[1000px] max-w-full max-h-[80vh] mx-4 overflow-y-auto">
+            <DialogPanel className="relative z-[210] transform overflow-hidden p-1 rounded-[8px] bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-secondary-dark border border-neutral-200 dark:border-neutral-800 text-left shadow-xl w-[1000px] max-w-full max-h-[80vh] mx-4">
               
               {/* Back Button */}
-              <button
+              {/* <button
                 onClick={() => {
                   setOpenPayment(false);
                   setPricingModalOpen(true); // reopen pricing
@@ -293,10 +337,18 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                 className="absolute top-4 left-4 text-white font-bold hover:text-purple-500 transition-colors"
               >
                 ← Back
-              </button>
+              </button> */}
 
-              {/* Payment Component */}
-              <OpenPayment />
+              {openPayment && (
+                <OpenPayment
+                  backToPricing={() => {
+                    setOpenPayment(false);
+                    setPricingModalOpen(true); // reopen Pricing modal
+                  }}
+                  plan={selectedPlan}
+                />
+              )}
+              <OpenPayment selectedPlan={selectedPlan} />
             </DialogPanel>
           </div>
         </div>

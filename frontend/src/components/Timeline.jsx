@@ -4124,11 +4124,11 @@ const Timeline = () => {
       </AnimatePresence>
 
       {/* Drum Component */}
-      {(showDrum || getTrackType === "Drums & Machines") && (
+      {/* {(showDrum || getTrackType === "Drums & Machines") && (
         <Drum onClose={() => { setShowDrum(false); dispatch(setTrackType(null)); }} />
-      )}
+      )} */}
 
-      {/* <AnimatePresence>
+      <AnimatePresence>
         {(showDrum || getTrackType === "Drums & Machines") && (
           <motion.div
             initial={{ y: "100%", opacity: 0 }}
@@ -4140,7 +4140,7 @@ const Timeline = () => {
             <Drum onClose={() => { setShowDrum(false); dispatch(setTrackType(null)); }} />
           </motion.div>
         )}
-      </AnimatePresence> */}
+      </AnimatePresence>
 
       {/* {(showGuitar || getTrackType === "Guitar") && (
         <Guitar onClose={() => { setShowGuitar(false); dispatch(setTrackType(null)); }} />
