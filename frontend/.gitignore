@@ -21,3 +21,18 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+
+# Optional eslint cache
+.eslintcache
+
+# Temporary files
+.tmp
+.temp
+
+# Backup files
+*.bak
+*.backup
