@@ -882,7 +882,7 @@ const handleSaveCoverImage = async () => {
                   <p className="text-white text-[14px] md:text-[16px]  lg:text-[18px] 2xl:text-[20px] 3xl:text-[24px] font-[600]">Start a new project</p>
                   <p className="text-white text-[12px] lg:text-[14px] 2xl:text-[14px] 3xl:text-[15px] lg:text-nowrap">Create a music or podcast project.</p>
                   <div className='flex bg-black mt-3 md:mt-2 lg:mt-3 3xl:mt-4 h-[150px] md:w-[150px]  lg:h-[180px] lg:w-[220px] 2xl:h-[180px] 2xl:w-[200px] 3xl:h-[200px] 3xl:w-[250px] d_customborder items-center justify-center' onClick={handleCreateNewProject} >
-                    <button className='border border-dashed border-white flex flex-col items-center justify-center group p-3 xl:p-4 rounded-xl hover:bg-gray-900' >
+                    <button className='border-2 border-dashed border-white flex flex-col items-center justify-center group p-3 xl:p-4 rounded-xl hover:bg-gray-900' >
                       <p className="text-white text-[16px] lg:text-[20px] xl:text-[24px]">+</p>
                       <p className="text-white text-[12px] xl:text-[14px] md:w-[60px] lg:w-full text-wrap lg:text-nowrap">New Project</p>
                     </button>
@@ -1127,7 +1127,7 @@ const handleSaveCoverImage = async () => {
                                       <MenuItem>
                                           {({ active }) => (
                                               <button onClick={() => handleMusicRenameClick(ele._id, ele.name)} className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
-                                                  <span className="font-[20px]">A</span>
+                                                    <img src={rename} alt="rename icon" className='w-3 h-3 md600:w-4 md600:h-4 2xl:w-5 2xl:h-5' />
                                                   Rename
                                               </button>
                                           )}
@@ -1340,7 +1340,7 @@ const handleSaveCoverImage = async () => {
                   </div>
                   <div className="text-center md:pt-[40px] pt-[20px]">
                     <button type="button" className="d_btn d_cancelbtn sm:me-7 me-5" onClick={() => { setAddFolderModal(false); formik.resetForm(); setEditingFolderId(null) }} >Cancel</button>
-                    <button type="submit" className="d_btn d_createbtn"> {editingFolderId ? "Rename Folder" : "New Folder"}</button>
+                    <button type="submit" className="d_btn d_createbtn"> {editingFolderId ? "Rename Folder" : "Create"}</button>
                   </div>
                 </div>
               </form>

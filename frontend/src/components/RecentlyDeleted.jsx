@@ -243,15 +243,15 @@ function RecentlyDeleted() {
 			{/* Restore Project Modal */}
 			{showRestoreModal && restoreIdx !== null && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-					<div className="bg-[#1F1F1F] rounded-xl shadow-lg p-8 w-full max-w-md relative">
+					<div className="bg-[#1F1F1F] rounded-xl shadow-lg p-8 w-full max-w-md relative mx-3">
 						<button
 							className="absolute top-4 right-4 text-gray-400 text-2xl font-bold hover:text-gray-600"
 							onClick={handleRestoreCancel}
 						>
 							&times;
 						</button>
-						<h2 className="font-bold text-2xl text-white mb-2">Restore "{deletedAudios[restoreIdx]?.name}"</h2>
-						<p className="text-[#FFFFFF99] mt-2 mb-6">Restored projects will be moved back to the default project list. Collaborators and open invites are not restored.</p>
+						<h2 className="font-bold text-[18px] text-white mb-2">Restore "{deletedAudios[restoreIdx]?.name}"</h2>
+						<p className="text-[#FFFFFF99] text-[15px] mt-2 mb-6">Restored projects will be moved back to the default project list. Collaborators and open invites are not restored.</p>
 						<div className="flex justify-end gap-4 mt-6">
 							<button
 								className="d_btn d_cancelbtn"
@@ -306,15 +306,15 @@ function RecentlyDeleted() {
 			{/* Permanently Delete Project Modal */}
 			{showDeleteModal && deleteIdx !== null && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-					<div className="bg-[#1F1F1F] rounded-xl shadow-lg p-8 w-full max-w-md relative">
+					<div className="bg-[#1F1F1F] rounded-xl shadow-lg p-8 w-full max-w-md relative mx-3">
 						<button
 							className="absolute top-4 right-4 text-gray-400 text-2xl font-bold hover:text-gray-600"
 							onClick={handleDeleteCancel}
 						>
 							&times;
 						</button>
-						<h2 className="font-bold text-2xl text-white mb-2">Permanently delete "{deletedAudios[deleteIdx]?.name}"</h2>
-						<p className="text-[#FFFFFF99] mt-2 mb-6">Are you sure you want to permanently delete this project? This action cannot be undone.</p>
+						<h2 className="font-bold text-[18px] text-white mb-2">Permanently delete "{deletedAudios[deleteIdx]?.name}"</h2>
+						<p className="text-[#FFFFFF99] text-[15px] text-center mt-2 mb-6">Are you sure you want to permanently delete this project? This action cannot be undone.</p>
 						<div className="flex justify-end gap-4 mt-6">
 							<button
 								className="d_btn d_cancelbtn"
@@ -349,18 +349,18 @@ function RecentlyDeleted() {
 							return (
 								<div key={idx} className="flex items-center justify-between py-4 border-b border-gray-200">
 									<div className="flex items-center gap-4">
-									<span className="font-semibold text-lg text-gray-200 md:text-base sm:text-xs md:max-w-[15ch] sm:max-w-[15ch] lg:max-w-none break-words whitespace-normal inline-block">{audio.name}</span>
+									<span className="font-semibold text-md text-gray-200 md:text-base md:max-w-[15ch] sm:max-w-[15ch] lg:max-w-none break-words whitespace-normal inline-block">{audio.name}</span>
 										<span className="text-gray-300 text-sm md:text-sm sm:text-xs">{daysLeft} days left</span>
 									</div>
 									<div className="flex gap-2">
 										<button
-											className="px-4 py-2 rounded border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-200 md:px-4 sm:px-1 md:py-2 sm:py-1 md:text-sm sm:text-xs"
+											className="px-2 sm:px-4 py-1 sm:py-2 rounded border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-200 md:px-4 md:py-2 md:text-sm sm:text-xs"
 											onClick={() => handleRestoreClick(idx)}
 										>
 											Restore
 										</button>
 										<button
-											className="px-4 py-2 rounded bg-red-500 text-white font-medium hover:bg-red-600 md:px-4 sm:px-1 md:py-2 sm:py-1 md:text-sm sm:text-xs"
+											className="px-2 sm:px-4 py-1 sm:py-2 rounded bg-red-500 text-white font-medium hover:bg-red-600 md:px-4 md:py-2 md:text-sm sm:text-xs"
 											onClick={() => handlePermanentDeleteClick(idx)}
 										>
 											Permanently delete

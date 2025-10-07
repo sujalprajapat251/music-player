@@ -7,7 +7,7 @@ import rightBottom from "../Images/rightBottom.png";
 import Homepage from "../Images/Homepage.png";
 import pianoImg from "../Images/piyano.png";
 import playButtonSvg from "../Images/play.png";
-import playButtonSvg_1 from "../Images/playwhite.svg";
+import playButtonSvg_1 from "../Images/video-play-icon.png";
 import pausewhiteSvg from "../Images/pausewhite.svg";
 import f1 from "../Images/f1.svg";
 import f2 from "../Images/f2.svg";
@@ -64,74 +64,59 @@ const Home = () => {
     },
   ];
 
-  // export default function PianoVideo() {
-  // const videoRef = useRef(null);
-  // const [isPlaying, setIsPlaying] = useState(false);
-
-  // const togglePlay = () => {
-  //   if (!videoRef.current) return;
-  //   if (videoRef.current.paused) {
-  //     videoRef.current.play();
-  //     setIsPlaying(true);
-  //   } else {
-  //     videoRef.current.pause();
-  //     setIsPlaying(false);
-  //   }
-  // };
-  
   const videoRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(true); // autoplay mate true
-  const [showControls, setShowControls] = useState(false);
+  const videoRef2 = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isPlaying2, setIsPlaying2] = useState(true);
+
+  // Ensure both videos are ready before toggling
+  useEffect(() => {
+    const video1 = videoRef.current;
+    const video2 = videoRef2.current;
+
+    // Try autoplay — if blocked, set state accordingly
+    if (video1) {
+      video1
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
+    }
+
+    if (video2) {
+      video2
+        .play()
+        .then(() => setIsPlaying2(true))
+        .catch(() => setIsPlaying2(false));
+    }
+  }, []);
 
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
 
-    if (isPlaying) {
+    if (video.paused) {
+      video.play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
+    } else {
       video.pause();
       setIsPlaying(false);
-      setShowControls(true); // pause par controls show thase
-    } else {
-      video.play();
-      setIsPlaying(true);
-      setShowControls(false); // play par controls hide thase
     }
-
-    // click par controls show/hide toggle thase
-    setShowControls((prev) => !prev);
   };
 
-  // useEffect(() => {
-  //   const observer = new IntersectionObserver(
-  //     (entries) => {
-  //       entries.forEach((entry) => {
-  //         if (videoRef.current) {
-  //           if (entry.isIntersecting) {
-  //             // If video visible and user already clicked play, continue
-  //             if (isPlaying) {
-  //               videoRef.current.play();
-  //             }
-  //           } else {
-  //             // If video not visible → pause
-  //             videoRef.current.pause();
-  //             setIsPlaying(false);
-  //           }
-  //         }
-  //       });
-  //     },
-  //     { threshold: 0.5 } // 50% video visible required
-  //   );
+  const togglePlay2 = () => {
+    const video = videoRef2.current;
+    if (!video) return;
 
-  //   if (videoRef.current) {
-  //     observer.observe(videoRef.current);
-  //   }
-
-  //   return () => {
-  //     if (videoRef.current) {
-  //       observer.unobserve(videoRef.current);
-  //     }
-  //   };
-  // }, [isPlaying]);
+    if (video.paused) {
+      video.play()
+        .then(() => setIsPlaying2(true))
+        .catch(() => setIsPlaying2(false));
+    } else {
+      video.pause();
+      setIsPlaying2(false);
+    }
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -169,7 +154,7 @@ const Home = () => {
       <div className="sticky top-0 z-10">
         <Header />
       </div>
-      <div className="relative bg-[#141111] h-auto p-4 md:p-12 flex flex-col items-center justify-center overflow-hidden">
+      <div className="relative bg-[#141414] h-auto p-4 md:p-12 flex flex-col items-center justify-center overflow-hidden">
         {/* Top-left decorative image */}
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <img
@@ -218,7 +203,7 @@ const Home = () => {
               //   rounded-xl object-cover
               // " 
               className="
-                relative z-0
+                relative z-[9]
                 w-full max-w-[600px] sm:max-w-[800px] md:max-w-[1000px] lg:max-w-[1200px] 3xl:max-w-[1500px] mx-auto
                 h-auto sm:h-[250px] md:h-[350px] lg:h-[450px] 3xl:h-[600px]
                 rounded-xl object-cover
@@ -232,27 +217,15 @@ const Home = () => {
             className="
               absolute right-0 bottom-0
               w-[50px] h-[50px]
-              sm:w-[110px] sm:h-[110px]
+              sm:w-[150px] sm:h-[150px]
               md:w-[160px] md:h-[160px]
               lg:w-[200px] lg:h-[200px]
-              xl:w-[240px] xl:h-[240px]
-              2xl:w-[280px] 2xl:h-[280px]
-              3xl:w-[320px] 3xl:h-[320px]
+              xl:w-[400px] xl:h-[380px]
+              2xl:w-[500px] 2xl:h-[400px]
+              3xl:w-[400px] 3xl:h-[400px]
               max-w-[30vw] max-h-[30vw] sm:max-w-full sm:max-h-full
               pointer-events-none select-none
             "
-            // className="
-            //   absolute right-0 bottom-0 
-            //   w-[150px] h-[150px] 
-            //   sm:w-[140px] sm:h-[140px] 
-            //   md:w-[180px] md:h-[180px] 
-            //   lg:w-[220px] lg:h-[220px] 
-            //   xl:w-[260px] xl:h-[260px] 
-            //   2xl:w-[300px] 2xl:h-[300px]
-            //   pointer-events-none select-none
-            // "
-            // className="absolute right-0 bottom-0 w-1/3 max-w-xs pointer-events-none select-none"
-            // style={{ zIndex: 1 }}
           />
         </div>
       </div>
@@ -314,38 +287,35 @@ const Home = () => {
             </div>
             {/* Right: Image with Play Button */}
             <div className="flex-1 flex justify-center items-center relative">
-              
-                {/* Replace image with video */}
-                {<video
+              <div className="relative w-full max-w-[900px] aspect-video rounded-xl overflow-hidden shadow-lg shadow-black/40">
+                <video
                   ref={videoRef}
                   src="https://cdn.pixabay.com/video/2017/11/28/13097-244835884_tiny.mp4"
-                  // controls
-                  // muted
-                  // playsInline
-                  autoPlay
                   loop
-                  className="rounded-xl w-full max-w-[800px] sm:max-w-[400px] md:max-w-[600px] lg:max-w-[800px] h-auto object-cover"
-                  // poster={pianoImg}
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                  poster={pianoImg}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
                 >
                   Your browser does not support the video tag.
-                </video>}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <button
-                  onClick={togglePlay}
-                  className="
-                    focus:outline-none
-                    pointer-events-auto
-                    flex items-center justify-center 
-                    rounded-full bg-black/25 
-                    h-[30px] w-[30px] sm:h-[40px] sm:w-[40px] md:h-[50px] md:w-[50px]
-                  "
-                >
-                  <img
-                    src={isPlaying ? pausewhiteSvg : playButtonSvg_1}
-                    alt="play/pause"
-                    className="h-1/2 w-1/2"
-                  />
-                </button>
+                </video>
+
+                <div className="absolute inset-0 flex items-center justify-center bg-black/10 hover:bg-black/20 transition-all">
+                  <button
+                    onClick={togglePlay}
+                    className="flex items-center justify-center rounded-full transition-all h-[60px] w-[60px] sm:h-[70px] sm:w-[70px] md:h-[120px] md:w-[120px] xl:h-[200px] xl:w-[200px]"
+                  >
+                    <img
+                      src={isPlaying ? pausewhiteSvg : playButtonSvg_1}
+                      alt="Play or Pause"
+                      className={`object-contain transition-all duration-300 ${
+                        isPlaying2 ? "h-[40%] w-[40%]" : "h-1/2 w-1/2"
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -501,18 +471,36 @@ const Home = () => {
                 />
               </div>
             </div>
-            <div className="relative gs-img w-full lg:w-1/2 flex justify-center items-center">
-              <img
-                src={pianoImg}
-                alt="pianoImg"
-                className="rounded-xl w-full max-w-[400px] md:max-w-[600px] lg:max-w-[800px] h-auto object-cover"
-              />
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <img
-                  src={playButtonSvg}
-                  alt="playButtonSvg"
-                  className="h-[30px] w-[30px] sm:h-[70px] sm:w-[70px] md:h-[80px] md:w-[80px]"
-                />
+            <div className="flex-1 flex justify-center items-center relative">
+              <div className="relative w-full max-w-[900px] aspect-video rounded-xl overflow-hidden shadow-lg shadow-black/40">
+                <video
+                  ref={videoRef2}
+                  src="https://cdn.pixabay.com/video/2016/09/21/5469-184226828_medium.mp4"
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                  poster={pianoImg}
+                  onPlay={() => setIsPlaying2(true)}
+                  onPause={() => setIsPlaying2(false)}
+                >
+                  Your browser does not support the video tag.
+                </video>
+
+                <div className="absolute inset-0 flex items-center justify-center bg-black/10 hover:bg-black/20 transition-all">
+                  <button
+                    onClick={togglePlay2}
+                    className="flex items-center justify-center rounded-full transition-all h-[60px] w-[60px] sm:h-[70px] sm:w-[70px] md:h-[120px] md:w-[120px] xl:h-[200px] xl:w-[200px]"
+                  >
+                    <img
+                      src={isPlaying2 ? pausewhiteSvg : playButtonSvg_1}
+                      alt="Play or Pause"
+                      className={`object-contain transition-all duration-300 ${
+                        isPlaying2 ? "h-[40%] w-[40%]" : "h-1/2 w-1/2"
+                      }`}                    
+                    />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
