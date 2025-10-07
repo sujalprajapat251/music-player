@@ -11,7 +11,7 @@ const { getAllFaqs, createFaq } = require('../controller/faqsController');
 const { addTerms, getTerms } = require('../controller/termsController');
 const { createCategory, getAllCategory, getCategoryById, deleteCategory, updateCategory } = require('../controller/categoryController');
 const { createSubscribe, getAllSubscribe } = require('../controller/subscribeController');
-const { createMusic, getAllMusic, deleteMusic, updateMusic, restoreMusic, permanentDeleteMusic, restoreAllMusic, permanentDeleteAllMusic, renameMusic, moveMusicToFolder, addCoverImage, removeCoverImage } = require('../controller/musicController');
+const { createMusic, getAllMusic, deleteMusic, updateMusic, restoreMusic, permanentDeleteMusic, restoreAllMusic, permanentDeleteAllMusic, renameMusic, moveMusicToFolder, addCoverImage, removeCoverImage, updateEffectParameters } = require('../controller/musicController');
 const { uploadAudio } = require('../helper/uploadController');
 const { getMusicByIdPublic } = require('../controller/publicController');
 
@@ -49,6 +49,7 @@ indexRoutes.put('/renameMusic/:id', auth, renameMusic);
 indexRoutes.put('/moveMusicToFolder/:id', auth, moveMusicToFolder);
 indexRoutes.post('/addCoverImage/:id', upload.single('image'), auth, addCoverImage);
 indexRoutes.delete('/removeCoverImage/:id', auth, removeCoverImage);
+indexRoutes.put('/updateEffectParameters/:id', auth, updateEffectParameters);
 indexRoutes.post('/upload-audio', upload.single('audio'), uploadAudio);
 
 // Wishlist Routes

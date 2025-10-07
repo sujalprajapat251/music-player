@@ -1,9 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FaPowerOff } from 'react-icons/fa6';
 import { IoClose } from 'react-icons/io5';
 import { FaPlay, FaStop } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeEffect, updateEffectParameter } from '../Redux/Slice/effects.slice';
+import { removeEffect, updateEffectParameter, removeEffectFromTrack, updateTrackEffectParameter } from '../Redux/Slice/effects.slice';
+import { selectStudioState } from '../Redux/rootReducer';
 
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
@@ -52,7 +53,6 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onValueChan
     const dragging = useRef(false);
     const lastY = useRef(0);
 
-
     // Tailwind-consistent responsive sizes
     const getResponsiveSize = () => {
         if (typeof window !== 'undefined') {
@@ -73,6 +73,12 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onValueChan
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    // Update angle when defaultAngle prop changes (important for parameter persistence)
+    useEffect(() => {
+        if (defaultAngle !== undefined) {
+            setAngle(defaultAngle);
+        }
+    }, [defaultAngle]);
 
     // Tailwind-consistent responsive sizes
     const getResponsiveStroke = () => {
@@ -212,7 +218,6 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle, onValueCha
     const dragging = useRef(false);
     const lastY = useRef(0);
 
-
     // Tailwind-consistent responsive sizes
     const getResponsiveSize = () => {
         if (typeof window !== 'undefined') {
@@ -234,6 +239,12 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle, onValueCha
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    // Update angle when defaultAngle prop changes (important for parameter persistence)
+    useEffect(() => {
+        if (defaultAngle !== undefined) {
+            setAngle(defaultAngle);
+        }
+    }, [defaultAngle]);
 
     // Tailwind-consistent responsive sizes
     const getResponsiveStroke = () => {
@@ -380,64 +391,50 @@ const Fuzz = () => {
     };
 
     const dispatch = useDispatch();
+    const { trackEffects, selectedTrackId } = useSelector((state) => state.effects);
+    const currentTrackId = useSelector((state) => selectStudioState(state)?.currentTrackId);
     const { activeEffects } = useSelector((state) => state.effects);
 
-    const handleRemoveEffect = (instanceId) => {
-        dispatch(removeEffect(instanceId));
-    };
+    // Use selectedTrackId from effects or fall back to currentTrackId from studio
+    const activeTrackId = selectedTrackId || currentTrackId;
 
-    // Get the current effect's instanceId from activeEffects
-    const currentEffect = activeEffects.find(effect => effect.name === "Fuzz");
+    // Get effects for the currently selected track
+    const trackSpecificEffects = trackEffects[activeTrackId] || [];
+    // Get the current effect's instanceId from track-specific effects or fallback to activeEffects
+    const currentEffect = trackSpecificEffects.find(effect =>
+        effect.name === "Fuzz"
+    ) || activeEffects.find(effect =>
+        effect.name === "Fuzz"
+    );
     const currentInstanceId = currentEffect?.instanceId;
 
-    // Initialize audio context
-    useEffect(() => {
-        const initAudio = async () => {
-            try {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                const ctx = new AudioContext();
-                setAudioContext(ctx);
-            } catch (error) {
-                console.error('Error initializing audio context:', error);
-            }
-        };
-
-        initAudio();
-
-        return () => {
-            stopSound();
-            if (audioContext) {
-                audioContext.close();
-            }
-        };
-    }, []);
-
-    useEffect(() => {
-        if (currentInstanceId) {
-            const savedValues = localStorage.getItem(`fuzz_${currentInstanceId}_values`);
-            if (savedValues) {
-                try {
-                    const parsedValues = JSON.parse(savedValues);
-                    // Update Redux with saved values
-                    parsedValues.forEach((value, index) => {
-                        if (value !== null && value !== undefined) {
-                            dispatch(updateEffectParameter({
-                                instanceId: currentInstanceId,
-                                parameterIndex: index,
-                                value: value
-                            }));
-                        }
-                    });
-                } catch (error) {
-                    console.error('Error loading saved Fuzz values:', error);
-                }
-            }
+    const handleRemoveEffect = (instanceId) => {
+        if (!instanceId) return;
+        
+        if (activeTrackId && trackSpecificEffects.some(effect => effect.instanceId === instanceId)) {
+            // Remove from track-specific effects
+            dispatch(removeEffectFromTrack({ trackId: activeTrackId, instanceId }));
+        } else if (activeEffects.some(effect => effect.instanceId === instanceId)) {
+            // Remove from general active effects
+            dispatch(removeEffect(instanceId));
         }
-    }, [currentInstanceId, dispatch]);
+    };
 
-    // Handle knob value changes
+    // Handle knob value changes for both track-specific and global effects
     const handleKnobChange = (parameterIndex, value) => {
-        if (currentInstanceId) {
+        if (!currentInstanceId) return;
+        
+        // First try updating track-specific effects
+        if (activeTrackId && trackSpecificEffects.some(effect => effect.instanceId === currentInstanceId)) {
+            dispatch(updateTrackEffectParameter({
+                trackId: activeTrackId,
+                instanceId: currentInstanceId,
+                parameterIndex: parameterIndex,
+                value: value
+            }));
+        } 
+        // Fall back to updating global effects
+        else if (activeEffects.some(effect => effect.instanceId === currentInstanceId)) {
             dispatch(updateEffectParameter({
                 instanceId: currentInstanceId,
                 parameterIndex: parameterIndex,
@@ -612,12 +609,20 @@ const Fuzz = () => {
         }
         // Return default values based on parameter index
         switch (parameterIndex) {
-            case 0: return -90; // Grain
-            case 1: return 0;   // Bite
-            case 2: return 90;  // Low Cut
+            case 0: return 0;   // Grain (start at 0 for subtle effect)
+            case 1: return 45;  // Bite (moderate high-frequency emphasis)
+            case 2: return 90;  // Low Cut (higher cut frequency)
             default: return 0;
         }
     };
+
+    // Debug logging
+    useEffect(() => {
+        console.log('🎛️ Fuzz Component - Active Track ID:', activeTrackId);
+        console.log('🎛️ Fuzz Component - Track Effects:', trackSpecificEffects);
+        console.log('🎛️ Fuzz Component - Current Effect:', currentEffect);
+        console.log('🎛️ Fuzz Component - Instance ID:', currentInstanceId);
+    }, [activeTrackId, trackSpecificEffects, currentEffect, currentInstanceId]);
 
     return (
         <div className='bg-[#141414]'>

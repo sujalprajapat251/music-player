@@ -66,9 +66,9 @@ const EFFECT_CONFIGS = {
     },
     "Fuzz": {
         parameters: [
-            { name: "Grain", min: -135, max: 135, defaultAngle: 0 },
-            { name: "Bite", min: -135, max: 135, defaultAngle: 45 },
-            { name: "Low Cut", min: -135, max: 135, defaultAngle: 90 }
+            { name: "Grain", min: -135, max: 135, defaultAngle: 0, value: 0 },
+            { name: "Bite", min: -135, max: 135, defaultAngle: 45, value: 45 },
+            { name: "Low Cut", min: -135, max: 135, defaultAngle: 90, value: 90 }
         ]
     },
     "Juicy Distrotion": {
