@@ -56,7 +56,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
         <div className="flex min-h-full items-center justify-center p-4 sm:p-0">
           <DialogPanel
             transition
-            className="relative z-[210] transform overflow-hidden p-7 rounded-[8px] bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-secondary-dark border border-neutral-200 dark:border-neutral-800 text-left shadow-xl w-[1000px] max-w-full transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 max-h-[80vh] mx-4 overflow-y-auto"
+            className="relative z-[210] transform overflow-hidden p-6 rounded-[8px] bg-white dark:bg-primary-dark text-secondary-light dark:text-secondary-dark border border-neutral-200 dark:border-neutral-800 text-left shadow-xl w-[1020px] max-w-full transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 max-h-[89vh] mx-4 sm:overflow-y-auto xl:overflow-hidden"
             // className="relative transform overflow-hidden rounded-2xl bg-[#0F1115] shadow-2xl w-[1000px] max-w-full transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 p-10"
           >
             {/* Close Button */}
@@ -83,215 +83,242 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
 
             {/* Heading */}
             <div className="text-center mb-8">
-              <p className="text-secondary-light dark:text-secondary-dark text-3xl md:text-3xl font-extrabold tracking-wide">
+              <p className="text-secondary-light dark:text-secondary-dark text-3xl md:text-3xl font-bold tracking-wide">
                 Our Pricing Plans
               </p>
-              <div className="mt-2 h-1 w-20 mx-auto bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
             </div>
 
             {/* Tabs with Toggle */}
-            <div className=" justify-center mb-10">
+            <div className=" justify-center mb-6">
               <Tabs
                 tabs={[
                   {
                     label: "Monthly",
                     content: (
-                      <div className="grid grid-cols-1 md:grid-cols-3 md:gap-4 gap-8 w-full">
-                        {/* Starter */}
-                        <div
-                        //  className="bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition"
-                        className={`bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col transition 
-                          ${selectedPlan?.name === "Starter" ? "shadow-[0_0_20px_rgba(168,85,247,0.9)]" : "hover:shadow-[0_0_20px_rgba(168,85,247,0.3)]"}`}
-                        onClick={() => setSelectedPlan({ name: "Starter", price: 9 })}
-                        >
-                          <h3 className="text-xl font-semibold text-secondary-light dark:text-white mb-2">
-                            Starter
-                          </h3>
-                          <p className="text-neutral-600 dark:text-gray-400 text-sm mb-6">
-                            Recommended for people with at least 1 year
-                            experience.
-                          </p>
-                          <p className="text-3xl font-bold text-secondary-light dark:text-white">
-                            $9<span className="text-lg font-normal">/mo</span>
-                          </p>
-                          <button className="mt-6 w-full py-2 rounded-lg border border-neutral-400 dark:border-gray-600 text-secondary-light dark:text-white hover:bg-violet-500 hover:border-violet-600 transition"
-                            // onClick={() => handleSelectPlan({ name: "Starter", price: 9 })}
-                          >
-                            Get started →
-                          </button>
-                          <ul className="mt-6 space-y-2 text-sm text-neutral-700 dark:text-gray-300">
-                            <li>10,000+ loops</li>
-                            <li>200 instruments</li>
-                            <li>50 effects</li>
-                            <li>Advanced vocal tools</li>
-                          </ul>
-                        </div>
-
-                        {/* Professional */}
-                        <div 
-                        // className="bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition"
-                        className={`bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col transition 
-                          ${selectedPlan?.name === "Professional" ? "shadow-[0_0_20px_rgba(168,85,247,0.9)]" : "hover:shadow-[0_0_20px_rgba(168,85,247,0.3)]"}`}
-                        onClick={() => setSelectedPlan({ name: "Professional", price: 15 })}
-                        >
-                          <div className="flex justify-between items-center mb-2">
-                            <h3 className="text-xl font-semibold text-secondary-light dark:text-white">
-                              Professional
-                            </h3>
-                            <span className="bg-purple-400 text-xs px-2 py-1 rounded-full text-black font-semibold">
-                              Bestseller
-                            </span>
+                      <>
+                        <div className="flex flex-col md:flex-row justify-center items-stretch gap-6 md:gap-8 w-full">
+                          <div className="flex-1 max-w-sm p-6 bg-[#1F1F1F] border border-[#FFFFFF4D] rounded-xl min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-110 hover:bg-[#353535] md:p-5 lg:p-6 md:max-w-xs lg:max-w-sm">
+                            <div className="main-price-month text-center md:mr-6 lg:mr-8">
+                              <span className="text-[#FFFFFF] text-[28px] font-semibold md:text-[26px] lg:text-[28px]">
+                                $15
+                              </span>{" "}
+                              <span className="text-[#FFFFFF] mr-4 md:mr-2 lg:mr-4">/month</span>
+                              <ul className="text-[#FFFFFF] flex flex-col mt-2">
+                                <li className="md:text-[15px] lg:text-[16px] tracking-wide whitespace-nowrap mr-6 md:mr-4 lg:mr-6">10,000+ loops</li>
+                                <li className="md:text-[15px] lg:text-[16px] tracking-wide whitespace-nowrap mr-2 md:mr-12 lg:mr-2">
+                                  200 instruments
+                                </li>
+                                <li className="md:text-[15px] lg:text-[16px] tracking-wide whitespace-nowrap mr-14 md:ml-0 lg:mr-15">
+                                  50 effects
+                                </li>
+                                <li className="md:text-[14px] lg:text-[16px] tracking-wide whitespace-nowrap ml-7 md:ml-0 lg:ml-6 xl:ml-7">
+                                  Advanced vocal tools
+                                </li>
+                              </ul>
+                            </div>
                           </div>
-                          <p className="text-neutral-600 dark:text-gray-400 text-sm mb-6">
-                            Perfect plan for advanced creators.
-                          </p>
-                          <p className="text-3xl font-bold text-secondary-light dark:text-white">
-                            $15<span className="text-lg font-normal">/mo</span>
-                          </p>
-                          <button className="mt-6 w-full py-2 rounded-lg bg-violet-500 text-black font-semibold hover:bg-violet-600 transition"
-                            // onClick={() => handleSelectPlan({ name: "Professional", price: 15 })}
-                          >
-                            Get started →
-                          </button>
-                          <ul className="mt-6 space-y-2 text-sm text-neutral-700 dark:text-gray-300">
-                            <li>7,000+ loops</li>
-                            <li>150 instruments</li>
-                            <li>30 effects</li>
-                            <li>Basic vocal tools</li>
-                          </ul>
+                          <div className="flex-1 max-w-sm p-6 bg-[#1F1F1F] border border-[#FFFFFF4D] rounded-xl min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-110 hover:bg-[#353535] md:p-5 lg:p-6 md:max-w-xs lg:max-w-sm">
+                            <div className="main-price-month relative pt-0 text-center md:mr-6 lg:mr-8">
+                              <span className="text-[#FFFFFF] text-[28px] font-semibold md:text-[26px] lg:text-[28px]">
+                                $9
+                              </span>{" "}
+                              <span className="text-[#FFFFFF] mr-4 md:mr-2 lg:mr-4">/month</span>
+                              <ul className="text-[#FFFFFF] flex flex-col mt-2">
+                                <li className="md:text-[15px] lg:text-[16px] tracking-wide whitespace-nowrap mr-6 md:ml-0 lg:mr-7">7,000+ loops</li>
+                                <li className="md:text-[15px] lg:text-[16px] tracking-wide whitespace-nowrap mr-1 md:mr-10 lg:mr-1">150 instruments</li>
+                                <li className="md:text-[15px] lg:text-[16px] tracking-wide whitespace-nowrap mr-11 md:ml-0 lg:mr-12">30 effects</li>
+                                <li className="md:text-[15px] lg:text-[16px] tracking-wide whitespace-nowrap ml-2 md:ml-0 lg:ml-2">Basic vocal tools</li>
+                              </ul>
+                              <span className="bg-[#FFFFFF] text-[#141414] rounded-full text-[14px] py-[2px] px-[8px] lg:py-[4px] lg:px-[10px] lg:text-[16px] absolute sm:top-[-14px] lg:top-[-8px] sm:right-[28px] md:right-1 translate-x-1/2 shadow-md ">
+                                Best Value
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex-1 max-w-sm p-6 bg-[#1F1F1F] border border-[#FFFFFF4D] rounded-xl min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-110 hover:bg-[#353535] md:p-5 lg:p-6 md:max-w-xs lg:max-w-sm">
+                            <div className="main-price-month text-center md:mr-6 lg:mr-8">
+                              <span className="text-[#FFFFFF] text-[28px] font-semibold md:text-[26px] lg:text-[28px]">
+                                $15
+                              </span>{" "}
+                              <span className="text-[#FFFFFF] mr-4 md:mr-2 lg:mr-4">/month</span>
+                              <ul className="text-[#FFFFFF] flex flex-col mt-2">
+                                <li className="md:text-[15px] lg:text-[16px] tracking-wide whitespace-nowrap mr-6 md:mr-7 lg:mr-6">10,000+ loops</li>
+                                <li className="md:text-[15px] lg:text-[16px] tracking-wide whitespace-nowrap mr-2 md:mr-10 lg:mr-1">200 instruments</li>
+                                <li className="md:text-[15px] lg:text-[16px] tracking-wide whitespace-nowrap mr-14 md:ml-0 lg:mr-14">50 effects</li>
+                                <li className="md:text-[15px] lg:text-[16px] tracking-wide whitespace-nowrap ml-7 md:ml-0 lg:ml-6 xl:ml-7">Advanced vocal tools</li>
+                              </ul>
+                            </div>
+                          </div>
                         </div>
 
-                        {/* Enterprise */}
-                        <div 
-                        // className="bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition"
-                        className={`bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col transition 
-                          ${selectedPlan?.name === "Enterprise" ? "shadow-[0_0_20px_rgba(168,85,247,0.9)]" : "hover:shadow-[0_0_20px_rgba(168,85,247,0.3)]"}`}
-                        onClick={() => setSelectedPlan({ name: "Enterprise", price: 99 })}
-                        >
-                          <h3 className="text-xl font-semibold text-secondary-light dark:text-white mb-2">
-                            Enterprise
-                          </h3>
-                          <p className="text-neutral-600 dark:text-gray-400 text-sm mb-6">
-                            For teams & companies managing audio projects.
-                          </p>
-                          <p className="text-3xl font-bold text-secondary-light dark:text-white">
-                            $99<span className="text-lg font-normal">/mo</span>
-                          </p>
-                          <button className="mt-6 w-full py-2 rounded-lg border border-neutral-400 dark:border-gray-600 text-secondary-light dark:text-white hover:bg-violet-500 hover:border-violet-600 transition"
-                            // onClick={() => handleSelectPlan({ name: "Enterprise", price: 99 })}
-                          >
-                            Schedule a call
-                          </button>
-                          <ul className="mt-6 space-y-2 text-sm text-neutral-700 dark:text-gray-300">
-                            <li>Unlimited users</li>
-                            <li>Priority mixing</li>
-                            <li>High quality downloads</li>
-                            <li>Multi-speaker transcription (8h)</li>
-                          </ul>
+                        <div className="mt-7 w-full mb-[-16px]">
+                          <div className="flex flex-col md:flex-row items-stretch justify-center gap-6 md:gap-6 w-full">
+                            {/* Box 1 */}
+                            <div className="p1-box flex-1 w-full max-w-full flex justify-center items-center flex-col">
+                              <div className="k-loop-icon w-[45px] h-[45px] border bg:border-black dark:border-[#FFFFFF4D] rounded-md flex justify-center items-center">
+                                <img src={p1} alt="" className="invert dark:invert-0"/>
+                              </div>
+                              <div className="p1-contant text-black dark:text-[#FFFFFF] text-center">
+                                <p className="text-[18px] mt-1">41K+</p>
+                                <p className="text-[20px]">loops/one-shots</p>
+                                <p className="text-[14px] text-black dark:text-[#FFFFFF99]">(everything)</p>
+                              </div>
+                              <div className="main-price-month mt-1 invert dark:invert-0 text-[#FFFFFF99] text-[14px] leading-relaxed">
+                                <ul className="list-none ">
+                                  <li>50+ effects</li>
+                                  <li>Realtime vocal tuning</li>
+                                  <li>Vocal tuning</li>
+                                  <li>Vocal cleanup</li>
+                                  <li>808 instrument (with glide)</li>
+                                </ul>
+                              </div>
+                            </div>
+
+                            {/* Box 2 */}
+                            <div className="p1-box flex-1 w-full max-w-full flex justify-center items-center flex-col">
+                              <div className="k-loop-icon w-[45px] h-[45px] border bg:border-black dark:border-[#FFFFFF4D] rounded-md flex justify-center items-center">
+                                <img src={p2} alt="" className="invert dark:invert-0"/>
+                              </div>
+                              <div className="p1-contant text-black dark:text-[#FFFFFF] text-center">
+                                <p className="text-[18px] mt-1">1250+</p>
+                                <p className="text-[20px]">Music Production</p>
+                                <p className="text-[14px] text-black dark:text-[#FFFFFF99]">(everything)</p>
+                              </div>
+                              <div className="main-price-month mt-1 invert dark:invert-0 text-[#FFFFFF99] text-[14px] leading-relaxed">
+                                <ul className="list-none">
+                                  <li>Chords</li>
+                                  <li>Realtime vocal tuning</li>
+                                  <li>Save presets and loops</li>
+                                  <li>150k+ Sound Effects freesound</li>
+                                  <li>Automation</li>
+                                </ul>
+                              </div>
+                            </div>
+
+                            {/* Box 3 */}
+                            <div className="p1-box flex-1 w-full max-w-full flex justify-center items-center flex-col">
+                              <div className="k-loop-icon w-[45px] h-[45px] border bg:border-black dark:border-[#FFFFFF4D] rounded-md flex justify-center items-center">
+                                <img src={p3} alt="" className="invert dark:invert-0"/>
+                              </div>
+                              <div className="p1-contant text-black dark:text-[#FFFFFF] text-center">
+                                <p className="text-[18px] mt-1">140+</p>
+                                <p className="text-[20px]">loops/one-shots</p>
+                                <p className="text-[14px] text-black dark:text-[#FFFFFF99]">(everything)</p>
+                              </div>
+                              <div className="main-price-month mt-1 invert dark:invert-0 text-[#FFFFFF99] text-[14px] leading-relaxed">
+                                <ul className="list-none">
+                                  <li>Sampler</li>
+                                  <li>Priority mixing</li>
+                                  <li>High quality downloads</li>
+                                  <li>8 mastering styles</li>
+                                  <li>Multi-speaker transcription (8h)</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      </>
                     ),
                   },
                   {
                     label: "Yearly",
                     content: (
-                      <div className="grid grid-cols-1 md:grid-cols-3 md:gap-4 gap-8 w-full">
-                        {/* Starter */}
-                        <div 
-                        // className="bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition"
-                          className={`bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col transition 
-                            ${selectedPlan?.name === "Starter" ? "shadow-[0_0_20px_rgba(168,85,247,0.9)]" : "hover:shadow-[0_0_20px_rgba(168,85,247,0.3)]"}`}
-                          onClick={() => setSelectedPlan({ name: "Starter", price: 90 })}
-                        >
-                          <h3 className="text-xl font-semibold text-secondary-light dark:text-white mb-2">
-                            Starter
-                          </h3>
-                          <p className="text-neutral-600 dark:text-gray-400 text-sm mb-6">
-                            Recommended for people with at least 1 year
-                            experience.
-                          </p>
-                          <p className="text-3xl font-bold text-secondary-light dark:text-white">
-                            $90
-                            <span className="text-lg font-normal">/yr</span>
-                          </p>
-                          <button className="mt-6 w-full py-2 rounded-lg border border-neutral-400 dark:border-gray-600 text-secondary-light dark:text-white hover:bg-violet-500 hover:border-violet-600 transition"
-                            // onClick={() => handleSelectPlan({ name: "Starter", price: 90 })}
-                          >
-                            Get started →
-                          </button>
-                          <ul className="mt-6 space-y-2 text-sm text-neutral-700 dark:text-gray-300">
-                            <li>10,000+ loops</li>
-                            <li>200 instruments</li>
-                            <li>50 effects</li>
-                            <li>Advanced vocal tools</li>
-                          </ul>
-                        </div>
-
-                        {/* Professional */}
-                        <div 
-                        // className="bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition"
-                          className={`bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col transition 
-                            ${selectedPlan?.name === "Professional" ? "shadow-[0_0_20px_rgba(168,85,247,0.9)]" : "hover:shadow-[0_0_20px_rgba(168,85,247,0.3)]"}`}
-                          onClick={() => setSelectedPlan({ name: "Professional", price: 150 })}
-                        >
-                          <div className="flex justify-between items-center mb-2">
-                            <h3 className="text-xl font-semibold text-secondary-light dark:text-white">
-                              Professional
-                            </h3>
-                            <span className="bg-purple-400 text-xs px-2 py-1 rounded-full text-black font-semibold">
-                              Bestseller
-                            </span>
+                      <>
+                        <div className="w-full flex flex-col items-center text-white">
+                          {/* Top 3 Pricing Cards */}
+                          <div className="flex flex-col md:flex-row justify-center items-stretch gap-6 md:gap-8 w-full">
+                            {[1, 2, 3].map((i) => (
+                              <div
+                                key={i}
+                                className="flex-1 max-w-sm p-6 bg-[#1F1F1F] border border-[#FFFFFF4D] rounded-xl min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-110 hover:bg-[#353535]"
+                              >
+                                <div className="text-center">
+                                  <span className="text-[#FFFFFF] text-[24px] lg:text-[28px] font-semibold">
+                                    $144.79
+                                  </span>{" "}
+                                  <span className="text-[#FFFFFF] text-[18px]">/year</span>
+                                  <p className="text-[#FFFFFF] mt-1 text-[16px]">
+                                    Production & Vocals
+                                  </p>
+                                  <div className="price-year text-[#9f9f9f] mt-2">
+                                    <p className="text-[14px]"> US $144.79/month (US$177.48/year)</p>
+                                    <p className="break-words w-full lg:w-60 mx-auto mt-3 text-[14px]">
+                                      A full suite to help you create professional sounding music
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                          <p className="text-neutral-600 dark:text-gray-400 text-sm mb-6">
-                            Perfect plan for advanced creators.
-                          </p>
-                          <p className="text-3xl font-bold text-secondary-light dark:text-white">
-                            $150
-                            <span className="text-lg font-normal">/yr</span>
-                          </p>
-                          <button className="mt-6 w-full py-2 rounded-lg bg-violet-500 text-black font-semibold hover:bg-violet-600 transition"
-                            // onClick={() => handleSelectPlan({ name: "Professional", price: 150 })}
-                          >
-                            Get started →
-                          </button>
-                          <ul className="mt-6 space-y-2 text-sm text-neutral-700 dark:text-gray-300">
-                            <li>7,000+ loops</li>
-                            <li>150 instruments</li>
-                            <li>30 effects</li>
-                            <li>Basic vocal tools</li>
-                          </ul>
-                        </div>
 
-                        {/* Enterprise */}
-                        <div 
-                        // className="bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition"
-                          className={`bg-neutral-100 dark:bg-[#14161c] border border-purple-400 rounded-2xl md:p-4 p-8 text-left flex flex-col transition 
-                            ${selectedPlan?.name === "Enterprise" ? "shadow-[0_0_20px_rgba(168,85,247,0.9)]" : "hover:shadow-[0_0_20px_rgba(168,85,247,0.3)]"}`}
-                          onClick={() => setSelectedPlan({ name: "Enterprise", price: 999 })}
-                        >
-                          <h3 className="text-xl font-semibold text-secondary-light dark:text-white mb-2">
-                            Enterprise
-                          </h3>
-                          <p className="text-neutral-600 dark:text-gray-400 text-sm mb-6">
-                            For teams & companies managing audio projects.
-                          </p>
-                          <p className="text-3xl font-bold text-secondary-light dark:text-white">
-                            $999
-                            <span className="text-lg font-normal">/yr</span>
-                          </p>
-                          <button className="mt-6 w-full py-2 rounded-lg border border-neutral-400 dark:border-gray-600 text-secondary-light dark:text-white hover:bg-violet-500 hover:border-violet-600 transition"
-                            // onClick={() => handleSelectPlan({ name: "Enterprise", price: 999 })}
-                          >
-                            Schedule a call
-                          </button>
-                          <ul className="mt-6 space-y-2 text-sm text-neutral-700 dark:text-gray-300">
-                            <li>Unlimited users</li>
-                            <li>Priority mixing</li>
-                            <li>High quality downloads</li>
-                            <li>Multi-speaker transcription (8h)</li>
-                          </ul>
+                          {/* Bottom 3 Feature Boxes */}
+                          <div className="mt-8 w-full">
+                            <div className="flex flex-col md:flex-row items-stretch justify-center gap-6 md:gap-6 w-full">
+                              {/* Box 1 */}
+                              <div className="p1-box flex-1 w-full max-w-full flex justify-center items-center flex-col">
+                                <div className="k-loop-icon w-[45px] h-[45px] border bg:border-black dark:border-[#FFFFFF4D] rounded-md flex justify-center items-center">
+                                  <img src={p1} alt="" className="invert dark:invert-0"/>
+                                </div>
+                                <div className="p1-contant text-black dark:text-[#FFFFFF] text-center">
+                                  <p className="text-[18px] mt-1">41K+</p>
+                                  <p className="text-[20px]">loops/one-shots</p>
+                                  <p className="text-[14px] text-black dark:text-[#FFFFFF99]">(everything)</p>
+                                </div>
+                                <div className="main-price-month mt-1 invert dark:invert-0 text-[#FFFFFF99] text-[14px] leading-relaxed">
+                                  <ul className="list-none">
+                                    <li>50+ effects</li>
+                                    <li>Realtime vocal tuning</li>
+                                    <li>Vocal tuning</li>
+                                    <li>Vocal cleanup</li>
+                                    <li>808 instrument (with glide)</li>
+                                  </ul>
+                                </div>
+                              </div>
+
+                              {/* Box 2 */}
+                              <div className="p1-box flex-1 w-full max-w-full flex justify-center items-center flex-col">
+                                <div className="k-loop-icon w-[45px] h-[45px] border bg:border-black dark:border-[#FFFFFF4D] rounded-md flex justify-center items-center">
+                                  <img src={p2} alt="" className="invert dark:invert-0"/>
+                                </div>
+                                <div className="p1-contant text-black dark:text-[#FFFFFF] text-center">
+                                  <p className="text-[18px] mt-1">1250+</p>
+                                  <p className="text-[20px]">Music Production</p>
+                                  <p className="text-[14px] text-black dark:text-[#FFFFFF99]">(everything)</p>
+                                </div>
+                                <div className="main-price-month mt-1 invert dark:invert-0 text-[#FFFFFF99] text-[14px] leading-relaxed">
+                                  <ul className="list-none">
+                                    <li>Chords</li>
+                                    <li>Realtime vocal tuning</li>
+                                    <li>Save presets and loops</li>
+                                    <li>150k+ Sound Effects freesound</li>
+                                    <li>Automation</li>
+                                  </ul>
+                                </div>
+                              </div>
+
+                              {/* Box 3 */}
+                              <div className="p1-box flex-1 w-full max-w-full flex justify-center items-center flex-col">
+                                <div className="k-loop-icon w-[45px] h-[45px] border bg:border-black dark:border-[#FFFFFF4D] rounded-md flex justify-center items-center">
+                                  <img src={p3} alt="" className="invert dark:invert-0"/>
+                                </div>
+                                <div className="p1-contant text-black dark:text-[#FFFFFF] text-center">
+                                  <p className="text-[18px] mt-1">140+</p>
+                                  <p className="text-[20px]">loops/one-shots</p>
+                                  <p className="text-[14px] text-black dark:text-[#FFFFFF99]">(everything)</p>
+                                </div>
+                                <div className="main-price-month mt-1 invert dark:invert-0 text-[#FFFFFF99] text-[14px] leading-relaxed">
+                                  <ul className="list-none">
+                                    <li>Sampler</li>
+                                    <li>Priority mixing</li>
+                                    <li>High quality downloads</li>
+                                    <li>8 mastering styles</li>
+                                    <li>Multi-speaker transcription (8h)</li>
+                                  </ul>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      </>
                     ),
                   },
                 ]}
@@ -299,8 +326,8 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
             </div>
 
             {/* Footer Button */}
-            <div className="pri-next-btn text-center mt-10">
-              <button className="bg-gradient-to-r from-indigo-500 to-purple-400 text-black font-semibold py-3 px-24 md:px-40 rounded-xl shadow-lg hover:scale-105 transition-transform"
+            <div className="pri-next-btn text-center">
+              <button className="bg-white border border-black text-black font-semibold py-3 px-24 md:px-40 rounded-md shadow-lg hover:scale-105 transition-transform"
                 onClick={() => {
                   if (!selectedPlan) {
                     alert("Please select a plan first!");
@@ -327,17 +354,6 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
         <div className="fixed inset-0 z-10 w-screen ">
           <div className="flex min-h-full items-center justify-center p-4 sm:p-0">
             <DialogPanel className="relative z-[210] transform overflow-hidden p-1 rounded-[8px] bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-secondary-dark border border-neutral-200 dark:border-neutral-800 text-left shadow-xl w-[1000px] max-w-full max-h-[80vh] mx-4">
-              
-              {/* Back Button */}
-              {/* <button
-                onClick={() => {
-                  setOpenPayment(false);
-                  setPricingModalOpen(true); // reopen pricing
-                }}
-                className="absolute top-4 left-4 text-white font-bold hover:text-purple-500 transition-colors"
-              >
-                ← Back
-              </button> */}
 
               {openPayment && (
                 <OpenPayment

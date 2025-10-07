@@ -1954,7 +1954,7 @@ const PianoRolls = () => {
                 <div
                     ref={playheadRef}
                     className="bg-fuchsia-600 dark:bg-fuchsia-400"
-                    style={{ position: "fixed", top: "110px", left: `${PIANO_KEYS_WIDTH}px`, height: "100%", width: "2px", zIndex: 25, pointerEvents: "auto", cursor: "pointer", transform: `translateX(${localPlayheadTime * timelineWidthPerSecond - (timelineContainerRef.current?.scrollLeft || 0)}px)`, willChange: "transform"}}
+                    style={{ position: "fixed", top: "110px", left: `${PIANO_KEYS_WIDTH}px`, height: "320px", width: "2px", zIndex: 25, pointerEvents: "auto", cursor: "pointer", transform: `translateX(${localPlayheadTime * timelineWidthPerSecond - (timelineContainerRef.current?.scrollLeft || 0)}px)`, willChange: "transform"}}
                     onClick={(e) => {
                         const rect = playheadRef.current.getBoundingClientRect();
                         const x = e.clientX - rect.left + (timelineContainerRef.current?.scrollLeft || 0);

@@ -8,8 +8,15 @@ export default function Tabs({ tabs }) {
   const tabRefs = React.useRef([]);
 
   React.useEffect(() => {
-    const widths = tabRefs.current.map(ref => ref?.offsetWidth || 0);
-    setTabWidths(widths);
+    const measure = () => {
+      const widths = tabRefs.current.map(ref => ref?.offsetWidth || 0);
+      setTabWidths(widths);
+    };
+
+    // measure initially and on resize to keep the active highlight aligned
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
   }, [tabs]);
 
   const getLeftPosition = () => {
@@ -23,9 +30,10 @@ export default function Tabs({ tabs }) {
   return (
     <>
       <div className="w-full flex justify-center">
-        <div className="relative flex rounded-full mx-auto justify-center gap-5 bg-gray-200 dark:bg-white p-2">
+        <div className="relative flex rounded-full mx-auto justify-center gap-5 bg-gray-200 dark:bg-white p-1 sm:p-1 md:p-2">
           <motion.div
-            className="absolute top-2 bottom-2 left-2 rounded-full bg-[#8b5cf6] shadow-md"
+            // Use inset positioning so the highlight scales properly across breakpoints
+            className="absolute top-2 inset-y-1 bottom-2 left-2 rounded-full bg-[#141414] shadow-md sm:inset-y-1 sm:left-1 md:inset-y-1 md:left-2"
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             animate={{
               x: getLeftPosition(),
@@ -37,21 +45,21 @@ export default function Tabs({ tabs }) {
               key={tab.label}
               ref={el => tabRefs.current[idx] = el}
               onClick={() => setActiveTab(idx)}
-              className={`relative flex items-center space-x-2 px-8 sm:px-10 md:px-12 py-2 rounded-full text-[12px] md:text-[16px] font-medium transition-colors duration-300 z-10
+              className={`relative flex items-center space-x-2 px-6 sm:px-4 md:px-12 py-2 rounded-full text-[12px] md:text-[16px] font-medium transition-colors duration-300 z-10
               ${
                 activeTab === idx
                   ? "text-white"
                   : "text-black hover:text-gray-700"
               }`}
             >
-              {tab.icon && <span className="w-5 h-5">{tab.icon}</span>}
+              {tab.icon && <span className="w-5 h-5 sm:w-4 sm:h-4 md:w-5 md:h-5">{tab.icon}</span>}
               <span>{tab.label}</span>
             </button>
           ))}
         </div>
       </div>
-      <div className="flex justify-center mt-5">
-        <div className="w-full py-6">{tabs[activeTab].content}</div>
+      <div className="flex justify-center mt-6">
+        <div className="w-full py-4">{tabs[activeTab].content}</div>
       </div>
     </>
   );
