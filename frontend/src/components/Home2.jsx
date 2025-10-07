@@ -952,7 +952,7 @@ const handleSaveCoverImage = async () => {
                       <>
                           <div className='flex relative pe-2' ref={sortDropdownRef}>
                               <button onClick={toggleSortDropdown} className='flex items-center gap-2 md600:gap-3 text-white cursor-pointer hover:text-gray-300 transition-colors'>
-                                  <span className='text-[10px] sm:text-[12px] md600:text-[16px]'>Sort by : {sortBy}</span>
+                                  <span className='text-[10px] sm:text-[12px] md600:text-[14px]'>Sort by : {sortBy}</span>
                                   <IoIosArrowDown className={`text-white transition-transform  duration-300 ${isSortDropdownOpen ? 'rotate-180' : 'rotate-0'}`}/>
                               </button>
 
@@ -978,12 +978,12 @@ const handleSaveCoverImage = async () => {
                               )}
                           </div>
                           <div className='my-auto sm:px-2 md600:px-3 md:px-2 2xl:px-3 cursor-pointer' onClick={() => setActiveSearch(true)}>
-                              <FiSearch className="text-white text-[14px] md600:text-[22px] md:text-[20px] 2xl:text-[24px]" />
+                              <FiSearch className="text-white text-[14px] md:text-[17px] 2xl:text-[18px]" />
                           </div>
                       </>
                   }
                   <div className='my-auto px-2 md600:px-3 md:px-2 2xl:px-3' >
-                      <AdaptiveMenu button={<BsThreeDotsVertical className='text-white text-[12px] sm:text-[14px]  xl:text-[18px] 3xl:text-[20px]' />} widthClass="w-36 sm:w-48 xl:w-52 2xl:w-64">
+                      <AdaptiveMenu button={<BsThreeDotsVertical className='text-white text-[14px] md:text-[17px] 2xl:text-[18px]' />} widthClass="w-36 sm:w-48 xl:w-52 2xl:w-64">
                           <div className="">
                               <MenuItem >
                                 <p className="block  px-3 sm:px-4 md600:px-5  lg:px-6 py-1  2xl:px-7 xl:py-2  3xl:px-9 3xl:py-3 hover:bg-gray-800 cursor-pointer" onClick={() => navigate('/recently-deleted')}>
@@ -1011,12 +1011,12 @@ const handleSaveCoverImage = async () => {
             sortedAndFilteredFolders.map((ele, index) => (
             <div key={ele._id} className="flex pt-2  md600:pt-3  lg:pt-3 ps-2 md600:ps-3 2xl:pt-4 2xl:ps-4 3xl:pt-5 3xl:ps-5 pe-2 md600:pe-3 md:pe-2 border-b border-[#FFFFFF1A] pb-2 cursor-pointer" onClick={() => navigate(`/project/folder/${ele._id}`)}>
                 <img src={folder} alt="" className='w-[16px] h-[16px] sm:w-[20px] sm:h-[20px] lg:w-[22px] lg:h-[22px] my-auto' />
-                <p className="text-white ps-2 md600:ps-3 lg:ps-4  my-auto text-[12px] sm:text-[14px] md:text-[16px] ">{ele?.folderName}</p>
+                <p className="text-white ps-2 md600:ps-3 lg:ps-4  my-auto text-[12px] sm:text-[14px] md:text-[15px]">{ele?.folderName}</p>
                 <div className='ms-auto' onClick={(e) => e.stopPropagation()}>
-                <AdaptiveMenu button={<BsThreeDotsVertical className='text-white text-[12px] sm:text-[14px] md600:text-[16px] lg:text-[18px] 3xl:text-[20px]' />} widthClass="w-40 2xl:w-44">
+                <AdaptiveMenu button={<BsThreeDotsVertical className='text-white text-[12px] sm:text-[14px] md600:text-[16px] lg:text-[18px] 3xl:text-[20px]' />} widthClass="w-40 2xl:w-25">
                     <div className="">
                     <MenuItem >
-                        <p className="block px-4 py-1 md600:px-5 lg:px-6 md600:py-1  2xl:px-7 lg:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" onClick={() => handleRenameClick(ele._id, ele.folderName)}>
+                        <p className="block px-4 py-1 md600:px-5 lg:px-6 md600:py-1  2xl:px-7 lg:py-2  3xl:px-5 3xl:py-3   hover:bg-gray-800 cursor-pointer" onClick={() => handleRenameClick(ele._id, ele.folderName)}>
                         <div className="flex items-center" >
                             <img src={rename} alt="" className=' w-3 h-3 md600:w-4 md600:h-4 2xl:w-6 2xl:h-6' />
                             <p className="text-white ps-2  md600:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] md600:text-[14px] 2xl:text-[16px]">Rename</p>
@@ -1024,7 +1024,7 @@ const handleSaveCoverImage = async () => {
                         </p>
                     </MenuItem>
                     <MenuItem >
-                        <p className="block px-4 py-1 md600:px-5 lg:px-6 md600:py-1  2xl:px-7 lg:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" onClick={() => handleDeleteClick(ele._id)}>
+                        <p className="block px-4 py-1 md600:px-5 lg:px-6 md600:py-1  2xl:px-7 lg:py-2  3xl:px-5 3xl:py-3   hover:bg-gray-800 cursor-pointer" onClick={() => handleDeleteClick(ele._id)}>
                         <div className="flex items-center">
                             <img src={RedDelete} alt="" className='w-3 h-3 md600:w-4 md600:h-4 2xl:w-6 2xl:h-6' />
                             <p className="text-[#FF0000] ps-2 md600:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] md600:text-[14px] 2xl:text-[16px]">Delete</p>
@@ -1178,7 +1178,7 @@ const handleSaveCoverImage = async () => {
                                       <MenuItem>
                                           {({ active }) => (
                                               <button type="button" onClick={() => handleExport(ele)} className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}>
-                                                  <span className="flex items-center gap-2"><FaArrowDownLong size={20} /> Export (MP3)</span>
+                                                  <span className="flex items-center gap-2"><FaArrowDownLong size={18} /> Export (MP3)</span>
                                                   <span><FaAngleRight size={20} /></span>
                                               </button>
                                           )}
@@ -1188,7 +1188,7 @@ const handleSaveCoverImage = async () => {
  
                                       <MenuItem>
                                           {({ active }) => (
-                                              <button type="button" onClick={() => { setSelectedProjectName(ele?.name || ''); setDeleteId(ele?._id || ele?.id); setDeleteProModal(true); }} className={`flex items-center gap-2 px-4 py-2 text-sm ${active ? "text-red-600" : "text-red-600"}`}>
+                                              <button type="button" onClick={() => { setSelectedProjectName(ele?.name || ''); setDeleteId(ele?._id || ele?.id); setDeleteProModal(true); }} className={`flex items-center gap-2 px-4 py-2 text-sm w-full ${active ? "text-[#ff0000]" : "text-[#ff0000]"}`}>
                                                   <MdDeleteOutline size={20} /> Delete
                                               </button>
                                           )}

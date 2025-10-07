@@ -5,6 +5,12 @@ import newProjectIcon from '../Images/new-project.svg';
 import mm1 from '../Images/np-1.png';
 import mm2 from '../Images/np-2.png';
 import mm3 from '../Images/np-3.png';
+import mm4 from '../Images/np-4.png';
+import mm5 from '../Images/np-5.png';
+import mm6 from '../Images/np-6.png';
+import mm7 from '../Images/np-7.png';
+import mm8 from '../Images/np-8.png';
+import mm9 from '../Images/np-9.png';
 import { useDispatch } from 'react-redux';
 import { resetStudio } from '../Redux/Slice/studio.slice';
 import { ReactComponent as Close } from '../Images/closeicon.svg';
@@ -41,11 +47,11 @@ const NewProject = ({ open, setOpen, showClose = true }) => {
                   {
                     label: 'New Project',
                     content: (
-                      <div className="flex flex-col items-center w-1/2">
-                        <div className="bg-gray-100 dark:bg-[#322d3c] rounded-t-lg w-full flex flex-col items-center justify-center py-14 sm:py-5 md:py-14 cursor-pointer" onClick={handleCreateNew}>
+                      <div className="flex flex-col items-center">
+                        <div className="bg-gray-100 dark:bg-[#CFEEFF] rounded-t-lg w-full flex flex-col items-center justify-center py-14 sm:py-5 md:py-14 cursor-pointer" onClick={handleCreateNew}>
                           <img src={newProjectIcon} alt="Music Note" className="w-12 h-12 mb-2" />
                         </div>
-                        <button className="w-full bg-[#9b7ae7] text-white py-4 sm:py-2 md:py-4 rounded-b-lg font-medium text-lg transition-colors hover:bg-[#8a6ad6] dark:hover:bg-[#8a6ad6]" onClick={handleCreateNew}>Music</button>
+                        <button className="w-full bg-[#00A3FF] text-white py-4 sm:py-2 md:py-4 rounded-b-lg font-medium text-lg" onClick={handleCreateNew}>Music</button>
                       </div>
                     ),
                   },
@@ -81,33 +87,33 @@ const NewProject = ({ open, setOpen, showClose = true }) => {
                           </div>
 
                           <div className="flex flex-col items-center">
-                            <img src={mm1} alt="Hyperpop" className="w-full h-full object-cover rounded-t-md" />
-                            <div className="border border-gray-200 dark:border-gray-600 w-full text-center py-2 sm:py-1 md:py-2 text-gray-800 dark:text-white text-[16px] font-medium">Hyperpop</div>
+                            <img src={mm4} alt="Hyperpop" className="w-full h-full object-cover rounded-t-md" />
+                            <div className="border border-gray-200 dark:border-gray-600 w-full text-center py-2 sm:py-1 md:py-2 text-gray-800 dark:text-white text-[16px] font-medium">Rave</div>
                           </div>
 
                           <div className="flex flex-col items-center">
-                            <img src={mm2} alt="Soul" className="w-full h-full object-cover rounded-t-md" />
-                            <div className="border border-gray-200 dark:border-gray-600 w-full text-center py-2 sm:py-1 md:py-2 text-gray-800 dark:text-white text-[16px] font-medium">Soul</div>
+                            <img src={mm5} alt="Soul" className="w-full h-full object-cover rounded-t-md" />
+                            <div className="border border-gray-200 dark:border-gray-600 w-full text-center py-2 sm:py-1 md:py-2 text-gray-800 dark:text-white text-[16px] font-medium">RnB</div>
                           </div>
 
                           <div className="flex flex-col items-center">
-                            <img src={mm3} alt="Pop" className="w-full object-cover rounded-t-md" />
-                            <div className="border border-gray-200 dark:border-gray-600 w-full text-center py-2 sm:py-1 md:py-2 text-gray-800 dark:text-white text-[16px] font-medium">Pop</div>
+                            <img src={mm6} alt="Pop" className="w-full object-cover rounded-t-md" />
+                            <div className="border border-gray-200 dark:border-gray-600 w-full text-center py-2 sm:py-1 md:py-2 text-gray-800 dark:text-white text-[16px] font-medium">Bass/Dubstep</div>
                           </div>
 
                           <div className="flex flex-col items-center">
-                            <img src={mm1} alt="Hyperpop" className="w-full h-full object-cover rounded-t-md" />
-                            <div className="border border-gray-200 dark:border-gray-600 w-full text-center py-2 sm:py-1 md:py-2 text-gray-800 dark:text-white text-[16px] font-medium">Hyperpop</div>
+                            <img src={mm7} alt="Hyperpop" className="w-full h-full object-cover rounded-t-md" />
+                            <div className="border border-gray-200 dark:border-gray-600 w-full text-center py-2 sm:py-1 md:py-2 text-gray-800 dark:text-white text-[16px] font-medium">Digicore</div>
                           </div>
 
                           <div className="flex flex-col items-center">
-                            <img src={mm2} alt="Soul" className="w-full h-full object-cover rounded-t-md" />
-                            <div className="border border-gray-200 dark:border-gray-600 w-full text-center py-2 sm:py-1 md:py-2 text-gray-800 dark:text-white text-[16px] font-medium">Soul</div>
+                            <img src={mm8} alt="Soul" className="w-full h-full object-cover rounded-t-md" />
+                            <div className="border border-gray-200 dark:border-gray-600 w-full text-center py-2 sm:py-1 md:py-2 text-gray-800 dark:text-white text-[16px] font-medium">Trance</div>
                           </div>
 
                           <div className="flex flex-col items-center">
-                            <img src={mm3} alt="Pop" className="w-full object-cover rounded-t-md" />
-                            <div className="border border-gray-200 dark:border-gray-600 w-full text-center py-2 sm:py-1 md:py-2 text-gray-800 dark:text-white text-[16px] font-medium">Pop</div>
+                            <img src={mm9} alt="Pop" className="w-full object-cover rounded-t-md" />
+                            <div className="border border-gray-200 dark:border-gray-600 w-full text-center py-2 sm:py-1 md:py-2 text-gray-800 dark:text-white text-[16px] font-medium">Acapella</div>
                           </div>
                         </div>
                       </div>

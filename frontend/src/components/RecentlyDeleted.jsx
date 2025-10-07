@@ -8,7 +8,30 @@ import { FiTrash2 } from 'react-icons/fi';
 import { useLocation, useNavigate } from "react-router-dom";
 import close from '../Images/close.svg';
 import { permanentDeleteAllMusic, permanentDeleteMusic, restoreAllMusic, restoreMusic } from "../Redux/Slice/music.slice";
+import { FaChevronLeft } from "react-icons/fa6";
+import notFound from '../Images/notFound.png'
+import { HiDotsVertical } from "react-icons/hi";
 
+const generateRandomColor = (seed) => {
+	const colors = [
+		'#AA005B', 
+		'#611364', 
+		'#F59B23', 
+		'#E33751', 
+		'#14833B', 
+		'#1A8CDE', 
+		'#FA6033', 
+		'#2D46B9',
+	];
+	
+	// Use seed to get consistent color for same item
+	const index = Math.abs(seed.split('').reduce((a, b) => {
+		a = ((a << 5) - a) + b.charCodeAt(0);
+		return a & a;
+	}, 0)) % colors.length;
+	
+	return colors[index];
+};
 
 function RecentlyDeleted() {
 	const dispatch = useDispatch();
@@ -169,18 +192,19 @@ function RecentlyDeleted() {
 
 	return (
 		<div className="p-3 lg:p-5 xl:p-6 2xl:p-8 3xl:p-10 bg-[#141414]">
-			<div className="mb-8 flex items-center gap-2">
-				<button onClick={() => navigate(-1)} className="text-gray-200 text-2xl font-medium mr-2">&lt; Projects</button>
-			</div>
+			<div className="flex items-center py-3 cursor-pointer" onClick={() => navigate('/project')}>
+				<FaChevronLeft className='w-4 h-4 text-[#FFFFFF99]' />
+				<span className="text-[15px] font-bold ps-2 text-[#FFFFFF99]">Projects</span>
+        	</div>
 			<div className="flex items-center mb-2 gap-2">
 				<h1 className="font-bold text-2xl text-gray-200 flex items-center">Recently deleted</h1>
 				<Menu as="div" className="relative inline-block text-left">
 					<MenuButton className="outline-none ml-1">
 						<div className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 transition">
-							<MoreHorizontal className="text-gray-500 text-xl cursor-pointer" />
+							<HiDotsVertical className="text-gray-500 text-xl cursor-pointer" />
 						</div>
 					</MenuButton>
-					<MenuItems className={`absolute left-1/2 transform -translate-x-1/2 mt-2 w-80 origin-top ${deletedAudios.length === 0 ? 'bg-[#232323] opacity-70' : 'bg-[#181818]'} rounded-md shadow-lg z-50 py-3 ${deletedAudios.length === 0 ? 'pointer-events-none' : ''}`}> 
+					<MenuItems className={`absolute left-1/2 transform -translate-x-1/2 mt-2 w-80 origin-top ${deletedAudios.length === 0 ? 'bg-[#232323]' : 'bg-[#181818]'} rounded-md shadow-lg z-50 py-3 ${deletedAudios.length === 0 ? 'pointer-events-none' : ''}`}> 
 						<MenuItem disabled={deletedAudios.length === 0}>
 							{({ active }) => (
 								<button
@@ -334,10 +358,17 @@ function RecentlyDeleted() {
 			)}
 				</Menu>
 			</div>
-			<hr className="mt-14 my-1 border-gray-200" />
+			<hr className="mt-4 my-1 border-gray-200" />
 			<div>
 				{deletedAudios.length === 0 ? (
-					<div className="text-gray-200">No deleted items.</div>
+					<div className="flex flex-col items-center justify-center py-16 px-4">
+						<div className="relative">
+							<img src={notFound} alt="No music" className='object-contain w-24 h-24' />
+						</div>
+						<div className="text-center mt-1">
+							<h3 className="text-lg font-medium text-gray-300 mb-1">No Deleted Items.</h3>
+						</div>
+				  </div>
 				) : (
 					<div>
 						{deletedAudios.map((audio, idx) => {
@@ -349,8 +380,14 @@ function RecentlyDeleted() {
 							return (
 								<div key={idx} className="flex items-center justify-between py-4 border-b border-gray-200">
 									<div className="flex items-center gap-4">
-									<span className="font-semibold text-md text-gray-200 md:text-base md:max-w-[15ch] sm:max-w-[15ch] lg:max-w-none break-words whitespace-normal inline-block">{audio.name}</span>
-										<span className="text-gray-300 text-sm md:text-sm sm:text-xs">{daysLeft} days left</span>
+										<div className='w-8 h-8 bg-white rounded-sm overflow-hidden flex items-center justify-center'>
+											<div 
+												className="w-full h-full"
+												style={{ backgroundColor: generateRandomColor(audio?._id || audio?.name || 'default') }}
+												></div>
+										</div>
+										<span className="font-semibold text-md text-gray-200 md:text-base md:max-w-[15ch] sm:max-w-[15ch] lg:max-w-none break-words whitespace-normal inline-block">{audio.name}</span>
+											<span className="text-gray-300 text-sm md:text-sm sm:text-xs">{daysLeft} days left</span>
 									</div>
 									<div className="flex gap-2">
 										<button
@@ -360,7 +397,7 @@ function RecentlyDeleted() {
 											Restore
 										</button>
 										<button
-											className="px-2 sm:px-4 py-1 sm:py-2 rounded bg-red-500 text-white font-medium hover:bg-red-600 md:px-4 md:py-2 md:text-sm sm:text-xs"
+											className="px-2 sm:px-4 py-1 sm:py-2 rounded bg-[#ff0000] text-white font-medium hover:bg-red-600 md:px-4 md:py-2 md:text-sm sm:text-xs"
 											onClick={() => handlePermanentDeleteClick(idx)}
 										>
 											Permanently delete

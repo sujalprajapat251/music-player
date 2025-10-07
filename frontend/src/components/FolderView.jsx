@@ -9,7 +9,34 @@ import { IMAGE_URL } from '../Utils/baseUrl';
 import { getAllMusic, renameMusic, moveToFolderMusic, deleteMusic, addCoverImage, removeCoverImage } from '../Redux/Slice/music.slice';
 import { getFolderByUserId } from '../Redux/Slice/folder.slice';
 import close from '../Images/close.svg';
-import { IoArrowBackOutline } from "react-icons/io5";
+import { IoIosArrowDown } from "react-icons/io";
+import { FiSearch } from "react-icons/fi";
+import { IoClose, IoFolderOutline, IoImageOutline } from "react-icons/io5";
+import { FaAngleRight, FaArrowDownLong, FaChevronLeft } from "react-icons/fa6";
+import notFound from '../Images/no-folder-img.png';
+import rename from "../Images/renameIcon.svg";
+import { MdDeleteOutline } from 'react-icons/md';
+
+const generateRandomColor = (seed) => {
+  const colors = [
+      '#AA005B', 
+      '#611364', 
+      '#F59B23', 
+      '#E33751', 
+      '#14833B', 
+      '#1A8CDE', 
+      '#FA6033', 
+      '#2D46B9',
+  ];
+  
+  // Use seed to get consistent color for same item
+  const index = Math.abs(seed.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+  }, 0)) % colors.length;
+  
+  return colors[index];
+};
 
 const FolderView = () => {
   const { id } = useParams();
@@ -43,6 +70,21 @@ const FolderView = () => {
   const [selectedMusicId, setSelectedMusicId] = useState(null);
   const [uploading, setUploading] = useState(false);
 
+  // Sort state (mirror Home2 behavior)
+  const [sortBy, setSortBy] = useState('Last updated');
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+  const sortDropdownRef = useRef(null);
+  const sortOptions = [
+    { value: 'Last updated', label: 'Last updated' },
+    { value: 'Oldest updated', label: 'Oldest updated' },
+    { value: 'Last created', label: 'Last created' },
+    { value: 'Title', label: 'Title' },
+  ];
+
+  // Search state
+  const [searchText, setSearchText] = useState('');
+  const [activeSearch, setActiveSearch] = useState(false);
+
   const musicAudioRefs = useRef([]);
   const canvasRefs = useRef([]);
   const animationRefs = useRef([]);
@@ -56,6 +98,17 @@ const FolderView = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, userId, id]);
 
+  // Close sort dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target)) {
+        setIsSortDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const getItemFolderId = (m) =>
     m?.folderId || (typeof m?.folder === 'string' ? m.folder : m?.folder?._id) || null;
 
@@ -64,6 +117,35 @@ const FolderView = () => {
       .filter(m => !m.isDeleted)
       .filter(m => getItemFolderId(m) === id);
   }, [allMusic, id]);
+
+  // Sorted items according to sortBy
+  const sortedItems = useMemo(() => {
+    const filtered = items.filter(m => {
+      if (!searchText.trim()) return true;
+      return (m?.name || '').toLowerCase().includes(searchText.toLowerCase());
+    });
+    const list = [...filtered];
+    list.sort((a, b) => {
+      switch (sortBy) {
+        case 'Last updated':
+          return new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt);
+        case 'Oldest updated':
+          return new Date(a.updatedAt || a.createdAt) - new Date(b.updatedAt || b.createdAt);
+        case 'Last created':
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        case 'Title':
+          return (a?.name || '').toLowerCase().localeCompare((b?.name || '').toLowerCase());
+        default:
+          return 0;
+      }
+    });
+    return list;
+  }, [items, sortBy, searchText]);
+
+  const handleSortSelect = (option) => {
+    setSortBy(option.value);
+    setIsSortDropdownOpen(false);
+  };
 
   const getCoverUrl = (m) => {
     const candidate = m?.coverImage || m?.cover || m?.image || m?.thumbnail;
@@ -99,10 +181,8 @@ const FolderView = () => {
     }
   }, [items]);
 
-  const drawWaveform = useCallback((musicId) => {
-    const index = items.findIndex(m => m._id === musicId);
-    if (index === -1) return;
-    const canvas = canvasRefs.current[index];
+  const drawWaveform = useCallback((musicId, filteredIndex) => {
+    const canvas = canvasRefs.current[filteredIndex];
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
@@ -130,25 +210,24 @@ const FolderView = () => {
       ctx.fillStyle = i < progressPoint ? '#3B82F6' : '#D1D5DB';
       ctx.fillRect(x, y, barWidth, barHeight);
     }
-  }, [items, musicProgress]);
+  }, [musicProgress]);
 
-  const handlePlayPauseMusic = async (musicId) => {
-    const index = items.findIndex(m => m._id === musicId);
-    if (index === -1 || !musicAudioRefs.current[index]) return;
-    const audioRef = musicAudioRefs.current[index];
+  const handlePlayPauseMusic = async (musicId, filteredIndex) => {
+    if (filteredIndex === -1 || !musicAudioRefs.current[filteredIndex]) return;
+    const audioRef = musicAudioRefs.current[filteredIndex];
     const isPlaying = playingMusicId === musicId;
 
-    if (audioContextRefs.current[index]?.state === 'suspended') {
-      await audioContextRefs.current[index].resume();
+    if (audioContextRefs.current[filteredIndex]?.state === 'suspended') {
+      await audioContextRefs.current[filteredIndex].resume();
     }
 
     if (isPlaying) {
       audioRef.pause();
       setPlayingMusicId(null);
     } else {
-      items.forEach((m, idx) => {
-        if (idx !== index && musicAudioRefs.current[idx]) {
-          musicAudioRefs.current[idx].pause();
+      musicAudioRefs.current.forEach((ref, idx) => {
+        if (idx !== filteredIndex && ref) {
+          ref.pause();
         }
       });
       try {
@@ -164,29 +243,26 @@ const FolderView = () => {
     }
   };
 
-  const handleTimeUpdate = (musicId) => {
-    const index = items.findIndex(m => m._id === musicId);
-    if (index === -1 || !musicAudioRefs.current[index]) return;
-    const audioRef = musicAudioRefs.current[index];
+  const handleTimeUpdate = (musicId, filteredIndex) => {
+    if (filteredIndex === -1 || !musicAudioRefs.current[filteredIndex]) return;
+    const audioRef = musicAudioRefs.current[filteredIndex];
     const current = audioRef.currentTime;
     const total = audioRef.duration;
     setMusicCurrentTimes(prev => ({ ...prev, [musicId]: formatTime(current) }));
     setMusicProgress(prev => ({ ...prev, [musicId]: total > 0 ? current / total : 0 }));
   };
 
-  const handleLoadedMetadata = (musicId) => {
-    const index = items.findIndex(m => m._id === musicId);
-    if (index === -1 || !musicAudioRefs.current[index]) return;
-    const audioRef = musicAudioRefs.current[index];
+  const handleLoadedMetadata = (musicId, filteredIndex) => {
+    if (filteredIndex === -1 || !musicAudioRefs.current[filteredIndex]) return;
+    const audioRef = musicAudioRefs.current[filteredIndex];
     setMusicDurations(prev => ({ ...prev, [musicId]: formatTime(audioRef.duration) }));
     setMusicAudioLoaded(prev => ({ ...prev, [musicId]: true }));
   };
 
-  const handleCanvasClick = (e, musicId) => {
-    const index = items.findIndex(m => m._id === musicId);
-    if (index === -1 || !musicAudioRefs.current[index] || !musicAudioLoaded[musicId]) return;
-    const audioRef = musicAudioRefs.current[index];
-    const canvas = canvasRefs.current[index];
+  const handleCanvasClick = (e, musicId, filteredIndex) => {
+    if (filteredIndex === -1 || !musicAudioRefs.current[filteredIndex] || !musicAudioLoaded[musicId]) return;
+    const audioRef = musicAudioRefs.current[filteredIndex];
+    const canvas = canvasRefs.current[filteredIndex];
     const rect = canvas.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const clickProgress = clickX / canvas.width;
@@ -196,7 +272,7 @@ const FolderView = () => {
   };
 
   useEffect(() => {
-    items.forEach((m, index) => {
+    sortedItems.forEach((m, index) => {
       const audio = musicAudioRefs.current[index];
       if (audio) {
         const musicId = m._id;
@@ -207,8 +283,8 @@ const FolderView = () => {
           setMusicProgress(prev => ({ ...prev, [musicId]: 0 }));
           setMusicCurrentTimes(prev => ({ ...prev, [musicId]: '0:00' }));
         };
-        const handleTimeUpdateEvent = () => handleTimeUpdate(musicId);
-        const handleLoadedMetadataEvent = () => handleLoadedMetadata(musicId);
+        const handleTimeUpdateEvent = () => handleTimeUpdate(musicId, index);
+        const handleLoadedMetadataEvent = () => handleLoadedMetadata(musicId, index);
 
         audio.addEventListener('play', handlePlay);
         audio.addEventListener('pause', handlePause);
@@ -225,10 +301,10 @@ const FolderView = () => {
         };
       }
     });
-  }, [items]);
+  }, [sortedItems]);
 
   useEffect(() => {
-    items.forEach((m, index) => {
+    sortedItems.forEach((m, index) => {
       const canvas = canvasRefs.current[index];
       if (canvas) {
         const musicId = m._id;
@@ -236,7 +312,7 @@ const FolderView = () => {
           const container = canvas.parentElement;
           canvas.width = container.offsetWidth;
           canvas.height = 48;
-          drawWaveform(musicId);
+          drawWaveform(musicId, index);
         };
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
@@ -246,11 +322,11 @@ const FolderView = () => {
         };
       }
     });
-  }, [items, drawWaveform]);
+  }, [sortedItems, drawWaveform]);
 
   useEffect(() => {
-    items.forEach((m) => drawWaveform(m._id));
-  }, [items, drawWaveform, musicProgress]);
+    sortedItems.forEach((m, index) => drawWaveform(m._id, index));
+  }, [sortedItems, drawWaveform, musicProgress]);
 
   const { refs, floatingStyles, update } = useFloating({
     placement: "bottom-end",
@@ -343,47 +419,6 @@ const FolderView = () => {
     setSelectedFile(file);
     setImage(URL.createObjectURL(file));
   };
-
-  const handleSaveCoverImage = async () => {
-    if (!image || !selectedMusicId) return;
-    
-    setUploading(true);
-    
-    try {
-      // Get the actual file from the input
-      const fileInput = document.getElementById('file-upload');
-      const file = fileInput.files[0];
-      
-      if (!file) {
-        alert('Please select an image file');
-        return;
-      }
-      
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append('musicId', selectedMusicId);
-      formData.append('coverImage', file);
-      
-      // Dispatch the addCoverImage action
-      await dispatch(addCoverImage(formData));
-      
-      // Refresh the music list to show updated cover
-      await dispatch(getAllMusic());
-      
-      // Reset state and close modal
-      setImage(null);
-      setSelectedMusicId(null);
-      setOpen(false);
-      
-      // Reset file input
-      fileInput.value = '';
-      
-    } catch (error) {
-      console.error('Error uploading cover image:', error);
-    } finally {
-      setUploading(false);
-    }
-  };
   
   const handleCloseCoverModal = () => {
     setOpen(false);
@@ -438,15 +473,73 @@ const FolderView = () => {
   return (
     <>
       <div className="p-3 lg:p-5 xl:p-6 2xl:p-8 3xl:p-10 bg-[#141414]">
-        <div className="flex items-center gap-3 text-white cursor-pointer">
-          <div className="py-1 px-2" onClick={() => navigate('/project')}>
-            <IoArrowBackOutline className='w-5 h-5' />
+        <div className="flex items-center py-3 cursor-pointer" onClick={() => navigate('/project')}>
+          <FaChevronLeft className='w-4 h-4 text-[#FFFFFF99]' />
+          <span className="text-[15px] font-bold ps-2 text-[#FFFFFF99]">Projects</span>
+        </div>
+        <div className="flex items-center justify-between text-white">
+          <div className="flex items-center gap-3 cursor-pointer">
+            <h1 className="text-[16px] md:text-[18px] lg:text-[20px] 2xl:text-[24px] 3xl:text-[30px] font-bold">{folderName}</h1>
           </div>
-          <h1 className="text-[16px] md:text-[18px] lg:text-[20px] 2xl:text-[24px] 3xl:text-[30px] font-bold">{folderName}</h1>
+          <div className='flex items-center gap-3'>
+            {activeSearch ? (
+              <div className='bg-[#FFFFFF0F] rounded-md'>
+                <div className='flex gap-2 py-1 px-2 items-center'>
+                  <FiSearch className='text-white text-[16px]' />
+                  <input
+                    type='text'
+                    className='outline-none w-40 md:w-56 text-sm border-0 bg-transparent text-white'
+                    placeholder='Search...'
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                  />
+                  <IoClose className='text-white cursor-pointer text-[18px]' onClick={() => { setActiveSearch(false); setSearchText(''); }} />
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className='relative' ref={sortDropdownRef}>
+                  <button onClick={() => setIsSortDropdownOpen(v => !v)} className='flex items-center gap-2 text-white hover:text-gray-300'>
+                    <span className='text-xs md:text-sm'>Sort by : {sortBy}</span>
+                    <IoIosArrowDown className={`transition-transform duration-300 ${isSortDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
+                  </button>
+                  {isSortDropdownOpen && (
+                    <div className="absolute top-full right-0 mt-2 bg-[#1F1F1F] rounded-lg shadow-lg z-10 min-w-[180px]">
+                      {sortOptions.map((option) => (
+                        <div
+                          key={option.value}
+                          onClick={() => handleSortSelect(option)}
+                          className="flex items-center py-2 px-3 hover:bg-[#3b3b3b] cursor-pointer"
+                        >
+                          <div className={`w-3 h-3 border-2 rounded-full mr-3 flex items-center justify-center ${sortBy === option.value ? 'border-white' : 'border-[#FFFFFF40]'}`}>
+                            {sortBy === option.value && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                          </div>
+                          <span className="text-white text-sm">{option.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className='cursor-pointer' onClick={() => setActiveSearch(true)}>
+                  <FiSearch className='text-white text-[18px]' />
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
+        {folders && folders.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4">
+            <div className="relative">
+              <img src={notFound} alt="No folders" className='object-contain w-24 h-24' />
+            </div>
+            <div className="text-center mt-3">
+              <h3 className="text-lg font-medium text-gray-300 mb-1">Your folder is Empty</h3>
+            </div>
+          </div>
+        ) : (
         <div className="mt-4 space-y-3">
-          {items.map((ele, index) => {
+          {sortedItems.length > 0 ? sortedItems.map((ele, index) => {
             const isPlaying = playingMusicId === ele._id;
             const duration = musicDurations[ele._id] || '0:00';
             const audioLoaded = musicAudioLoaded[ele._id] || false;
@@ -463,11 +556,11 @@ const FolderView = () => {
                       src={url}
                       preload="auto"
                       crossOrigin="anonymous"
-                      onLoadedMetadata={() => handleLoadedMetadata(ele._id)}
+                      onLoadedMetadata={() => handleLoadedMetadata(ele._id, index)}
                       onCanPlay={() =>
                         setMusicAudioLoaded(prev => ({ ...prev, [ele._id]: true }))
                       }
-                      onTimeUpdate={() => handleTimeUpdate(ele._id)}
+                      onTimeUpdate={() => handleTimeUpdate(ele._id, index)}
                       onEnded={() => {
                         setPlayingMusicId(null);
                         setMusicProgress(prev => ({ ...prev, [ele._id]: 0 }));
@@ -483,18 +576,21 @@ const FolderView = () => {
                     <div className="text-red-500 text-xs p-2">No audio file available</div>
                   )}
 
-                  <div className='w-12 h-12 bg-white rounded overflow-hidden flex items-center justify-center'>
+                  <div className='w-12 h-12 bg-white rounded-sm overflow-hidden flex items-center justify-center'>
                     {coverUrl ? (
                       <img src={coverUrl} alt={ele?.name || 'cover'} className="w-full h-full object-cover" />
                     ) : (
-                      <img src="" alt="" className="w-full h-full object-cover" />
+                      <div 
+                        className="w-full h-full"
+                        style={{ backgroundColor: generateRandomColor(ele?._id || ele?.name || 'default') }}
+                        ></div>
                     )}
                   </div>
 
                   <div className="relative flex-shrink-0">
                     <div className="w-12 h-12 rounded-lg flex items-center justify-center cursor-pointer transition-colors shadow-md">
                     <button
-                        onClick={() => handlePlayPauseMusic(ele._id)}
+                        onClick={() => handlePlayPauseMusic(ele._id, index)}
                         className="text-white"
                         disabled={!url}
                       >
@@ -532,7 +628,7 @@ const FolderView = () => {
                       <canvas
                         ref={el => canvasRefs.current[index] = el}
                         className="w-full h-12 cursor-pointer"
-                        onClick={(e) => handleCanvasClick(e, ele._id)}
+                        onClick={(e) => handleCanvasClick(e, ele._id, index)}
                         style={{ display: 'block' }}
                       />
                     </div>
@@ -558,7 +654,7 @@ const FolderView = () => {
                                 onClick={() => { setEditingMusicId(ele._id); setEditingMusicName(ele.name || ''); }}
                                 className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
                               >
-                                <span className="font-medium">A</span>
+                                <img src={rename} alt="rename icon" className='w-3 h-3 md600:w-4 md600:h-4 2xl:w-5 2xl:h-5' />
                                 Rename
                               </button>
                             )}
@@ -576,7 +672,8 @@ const FolderView = () => {
                                 }}
                                 className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
                               >
-                                🖼️ Change cover
+                                <IoImageOutline size={20} /> 
+                                Change cover
                               </button>
                             )}
                           </MenuItem>
@@ -588,8 +685,8 @@ const FolderView = () => {
                                 onClick={() => { setMoveMusicId(ele._id); setMoveModalOpen(true); }}
                                 className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
                               >
-                                <span className="flex items-center gap-2">📁 Move to folder</span>
-                                <span>›</span>
+                                <span className="flex items-center gap-2"><IoFolderOutline size={18} /> Move to folder</span>
+                                <span><FaAngleRight size={18} /></span>
                               </button>
                             )}
                           </MenuItem>
@@ -601,8 +698,8 @@ const FolderView = () => {
                                 onClick={() => handleExport(ele)}
                                 className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
                               >
-                                <span className="flex items-center gap-2">⬇ Export (MP3)</span>
-                                <span>›</span>
+                                <span className="flex items-center gap-2"><FaArrowDownLong size={18} /> Export (MP3)</span>
+                                <span><FaAngleRight size={18} /></span>
                               </button>
                             )}
                           </MenuItem>
@@ -614,9 +711,9 @@ const FolderView = () => {
                               <button
                                 type="button"
                                 onClick={() => { setSelectedProjectName(ele?.name || ''); setDeleteId(ele._id); setDeleteModalOpen(true); }}
-                                className={`flex items-center gap-2 px-4 py-2 text-sm ${active ? "bg-red-100 text-red-600" : "text-red-600"}`}
+                                className={`flex items-center gap-2 px-4 py-2 w-full text-sm ${active ? "bg-red-100 text-red-600" : "text-red-600"}`}
                               >
-                                🗑️ Delete
+                                <MdDeleteOutline size={20} /> Delete
                               </button>
                             )}
                           </MenuItem>
@@ -627,8 +724,18 @@ const FolderView = () => {
                 </div>
               </div>
             );
-          })}
+          }) : (
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <div className="relative">
+                <img src={notFound} alt="No music" className='object-contain w-24 h-24' />
+              </div>
+              <div className="text-center mt-3">
+                <h3 className="text-lg font-medium text-gray-300 mb-1">Your folder is Empty</h3>
+              </div>
+            </div>
+          )}
         </div>
+        )}
       </div>
 
       {/* Change Cover Model */}
