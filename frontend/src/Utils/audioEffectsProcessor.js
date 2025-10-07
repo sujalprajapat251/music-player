@@ -164,57 +164,74 @@ export class AudioEffectsProcessor {
 
   // Create Fuzz effect chain
   createFuzz(parameters = {}) {
-    const { drive = 0.5, tone = 0.5, mix = 0.5 } = parameters;
+    const { grain = 0.5, bite = 0.5, lowCut = 0.5 } = parameters;
 
     // Create audio nodes
     const inputGain = this.audioContext.createGain();
-    inputGain.gain.setValueAtTime(3.0, this.audioContext.currentTime); // Pre-amplify input signal
+    inputGain.gain.setValueAtTime(2.0, this.audioContext.currentTime); // Pre-amplify input signal
     const fuzzGain = this.audioContext.createGain();
-    fuzzGain.gain.setValueAtTime(2.5, this.audioContext.currentTime); // Boost fuzz signal
+    fuzzGain.gain.setValueAtTime(1.5, this.audioContext.currentTime); // Moderate fuzz signal boost
     const outputGain = this.audioContext.createGain();
-    outputGain.gain.setValueAtTime(2.0, this.audioContext.currentTime); // Boost output signal
+    outputGain.gain.setValueAtTime(1.8, this.audioContext.currentTime); // Output signal boost
 
-    // Create fuzz distortion
-    const waveshaper = this.audioContext.createWaveShaper();
-    const curve = this.createFuzzCurve(drive);
-    waveshaper.curve = curve;
-    waveshaper.oversample = "4x";
+    // Create main fuzz distortion waveshaper
+    const fuzzWaveshaper = this.audioContext.createWaveShaper();
+    const fuzzCurve = this.createFuzzCurve(grain);
+    fuzzWaveshaper.curve = fuzzCurve;
+    fuzzWaveshaper.oversample = "4x";
 
-    // Create tone filter
-    const toneFilter = this.audioContext.createBiquadFilter();
-    toneFilter.type = "lowpass";
-    const frequency = 200 + (tone * 9800);
-    toneFilter.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
-    toneFilter.Q.setValueAtTime(1, this.audioContext.currentTime);
+    // Create bite (high-frequency emphasis) filter
+    const biteFilter = this.audioContext.createBiquadFilter();
+    biteFilter.type = "highshelf";
+    biteFilter.frequency.setValueAtTime(2000, this.audioContext.currentTime); // 2kHz shelf frequency
+    const biteGain = -12 + (bite * 24); // -12dB to +12dB range
+    biteFilter.gain.setValueAtTime(biteGain, this.audioContext.currentTime);
+    biteFilter.Q.setValueAtTime(0.7, this.audioContext.currentTime);
 
-    // Set mix levels
-    inputGain.gain.setValueAtTime(1 - mix, this.audioContext.currentTime); // Dry signal
-    fuzzGain.gain.setValueAtTime(mix, this.audioContext.currentTime); // Wet signal
+    // Create low cut filter
+    const lowCutFilter = this.audioContext.createBiquadFilter();
+    lowCutFilter.type = "highpass";
+    const lowCutFreq = 20 + (lowCut * 480); // 20Hz to 500Hz range
+    lowCutFilter.frequency.setValueAtTime(lowCutFreq, this.audioContext.currentTime);
+    lowCutFilter.Q.setValueAtTime(1.2, this.audioContext.currentTime);
 
-    // Connect the chain
-    inputGain.connect(outputGain); // Dry path
-    inputGain.connect(waveshaper); // Wet path
-    waveshaper.connect(toneFilter);
-    toneFilter.connect(fuzzGain);
+    // Create additional harmonics generator for more aggressive fuzz
+    const harmonicsGain = this.audioContext.createGain();
+    harmonicsGain.gain.setValueAtTime(0.3 + (grain * 0.4), this.audioContext.currentTime); // Varies with grain
+
+    // Connect the chain: Input -> Low Cut -> Fuzz -> Bite -> Harmonics -> Output
+    inputGain.connect(lowCutFilter);
+    lowCutFilter.connect(fuzzWaveshaper);
+    fuzzWaveshaper.connect(biteFilter);
+    biteFilter.connect(harmonicsGain);
+    harmonicsGain.connect(fuzzGain);
     fuzzGain.connect(outputGain);
 
     return {
       input: inputGain,
       output: outputGain,
       updateParameters: (newParams) => {
-        const { drive: newDrive, tone: newTone, mix: newMix } = newParams;
+        const { grain: newGrain, bite: newBite, lowCut: newLowCut } = newParams;
 
-        // Update waveshaper curve
-        const newCurve = this.createFuzzCurve(newDrive);
-        waveshaper.curve = newCurve;
+        // Update fuzz waveshaper curve based on grain
+        const newFuzzCurve = this.createFuzzCurve(newGrain);
+        fuzzWaveshaper.curve = newFuzzCurve;
 
-        // Update tone filter frequency
-        const newFrequency = 200 + (newTone * 9800);
-        toneFilter.frequency.setValueAtTime(newFrequency, this.audioContext.currentTime);
+        // Update bite (high-frequency emphasis)
+        const newBiteGain = -12 + (newBite * 24); // -12dB to +12dB range
+        biteFilter.gain.setValueAtTime(newBiteGain, this.audioContext.currentTime);
 
-        // Update gains
-        inputGain.gain.setValueAtTime(1 - newMix, this.audioContext.currentTime);
-        fuzzGain.gain.setValueAtTime(newMix, this.audioContext.currentTime);
+        // Update low cut filter frequency
+        const newLowCutFreq = 20 + (newLowCut * 480); // 20Hz to 500Hz range
+        lowCutFilter.frequency.setValueAtTime(newLowCutFreq, this.audioContext.currentTime);
+
+        // Update harmonics gain based on grain amount
+        const newHarmonicsGain = 0.3 + (newGrain * 0.4);
+        harmonicsGain.gain.setValueAtTime(newHarmonicsGain, this.audioContext.currentTime);
+
+        // Update fuzz signal gain based on grain for more dynamic response
+        const newFuzzSignalGain = 1.2 + (newGrain * 0.6);
+        fuzzGain.gain.setValueAtTime(newFuzzSignalGain, this.audioContext.currentTime);
       }
     };
   }
@@ -354,15 +371,37 @@ export class AudioEffectsProcessor {
     };
   }
 
-  // Create fuzz curve
-  createFuzzCurve(drive) {
+  // Create fuzz curve - Enhanced for better grain control
+  createFuzzCurve(grain) {
     const samples = 44100;
     const curve = new Float32Array(samples);
-    const driveValue = Math.max(1, drive * 50);
+    // Use grain to control both drive and saturation characteristics
+    const driveValue = Math.max(2, grain * 80); // More dynamic range
+    const saturation = 0.6 + (grain * 0.4); // Variable saturation
 
     for (let i = 0; i < samples; i++) {
       const x = (i * 2) / samples - 1;
-      curve[i] = Math.tanh(x * driveValue);
+      
+      // Multi-stage distortion for more complex harmonics
+      let y = Math.tanh(x * driveValue) * saturation;
+      
+      // Add asymmetric clipping for more character
+      if (y > 0.7) {
+        y = 0.7 + (y - 0.7) * 0.3;
+      } else if (y < -0.6) {
+        y = -0.6 + (y + 0.6) * 0.4;
+      }
+      
+      // Apply soft knee compression for smoother transitions
+      const threshold = 0.8;
+      const ratio = 3;
+      if (Math.abs(y) > threshold) {
+        const excess = Math.abs(y) - threshold;
+        const compressedExcess = excess / ratio;
+        y = Math.sign(y) * (threshold + compressedExcess);
+      }
+      
+      curve[i] = y;
     }
 
     return curve;

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { Player, start } from "tone";
+import { Player, start, MonoSynth, Distortion, EQ3, Filter, Frequency, context, Transport } from "tone";
+import * as Tone from "tone";
 import * as d3 from "d3";
 import { useSelector, useDispatch } from "react-redux";
 import Soundfont from 'soundfont-player';
@@ -127,6 +128,7 @@ const Timeline = () => {
   const instrumentCacheRef = useRef({});
   const pianoAudioContextRef = useRef(null);
   const activePianoNotesRef = useRef(new Set());
+  const bass808SynthRef = useRef(null);
 
   const { zoomLevel } = useSelector(selectGridSettings);
   const drumRecordedData = useSelector((state) => selectStudioState(state)?.drumRecordedData || []);
@@ -141,6 +143,7 @@ const Timeline = () => {
   const currentTime = useSelector((state) => selectStudioState(state)?.currentTime || 0);
   const audioDuration = useSelector((state) => selectStudioState(state)?.audioDuration || 150);
   const trackEffectsState = useSelector(state => state.effects?.trackEffects || {});
+  const globalActiveEffects = useSelector(state => state.effects?.activeEffects || []);
   // eslint-disable-next-line no-unused-vars
   const audioSettings = useSelector((state) => state.audioSettings);
   const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
@@ -443,26 +446,368 @@ const Timeline = () => {
     }
   }, [selectedInstrument]);
 
-  const playPianoNote = useCallback(async (midiNumber, duration = 0.5, instrumentId) => {
-    if (pianoAudioContextRef.current) {
-      try {
-        if (pianoAudioContextRef.current.state === 'suspended') {
-          pianoAudioContextRef.current.resume();
-        }
-        const instrument = await getInstrument(instrumentId);
-        if (!instrument) return;
-        const audioNode = instrument.play(midiNumber, undefined, { duration });
-        activePianoNotesRef.current.add(audioNode);
+  // Initialize Bass & 808 synth for timeline playback
+  const initializeBass808Synth = useCallback((instrumentId) => {
+    const baseConfig = {
+      oscillator: { 
+        type: "sawtooth",
+        detune: -1200 // Lower pitch for bass sound
+      },
+      envelope: {
+        attack: 0.01,
+        decay: 0.35,
+        sustain: 0.7,
+        release: 1.2
+      },
+      filterEnvelope: {
+        attack: 0.02,
+        decay: 0.25,
+        sustain: 0.4,
+        release: 1.0,
+        baseFrequency: 180,
+        octaves: 5
+      },
+      volume: -1
+    };
 
-        // Clean up after note duration
-        setTimeout(() => {
-          activePianoNotesRef.current.delete(audioNode);
-        }, duration * 1000);
-      } catch (error) {
-        console.error("Error playing piano note:", error);
+    // Customize synth based on instrument type (same as BassAnd808 component)
+    switch (instrumentId) {
+      case '808_atom':
+        baseConfig.oscillator.type = "square";
+        baseConfig.envelope.attack = 0.001;
+        baseConfig.envelope.decay = 0.2;
+        baseConfig.envelope.sustain = 0.1;
+        baseConfig.envelope.release = 0.8;
+        break;
+      case '808_bass_tube':
+        baseConfig.oscillator.type = "triangle";
+        baseConfig.envelope.attack = 0.005;
+        baseConfig.envelope.decay = 0.4;
+        baseConfig.envelope.sustain = 0.3;
+        baseConfig.envelope.release = 1.0;
+        break;
+      case '808_clean':
+        baseConfig.oscillator.type = "sine";
+        baseConfig.envelope.attack = 0.01;
+        baseConfig.envelope.decay = 0.3;
+        baseConfig.envelope.sustain = 0.5;
+        baseConfig.envelope.release = 0.6;
+        break;
+      case 'heavy_808':
+        baseConfig.oscillator.type = "sawtooth";
+        baseConfig.envelope.attack = 0.001;
+        baseConfig.envelope.decay = 0.5;
+        baseConfig.envelope.sustain = 0.2;
+        baseConfig.envelope.release = 1.5;
+        baseConfig.volume = 2;
+        break;
+      case 'upright_bass':
+        baseConfig.oscillator.type = "triangle";
+        baseConfig.envelope.attack = 0.05;
+        baseConfig.envelope.decay = 0.2;
+        baseConfig.envelope.sustain = 0.8;
+        baseConfig.envelope.release = 0.8;
+        break;
+      case 'electric_bass':
+        baseConfig.oscillator.type = "sawtooth";
+        baseConfig.envelope.attack = 0.02;
+        baseConfig.envelope.decay = 0.3;
+        baseConfig.envelope.sustain = 0.6;
+        baseConfig.envelope.release = 0.5;
+        break;
+      default:
+        break;
+    }
+
+    // Create and return a fresh synth instance
+    return new Tone.MonoSynth(baseConfig);
+  }, []);
+
+  // Apply Fuzz effects to Bass & 808 synth for timeline playback
+  const applyBass808Effects = useCallback((synth, trackId, recordedEffects = null) => {
+    console.log('🎵 applyBass808Effects debug:');
+    console.log('  - Track ID:', trackId);
+    console.log('  - Recorded Effects:', recordedEffects);
+    console.log('  - Track Effects State:', trackEffectsState);
+    console.log('  - Global Active Effects:', globalActiveEffects);
+    
+    let fuzzEffect = null;
+    let effectSource = 'none';
+    
+    // Priority 1: Use recorded effect parameters if available
+    if (recordedEffects && recordedEffects.fuzz) {
+      fuzzEffect = {
+        name: 'Fuzz',
+        parameters: [
+          { value: recordedEffects.fuzz.grain },
+          { value: recordedEffects.fuzz.bite },
+          { value: recordedEffects.fuzz.lowCut }
+        ],
+        instanceId: recordedEffects.fuzz.instanceId
+      };
+      effectSource = 'recorded';
+      console.log('  - Using recorded Fuzz effect parameters:', fuzzEffect);
+    } else {
+      // Priority 2: Use current track-specific effects
+      const trackEffects = trackEffectsState[trackId] || [];
+      fuzzEffect = trackEffects.find(effect => effect.name === 'Fuzz');
+      if (fuzzEffect) {
+        effectSource = 'track-specific';
+        console.log('  - Using current track-specific Fuzz effect:', fuzzEffect);
+      } else {
+        // Priority 3: Use current global effects
+        fuzzEffect = globalActiveEffects.find(effect => effect.name === 'Fuzz');
+        if (fuzzEffect) {
+          effectSource = 'global';
+          console.log('  - Using current global Fuzz effect:', fuzzEffect);
+        }
       }
     }
-  }, [getInstrument]);
+    
+    console.log('  - Effect source:', effectSource);
+    
+    if (fuzzEffect && fuzzEffect.parameters && Array.isArray(fuzzEffect.parameters) && fuzzEffect.parameters.length >= 3) {
+      console.log('🎵 Applying current Fuzz effects for timeline playback:', fuzzEffect);
+      
+      // Extract current parameter values with null checks
+      const grainParam = fuzzEffect.parameters[0];
+      const biteParam = fuzzEffect.parameters[1];
+      const lowCutParam = fuzzEffect.parameters[2];
+      
+      let grain, bite, lowCut;
+      
+      // Handle conversion differently based on effect source
+      if (effectSource === 'recorded') {
+        // For recorded effects, parameters are stored as angle values (-135 to 135)
+        // Convert angle parameters to 0-1 range using the same function as for current effects
+        const effectsProcessor = getEffectsProcessor();
+        grain = effectsProcessor.angleToParameter(grainParam?.value ?? 0);
+        bite = effectsProcessor.angleToParameter(biteParam?.value ?? 45);
+        lowCut = effectsProcessor.angleToParameter(lowCutParam?.value ?? 90);
+      } else {
+        // For current effects, use the same conversion as before
+        grain = Math.max(0, Math.min(1, ((grainParam?.value ?? 0) + 135) / 270));
+        bite = Math.max(0, Math.min(1, ((biteParam?.value ?? 45) + 135) / 270));
+        lowCut = Math.max(0, Math.min(1, ((lowCutParam?.value ?? 90) + 135) / 270));
+      }
+      
+      console.log('🎲 Using Fuzz parameter values:', { 
+        grain: `${grainParam?.value ?? 'default'} -> ${grain}`, 
+        bite: `${biteParam?.value ?? 'default'} -> ${bite}`, 
+        lowCut: `${lowCutParam?.value ?? 'default'} -> ${lowCut}`,
+        rawParams: fuzzEffect.parameters,
+        effectSource
+      });
+      
+      // Test if effects make a significant difference
+      const hasSignificantEffect = grain > 0.1 || Math.abs(bite - 0.5) > 0.1 || lowCut > 0.1;
+      console.log('📊 Effect significance check:', {
+        grain, bite, lowCut, hasSignificantEffect
+      });
+      
+      try {
+        // Create Tone.js Fuzz effect chain (same as BassAnd808 component)
+        const fuzzDistortion = new Tone.Distortion({
+          distortion: grain,
+          wet: 1.0
+        });
+        
+        const biteEQ = new Tone.EQ3({
+          high: (bite - 0.5) * 24, // -12dB to +12dB
+          highFrequency: 2000
+        });
+        
+        const lowCutFilter = new Tone.Filter({
+          type: "highpass",
+          frequency: 20 + (lowCut * 480), // 20Hz to 500Hz
+          Q: 1.2
+        });
+        
+        // Connect effects chain: Synth -> Low Cut -> Fuzz -> Bite -> Output
+        synth.disconnect(); // Ensure clean connections
+        synth.chain(lowCutFilter, fuzzDistortion, biteEQ);
+        biteEQ.toDestination();
+        
+        console.log('✅ Fresh Fuzz effects applied with current parameters');
+        console.log('🔊 Effect values applied:', {
+          distortion: grain,
+          eqHigh: (bite - 0.5) * 24,
+          filterFreq: 20 + (lowCut * 480)
+        });
+        
+        // Test the effect chain by logging the connections
+        console.log('🔗 Effect chain connections:', {
+          synthConnected: synth.output.numberOfOutputs > 0,
+          lowCutConnected: lowCutFilter.output.numberOfOutputs > 0,
+          distortionConnected: fuzzDistortion.output.numberOfOutputs > 0,
+          eqConnected: biteEQ.output.numberOfOutputs > 0
+        });
+        
+      } catch (error) {
+        console.error('❌ Error applying Fuzz effects:', error);
+        console.error('Error details:', error.message);
+        // Fallback: connect directly to destination
+        synth.disconnect();
+        synth.toDestination();
+        console.log('🔄 Fallback: Connected synth directly to destination');
+      }
+    } else {
+      // No effects, connect directly to destination
+      synth.disconnect();
+      synth.toDestination();
+      console.log('🎵 No Fuzz effects found, Bass & 808 synth connected directly');
+      if (fuzzEffect) {
+        console.log('⚠️ Fuzz effect found but parameters invalid:', fuzzEffect);
+      }
+      
+      // Test basic synth sound without effects
+      console.log('🎧 Testing basic Bass & 808 synth output (no effects)');
+    }
+  }, [trackEffectsState, globalActiveEffects]);
+
+  // Play Bass & 808 note with effects for timeline playback
+  const playBass808Note = useCallback(async (midiNumber, duration, instrumentId, trackId, recordedEffects = null) => {
+    try {
+      console.log('🎵 playBass808Note called with:', { midiNumber, duration, instrumentId, trackId, recordedEffects });
+      
+      // Ensure Tone.js context is started
+      if (Tone.context.state !== 'running') {
+        console.log('🎵 Starting Tone.js context...');
+        await Tone.start();
+        console.log('🎵 Tone.js context state:', Tone.context.state);
+      }
+      
+      // Create a fresh synth for each note to ensure clean effects application
+      const freshSynth = initializeBass808Synth(instrumentId);
+      console.log('🎵 Created fresh synth for instrument:', instrumentId);
+      
+      // Check if we have any effects before applying them
+      const trackEffects = trackEffectsState[trackId] || [];
+      const globalEffects = globalActiveEffects || [];
+      const hasCurrentFuzzEffect = trackEffects.some(e => e.name === 'Fuzz') || globalEffects.some(e => e.name === 'Fuzz');
+      const hasRecordedFuzzEffect = recordedEffects && recordedEffects.fuzz;
+      
+      console.log('🔍 Pre-effect check:', {
+        trackId,
+        trackEffectsCount: trackEffects.length,
+        globalEffectsCount: globalEffects.length,
+        hasCurrentFuzzEffect,
+        hasRecordedFuzzEffect,
+        effectSource: hasRecordedFuzzEffect ? 'recorded' : (hasCurrentFuzzEffect ? 'current' : 'none')
+      });
+      
+      // Apply effects to this fresh synth (prioritize recorded effects)
+      applyBass808Effects(freshSynth, trackId, recordedEffects);
+      
+      // Convert MIDI to note name and play immediately
+      const noteName = Tone.Frequency(midiNumber, "midi").toNote();
+      
+      console.log('🎵 Timeline playing Bass & 808 note:', noteName, 'with fresh synth and effects');
+      
+      // Trigger the note with explicit timing
+      freshSynth.triggerAttackRelease(noteName, duration, Tone.now());
+      
+      // Verify synth is actually connected and playing
+      console.log('🔊 Synth state after trigger:', {
+        synthState: freshSynth.state,
+        contextState: Tone.context.state,
+        noteTriggered: noteName,
+        duration: duration
+      });
+      
+      // Store reference for cleanup
+      bass808SynthRef.current = freshSynth;
+      
+      // Clean up after note duration with longer delay to ensure note completes
+      setTimeout(() => {
+        try {
+          if (freshSynth && freshSynth.disposed !== true) {
+            freshSynth.dispose();
+          }
+          if (bass808SynthRef.current === freshSynth) {
+            bass808SynthRef.current = null;
+          }
+          console.log('🗑️ Cleaned up Bass & 808 synth after note completion');
+        } catch (e) {
+          console.warn('Cleanup error for Bass & 808 synth:', e);
+        }
+      }, (duration + 0.5) * 1000); // Increased delay to ensure note completes
+      
+    } catch (error) {
+      console.error('❌ Error playing Bass & 808 note on timeline:', error);
+      console.error('Error stack:', error.stack);
+    }
+  }, [initializeBass808Synth, applyBass808Effects, trackEffectsState, globalActiveEffects]);
+
+  // Clean up Bass & 808 synth when component unmounts
+  useEffect(() => {
+    return () => {
+      if (bass808SynthRef.current) {
+        bass808SynthRef.current.dispose();
+      }
+    };
+  }, []);
+
+  const playPianoNote = useCallback(async (midiNumber, duration = 0.5, instrumentId, trackId, recordedEffects = null) => {
+    try {
+      // Check if this is a Bass & 808 instrument that should use Tone.js
+      const isBass808 = instrumentId && (
+        instrumentId.includes('808') || 
+        instrumentId.includes('bass') ||
+        instrumentId.includes('Bass') ||
+        instrumentId === '808_atom' ||
+        instrumentId === '808_bass_tube' ||
+        instrumentId === '808_broad_stereo' ||
+        instrumentId === '808_clean' ||
+        instrumentId === '808_pi_bass' ||
+        instrumentId === '808_provider' ||
+        instrumentId === '808_yeast' ||
+        instrumentId === 'drm_808' ||
+        instrumentId === 'flag_808' ||
+        instrumentId === 'gritty_sub_808' ||
+        instrumentId === 'gritty_rumble_808' ||
+        instrumentId === 'hangry_808' ||
+        instrumentId === 'heavy_808' ||
+        instrumentId === 'upright_bass' ||
+        instrumentId === 'electric_bass' ||
+        instrumentId === 'synth_bass' ||
+        instrumentId === 'sub_bass'
+      );
+      
+      console.log('🎵 playPianoNote debug:');
+      console.log('  - Instrument ID:', instrumentId);
+      console.log('  - Is Bass & 808:', isBass808);
+      console.log('  - Track ID:', trackId);
+      console.log('  - Recorded Effects:', recordedEffects);
+      
+      if (isBass808) {
+        // Use Tone.js for Bass & 808 playback with effects
+        console.log('🎸 Routing to Tone.js Bass & 808 system');
+        await playBass808Note(midiNumber, duration, instrumentId, trackId, recordedEffects);
+      } else {
+        // Use Soundfont.js for regular piano instruments
+        console.log('🎹 Routing to Soundfont.js piano system');
+        
+        if (pianoAudioContextRef.current) {
+          if (pianoAudioContextRef.current.state === 'suspended') {
+            pianoAudioContextRef.current.resume();
+          }
+          
+          const instrument = await getInstrument(instrumentId);
+          if (!instrument) return;
+          const audioNode = instrument.play(midiNumber, undefined, { duration });
+          activePianoNotesRef.current.add(audioNode);
+
+          // Clean up after note duration
+          setTimeout(() => {
+            activePianoNotesRef.current.delete(audioNode);
+          }, duration * 1000);
+        }
+      }
+    } catch (error) {
+      console.error("Error playing piano note:", error);
+    }
+  }, [getInstrument, playBass808Note]);
 
 
 
@@ -986,6 +1331,27 @@ const Timeline = () => {
             }
           });
         }
+        
+        // Add Fuzz effect parameter handling
+        if (effect.name === "Fuzz" && effect.parameters) {
+          const parameters = {
+            grain: effectsProcessorRef.current.angleToParameter(effect.parameters[0]?.value || 0),  // Grain
+            bite: effectsProcessorRef.current.angleToParameter(effect.parameters[1]?.value || 45), // Bite
+            lowCut: effectsProcessorRef.current.angleToParameter(effect.parameters[2]?.value || 90) // Low Cut
+          };
+
+          // Update only players for this specific track
+          players.forEach((playerObj) => {
+            if (playerObj.trackId === trackId && playerObj.appliedEffects) {
+              const appliedEffect = playerObj.appliedEffects.find(
+                ae => ae.effectId === effect.instanceId && ae.trackId === trackId
+              );
+              if (appliedEffect && appliedEffect.chain.updateParameters) {
+                appliedEffect.chain.updateParameters(parameters);
+              }
+            }
+          });
+        }
       });
     });
   }, [trackEffectsState, players]);
@@ -1205,8 +1571,25 @@ const Timeline = () => {
               // Check if we haven't already played this note in this time range
               const noteKey = `${note.id}-${Math.floor(noteStartTime * 10)}`;
               if (!activePianoNotesRef.current.has(noteKey)) {
-                // Always use the currently selected instrument to re-voice the entire recording uniformly
-                playPianoNote(note.midiNumber, note.duration || 0.5, selectedInstrument);
+                // Debug logging for Bass & 808 detection
+                console.log('🎹 Timeline note playback debug:');
+                console.log('  - Note:', note);
+                console.log('  - Instrument ID:', note.instrumentId);
+                console.log('  - Track ID:', note.trackId);
+                console.log('  - Selected Instrument:', selectedInstrument);
+                
+                // Always use the instrument from the note data, with track context for effects
+                const noteInstrumentId = note.instrumentId || selectedInstrument;
+                console.log('  - Final Instrument ID:', noteInstrumentId);
+                console.log('  - Will use Bass & 808 system:', noteInstrumentId && (
+                  noteInstrumentId.includes('808') || 
+                  noteInstrumentId.includes('bass') ||
+                  noteInstrumentId.includes('Bass')
+                ));
+                console.log('  - Note has recorded effects:', !!note.recordedEffects);
+                
+                // Pass recorded effects if available
+                playPianoNote(note.midiNumber, note.duration || 0.5, noteInstrumentId, note.trackId, note.recordedEffects);
                 activePianoNotesRef.current.add(noteKey);
 
                 // Remove the note key after the note duration
