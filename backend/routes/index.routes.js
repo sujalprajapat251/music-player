@@ -14,6 +14,7 @@ const { createSubscribe, getAllSubscribe } = require('../controller/subscribeCon
 const { createMusic, getAllMusic, deleteMusic, updateMusic, restoreMusic, permanentDeleteMusic, restoreAllMusic, permanentDeleteAllMusic, renameMusic, moveMusicToFolder, addCoverImage, removeCoverImage } = require('../controller/musicController');
 const { uploadAudio } = require('../helper/uploadController');
 const { getMusicByIdPublic } = require('../controller/publicController');
+const { createReview, getReviewsByMusicId, getReviewsByUserId, updateReview, deleteReview } = require('../controller/reviewController');
 
 // auth Routes
 
@@ -96,5 +97,12 @@ indexRoutes.get('/allsubscribe', getAllSubscribe);
 
 // Public share route
 indexRoutes.get('/public/music/:id', getMusicByIdPublic);
+
+// Review Routes
+indexRoutes.post('/createReview', auth, createReview);
+indexRoutes.get('/reviews/music/:musicId', getReviewsByMusicId);
+indexRoutes.get('/reviews/user', auth, getReviewsByUserId);
+indexRoutes.put('/reviews/:reviewId', auth, updateReview);
+indexRoutes.delete('/reviews/:reviewId', auth, deleteReview);
 
 module.exports = indexRoutes

@@ -49,6 +49,7 @@ import audioQualityManager from '../../Utils/audioQualityManager';
 import ExportPopup from '../ExportProjectModel';
 import { useUndoRedo } from '../../hooks/useUndoRedo';
 import { createMusic, updateMusic, getAllMusic } from '../../Redux/Slice/music.slice';
+import { createReview } from '../../Redux/Slice/reviews.slice';
 import axiosInstance from '../../Utils/axiosInstance';
 import { selectStudioState } from '../../Redux/rootReducer';
 import WavEncoder from 'wav-encoder';
@@ -60,6 +61,7 @@ import AccessPopup from '../AccessPopup';
 import { addAudioClipToTrack, createTrackWithDefaults, updateAudioClip, setTrackType } from '../../Redux/Slice/studio.slice';
 import TunerPopup from '../TunerPopup';
 import { CloudCog } from 'lucide-react';
+import ReviewModal from '../ReviewModal';
 
 const getTopHeaderColors = (isDark) => ({
   // Background colors
@@ -171,6 +173,7 @@ const TopHeader = () => {
     const [showAccessPopup, setShowAccessPopup] = useState(false);
     const [showTunerPopup, setShowTunerPopup] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [showReviewModal, setShowReviewModal] = useState(false);
 
     // Function to check for live instruments connected to the setup
     const checkForLiveInstruments = async () => {
@@ -806,6 +809,8 @@ const TopHeader = () => {
             }
         }
             setSaveStatus('saved');
+            // Show review modal after successful save
+            setShowReviewModal(true);
         } catch (e) {
             setSaveStatus('error');
         }
@@ -916,6 +921,36 @@ const TopHeader = () => {
         } catch (error) {
             console.error('Error importing audio file:', error);
             alert('Failed to import audio file. Please try again.');
+        }
+    };
+
+    // Handle review submission
+    const handleReviewSubmit = async (reviewData) => {
+        try {
+            if (!currentMusic?._id) {
+                console.error('No music ID available for review');
+                setShowReviewModal(false);
+                return;
+            }
+
+            const result = await dispatch(createReview({
+                musicId: currentMusic._id,
+                rating: reviewData.rating,
+                description: reviewData.description
+            }));
+
+            if (result.payload?.success) {
+                console.log('Review submitted successfully:', result.payload);
+                // You can add a success toast notification here
+            } else {
+                console.error('Failed to submit review:', result.payload);
+                // You can add an error toast notification here
+            }
+        } catch (error) {
+            console.error('Error submitting review:', error);
+            // You can add an error toast notification here
+        } finally {
+            setShowReviewModal(false);
         }
     };
 
@@ -2324,6 +2359,13 @@ const TopHeader = () => {
             {showTunerPopup && (
                 <TunerPopup onClose={() => setShowTunerPopup(false)} />
             )}
+
+            {/* Review Modal */}
+            <ReviewModal 
+                isOpen={showReviewModal} 
+                onClose={() => setShowReviewModal(false)} 
+                onSubmit={handleReviewSubmit}
+            />
 
             {/* Add hidden file input for regular audio import */}
             <input

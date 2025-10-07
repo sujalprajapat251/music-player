@@ -33,6 +33,7 @@ import { log } from 'tone/build/esm/core/util/Debug';
 import { FaAngleRight } from "react-icons/fa";
 import { FaArrowDownLong } from "react-icons/fa6";
 import { MdDeleteOutline } from "react-icons/md";
+import notFound from '../Images/notFound.png'
 
 // Function to generate random colors
 const generateRandomColor = (seed) => {
@@ -1006,34 +1007,55 @@ const handleSaveCoverImage = async () => {
               </div>
           </div>
 
-          {sortedAndFilteredFolders?.map((ele, index) => (
+          {sortedAndFilteredFolders?.length > 0 ? (
+            sortedAndFilteredFolders.map((ele, index) => (
             <div key={ele._id} className="flex pt-2  md600:pt-3  lg:pt-3 ps-2 md600:ps-3 2xl:pt-4 2xl:ps-4 3xl:pt-5 3xl:ps-5 pe-2 md600:pe-3 md:pe-2 border-b border-[#FFFFFF1A] pb-2 cursor-pointer" onClick={() => navigate(`/project/folder/${ele._id}`)}>
-              <img src={folder} alt="" className='w-[16px] h-[16px] sm:w-[20px] sm:h-[20px] lg:w-[22px] lg:h-[22px] my-auto' />
-              <p className="text-white ps-2 md600:ps-3 lg:ps-4  my-auto text-[12px] sm:text-[14px] md:text-[16px] ">{ele?.folderName}</p>
-              <div className='ms-auto' onClick={(e) => e.stopPropagation()}>
+                <img src={folder} alt="" className='w-[16px] h-[16px] sm:w-[20px] sm:h-[20px] lg:w-[22px] lg:h-[22px] my-auto' />
+                <p className="text-white ps-2 md600:ps-3 lg:ps-4  my-auto text-[12px] sm:text-[14px] md:text-[16px] ">{ele?.folderName}</p>
+                <div className='ms-auto' onClick={(e) => e.stopPropagation()}>
                 <AdaptiveMenu button={<BsThreeDotsVertical className='text-white text-[12px] sm:text-[14px] md600:text-[16px] lg:text-[18px] 3xl:text-[20px]' />} widthClass="w-40 2xl:w-44">
-                  <div className="">
+                    <div className="">
                     <MenuItem >
-                      <p className="block px-4 py-1 md600:px-5 lg:px-6 md600:py-1  2xl:px-7 lg:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" onClick={() => handleRenameClick(ele._id, ele.folderName)}>
+                        <p className="block px-4 py-1 md600:px-5 lg:px-6 md600:py-1  2xl:px-7 lg:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" onClick={() => handleRenameClick(ele._id, ele.folderName)}>
                         <div className="flex items-center" >
-                          <img src={rename} alt="" className=' w-3 h-3 md600:w-4 md600:h-4 2xl:w-6 2xl:h-6' />
-                          <p className="text-white ps-2  md600:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] md600:text-[14px] 2xl:text-[16px]">Rename</p>
+                            <img src={rename} alt="" className=' w-3 h-3 md600:w-4 md600:h-4 2xl:w-6 2xl:h-6' />
+                            <p className="text-white ps-2  md600:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] md600:text-[14px] 2xl:text-[16px]">Rename</p>
                         </div>
-                      </p>
+                        </p>
                     </MenuItem>
                     <MenuItem >
-                      <p className="block px-4 py-1 md600:px-5 lg:px-6 md600:py-1  2xl:px-7 lg:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" onClick={() => handleDeleteClick(ele._id)}>
+                        <p className="block px-4 py-1 md600:px-5 lg:px-6 md600:py-1  2xl:px-7 lg:py-2  3xl:px-9 3xl:py-3   hover:bg-gray-800 cursor-pointer" onClick={() => handleDeleteClick(ele._id)}>
                         <div className="flex items-center">
-                          <img src={RedDelete} alt="" className='w-3 h-3 md600:w-4 md600:h-4 2xl:w-6 2xl:h-6' />
-                          <p className="text-[#FF0000] ps-2 md600:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] md600:text-[14px] 2xl:text-[16px]">Delete</p>
+                            <img src={RedDelete} alt="" className='w-3 h-3 md600:w-4 md600:h-4 2xl:w-6 2xl:h-6' />
+                            <p className="text-[#FF0000] ps-2 md600:ps-3 xl:ps-4 3xl:ps-4 font-semibold text-[12px] md600:text-[14px] 2xl:text-[16px]">Delete</p>
                         </div>
-                      </p>
+                        </p>
                     </MenuItem>
-                  </div>
+                    </div>
                 </AdaptiveMenu>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              {/* No Results Icon */}
+              <div className="relative">
+                <img src={notFound} alt="" className='w-24 h-24' />
+              </div>
+              
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-gray-300 mb-2">
+                  {searchText ? `No results found for "${searchText}"` : "No folders found"}
+                </h3>
+                <p className="text-sm text-gray-500 mb-1">
+                  Sorry! We couldn't find that try looking for
+                </p>
+                <p className="text-sm text-gray-500">
+                  something else
+                </p>
               </div>
             </div>
-          ))}
+        )}
 
           {sortedAndFilteredMusic.map((ele, index) => {
               const isPlaying = playingMusicId === ele._id;
