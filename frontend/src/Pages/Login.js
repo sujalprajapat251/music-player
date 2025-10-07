@@ -267,14 +267,14 @@ const Login = () => {
                   <div className="flex-1 h-px m-0-10 bg-gradient-to-r from-black to-white/50"></div>
                 </div>
 
-                <div className="mt-6 flex justify-between items-center">
+                <div className="mt-6 flex justify-between items-center gap-6">
                   <GoogleLogin
                     onSuccess={(response) => {
-                      const {
-                        name,
-                        email,
+                      const { 
+                        name, 
+                        email, 
                         sub: uid,
-                      } = jwtDecode(response.credential);
+                       } = jwtDecode(response.credential);
                       const [firstName, ...rest] = name.split(" ");
                       const lastName = rest.join(" ");
                       dispatch(
@@ -286,25 +286,26 @@ const Login = () => {
                     }}
                     onFailure={console.error}
                     render={(renderProps) => (
-                      <button onClick={renderProps.onClick} disabled={renderProps.disabled} className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-lg p-2.5 hover:bg-gray-50 transition-colors">
-                        <img src={require("../Images/google-logo.png")} alt="Google" className="w-5 h-5"/>
-                        <span className="text-right flex-grow-0">Google</span>
+                      <button onClick={renderProps.onClick}
+                        disabled={renderProps.disabled}
+                        className="flex items-center justify-center gap-3 w-[180px] border border-[#ffffff4d] rounded-md py-2.5 bg-transparent text-white text-base font-normal hover:bg-[#1a1a1a] transition-all duration-200"
+                      >
+                        <img src={require("../Images/google-logo.png")}
+                          alt="Google" className="w-5 h-5"/>
+                        <span>Google</span>
                       </button>
                     )}
                   />
-                  <div className="w-44">
+                  <div className="w-1/2">
                     <FacebookLogin
                       appId="2295150360940038"
                       autoLoad={false}
                       fields="name, email, picture"
+                      scope=""
                       callback={handleResponse}
-                      cssClass="w-full flex items-center justify-center px-4 py-2 border border-white/20 rounded-[4px] text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                      cssClass="flex items-center justify-center gap-3 w-full border border-[#7a7a7a] rounded-md py-3 text-white text-sm font-medium hover:bg-[#1a1a1a] transition-colors"
+                      icon={<img src={require('../Images/facebook-login-icon.png')} alt="Facebook" className="w-5 h-5" />}
                       textButton="Facebook"
-                      icon={
-                        <svg className="w-5 h-5 mr-3" fill="#1877F2" viewBox="0 0 24 24">
-                          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                        </svg>
-                      }
                     />
                   </div>
                 </div>
@@ -428,36 +429,43 @@ const Login = () => {
                   <div className="flex-1 h-px m-0-10 bg-gradient-to-r from-black to-white/50"></div>
                 </div>
                 
-                <div className="flex justify-between items-center">
-                <GoogleLogin
-                  onSuccess={(response) => {
-                    const {
-                      name,
-                      email,
-                      sub: uid,
-                    } = jwtDecode(response.credential);
-                    const [firstName, ...rest] = name.split(" ");
-                    const lastName = rest.join(" ");
-                    dispatch(
-                      googleLogin({ uid, firstName, lastName, email })
+                <div className="mt-6 flex justify-between items-center gap-6">
+                  <GoogleLogin
+                    onSuccess={(response) => {
+                      const { 
+                        name, 
+                        email, 
+                        sub: uid,
+                      } = jwtDecode(response.credential);
+                      const [firstName, ...rest] = name.split(" ");
+                      const lastName = rest.join(" ");
+                      dispatch(
+                        googleLogin({ uid, firstName, lastName, email })
                     ).then((response) => {
                       console.log(response);
-                      if (response.payload.success) navigate("/project", { replace: true });
-                    });
-                  }}
-                  onFailure={console.error}
-                  render={(renderProps) => (
-                    <button onClick={renderProps.onClick} disabled={renderProps.disabled} className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-lg p-2.5 hover:bg-gray-50 transition-colors">
-                      <img src={require("../Images/google-logo.png")} alt="Google" className="w-5 h-5"/>
-                      <span className="text-right flex-grow-0">Continue with Google</span>
-                    </button>
-                  )}
-                />
+                        if (response.payload.success) navigate("/project", { replace: true });
+                      });
+                    }}
+                    onFailure={console.error}
+                    render={(renderProps) => (
+                      <button onClick={renderProps.onClick}
+                        disabled={renderProps.disabled}
+                        className="flex items-center justify-center gap-3 w-[180px] border border-[#ffffff4d] rounded-md py-2.5 bg-transparent text-white text-base font-normal hover:bg-[#1a1a1a] transition-all duration-200"
+                      >
+                        <img src={require("../Images/google-logo.png")}
+                          alt="Google" className="w-5 h-5"/>
+                        <span>Google</span>
+                      </button>
+                    )}
+                  />
 
-                <div className='s_modal_btn2' >
-                  <FacebookLogin appId="2295150360940038" autoLoad={false} fields="name, email, picture" scope="" callback={handleResponse} text='signin_with' icon='fa-facebook' cssClass="!flex !items-center !justify-center gap-2 w-full bg-[#1877f2] text-white text-sm font-medium px-4 py-3 rounded-md hover:bg-[#166fe0] focus:outline-none focus:ring-2 focus:ring-[#1877f2]/40 transition" textButton='Sign in with Facebook'>
-                  <p className='mb-0 text-sm font-medium'>Sign in with Facebook</p></FacebookLogin>
-                </div>
+                  <div className="w-1/2">
+                    <FacebookLogin appId="2295150360940038" autoLoad={false}
+                      fields="name, email, picture" scope="" callback={handleResponse} cssClass="flex items-center justify-center gap-3 w-full border border-[#7a7a7a] rounded-md py-3 text-white text-sm font-medium hover:bg-[#1a1a1a] transition-colors"
+                      icon={<img src={require('../Images/facebook-login-icon.png')} alt="Facebook" className="w-5 h-5" />}
+                      textButton="Facebook"
+                    />
+                  </div>
  
                 </div>
                 {/* Sign up link */}
