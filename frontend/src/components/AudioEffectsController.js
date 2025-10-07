@@ -17,11 +17,11 @@ class AudioEffectsController {
         },
       },
       Fuzz: {
-        defaultParams: { fuzz: 0.7, tone: 0.5, mix: 0.8 },
+        defaultParams: { grain: 0.7, bite: 0.5, lowCut: 0.8 },
         paramRanges: {
-          fuzz: { min: 0, max: 1 },
-          tone: { min: 0, max: 1 },
-          mix: { min: 0, max: 1 },
+          grain: { min: 0, max: 1 },
+          bite: { min: 0, max: 1 },
+          lowCut: { min: 0, max: 1 },
         },
       },
       Overdrive: {
@@ -143,7 +143,7 @@ class AudioEffectsController {
           effectInstance = new Tone.Distortion(params.defaultParams.distortion);
           break;
         case "Fuzz":
-          effectInstance = new Tone.Distortion(params.defaultParams.fuzz);
+          effectInstance = new Tone.Distortion(params.defaultParams.grain);
           break;
         case "Overdrive":
           effectInstance = new Tone.Distortion(params.defaultParams.drive);
@@ -269,14 +269,18 @@ class AudioEffectsController {
         case "distortion":
         case "drive":
         case "fuzz":
+        case "grain":
           if (effectInstance.distortion !== undefined) {
             effectInstance.distortion = value;
           }
           break;
         case "frequency":
         case "oscFrequency":
+        case "bite":
           if (effectInstance.frequency !== undefined) {
             effectInstance.frequency.value = value;
+          } else if (effectInstance.bite !== undefined) {
+            effectInstance.bite.value = value;
           }
           break;
         case "rate":
@@ -315,10 +319,13 @@ class AudioEffectsController {
           }
           break;
         case "cutoff":
+        case "lowCut":
           if (effectInstance.baseFrequency !== undefined) {
             effectInstance.baseFrequency = value;
           } else if (effectInstance.frequency !== undefined) {
             effectInstance.frequency.value = value;
+          } else if (effectInstance.lowCut !== undefined) {
+            effectInstance.lowCut.value = value;
           }
           break;
         case "threshold":

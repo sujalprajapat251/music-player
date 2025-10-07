@@ -5,7 +5,7 @@ const fs = require('fs');
 // create music
 exports.createMusic = async (req, res) => {
     try {
-        const { name, musicdata, url, userId, folderId, drumRecordingClip } = req.body;
+        const { name, musicdata, url, userId, folderId, drumRecordingClip, effectsData } = req.body;
 
         // Check if music with this name already exists
         const existingMusic = await Music.findOne({ name });
@@ -19,6 +19,10 @@ exports.createMusic = async (req, res) => {
             if (drumRecordingClip) {
                 existingMusic.drumRecordingClip = drumRecordingClip;
             }
+            // Update effects data if provided
+            if (effectsData) {
+                existingMusic.effectsData = effectsData;
+            }
 
             const updatedMusic = await existingMusic.save();
 
@@ -30,14 +34,21 @@ exports.createMusic = async (req, res) => {
             });
         } else {
             // Create new music
-            const newMusic = await Music.create({
+            const newMusicData = {
                 name,
                 musicdata,
                 url,
                 userId,
                 folderId,
                 drumRecordingClip
-            });
+            };
+            
+            // Add effects data if provided
+            if (effectsData) {
+                newMusicData.effectsData = effectsData;
+            }
+            
+            const newMusic = await Music.create(newMusicData);
 
             return res.status(200).json({
                 status: 200,
@@ -96,7 +107,7 @@ exports.getAllMusic = async (req, res) => {
 exports.updateMusic = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, musicdata, url, folderId } = req.body;
+        const { name, musicdata, url, folderId, effectsData } = req.body;
 
         const existingMusic = await Music.findById(id);
         if (!existingMusic) {
@@ -114,6 +125,11 @@ exports.updateMusic = async (req, res) => {
         existingMusic.musicdata = musicdata || existingMusic.musicdata;
         existingMusic.url = url || existingMusic.url;
         existingMusic.folderId = folderId || existingMusic.folderId;
+        
+        // Update effects data if provided
+        if (effectsData !== undefined) {
+            existingMusic.effectsData = effectsData;
+        }
 
         const updatedMusic = await existingMusic.save();
 
@@ -336,6 +352,31 @@ exports.removeCoverImage = async (req, res) => {
         await music.save();
 
         res.status(200).json({ status: 200, message: "Cover image removed successfully..!", data: music });
+    } catch (error) {
+        res.status(500).json({ status: 500, message: error.message });
+    }
+};
+
+// Update Effect Parameters
+exports.updateEffectParameters = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { effectsData } = req.body;
+
+        const music = await Music.findById(id);
+        if (!music) {
+            return res.status(404).json({ status: 404, message: "Music not found" });
+        }
+
+        // Update only effects data
+        music.effectsData = effectsData;
+        await music.save();
+
+        res.status(200).json({ 
+            status: 200, 
+            message: "Effect parameters updated successfully!", 
+            music: music 
+        });
     } catch (error) {
         res.status(500).json({ status: 500, message: error.message });
     }

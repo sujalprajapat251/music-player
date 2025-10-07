@@ -24,6 +24,14 @@ const musicSchema = mongoose.Schema({
         type: String,
         default: null
     },
+    effectsData: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null
+    },
+    drumRecordingClip: {
+        type: mongoose.Schema.Types.Mixed,
+        default: null
+    },
     isDeleted: {
         type: Boolean,
         default: false

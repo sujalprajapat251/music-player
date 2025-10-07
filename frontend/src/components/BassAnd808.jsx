@@ -209,13 +209,15 @@ const BassAnd808 = ({ onClose }) => {
         };
     }, []);
 
-    // const audioContextRef = useRef(null);
+    const audioContextRef = useRef(null);
+    const gainNodeRef = useRef(null);
     const panNodeRef = useRef(null);
     const pianoRef = useRef(null);
     const reverbGainNodeRef = useRef(null);
     const dryGainNodeRef = useRef(null);
     const convolverNodeRef = useRef(null);
     const saturationNodeRef = useRef(null);
+    const trackEffectsChainRef = useRef(null); // Add track effects chain reference
     const recordAnchorRef = useRef({ systemMs: 0, playheadSec: 0 });
     // Lock instrument for the duration of a recording session
     const recordingInstrumentRef = useRef(null);
@@ -234,6 +236,48 @@ const BassAnd808 = ({ onClose }) => {
     const existingPianoNotes = useSelector((state) => selectStudioState(state).pianoNotes || []);
     const tracks = useSelector((state) => selectStudioState(state).tracks || []);
     const getActiveTabs = useSelector((state) => state.effects.activeTabs);
+    const { trackEffects: trackEffectsState, selectedTrackId } = useSelector((state) => state.effects); // Get trackEffects and selectedTrackId
+    const activeEffects = useSelector((state) => state.effects.activeEffects); // Get global activeEffects for UI rendering
+    
+    // Use selectedTrackId from effects or fall back to currentTrackId from studio
+    const activeTrackId = selectedTrackId || currentTrackId;
+    
+    // Get track-specific effects
+    const trackSpecificEffects = trackEffectsState[activeTrackId] || [];
+    
+    // Look for Fuzz effect in both global and track-specific effects
+    const getFuzzEffect = () => {
+        // First check track-specific effects
+        const trackFuzzEffect = trackSpecificEffects.find(effect => effect.name === 'Fuzz');
+        if (trackFuzzEffect) {
+            console.log('🎯 Found Fuzz in track-specific effects:', trackFuzzEffect);
+            return trackFuzzEffect;
+        }
+        
+        // Then check global effects
+        const globalFuzzEffect = activeEffects.find(effect => effect.name === 'Fuzz');
+        if (globalFuzzEffect) {
+            console.log('🌍 Found Fuzz in global effects:', globalFuzzEffect);
+            return globalFuzzEffect;
+        }
+        
+        return null;
+    };
+    
+    // Debug current track and effects
+    useEffect(() => {
+        console.log('🎤 Current track ID:', currentTrackId);
+        console.log('🎵 Selected track ID from effects:', selectedTrackId);
+        console.log('🎯 Active track ID:', activeTrackId);
+        console.log('🎧 All track effects:', trackEffectsState);
+        console.log('🌍 Global active effects:', activeEffects);
+        if (activeTrackId) {
+            console.log('🎯 Effects for active track:', trackEffectsState[activeTrackId]);
+        }
+        const fuzzEffect = getFuzzEffect();
+        console.log('🔊 Detected Fuzz effect:', fuzzEffect);
+        console.log('🔗 Current effects chain ref:', trackEffectsChainRef.current);
+    }, [currentTrackId, selectedTrackId, activeTrackId, trackEffectsState, activeEffects]);
 
     useEffect(() => {
         if (getActiveTabs) {
@@ -292,11 +336,9 @@ const BassAnd808 = ({ onClose }) => {
 
     const [recordedNotes, setRecordedNotes] = useState([]);
 
-    const audioContextRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const recordedChunksRef = useRef([]);
     const destinationRef = useRef(null);
-    const gainNodeRef = useRef(null);
 
     useEffect(() => {
         // Use Tone.js context for consistency
@@ -397,7 +439,8 @@ const BassAnd808 = ({ onClose }) => {
             }
 
             const synth = new Tone.MonoSynth(baseConfig);
-            // Connect through saturation, then onward in the chain
+            
+            // Connect through existing saturation chain (effects will be applied separately)
             if (saturationNodeRef.current) {
                 synth.connect(saturationNodeRef.current);
             } else if (panNodeRef.current) {
@@ -405,6 +448,7 @@ const BassAnd808 = ({ onClose }) => {
             } else {
                 synth.toDestination();
             }
+            
             return synth;
         };
 
@@ -423,8 +467,115 @@ const BassAnd808 = ({ onClose }) => {
             if (reverbNode) {
                 reverbNode.dispose();
             }
+            // Clean up effect chain references when synth is recreated
+            if (trackEffectsChainRef.current) {
+                Object.values(trackEffectsChainRef.current).forEach(effectChain => {
+                    if (effectChain.distortion) effectChain.distortion.dispose();
+                    if (effectChain.bite) effectChain.bite.dispose();
+                    if (effectChain.lowCut) effectChain.lowCut.dispose();
+                });
+                trackEffectsChainRef.current = {};
+            }
         };
-    }, [selectedInstrument]);
+    }, [selectedInstrument, activeTrackId]); // Use activeTrackId instead of currentTrackId for effects
+
+    // Separate useEffect to apply/update effects without recreating the synth
+    useEffect(() => {
+        if (!pianoRef.current || !activeTrackId) return;
+        
+        const fuzzEffect = getFuzzEffect();
+        console.log('🎯 Checking for Fuzz effect:', fuzzEffect);
+        
+        // If Fuzz effect is active but not yet created, create it
+        if (fuzzEffect && fuzzEffect.parameters && !trackEffectsChainRef.current?.[fuzzEffect.instanceId]) {
+            console.log('🎧 Creating Fuzz effect for track:', activeTrackId, 'instanceId:', fuzzEffect.instanceId);
+            
+            // Convert angle parameters to 0-1 range
+            const grain = (fuzzEffect.parameters[0]?.value + 135) / 270; // Grain (0-1)
+            const bite = (fuzzEffect.parameters[1]?.value + 135) / 270;  // Bite (0-1)
+            const lowCut = (fuzzEffect.parameters[2]?.value + 135) / 270; // Low Cut (0-1)
+            
+            console.log('🎲 Initial Fuzz parameters:', { grain, bite, lowCut });
+            
+            // Create Tone.js Fuzz effect chain
+            const fuzzDistortion = new Tone.Distortion({
+                distortion: grain,
+                wet: 1.0
+            });
+            
+            const biteEQ = new Tone.EQ3({
+                high: (bite - 0.5) * 24, // -12dB to +12dB
+                highFrequency: 2000
+            });
+            
+            const lowCutFilter = new Tone.Filter({
+                type: "highpass",
+                frequency: 20 + (lowCut * 480), // 20Hz to 500Hz
+                Q: 1.2
+            });
+            
+            // Disconnect existing connections
+            pianoRef.current.disconnect();
+            
+            // Connect new effects chain: Synth -> Low Cut -> Fuzz -> Bite -> Output
+            pianoRef.current.chain(lowCutFilter, fuzzDistortion, biteEQ);
+            
+            // Connect to existing output chain
+            if (saturationNodeRef.current) {
+                biteEQ.connect(saturationNodeRef.current);
+                console.log('🔗 Connected Fuzz to saturation node');
+            } else if (panNodeRef.current) {
+                biteEQ.connect(panNodeRef.current);
+                console.log('🔗 Connected Fuzz to pan node');
+            } else {
+                biteEQ.toDestination();
+                console.log('🔗 Connected Fuzz directly to destination');
+            }
+            
+            // Store effect references
+            if (!trackEffectsChainRef.current) {
+                trackEffectsChainRef.current = {};
+            }
+            
+            trackEffectsChainRef.current[fuzzEffect.instanceId] = {
+                distortion: fuzzDistortion,
+                bite: biteEQ,
+                lowCut: lowCutFilter,
+                updateParameters: (newParams) => {
+                    const { grain: newGrain, bite: newBite, lowCut: newLowCut } = newParams;
+                    
+                    try {
+                        fuzzDistortion.distortion = newGrain;
+                        biteEQ.high.value = (newBite - 0.5) * 24;
+                        lowCutFilter.frequency.value = 20 + (newLowCut * 480);
+                    } catch (error) {
+                        console.error('Error updating Tone.js parameters:', error);
+                    }
+                }
+            };
+        }
+        
+        // If Fuzz effect is removed, disconnect and clean up
+        if (!fuzzEffect && trackEffectsChainRef.current && Object.keys(trackEffectsChainRef.current).length > 0) {
+            // Clean up all effects and reconnect synth directly
+            Object.values(trackEffectsChainRef.current).forEach(effectChain => {
+                if (effectChain.distortion) effectChain.distortion.dispose();
+                if (effectChain.bite) effectChain.bite.dispose();
+                if (effectChain.lowCut) effectChain.lowCut.dispose();
+            });
+            trackEffectsChainRef.current = {};
+            
+            // Reconnect synth directly to output
+            pianoRef.current.disconnect();
+            if (saturationNodeRef.current) {
+                pianoRef.current.connect(saturationNodeRef.current);
+            } else if (panNodeRef.current) {
+                pianoRef.current.connect(panNodeRef.current);
+            } else {
+                pianoRef.current.toDestination();
+            }
+        }
+    }, [trackEffectsState, activeEffects, activeTrackId]); // Add activeEffects to dependencies
 
     useEffect(() => {
         // Map Glide knob to portamento (0..0.3s)
@@ -471,6 +622,32 @@ const BassAnd808 = ({ onClose }) => {
         }
     }, [release]);
 
+    // Add effect to listen for track effect parameter changes
+    useEffect(() => {
+        if (!trackEffectsChainRef.current || !activeTrackId) return;
+        
+        const fuzzEffect = getFuzzEffect();
+        
+        if (fuzzEffect && fuzzEffect.name === "Fuzz" && fuzzEffect.parameters && trackEffectsChainRef.current[fuzzEffect.instanceId]) {
+            const parameters = {
+                grain: (fuzzEffect.parameters[0]?.value + 135) / 270,  // Convert angle to 0-1
+                bite: (fuzzEffect.parameters[1]?.value + 135) / 270,   // Convert angle to 0-1  
+                lowCut: (fuzzEffect.parameters[2]?.value + 135) / 270  // Convert angle to 0-1
+            };
+            
+            console.log('🎛️ Updating Fuzz parameters:', parameters);
+            
+            // Update the effect parameters in real-time
+            const effectChain = trackEffectsChainRef.current[fuzzEffect.instanceId];
+            if (effectChain && effectChain.updateParameters) {
+                effectChain.updateParameters(parameters);
+                console.log('✅ Fuzz parameters updated');
+            } else {
+                console.warn('❌ Effect chain not found for:', fuzzEffect.instanceId);
+            }
+        }
+    }, [trackEffectsState, activeEffects, activeTrackId]);
+
 
 
     const playNote = (midiNumber) => {
@@ -480,11 +657,28 @@ const BassAnd808 = ({ onClose }) => {
 
         // Ensure Tone.js context is started (required for audio to work)
         if (Tone.context.state !== 'running') {
+            console.log('🔊 Starting Tone.js context');
             Tone.start();
         }
 
         // Only push notes to timeline state when recording is active
         if (getIsRecording) {
+            // Capture current effect parameters at recording time
+            const fuzzEffect = getFuzzEffect();
+            let recordedEffectParams = null;
+            
+            if (fuzzEffect && fuzzEffect.parameters) {
+                recordedEffectParams = {
+                    fuzz: {
+                        grain: fuzzEffect.parameters[0]?.value ?? 0,
+                        bite: fuzzEffect.parameters[1]?.value ?? 45,
+                        lowCut: fuzzEffect.parameters[2]?.value ?? 90,
+                        instanceId: fuzzEffect.instanceId
+                    }
+                };
+                console.log('🎤 Recording note with Fuzz parameters:', recordedEffectParams);
+            }
+            
             const newEvent = {
                 note: noteName,
                 startTime: currentTime,
@@ -492,7 +686,8 @@ const BassAnd808 = ({ onClose }) => {
                 midiNumber: effectiveMidi,
                 trackId: currentTrackId || null,
                 instrumentId: recordingInstrumentRef.current || selectedInstrument,
-                id: `${midiNumber}-${Date.now()}-${Math.random()}`
+                id: `${midiNumber}-${Date.now()}-${Math.random()}`,
+                recordedEffects: recordedEffectParams // Store effect parameters with the note
             };
             const updated = [...(pianoNotesRef.current || []), newEvent];
             dispatch(setPianoNotes(updated));
@@ -528,6 +723,7 @@ const BassAnd808 = ({ onClose }) => {
         // Play the Bass & 808 synth
         if (pianoRef.current) {
             const noteName = Tone.Frequency(effectiveMidi, "midi", { duration: 1 }).toNote();
+            console.log('🎹 Playing note:', noteName, 'with effects:', Object.keys(trackEffectsChainRef.current || {}));
             pianoRef.current.triggerAttackRelease(noteName, "1n");
         }
     };
@@ -646,7 +842,7 @@ const BassAnd808 = ({ onClose }) => {
     const [selectedEffectCategory, setSelectedEffectCategory] = useState(null);
 
 
-    const { activeEffects, effectsLibrary } = useSelector((state) => state.effects);
+    const { effectsLibrary } = useSelector((state) => state.effects);
 
     const getTrackType = useSelector((state) => state.studio.newtrackType);
     // console.log(getTrackType);
