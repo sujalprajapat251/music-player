@@ -525,13 +525,14 @@ const Timeline = () => {
 
   // Apply Fuzz effects to Bass & 808 synth for timeline playback
   const applyBass808Effects = useCallback((synth, trackId, recordedEffects = null) => {
-    console.log('🎵 applyBass808Effects debug:');
-    console.log('  - Track ID:', trackId);
-    console.log('  - Recorded Effects:', recordedEffects);
-    console.log('  - Track Effects State:', trackEffectsState);
-    console.log('  - Global Active Effects:', globalActiveEffects);
+    // console.log('🎵 applyBass808Effects debug:');
+    // console.log('  - Track ID:', trackId);
+    // console.log('  - Recorded Effects:', recordedEffects);
+    // console.log('  - Track Effects State:', trackEffectsState);
+    // console.log('  - Global Active Effects:', globalActiveEffects);
     
     let fuzzEffect = null;
+    let overdriveEffect = null;
     let effectSource = 'none';
     
     // Priority 1: Use recorded effect parameters if available
@@ -551,135 +552,118 @@ const Timeline = () => {
       // Priority 2: Use current track-specific effects
       const trackEffects = trackEffectsState[trackId] || [];
       fuzzEffect = trackEffects.find(effect => effect.name === 'Fuzz');
-      if (fuzzEffect) {
+      overdriveEffect = trackEffects.find(effect => effect.name === 'Overdrive');
+      if (fuzzEffect || overdriveEffect) {
         effectSource = 'track-specific';
-        console.log('  - Using current track-specific Fuzz effect:', fuzzEffect);
+        // if (fuzzEffect) console.log('  - Using current track-specific Fuzz effect:', fuzzEffect);
+        // if (overdriveEffect) console.log('  - Using current track-specific Overdrive effect:', overdriveEffect);
       } else {
         // Priority 3: Use current global effects
         fuzzEffect = globalActiveEffects.find(effect => effect.name === 'Fuzz');
-        if (fuzzEffect) {
+        overdriveEffect = globalActiveEffects.find(effect => effect.name === 'Overdrive');
+        if (fuzzEffect || overdriveEffect) {
           effectSource = 'global';
-          console.log('  - Using current global Fuzz effect:', fuzzEffect);
+          // if (fuzzEffect) console.log('  - Using current global Fuzz effect:', fuzzEffect);
+          // if (overdriveEffect) console.log('  - Using current global Overdrive effect:', overdriveEffect);
         }
       }
     }
     
-    console.log('  - Effect source:', effectSource);
+    // console.log('  - Effect source:', effectSource);
     
-    if (fuzzEffect && fuzzEffect.parameters && Array.isArray(fuzzEffect.parameters) && fuzzEffect.parameters.length >= 3) {
-      console.log('🎵 Applying current Fuzz effects for timeline playback:', fuzzEffect);
-      
-      // Extract current parameter values with null checks
-      const grainParam = fuzzEffect.parameters[0];
-      const biteParam = fuzzEffect.parameters[1];
-      const lowCutParam = fuzzEffect.parameters[2];
-      
-      let grain, bite, lowCut;
-      
-      // Handle conversion differently based on effect source
-      if (effectSource === 'recorded') {
-        // For recorded effects, parameters are stored as angle values (-135 to 135)
-        // Convert angle parameters to 0-1 range using the same function as for current effects
-        const effectsProcessor = getEffectsProcessor();
-        grain = effectsProcessor.angleToParameter(grainParam?.value ?? 0);
-        bite = effectsProcessor.angleToParameter(biteParam?.value ?? 45);
-        lowCut = effectsProcessor.angleToParameter(lowCutParam?.value ?? 90);
-      } else {
-        // For current effects, use the same conversion as before
-        grain = Math.max(0, Math.min(1, ((grainParam?.value ?? 0) + 135) / 270));
-        bite = Math.max(0, Math.min(1, ((biteParam?.value ?? 45) + 135) / 270));
-        lowCut = Math.max(0, Math.min(1, ((lowCutParam?.value ?? 90) + 135) / 270));
+    // Helper to convert angle (-135..135) to 0..1 safely
+    const angleTo01 = (angle) => {
+      const n = (Number(angle) + 135) / 270;
+      if (!Number.isFinite(n)) return 0;
+      return Math.max(0, Math.min(1, n));
+    };
+
+    try {
+      // Disconnect to rebuild chain
+      synth.disconnect();
+
+      let chainTail = synth;
+
+      // Overdrive first if present (Synth -> HP -> Dist -> ToneLP)
+      if (overdriveEffect && overdriveEffect.parameters && Array.isArray(overdriveEffect.parameters)) {
+        const dist = angleTo01(overdriveEffect.parameters[0]?.value ?? 0);
+        const tone = angleTo01(overdriveEffect.parameters[1]?.value ?? 0);
+        const lowCutOD = angleTo01(overdriveEffect.parameters[2]?.value ?? 90);
+
+        const odDist = new Tone.Distortion({ distortion: dist, oversample: '2x', wet: 1 });
+        const odToneLP = new Tone.Filter({ type: 'lowpass', frequency: 800 + tone * 6200, Q: 0.7 });
+        const odLowCutHP = new Tone.Filter({ type: 'highpass', frequency: 20 + lowCutOD * 480, Q: 1.0 });
+
+        chainTail.chain(odLowCutHP, odDist, odToneLP);
+        chainTail = odToneLP;
+        // console.log('✅ Applied effects for timeline playback');
       }
-      
-      console.log('🎲 Using Fuzz parameter values:', { 
-        grain: `${grainParam?.value ?? 'default'} -> ${grain}`, 
-        bite: `${biteParam?.value ?? 'default'} -> ${bite}`, 
-        lowCut: `${lowCutParam?.value ?? 'default'} -> ${lowCut}`,
-        rawParams: fuzzEffect.parameters,
-        effectSource
-      });
-      
-      // Test if effects make a significant difference
-      const hasSignificantEffect = grain > 0.1 || Math.abs(bite - 0.5) > 0.1 || lowCut > 0.1;
-      console.log('📊 Effect significance check:', {
-        grain, bite, lowCut, hasSignificantEffect
-      });
-      
-      try {
-        // Create Tone.js Fuzz effect chain (same as BassAnd808 component)
-        const fuzzDistortion = new Tone.Distortion({
-          distortion: grain,
-          wet: 1.0
+
+      // Fuzz next if present (-> HP -> Dist -> EQ3)
+      if (fuzzEffect && fuzzEffect.parameters && Array.isArray(fuzzEffect.parameters) && fuzzEffect.parameters.length >= 3) {
+        const grainParam = fuzzEffect.parameters[0];
+        const biteParam = fuzzEffect.parameters[1];
+        const lowCutParam = fuzzEffect.parameters[2];
+
+        let grain, bite, lowCut;
+        if (effectSource === 'recorded') {
+          const effectsProcessor = getEffectsProcessor();
+          grain = effectsProcessor.angleToParameter(grainParam?.value ?? 0);
+          bite = effectsProcessor.angleToParameter(biteParam?.value ?? 45);
+          lowCut = effectsProcessor.angleToParameter(lowCutParam?.value ?? 90);
+        } else {
+          grain = angleTo01(grainParam?.value ?? 0);
+          bite = angleTo01(biteParam?.value ?? 45);
+          lowCut = angleTo01(lowCutParam?.value ?? 90);
+        }
+
+        const fuzzDistortion = new Tone.Distortion({ 
+          distortion: grain, 
+          wet: 1.0 
         });
-        
-        const biteEQ = new Tone.EQ3({
+        const biteEQ = new Tone.EQ3({ 
           high: (bite - 0.5) * 24, // -12dB to +12dB
-          highFrequency: 2000
+          highFrequency: 2000 
         });
-        
-        const lowCutFilter = new Tone.Filter({
-          type: "highpass",
-          frequency: 20 + (lowCut * 480), // 20Hz to 500Hz
-          Q: 1.2
+        const lowCutFilter = new Tone.Filter({ 
+          type: 'highpass', 
+          frequency: 20 + (lowCut * 480), 
+          Q: 1.2 
         });
-        
-        // Connect effects chain: Synth -> Low Cut -> Fuzz -> Bite -> Output
-        synth.disconnect(); // Ensure clean connections
-        synth.chain(lowCutFilter, fuzzDistortion, biteEQ);
-        biteEQ.toDestination();
-        
-        console.log('✅ Fresh Fuzz effects applied with current parameters');
-        console.log('🔊 Effect values applied:', {
-          distortion: grain,
-          eqHigh: (bite - 0.5) * 24,
-          filterFreq: 20 + (lowCut * 480)
-        });
-        
-        // Test the effect chain by logging the connections
-        console.log('🔗 Effect chain connections:', {
-          synthConnected: synth.output.numberOfOutputs > 0,
-          lowCutConnected: lowCutFilter.output.numberOfOutputs > 0,
-          distortionConnected: fuzzDistortion.output.numberOfOutputs > 0,
-          eqConnected: biteEQ.output.numberOfOutputs > 0
-        });
-        
-      } catch (error) {
-        console.error('❌ Error applying Fuzz effects:', error);
-        console.error('Error details:', error.message);
-        // Fallback: connect directly to destination
-        synth.disconnect();
-        synth.toDestination();
-        console.log('🔄 Fallback: Connected synth directly to destination');
+
+        chainTail.chain(lowCutFilter, fuzzDistortion, biteEQ);
+        chainTail = biteEQ;
+        console.log('✅ Applied Fuzz for timeline playback');
       }
-    } else {
-      // No effects, connect directly to destination
+
+      // Connect to destination at the end of chain
+      chainTail.toDestination();
+
+      // if (!(overdriveEffect || fuzzEffect)) {
+      //   console.log('🎵 No Overdrive/Fuzz found, connected synth directly');
+      // }
+    } catch (error) {
+      console.error('❌ Error applying effects (Overdrive/Fuzz) on timeline:', error);
       synth.disconnect();
       synth.toDestination();
-      console.log('🎵 No Fuzz effects found, Bass & 808 synth connected directly');
-      if (fuzzEffect) {
-        console.log('⚠️ Fuzz effect found but parameters invalid:', fuzzEffect);
-      }
-      
-      // Test basic synth sound without effects
-      console.log('🎧 Testing basic Bass & 808 synth output (no effects)');
     }
   }, [trackEffectsState, globalActiveEffects]);
 
   // Play Bass & 808 note with effects for timeline playback
   const playBass808Note = useCallback(async (midiNumber, duration, instrumentId, trackId, recordedEffects = null) => {
     try {
-      console.log('🎵 playBass808Note called with:', { midiNumber, duration, instrumentId, trackId, recordedEffects });
+      // console.log('🎵 playBass808Note called with:', { midiNumber, duration, instrumentId, trackId, recordedEffects });
       
       // Ensure Tone.js context is started
       if (Tone.context.state !== 'running') {
-        console.log('🎵 Starting Tone.js context...');
+        // console.log('🎵 Starting Tone.js context...');
         await Tone.start();
-        console.log('🎵 Tone.js context state:', Tone.context.state);
+        // console.log('🎵 Tone.js context state:', Tone.context.state);
       }
       
       // Create a fresh synth for each note to ensure clean effects application
       const freshSynth = initializeBass808Synth(instrumentId);
-      console.log('🎵 Created fresh synth for instrument:', instrumentId);
+      // console.log('🎵 Created fresh synth for instrument:', instrumentId);
       
       // Check if we have any effects before applying them
       const trackEffects = trackEffectsState[trackId] || [];
@@ -687,14 +671,14 @@ const Timeline = () => {
       const hasCurrentFuzzEffect = trackEffects.some(e => e.name === 'Fuzz') || globalEffects.some(e => e.name === 'Fuzz');
       const hasRecordedFuzzEffect = recordedEffects && recordedEffects.fuzz;
       
-      console.log('🔍 Pre-effect check:', {
-        trackId,
-        trackEffectsCount: trackEffects.length,
-        globalEffectsCount: globalEffects.length,
-        hasCurrentFuzzEffect,
-        hasRecordedFuzzEffect,
-        effectSource: hasRecordedFuzzEffect ? 'recorded' : (hasCurrentFuzzEffect ? 'current' : 'none')
-      });
+      // console.log('🔍 Pre-effect check:', {
+      //   trackId,
+      //   trackEffectsCount: trackEffects.length,
+      //   globalEffectsCount: globalEffects.length,
+      //   hasCurrentFuzzEffect,
+      //   hasRecordedFuzzEffect,
+      //   effectSource: hasRecordedFuzzEffect ? 'recorded' : (hasCurrentFuzzEffect ? 'current' : 'none')
+      // });
       
       // Apply effects to this fresh synth (prioritize recorded effects)
       applyBass808Effects(freshSynth, trackId, recordedEffects);
@@ -702,18 +686,18 @@ const Timeline = () => {
       // Convert MIDI to note name and play immediately
       const noteName = Tone.Frequency(midiNumber, "midi").toNote();
       
-      console.log('🎵 Timeline playing Bass & 808 note:', noteName, 'with fresh synth and effects');
+      // console.log('🎵 Timeline playing Bass & 808 note:', noteName, 'with fresh synth and effects');
       
       // Trigger the note with explicit timing
       freshSynth.triggerAttackRelease(noteName, duration, Tone.now());
       
       // Verify synth is actually connected and playing
-      console.log('🔊 Synth state after trigger:', {
-        synthState: freshSynth.state,
-        contextState: Tone.context.state,
-        noteTriggered: noteName,
-        duration: duration
-      });
+      // console.log('🔊 Synth state after trigger:', {
+      //   synthState: freshSynth.state,
+      //   contextState: Tone.context.state,
+      //   noteTriggered: noteName,
+      //   duration: duration
+      // });
       
       // Store reference for cleanup
       bass808SynthRef.current = freshSynth;
@@ -727,7 +711,7 @@ const Timeline = () => {
           if (bass808SynthRef.current === freshSynth) {
             bass808SynthRef.current = null;
           }
-          console.log('🗑️ Cleaned up Bass & 808 synth after note completion');
+          // console.log('🗑️ Cleaned up Bass & 808 synth after note completion');
         } catch (e) {
           console.warn('Cleanup error for Bass & 808 synth:', e);
         }
@@ -774,19 +758,19 @@ const Timeline = () => {
         instrumentId === 'sub_bass'
       );
       
-      console.log('🎵 playPianoNote debug:');
-      console.log('  - Instrument ID:', instrumentId);
-      console.log('  - Is Bass & 808:', isBass808);
-      console.log('  - Track ID:', trackId);
-      console.log('  - Recorded Effects:', recordedEffects);
+      // console.log('🎵 playPianoNote debug:');
+      // console.log('  - Instrument ID:', instrumentId);
+      // console.log('  - Is Bass & 808:', isBass808);
+      // console.log('  - Track ID:', trackId);
+      // console.log('  - Recorded Effects:', recordedEffects);
       
       if (isBass808) {
         // Use Tone.js for Bass & 808 playback with effects
-        console.log('🎸 Routing to Tone.js Bass & 808 system');
+        // console.log('🎸 Routing to Tone.js Bass & 808 system');
         await playBass808Note(midiNumber, duration, instrumentId, trackId, recordedEffects);
       } else {
         // Use Soundfont.js for regular piano instruments
-        console.log('🎹 Routing to Soundfont.js piano system');
+        // console.log('🎹 Routing to Soundfont.js piano system');
         
         if (pianoAudioContextRef.current) {
           if (pianoAudioContextRef.current.state === 'suspended') {
@@ -1572,21 +1556,21 @@ const Timeline = () => {
               const noteKey = `${note.id}-${Math.floor(noteStartTime * 10)}`;
               if (!activePianoNotesRef.current.has(noteKey)) {
                 // Debug logging for Bass & 808 detection
-                console.log('🎹 Timeline note playback debug:');
-                console.log('  - Note:', note);
-                console.log('  - Instrument ID:', note.instrumentId);
-                console.log('  - Track ID:', note.trackId);
-                console.log('  - Selected Instrument:', selectedInstrument);
+                // console.log('🎹 Timeline note playback debug:');
+                // console.log('  - Note:', note);
+                // console.log('  - Instrument ID:', note.instrumentId);
+                // console.log('  - Track ID:', note.trackId);
+                // console.log('  - Selected Instrument:', selectedInstrument);
                 
                 // Always use the instrument from the note data, with track context for effects
                 const noteInstrumentId = note.instrumentId || selectedInstrument;
-                console.log('  - Final Instrument ID:', noteInstrumentId);
-                console.log('  - Will use Bass & 808 system:', noteInstrumentId && (
-                  noteInstrumentId.includes('808') || 
-                  noteInstrumentId.includes('bass') ||
-                  noteInstrumentId.includes('Bass')
-                ));
-                console.log('  - Note has recorded effects:', !!note.recordedEffects);
+                // console.log('  - Final Instrument ID:', noteInstrumentId);
+                // console.log('  - Will use Bass & 808 system:', noteInstrumentId && (
+                //   noteInstrumentId.includes('808') || 
+                //   noteInstrumentId.includes('bass') ||
+                //   noteInstrumentId.includes('Bass')
+                // ));
+                // console.log('  - Note has recorded effects:', !!note.recordedEffects);
                 
                 // Pass recorded effects if available
                 playPianoNote(note.midiNumber, note.duration || 0.5, noteInstrumentId, note.trackId, note.recordedEffects);
