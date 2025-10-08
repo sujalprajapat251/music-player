@@ -1499,7 +1499,7 @@ const TopHeader = () => {
                                         </div>
                                     )}
                                 </Menu.Item>
-                                <Menu.Item>
+                                {/* <Menu.Item>
                                     {({ active }) => (
                                         <p 
                                             className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer transition-colors"
@@ -1512,7 +1512,7 @@ const TopHeader = () => {
                                             <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('createRegion')}</span>
                                         </p>
                                     )}
-                                </Menu.Item>
+                                </Menu.Item> */}
 
                             </div>
                         </Menu.Items>

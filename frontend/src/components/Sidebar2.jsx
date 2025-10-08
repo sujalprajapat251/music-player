@@ -389,9 +389,9 @@ const Sidebar2 = () => {
                       >
                         {t('record')}
                       </span>
-                      <span className="w-8 h-8 rounded-full bg-transparent">
+                      {/* <span className="w-8 h-8 rounded-full bg-transparent">
                         <img src={tk} alt="" className={`w-full h-full opacity-60`} />
-                      </span>
+                      </span> */}
                       <span>
                         <VolumeKnob  initialVolume={track.volume || 80} onChange={handleTrackVolumeChange} trackId={track.id}/>
                       </span>
