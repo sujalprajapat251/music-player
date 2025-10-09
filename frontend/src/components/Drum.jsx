@@ -4,6 +4,7 @@ import { setDrumRecordedData, setDrumPlayback, setDrumPlaybackStartTime, addAudi
 import { selectStudioState } from '../Redux/rootReducer';
 import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
 import Pattern from '../components/Pattern';
+import OpenInstrumentModal from './OpenInstrumentsModel';
 import {
   drumMachineTypes,
   soundDescriptions,
@@ -1245,8 +1246,13 @@ const DrumPadMachine = ({ onClose }) => {
     }
   }, [currentType]);
 
+  const [openInstrumentModal, setOpenInstrumentModal] = useState(false);
+  
   return (
     <>
+      {openInstrumentModal && (
+          <OpenInstrumentModal onClose={() => setOpenInstrumentModal(false)} initialCategory={"Drums & Machines"} initialSubCategory={"Machines"} />
+      )}
       {useSelector((state) => state.ui?.musicalTypingEnabled !== false) === false && (
         <style jsx>{`
           .mv_drum_key_none { color: transparent !important;
@@ -1331,7 +1337,13 @@ const DrumPadMachine = ({ onClose }) => {
                             <FaChevronLeft className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                           </button>
 
-                          <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-start 2xl:px-4 2xl:w-[250px]">
+                          <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-start 2xl:px-4 2xl:w-[250px]"
+                            onClick={() => {
+                                setOpenInstrumentModal(true);
+                                // Ensure local UI reflects glide-enabled selection
+                                // setGlide(135); // set glide to max visible position so it appears enabled
+                            }}
+                          >
                             <Track5 className="text-secondary-light dark:text-secondary-dark text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[20px]" />
                             <div>
                               <div className="text-secondary-light dark:text-secondary-dark font-semibold text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px] 2xl:text-[15px]">
@@ -1705,7 +1717,7 @@ const DrumPadMachine = ({ onClose }) => {
                             }}
                           >
                             <div className="w-14 h-14 bg-black dark:bg-white text-white dark:text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
-                            <p className="text-center text-sm leading-snug">Drop effects here or<br />select from library</p>
+                            <p className="text-center text-sm leading-snug">Select From the <br />effects library</p>
                           </div>
                         )}
                         {(() => {

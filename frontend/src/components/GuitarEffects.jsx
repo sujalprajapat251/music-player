@@ -8,6 +8,7 @@ import { setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Red
 import { selectStudioState } from '../Redux/rootReducer';
 import { ReactComponent as Track7 } from '../Images/track7.svg'
 import PricingModel from './PricingModel';
+import OpenInstrumentModal from './OpenInstrumentsModel';
 
 function polarToCartesian(cx, cy, r, angle) {
   const a = (angle - 90) * Math.PI / 180.0;
@@ -287,9 +288,13 @@ const GuitarEffects = ({onClose}) => {
         dispatch(toggleEffectsOffcanvas());
     };
 
+    const [openInstrumentModal, setOpenInstrumentModal] = useState(false);
 
   return (
     <>
+    {openInstrumentModal && (
+        <OpenInstrumentModal onClose={() => setOpenInstrumentModal(false)} initialCategory={"Guitar"} initialSubCategory={"Jazz"} />
+    )}
     {showOffcanvas1 === true && (
       <>
       <div className="fixed z-[10] w-full h-full transition-transform left-0 right-0 translate-y-full bottom-[330px] sm:bottom-[351px] md:bottom-[403px] lg:bottom-[437px] xl:bottom-[441px] 2xl:bottom-[467px] shadow-[0_-2px_11px_rgba(0,0,0,0.08)]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
@@ -308,7 +313,12 @@ const GuitarEffects = ({onClose}) => {
                 <button onClick={prevInstrument} className="text-gray-400 hover:text-white transition-colors p-1 md600:p-2">
                   <FaChevronLeft className='text-secondary-light dark:text-secondary-dark text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]' />
                 </button>
-                <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-start 2xl:px-4 2xl:w-[250px]">
+                <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-start 2xl:px-4 2xl:w-[250px]"
+                onClick={() => {
+                    setOpenInstrumentModal(true);
+                    // setGlide(135); // set glide to max visible position so it appears enabled
+                }}
+                >
                     <div className="text-white">
                         <Track7 className='text-secondary-light dark:text-secondary-dark text-[10px] sm:text-[12px] md600:text-[14px] md:txt-[16px] lg:text-[18px] 2xl:text-[20px]' />
                     </div>
@@ -413,7 +423,7 @@ const GuitarEffects = ({onClose}) => {
                     }}
                   >
                     <div className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
-                    <p className="text-center text-xs sm:text-sm leading-snug">Drop effects here or<br />select from library</p>
+                    <p className="text-center text-xs sm:text-sm leading-snug">Select From the<br />effects library</p>
                   </div>
                 )}
                 {Array.from({ length: 4 - activeEffects.length - 1 }, (_, index) => (

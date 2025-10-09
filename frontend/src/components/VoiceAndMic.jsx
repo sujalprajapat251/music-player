@@ -14,6 +14,7 @@ import PricingModel from './PricingModel';
 import { LiaWaveSquareSolid } from "react-icons/lia";
 import { FaChevronDown } from "react-icons/fa";
 import { addEffect, setShowEffectsLibrary, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
+import OpenInstrumentModal from './OpenInstrumentsModel';
 
 
 function polarToCartesian(cx, cy, r, angle) {
@@ -460,8 +461,13 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
         dispatch(toggleEffectsOffcanvas());
       };
 
+      const [openInstrumentModal, setOpenInstrumentModal] = useState(false);
+
     return (
         <>
+            {openInstrumentModal && (
+                <OpenInstrumentModal onClose={() => setOpenInstrumentModal(false)} initialCategory={"Bass & 808s"} initialSubCategory={"808 (with glide)"} />
+            )}
             {showOffcanvas1 === true && (
                 <>
                     <div className="fixed z-[10] w-full h-full transition-transform left-0 right-0 translate-y-full bottom-[330px] sm:bottom-[351px] md:bottom-[400px] lg:bottom-[430px] xl:bottom-[433px] 2xl:bottom-[467px] shadow-[0_-2px_11px_rgba(0,0,0,0.08)]">
@@ -558,7 +564,12 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                             <FaChevronLeft className="w-2 sm:w-3 lg:w-4 h-2 sm:h-3 lg:h-4 cursor-pointer hover:text-purple-300" />
                                                             <FaChevronRight className="w-2 sm:w-3 lg:w-4 h-2 sm:h-3 lg:h-4 cursor-pointer hover:text-purple-300" />
                                                         </div>
-                                                        <div className="flex items-center gap-1 sm:gap-3 md:gap-8 ms-1 sm:px-1 md:px-2 lg:px-4 p-1 sm:py-1 md:py-2 lg:py-3 text-gray-600 dark:text-gray-200">
+                                                        <div className="flex items-center gap-1 sm:gap-3 md:gap-8 ms-1 sm:px-1 md:px-2 lg:px-4 p-1 sm:py-1 md:py-2 lg:py-3 text-gray-600 dark:text-gray-200"
+                                                            onClick={() => {
+                                                            setOpenInstrumentModal(true);
+                                                            // setGlide(135); // set glide to max visible position so it appears enabled
+                                                        }}
+                                                        >
                                                             <span className="text-[7px] sm:text-[9px] md:text-[12px] lg:text-sm text-black dark:text-gray-200">Load and Clear</span>
                                                             <FaChevronDown className="w-3 lg:w-4 h-3 lg:h-4 transform cursor-pointer hover:text-purple-300" />
                                                         </div>
@@ -782,7 +793,7 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                 }}
                                                 >
                                                 <div className="w-14 h-14 bg-black dark:bg-white text-white dark:text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
-                                                <p className="text-center text-xs sm:text-sm leading-snug">Drop effects here or<br />select from library</p>
+                                                <p className="text-center text-xs sm:text-sm leading-snug">Select From the<br />effects library</p>
                                                 </div>
                                             )}
                                             {Array.from({ length: 4 - activeEffects.length - 1 }, (_, index) => (
