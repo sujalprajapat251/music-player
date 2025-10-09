@@ -290,6 +290,7 @@ const Timeline = () => {
     if (trackDeleted && trackDeleted.trackId) {
       console.log('Track deleted, stopping audio for track:', trackDeleted.trackId);
       dispatch(setAlert({ text: 'Track Deleted.', color: 'success' }));
+      dispatch(setTrackType(null));
       // Stop all players for this track
       const playersToStop = players.filter(playerObj =>
         playerObj.trackId === trackDeleted.trackId
@@ -533,6 +534,9 @@ const Timeline = () => {
     
     let fuzzEffect = null;
     let overdriveEffect = null;
+    let autoPanEffect = null;
+    let classicDistEffect = null;
+    let autoWahEffect = null;
     let effectSource = 'none';
     
     // Priority 1: Use recorded effect parameters if available
@@ -553,7 +557,11 @@ const Timeline = () => {
       const trackEffects = trackEffectsState[trackId] || [];
       fuzzEffect = trackEffects.find(effect => effect.name === 'Fuzz');
       overdriveEffect = trackEffects.find(effect => effect.name === 'Overdrive');
-      if (fuzzEffect || overdriveEffect) {
+      classicDistEffect = trackEffects.find(effect => effect.name === 'Classic Dist' || effect.name === 'ClassicDist');
+      autoPanEffect = trackEffects.find(effect => effect.name === 'Auto Pan');
+      autoWahEffect = trackEffects.find(effect => effect.name === 'Auto-Wah' || effect.name === 'AutoWah');
+
+      if (fuzzEffect || overdriveEffect || classicDistEffect || autoPanEffect || autoWahEffect) {
         effectSource = 'track-specific';
         // if (fuzzEffect) console.log('  - Using current track-specific Fuzz effect:', fuzzEffect);
         // if (overdriveEffect) console.log('  - Using current track-specific Overdrive effect:', overdriveEffect);
@@ -561,7 +569,11 @@ const Timeline = () => {
         // Priority 3: Use current global effects
         fuzzEffect = globalActiveEffects.find(effect => effect.name === 'Fuzz');
         overdriveEffect = globalActiveEffects.find(effect => effect.name === 'Overdrive');
-        if (fuzzEffect || overdriveEffect) {
+        classicDistEffect = globalActiveEffects.find(effect => effect.name === 'Classic Dist' || effect.name === 'ClassicDist');
+        autoPanEffect = globalActiveEffects.find(effect => effect.name === 'Auto Pan');
+        autoWahEffect = globalActiveEffects.find(effect => effect.name === 'Auto-Wah' || effect.name === 'AutoWah');
+
+        if (fuzzEffect || overdriveEffect || classicDistEffect || autoPanEffect || autoWahEffect) {
           effectSource = 'global';
           // if (fuzzEffect) console.log('  - Using current global Fuzz effect:', fuzzEffect);
           // if (overdriveEffect) console.log('  - Using current global Overdrive effect:', overdriveEffect);
@@ -597,6 +609,44 @@ const Timeline = () => {
         chainTail.chain(odLowCutHP, odDist, odToneLP);
         chainTail = odToneLP;
         // console.log('✅ Applied effects for timeline playback');
+      }
+
+      // Classic Dist next if present (-> HP -> Dist -> ToneLP)
+      if (classicDistEffect && classicDistEffect.parameters && Array.isArray(classicDistEffect.parameters) && classicDistEffect.parameters.length >= 3) {
+        const distParam = classicDistEffect.parameters[0];
+        const toneParam = classicDistEffect.parameters[1];
+        const lowCutParam = classicDistEffect.parameters[2];
+
+        let dist, tone, lowCut;
+        if (effectSource === 'recorded') {
+          const effectsProcessor = getEffectsProcessor();
+          dist = effectsProcessor.angleToParameter(distParam?.value ?? 0);
+          tone = effectsProcessor.angleToParameter(toneParam?.value ?? 45);
+          lowCut = effectsProcessor.angleToParameter(lowCutParam?.value ?? 90);
+        } else {
+          dist = angleTo01(distParam?.value ?? 0);
+          tone = angleTo01(toneParam?.value ?? 45);
+          lowCut = angleTo01(lowCutParam?.value ?? 90);
+        }
+
+        const classicDistortion = new Tone.Distortion({ 
+          distortion: dist, 
+          oversample: '2x',
+          wet: 1.0 
+        });
+        const toneLowPass = new Tone.Filter({ 
+          type: 'lowpass', 
+          frequency: 800 + (tone * 6200),
+          Q: 0.7 
+        });
+        const lowCutFilter = new Tone.Filter({ 
+          type: 'highpass', 
+          frequency: 20 + (lowCut * 480),
+          Q: 1.0 
+        });
+
+        chainTail.chain(lowCutFilter, classicDistortion, toneLowPass);
+        chainTail = toneLowPass;
       }
 
       // Fuzz next if present (-> HP -> Dist -> EQ3)
@@ -636,6 +686,82 @@ const Timeline = () => {
         console.log('✅ Applied Fuzz for timeline playback');
       }
 
+      // 🎸 Auto-Wah effect if present (-> AutoWah)
+      if (autoWahEffect && autoWahEffect.parameters && Array.isArray(autoWahEffect.parameters) && autoWahEffect.parameters.length >= 2) {
+        const rateParam = autoWahEffect.parameters[0];
+        const mixParam = autoWahEffect.parameters[1];
+
+        let rate, mix;
+        if (effectSource === 'recorded') {
+          const effectsProcessor = getEffectsProcessor();
+          rate = effectsProcessor.angleToParameter(rateParam?.value ?? 0);
+          mix = effectsProcessor.angleToParameter(mixParam?.value ?? 0);
+        } else {
+          rate = angleTo01(rateParam?.value ?? 0);
+          mix = angleTo01(mixParam?.value ?? 0);
+        }
+
+        // Rate controls the sweep frequency (0.5 Hz to 10 Hz)
+        const wahRate = 0.5 + (rate * 9.5);
+        
+        // Mix controls wet/dry balance (0.0 to 1.0)
+        const wahMix = Math.max(0.3, mix); // Minimum 0.3 for audible effect
+
+        // Create AutoWah effect using AutoFilter with aggressive settings
+        const autoWah = new Tone.AutoFilter({
+          frequency: wahRate,
+          type: 'sine',
+          depth: 1,
+          baseFrequency: 100,
+          octaves: 4.5,
+          filter: {
+            type: 'bandpass',
+            rolloff: -12,
+            Q: 10
+          }
+        }).start();
+
+        // Set wet amount
+        autoWah.wet.value = wahMix;
+
+        // Chain to auto wah (don't connect to destination yet)
+        chainTail.connect(autoWah);
+        chainTail = autoWah;
+      }
+
+      // Auto Pan effect if present (-> Pan)
+      if (autoPanEffect && autoPanEffect.parameters && Array.isArray(autoPanEffect.parameters) && autoPanEffect.parameters.length >= 2) {
+        const rateParam = autoPanEffect.parameters[0];
+        const depthParam = autoPanEffect.parameters[1];
+
+        let rate, depth;
+        if (effectSource === 'recorded') {
+          const effectsProcessor = getEffectsProcessor();
+          rate = effectsProcessor.angleToParameter(rateParam?.value ?? 0);
+          depth = effectsProcessor.angleToParameter(depthParam?.value ?? 0);
+        } else {
+          rate = angleTo01(rateParam?.value ?? 0);
+          depth = angleTo01(depthParam?.value ?? 0);
+        }
+
+        // Much wider rate range for dramatic movement (0.5 Hz to 15 Hz)
+        const panRate = 0.5 + (rate * 14.5);
+        
+        // Full depth range for maximum stereo effect (0.5 to 1.0)
+        const panDepth = 0.5 + (depth * 0.5);
+
+        // Use Tone.AutoPanner for reliable auto-panning effect
+        const autoPanner = new Tone.AutoPanner({
+          frequency: panRate,
+          depth: panDepth,
+          type: 'sine'
+        }).toDestination().start();
+
+        // Chain to auto panner
+        chainTail.connect(autoPanner);
+        chainTail = autoPanner;
+      }
+
       // Connect to destination at the end of chain
       chainTail.toDestination();
 
@@ -669,6 +795,7 @@ const Timeline = () => {
       const trackEffects = trackEffectsState[trackId] || [];
       const globalEffects = globalActiveEffects || [];
       const hasCurrentFuzzEffect = trackEffects.some(e => e.name === 'Fuzz') || globalEffects.some(e => e.name === 'Fuzz');
+      const hasCurrentAutoPanEffect = trackEffects.some(e => e.name === 'Auto Pan') || globalEffects.some(e => e.name === 'Auto Pan');
       const hasRecordedFuzzEffect = recordedEffects && recordedEffects.fuzz;
       
       // console.log('🔍 Pre-effect check:', {

@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { FaPowerOff } from 'react-icons/fa6';
 import { IoClose } from 'react-icons/io5';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect } from '../Redux/Slice/effects.slice';
+import { removeEffect, updateEffectParameter, removeEffectFromTrack, updateTrackEffectParameter } from '../Redux/Slice/effects.slice';
+import { selectStudioState } from '../Redux/rootReducer';
 
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
@@ -42,7 +43,7 @@ function BadgeTooltip({ value, visible }) {
     );
 }
 
-function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
+function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle, onValueChange, parameterIndex }) {
     const [angle, setAngle] = useState(defaultAngle ?? min);
     const [showTooltip, setShowTooltip] = useState(false);
     const knobRef = useRef(null);
@@ -67,6 +68,13 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    // Update angle when defaultAngle prop changes (important for parameter persistence)
+    useEffect(() => {
+        if (defaultAngle !== undefined) {
+            setAngle(defaultAngle);
+        }
+    }, [defaultAngle]);
 
     // Tailwind-consistent responsive sizes
     const getResponsiveStroke = () => {
@@ -105,6 +113,12 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         setAngle((prev) => {
             let next = prev + deltaY * 1.5; // adjust sensitivity as needed
             next = Math.max(min, Math.min(max, next));
+
+            // Call the callback to update Redux
+            if (onValueChange) {
+                onValueChange(parameterIndex, next);
+            }
+
             return next;
         });
     };
@@ -199,15 +213,70 @@ const Chorus = () => {
     };
 
     const dispatch = useDispatch();
+    const { trackEffects, selectedTrackId } = useSelector((state) => state.effects);
+    const currentTrackId = useSelector((state) => selectStudioState(state)?.currentTrackId);
     const { activeEffects } = useSelector((state) => state.effects);
 
+    // Use selectedTrackId from effects or fall back to currentTrackId from studio
+    const activeTrackId = selectedTrackId || currentTrackId;
+
+    // Get effects for the currently selected track
+    const trackSpecificEffects = trackEffects[activeTrackId] || [];
+    // Get the current effect's instanceId from track-specific effects or fallback to activeEffects
+    const currentEffect = trackSpecificEffects.find(effect =>
+        effect.name === "Chorus"
+    ) || activeEffects.find(effect =>
+        effect.name === "Chorus"
+    );
+
+    const currentInstanceId = currentEffect?.instanceId;
+
     const handleRemoveEffect = (instanceId) => {
-        dispatch(removeEffect(instanceId));
+        if (!instanceId) return;
+
+        if (activeTrackId && trackSpecificEffects.some(effect => effect.instanceId === instanceId)) {
+            // Remove from track-specific effects
+            dispatch(removeEffectFromTrack({ trackId: activeTrackId, instanceId }));
+        } else if (activeEffects.some(effect => effect.instanceId === instanceId)) {
+            // Remove from general active effects
+            dispatch(removeEffect(instanceId));
+        }
+    };
+    
+    // Handle knob value changes for both track-specific and global effects
+    const handleKnobChange = (parameterIndex, value) => {
+        if (!currentInstanceId) return;
+
+        // First try updating track-specific effects
+        if (activeTrackId && trackSpecificEffects.some(effect => effect.instanceId === currentInstanceId)) {
+            dispatch(updateTrackEffectParameter({
+                trackId: activeTrackId,
+                instanceId: currentInstanceId,
+                parameterIndex: parameterIndex,
+                value: value
+            }));
+        }
+        else if (activeEffects.some(effect => effect.instanceId === currentInstanceId)) {
+            dispatch(updateEffectParameter({
+                instanceId: currentInstanceId,
+                parameterIndex: parameterIndex,
+                value: value
+            }));
+        }
     };
 
-    // Get the current effect's instanceId from activeEffects
-    const currentEffect = activeEffects.find(effect => effect.name === "Chorus");
-    const currentInstanceId = currentEffect?.instanceId;
+    // Get current parameter values for initialization
+    const getCurrentParameterValue = (parameterIndex) => {
+        if (currentEffect && currentEffect.parameters && currentEffect.parameters[parameterIndex]) {
+            return currentEffect.parameters[parameterIndex].value;
+        }
+        // Return default values based on parameter index
+        switch (parameterIndex) {
+            case 0: return 45;  // Rate (start at moderate speed for noticeable effect)
+            case 1: return 90;  // Depth (start at moderate depth for noticeable effect)
+            default: return 0;
+        }
+    };
 
     return (
         <div className='bg-[#141414]'>
@@ -230,12 +299,26 @@ const Chorus = () => {
             <div className={`w-[150px] h-[185px] sm:w-[190px] sm:h-[213px] md600:w-[220px] md600:h-[210px] md:w-[230px] md:h-[265px] lg:w-[240px] lg:h-[282px] xl:w-[240px] xl:h-[285px] 2xl:w-[256px] 2xl:h-[300px] bg-[#302f2f] relative ${!isPoweredOn ? 'opacity-50 pointer-events-none' : ''}`}>
                 {/* Tone Knob - Top Right */}
                 <div className="absolute top-[30px] left-[30px] sm:top-[40px] sm:left-[30px] md:top-[80px] md:left-[30px]">
-                    <Knob1 label="Rate" min={-135} max={135} defaultAngle={0} />
+                    <Knob1
+                        label="Rate"
+                        min={-135}
+                        max={135}
+                        defaultAngle={getCurrentParameterValue(1) || 90}
+                        onValueChange={handleKnobChange}
+                        parameterIndex={1}
+                    />
                 </div>
 
                 {/* Low cut Knob - Bottom Center */}
                 <div className="absolute top-[70px] right-[30px] sm:top-[100px] sm:right-[30px] md:top-[140px] md:right-[30px]">
-                    <Knob1 label="Depth" min={-135} max={135} defaultAngle={90} />
+                    <Knob1 
+                        label="Depth"
+                        min={-135}
+                        max={135}
+                        defaultAngle={getCurrentParameterValue(0) || 45}
+                        onValueChange={handleKnobChange}
+                        parameterIndex={0}
+                    />
                 </div>
             </div>
         </div>
