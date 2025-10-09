@@ -38,6 +38,40 @@ const generateRandomColor = (seed) => {
   return colors[index];
 };
 
+const AdaptiveMenu = ({ button, children, placement = 'bottom-end', widthClass = 'w-40 2xl:w-44' }) => {
+    const {
+        refs,
+        floatingStyles,
+        update,
+    } = useFloating({
+        placement,
+        middleware: [offset(4), flip(), shift()],
+    });
+
+    useEffect(() => {
+        if (refs.reference.current && refs.floating.current) {
+            return autoUpdate(refs.reference.current, refs.floating.current, update);
+        }
+    }, [refs.reference, refs.floating, update]);
+
+    return (
+        <Menu as="div" className="relative inline-block text-left">
+            <div>
+                <MenuButton ref={refs.setReference} className="outline-none">
+                    {button}
+                </MenuButton>
+            </div>
+            <MenuItems
+                ref={refs.setFloating}
+                style={floatingStyles}
+                className={`z-50 ${widthClass} origin-top-right bg-[#1f1f1f] shadow-lg outline-none rounded-md ring-1 ring-black ring-opacity-5`}
+            >
+                {children}
+            </MenuItems>
+        </Menu>
+    );
+};
+
 const FolderView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -328,15 +362,6 @@ const FolderView = () => {
     sortedItems.forEach((m, index) => drawWaveform(m._id, index));
   }, [sortedItems, drawWaveform, musicProgress]);
 
-  const { refs, floatingStyles, update } = useFloating({
-    placement: "bottom-end",
-    middleware: [offset(4), flip(), shift()],
-  });
-  useEffect(() => {
-    if (refs.reference.current && refs.floating.current) {
-      return autoUpdate(refs.reference.current, refs.floating.current, update);
-    }
-  }, [refs.reference, refs.floating, update]);
 
   const handleInlineRenameSave = async (musicId) => {
     if (editingMusicName.trim()) {
@@ -528,6 +553,7 @@ const FolderView = () => {
           </div>
         </div>
 
+        <div className='max-h-[80vh] min-h-[400px] overflow-auto d_customscrollbar'>
         {folders && folders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4">
             <div className="relative">
@@ -538,7 +564,7 @@ const FolderView = () => {
             </div>
           </div>
         ) : (
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 space-y-3 relative">
           {sortedItems.length > 0 ? sortedItems.map((ele, index) => {
             const isPlaying = playingMusicId === ele._id;
             const duration = musicDurations[ele._id] || '0:00';
@@ -639,87 +665,84 @@ const FolderView = () => {
                       <div className="text-lg font-mono">{duration}</div>
                     </div>
 
-                    <Menu as="div" className="relative inline-block text-left">
-                      <div>
-                        <MenuButton ref={refs.setReference} className="outline-none">
-                          <BsThreeDotsVertical size={20} className="cursor-pointer transition-colors" />
-                        </MenuButton>
+                    <AdaptiveMenu
+                      key={ele._id}
+                      placement="right-start"
+                      widthClass="w-56"
+                      button={<BsThreeDotsVertical size={20} className="cursor-pointer transition-colors" />}
+                    >
+                      <div className="py-1">
+                        <MenuItem>
+                          {({ active }) => (
+                            <button
+                              onClick={() => { setEditingMusicId(ele._id); setEditingMusicName(ele.name || ''); }}
+                              className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
+                            >
+                              <img src={rename} alt="rename icon" className='w-3 h-3 md600:w-4 md600:h-4 2xl:w-5 2xl:h-5' />
+                              Rename
+                            </button>
+                          )}
+                        </MenuItem>
+
+                        <MenuItem>
+                          {({ active }) => (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedMusicId(ele._id);
+                                // Preload existing cover into the selector preview
+                                setImage(coverUrl || null);
+                                setOpen(true);
+                              }}
+                              className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
+                            >
+                              <IoImageOutline size={20} /> 
+                              Change cover
+                            </button>
+                          )}
+                        </MenuItem>
+
+                        <MenuItem>
+                          {({ active }) => (
+                            <button
+                              type="button"
+                              onClick={() => { setMoveMusicId(ele._id); setMoveModalOpen(true); }}
+                              className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
+                            >
+                              <span className="flex items-center gap-2"><IoFolderOutline size={18} /> Move to folder</span>
+                              <span><FaAngleRight size={18} /></span>
+                            </button>
+                          )}
+                        </MenuItem>
+
+                        <MenuItem>
+                          {({ active }) => (
+                            <button
+                              type="button"
+                              onClick={() => handleExport(ele)}
+                              className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
+                            >
+                              <span className="flex items-center gap-2"><FaArrowDownLong size={18} /> Export (MP3)</span>
+                              <span><FaAngleRight size={18} /></span>
+                            </button>
+                          )}
+                        </MenuItem>
+
+                        <hr className="my-1 border-gray-200" />
+
+                        <MenuItem>
+                          {({ active }) => (
+                            <button
+                              type="button"
+                              onClick={() => { setSelectedProjectName(ele?.name || ''); setDeleteId(ele._id); setDeleteModalOpen(true); }}
+                              className={`flex items-center gap-2 px-4 py-2 w-full text-sm ${active ? "bg-red-100 text-red-600" : "text-red-600"}`}
+                            >
+                              <MdDeleteOutline size={20} /> Delete
+                            </button>
+                          )}
+                        </MenuItem>
                       </div>
-
-                      <MenuItems ref={refs.setFloating} style={floatingStyles} className="w-56 rounded-md bg-[#1f1f1f] shadow-lg ring-1 ring-black ring-opacity-5 outline-none z-30">
-                        <div className="py-1">
-                          <MenuItem>
-                            {({ active }) => (
-                              <button
-                                onClick={() => { setEditingMusicId(ele._id); setEditingMusicName(ele.name || ''); }}
-                                className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
-                              >
-                                <img src={rename} alt="rename icon" className='w-3 h-3 md600:w-4 md600:h-4 2xl:w-5 2xl:h-5' />
-                                Rename
-                              </button>
-                            )}
-                          </MenuItem>
-
-                          <MenuItem>
-                            {({ active }) => (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedMusicId(ele._id);
-                                  // Preload existing cover into the selector preview
-                                  setImage(coverUrl || null);
-                                  setOpen(true);
-                                }}
-                                className={`flex items-center gap-2 px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
-                              >
-                                <IoImageOutline size={20} /> 
-                                Change cover
-                              </button>
-                            )}
-                          </MenuItem>
-
-                          <MenuItem>
-                            {({ active }) => (
-                              <button
-                                type="button"
-                                onClick={() => { setMoveMusicId(ele._id); setMoveModalOpen(true); }}
-                                className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
-                              >
-                                <span className="flex items-center gap-2"><IoFolderOutline size={18} /> Move to folder</span>
-                                <span><FaAngleRight size={18} /></span>
-                              </button>
-                            )}
-                          </MenuItem>
-
-                          <MenuItem>
-                            {({ active }) => (
-                              <button
-                                type="button"
-                                onClick={() => handleExport(ele)}
-                                className={`flex items-center justify-between px-4 py-2 text-sm w-full text-left ${active ? "bg-gray-600 text-white" : "text-white"}`}
-                              >
-                                <span className="flex items-center gap-2"><FaArrowDownLong size={18} /> Export (MP3)</span>
-                                <span><FaAngleRight size={18} /></span>
-                              </button>
-                            )}
-                          </MenuItem>
-
-                          <hr className="my-1 border-gray-200" />
-
-                          <MenuItem>
-                            {({ active }) => (
-                              <button
-                                type="button"
-                                onClick={() => { setSelectedProjectName(ele?.name || ''); setDeleteId(ele._id); setDeleteModalOpen(true); }}
-                                className={`flex items-center gap-2 px-4 py-2 w-full text-sm ${active ? "bg-red-100 text-red-600" : "text-red-600"}`}
-                              >
-                                <MdDeleteOutline size={20} /> Delete
-                              </button>
-                            )}
-                          </MenuItem>
-                        </div>
-                      </MenuItems>
-                    </Menu>
+                    </AdaptiveMenu>
                   </div>
                 </div>
               </div>
@@ -736,6 +759,7 @@ const FolderView = () => {
           )}
         </div>
         )}
+        </div>
       </div>
 
       {/* Change Cover Model */}
