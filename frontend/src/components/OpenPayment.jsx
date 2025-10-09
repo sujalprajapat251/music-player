@@ -1,27 +1,40 @@
 import React, { useState } from 'react';
-import p1 from "../Images/p1.svg";
-import p2 from "../Images/p2.svg";
-import p3 from "../Images/p3.svg";
+import { motion, AnimatePresence } from "framer-motion";
 
-export default function OpenPayment({ backToPricing, plan }) {
-  const [showSubscribe, setShowSubscribe] = useState(false);
+import visa from "../Images/visa.png";
+import mastercard from "../Images/mastercard.png";
+import amex from "../Images/amex.png";
+import rupay from "../Images/rupay.png";
+import bhim from "../Images/bhim.png";
+import paytm from "../Images/paytm.png";
+import Gpay from "../Images/Gpay.png";
+import phonepe from "../Images/phonepe.png";
+import citi from "../Images/citi.png";
+import wells from "../Images/wf.png";
+import capital from "../Images/capitalone.png";
+import td from "../Images/td.png";
+import hdfc from "../Images/hdfc.png";
+import sbi from "../Images/sbi.png";
+import axis from "../Images/axis.png";
+import icici from "../Images/icici.png";
+
+export default function OpenPayment({ backToPricing }) {
   
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
   const [isChecked, setIsChecked] = useState(false);
-  const [activePayment, setActivePayment] = useState('card'); // card OR paypal
-  const [country, setCountry] = useState('India');
+  const [activePayment, setActivePayment] = useState('card'); 
+  const [cardHolderName, setCardHolderName] = useState('');
+  const [upiId, setUpiId] = useState("");
+  const [upiDomain, setUpiDomain] = useState("@okicici");
+  const [searchBank, setSearchBank] = useState("");
 
-  const today = new Date();
-  const dueDate = new Date(today);
-  dueDate.setDate(today.getDate() + 7); // trial end date
-  const dueDateStr = dueDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const upiDomains = ["@okicici", "@oksbi", "@okaxis", "@okhdfcbank"];
 
   const formatCardNumber = (value) => {
-    const numbers = value.replace(/\s/g, '');
-    const formatted = numbers.match(/.{1,4}/g)?.join(' ') || numbers;
-    return formatted.slice(0, 19);
+    const numbers = value.replace(/\s/g, '').replace(/\D/g, '');
+    return numbers.match(/.{1,4}/g)?.join(' ')?.slice(0, 19) || numbers;
   };
 
   const formatExpiry = (value) => {
@@ -33,492 +46,349 @@ export default function OpenPayment({ backToPricing, plan }) {
   };
 
   const formatCVV = (value) => {
-    return value.replace(/\D/g, '').slice(0, 3);
+    return value.replace(/\D/g, '').slice(0, 4);
   };
 
-  // return (
-  //   <div className="min-h-screen overflow-y-auto">
-  //     <div className="max-w-md min-h-[79vh] mx-auto bg-[#1e1e1e] rounded-lg p-6 overflow-y-auto">
-  //       {/* Header */}
-  //       <div className="flex items-center mb-6 text-white text-lg font-semibold">
-  //         <span onClick={backToPricing} className="mr-3 text-2xl cursor-pointer">‹</span>
-  //         <span>{plan?.name ? plan.name : "Selected Plan"}</span>
-  //       </div>
+  const banks = [
+    {
+      name: "Citi Bank",
+      logo: citi,
+    },
+    {
+      name: "Wells Fargo Bank",
+      logo: wells,
+    },
+    {
+      name: "Capital One Bank",
+      logo: capital,
+    },
+    {
+      name: "TD Bank",
+      logo: td,
+    },
+    {
+      name: "HDFC Bank",
+      logo: hdfc,
+    },
+    { 
+      name: "SBI Bank",
+      logo: sbi,
+    },
+    {
+      name: "Axis Bank",
+      logo: axis,
+    },
+    {
+      name: "ICICI Bank",
+      logo: icici,
+    },
+  ];
 
-  //       {/* Payment Options */}
-  //       <div className="text-white text-sm font-semibold mb-4">Payment details</div>
-  //       <div className="flex gap-3 mb-4">
-  //         {/* Card Option */}
-  //         <div
-  //           onClick={() => setActivePayment('card')}
-  //           className={`flex-1 border-2 rounded-lg p-2 cursor-pointer transition-colors bg-[#2a2a2a] flex items-center justify-center ${
-  //             activePayment === 'card' ? 'border-purple-600' : 'border-[#3a3a3a] hover:border-[#5a5a5a]'
-  //           }`}
-  //         >
-  //           <span className="text-xl font-bold italic text-white">VISA</span>
-  //           <div className="flex ml-2">
-  //             <div className="w-5 h-5 rounded-full bg-[#eb001b]"></div>
-  //             <div className="w-5 h-5 rounded-full bg-[#ff5f00] -ml-2"></div>
-  //           </div>
-  //         </div>
-
-  //         {/* PayPal Option */}
-  //         <div
-  //           onClick={() => setActivePayment('paypal')}
-  //           className={`flex-1 border-2 rounded-lg p-2 cursor-pointer transition-colors bg-[#2a2a2a] flex items-center justify-center ${
-  //             activePayment === 'paypal' ? 'border-purple-600' : 'border-[#3a3a3a] hover:border-[#5a5a5a]'
-  //           }`}
-  //         >
-  //           <div className="flex flex-col items-start">
-  //             <div className="text-lg font-bold italic text-white/80">
-  //               Pay<span className="text-white/80">Pal</span>
-  //             </div>
-  //             <div className="flex gap-1 mt-0">
-  //               <span className="text-[8px] px-1 py-0.5 rounded bg-[#006fcf] text-white font-bold">AMEX</span>
-  //               <span className="text-[8px] px-1 py-0.5 rounded bg-[#ff6000] text-white font-bold">Discover</span>
-  //             </div>
-  //           </div>
-  //         </div>
-  //       </div>
-
-  //       {/* ---------- Conditional Rendering ---------- */}
-  //       {activePayment === 'card' ? (
-  //         <>
-  //           {/* Card Details */}
-  //           <div className="text-white text-sm font-semibold mb-3">Card details</div>
-  //           <div className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-2 mb-3 flex items-center gap-3">
-  //             <div className="w-10 h-7 bg-gray-200 rounded flex items-center justify-center text-[10px] text-gray-600 flex-shrink-0">
-  //               💳
-  //             </div>
-  //             <div className="flex flex-1 gap-3">
-  //               <div className="flex-[2]">
-  //                 <label className="block text-[11px] text-gray-400 mb-1">Card number</label>
-  //                 <input
-  //                   type="text"
-  //                   inputMode="numeric"          // mobile keyboards show numbers
-  //                   pattern="[0-9\s]*"
-  //                   value={cardNumber}
-  //                   // onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-  //                   onChange={(e) => {
-  //                     const onlyNumbers = e.target.value.replace(/\D/g, ""); // remove all non-digits
-  //                     setCardNumber(formatCardNumber(onlyNumbers));
-  //                   }}
-  //                   placeholder="1234 5678 9012 3456"
-  //                   className="w-full bg-transparent border-none text-white text-sm outline-none placeholder-gray-600"
-  //                 />
-  //               </div>
-  //               <div className="flex-1">
-  //                 <label className="block text-[11px] text-gray-400 mb-1">MM/YY</label>
-  //                 <input
-  //                   type="text"
-  //                   value={expiryDate}
-  //                   onChange={(e) => setExpiryDate(formatExpiry(e.target.value))}
-  //                   placeholder="12/25"
-  //                   className="w-full bg-transparent border-none text-white text-sm outline-none placeholder-gray-600"
-  //                 />
-  //               </div>
-  //               <div className="flex-1">
-  //                 <label className="block text-[11px] text-gray-400 mb-1">CVV</label>
-  //                 <input
-  //                   type="text"
-  //                   value={cvv}
-  //                   onChange={(e) => setCvv(formatCVV(e.target.value))}
-  //                   placeholder="123"
-  //                   className="w-full bg-transparent border-none text-white text-sm outline-none placeholder-gray-600"
-  //                 />
-  //               </div>
-  //             </div>
-  //           </div>
-
-  //           {/* Security Note */}
-  //           <div className="flex items-center gap-1 text-[11px] text-gray-200 mb-5">
-  //             <span className="text-xs">🔒</span>
-  //             <span>Your data is encrypted and secure.</span>
-  //           </div>
-  //         </>
-  //       ) : (
-  //         <>
-  //           {/* PayPal Selected Message */}
-  //           {/* <div className="bg-[#2a2a2a] border border-purple-600 rounded-lg p-4 mb-5 text-center text-white">
-  //             <p className="text-sm font-semibold">You have selected PayPal</p>
-  //             <p className="text-xs text-gray-400 mt-1">
-  //               After clicking "Start your free trial", you will be redirected to PayPal to complete your purchase securely.
-  //             </p>
-  //           </div> */}
-  //         </>
-  //       )}
-
-  //       {/* Country */}
-  //       <div className="text-white text-sm font-semibold mb-3">Country</div>
-  //       <select
-  //         value={country}
-  //         onChange={(e) => setCountry(e.target.value)}
-  //         className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-3 text-white text-sm mb-4 cursor-pointer outline-none"
-  //       >
-  //         <option>India</option>
-  //         <option>United States</option>
-  //         <option>United Kingdom</option>
-  //         <option>Canada</option>
-  //         <option>Australia</option>
-  //       </select>
-
-  //       {/* Pricing */}
-  //       <div className="flex justify-between mb-3 text-sm">
-  //         <span className="text-gray-300">Due {dueDateStr}</span>
-  //         <span className="text-white font-semibold">US${plan?.price}.00{" "} {plan?.period && `(${plan.period})`}</span>
-  //       </div>
-
-  //       <div className="flex justify-between mb-5 text-sm">
-  //         <span className="text-gray-300">Due today{" "} <span className="text-green-500 font-semibold">7 days free</span></span>
-  //         <span className="text-white font-semibold">US$0.00</span>
-  //       </div>
-
-  //       <div className="h-px bg-[#3a3a3a] my-5"></div>
-
-  //       {/* Checkbox */}
-  //       <div className="flex items-start gap-2.5 mb-6">
-  //         <div
-  //           onClick={() => setIsChecked(!isChecked)}
-  //           className={`w-[21px] h-[22px] border-2 border-[#3a3a3a] rounded cursor-pointer flex-shrink-0 mt-0.5 ${
-  //             isChecked ? 'bg-purple-600 border-purple-600' : ''
-  //           }`}
-  //         >
-  //           {isChecked && <span className="text-white text-sm leading-none">✓</span>}
-  //         </div>
-  //         <div className="text-[11px] text-gray-400 leading-relaxed">
-  //           I agree to be automatically charged the amount displayed above if I don't cancel my trial by {dueDateStr} .
-  //           After the trial, I will be charged each subsequent year unless I cancel before that date.
-  //         </div>
-  //       </div>
-
-  //       {/* Buttons */}
-  //       {/* <button className="w-full bg-gradient-to-br from-purple-600 to-purple-500 text-white rounded-full p-2 text-base font-semibold mb-3 transition-transform hover:bg-purple-900">
-  //         Start your free trial
-  //       </button> */}
-  //       {/* <button className="w-full bg-white text-[#1e1e1e] rounded-full p-2 text-sm font-semibold flex items-center justify-center gap-2 transition-colors hover:bg-gray-50">
-  //         Or pay now with 50% off
-  //         <span className="text-lg">›</span>
-  //       </button> */}
-  //       {showSubscribe ? (
-  //         <button className="w-full bg-gradient-to-br from-purple-600 to-purple-500 text-white rounded-full p-2 text-sm font-semibold flex items-center justify-center gap-2 transition-colors hover:bg-green-600">
-  //           Subscribe
-  //         </button>
-  //       ) : (
-  //         <>
-  //           <button className="w-full bg-gradient-to-br from-purple-600 to-purple-500 text-white rounded-full p-2 text-base font-semibold mb-3 transition-transform hover:bg-purple-900">
-  //             Start your free trial
-  //           </button>
-  //           <button
-  //             className="w-full bg-white text-[#1e1e1e] rounded-full p-2 text-sm font-semibold flex items-center justify-center gap-2 transition-colors hover:bg-gray-50"
-  //             onClick={() => setShowSubscribe(true)}
-  //           >
-  //             Or pay now with 50% off
-  //             <span className="text-lg">›</span>
-  //           </button>
-  //         </>
-  //       )}
-  //     </div>
-  //   </div>
-  // );
+  const filteredBanks = banks.filter((bank) =>
+    bank.name.toLowerCase().includes(searchBank.toLowerCase())
+  );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-10 bg-[#141414] text-white min-h-[79vh] rounded-lg overflow-y-auto p-6">
-      {/* ================= Left Side - Payment ================= */}
-      <div>
-        {/* Header */}
-        <div className="flex items-center mb-6 text-lg font-semibold">
-          <span
-            onClick={backToPricing}
-            className="mr-3 text-2xl cursor-pointer"
-          >
-            ‹
-          </span>
-          <span>{plan?.name ? plan.name : "Selected Plan"}</span>
-        </div>
-
-        {/* Payment Options */}
-        <div className="text-white text-sm font-semibold mb-4">Payment details</div>
-        <div className="flex gap-3 mb-4">
-          {/* Card Option */}
-          <div
-            onClick={() => setActivePayment("card")}
-            className={`flex-1 border-2 rounded-lg p-2 cursor-pointer transition-colors bg-[#2a2a2a] flex items-center justify-center ${
-              activePayment === "card"
-                ? "border-purple-600"
-                : "border-[#3a3a3a] hover:border-[#5a5a5a]"
-            }`}
-          >
-            <span className="text-xl font-bold italic">VISA</span>
-            <div className="flex ml-2">
-              <div className="w-5 h-5 rounded-full bg-[#eb001b]"></div>
-              <div className="w-5 h-5 rounded-full bg-[#ff5f00] -ml-2"></div>
+    <div className="min-h-[80vh] flex items-center justify-center bg-white dark:bg-[#1f1f1f] p-4">
+      {/* Modal container like the screenshot */}
+      <div className="w-[920px] max-w-full bg-transparent relative">
+        {/* Card-like panel */}
+        <div className="p-4 text-black dark:text-white">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={backToPricing}
+                className="text-2xl leading-none hover:opacity-80"
+                aria-label="back"
+              >
+                ‹
+              </button>
+              <h3 className="text-lg font-medium">Production &amp; Vocals</h3>
             </div>
+
+            <button
+              onClick={() => backToPricing && backToPricing(null)}
+              className="text-xl opacity-60 hover:opacity-90"
+              aria-label="close"
+            >
+              ✕
+            </button>
           </div>
 
-          {/* PayPal Option */}
+          {/* First box: Credit Card / Debit Card (expanded) */}
           <div
-            onClick={() => setActivePayment("paypal")}
-            className={`flex-1 border-2 rounded-lg p-2 cursor-pointer transition-colors bg-[#2a2a2a] flex items-center justify-center ${
-              activePayment === "paypal"
-                ? "border-purple-600"
-                : "border-[#3a3a3a] hover:border-[#5a5a5a]"
+            className={`rounded-md border px-5 py-4 mb-4 transition-all duration-300 ${
+              activePayment === 'card' ? 'border-[#6b6b6b] bg-white dark:bg-[#1f1f1f]' : 'border-[#2b2b2b] bg-transparent'
             }`}
+            onClick={() => setActivePayment('card')}
+            style={{ cursor: "pointer"}}
           >
-            <div className="flex flex-col items-start">
-              <div className="text-lg font-bold italic">
-                Pay<span className="text-white/80">Pal</span>
+            <div className="flex items-center justify-between py-2">
+              <div className="flex items-center gap-3">
+                <input
+                  type="radio"
+                  name="paymethod"
+                  checked={activePayment === 'card'}
+                  onChange={() => setActivePayment('card')}
+                  className="accent-white mt-1"
+                />
+                <div className="text-md font-medium">Credit Card / Debit Card</div>
               </div>
-              <div className="flex gap-1 mt-0">
-                <span className="text-[8px] px-1 py-0.5 rounded bg-[#006fcf] font-bold">
-                  AMEX
-                </span>
-                <span className="text-[8px] px-1 py-0.5 rounded bg-[#ff6000] font-bold">
-                  Discover
-                </span>
+
+              {/* small card logos on right */}
+              <div className="flex items-center gap-0.3">
+                <img src={visa} alt='visa' className="w-9 h-6 object-contain" />
+                <img src={mastercard} alt='mastercard' className="w-9 h-6 object-contain" />
+                <img src={amex} alt='amex' className="w-9 h-6 object-contain" />
+                <img src={rupay} alt='rupay' className="w-9 h-6 object-contain" />
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* ---------- Conditional Rendering ---------- */}
-        {activePayment === "card" && (
-          <>
-            {/* Card Details */}
-            <div className="text-white text-sm font-semibold mb-3">Card details</div>
-            <div className="bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-2 mb-3 flex items-center gap-3">
-              <div className="w-10 h-7 bg-gray-200 rounded flex items-center justify-center text-[10px] text-gray-600 flex-shrink-0">
-                💳
-              </div>
-              <div className="flex flex-1 gap-3">
-                <div className="flex-[2]">
-                  <label className="block text-[11px] text-gray-400 mb-1">
-                    Card number
-                  </label>
+            
+            {activePayment === "card" && (
+              <>
+              <hr className="border-t border-[#2b2b2b] my-2" />
+              <div className="grid grid-cols-2 mt-4 gap-5">
+                <div>
+                  <label className="text-xs text-black dark:text-gray-200 mb-2 block">Card Number</label>
                   <input
                     type="text"
                     inputMode="numeric"
-                    pattern="[0-9\s]*"
                     value={cardNumber}
-                    onChange={(e) => {
-                      const onlyNumbers = e.target.value.replace(/\D/g, "");
-                      setCardNumber(formatCardNumber(onlyNumbers));
-                    }}
-                    placeholder="1234 5678 9012 3456"
-                    className="w-full bg-transparent border-none text-sm outline-none placeholder-gray-600"
+                    onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                    placeholder="Card Number"
+                    className="w-full bg-gray-100 dark:bg-[#2c2c2c] border border-[#333] rounded-md px-3 py-3 text-sm placeholder-[#646464] outline-none"
                   />
                 </div>
-                <div className="flex-1">
-                  <label className="block text-[11px] text-gray-400 mb-1">
-                    MM/YY
-                  </label>
+
+                <div>
+                  <label className="text-xs text-black dark:text-gray-200 mb-2 block">Card Holder Name</label>
+                  <input
+                    type="text"
+                    value={cardHolderName}
+                    onChange={(e) => {
+                      // Allow only alphabets and spaces
+                      let value = e.target.value.replace(/[^A-Za-z\s]/g, "");
+                      // Prevent multiple spaces
+                      value = value.replace(/\s{2,}/g, " ");
+                      setCardHolderName(value);
+                    }}
+                    onKeyPress={(e) => {
+                      // Block numbers and special characters completely
+                      const char = String.fromCharCode(e.which);
+                      if (!/^[A-Za-z\s]$/.test(char)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    placeholder="Card Holder Name"
+                    className="w-full bg-gray-100 dark:bg-[#2c2c2c] border border-[#333] rounded-md px-3 py-3 text-sm placeholder-[#646464] outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs text-black dark:text-gray-200 mb-2 block">Expiry Date</label>
                   <input
                     type="text"
                     value={expiryDate}
-                    onChange={(e) => setExpiryDate(formatExpiry(e.target.value))}
-                    placeholder="12/25"
-                    className="w-full bg-transparent border-none text-sm outline-none placeholder-gray-600"
+                    // onChange={(e) => setExpiryDate(formatExpiry(e.target.value))}
+                    onChange={(e) => {
+                      let value = e.target.value.replace(/\D/g, ""); // allow only digits
+
+                      // limit to max 6 digits (MMYYYY)
+                      if (value.length > 6) value = value.slice(0, 6);
+
+                      let month = value.slice(0, 2);
+                      let year = value.slice(2, 6);
+
+                      // ✅ ensure valid month (1–12)
+                      if (month.length === 1 && parseInt(month) > 1) {
+                        month = "0" + month; // if user types 9 → make 09
+                      } else if (month.length === 2) {
+                        const mNum = parseInt(month);
+                        if (mNum < 1 || mNum > 12) {
+                          month = "12"; // auto-correct invalid month
+                        }
+                      }
+
+                      // ✅ only allow numeric 4-digit year
+                      if (year && year.length > 4) year = year.slice(0, 4);
+
+                      let formatted = month;
+                      if (year.length > 0) formatted = `${month} / ${year}`;
+
+                      setExpiryDate(formatted);
+                    }}
+                    placeholder="MM / YYYY"
+                    maxLength={9}
+                    className="w-full bg-gray-100 dark:bg-[#2c2c2c] border border-[#333] rounded-md px-3 py-3 text-sm placeholder-[#646464] outline-none"
                   />
                 </div>
-                <div className="flex-1">
-                  <label className="block text-[11px] text-gray-400 mb-1">
-                    CVV
-                  </label>
+
+                <div>
+                  <label className="text-xs text-black dark:text-gray-200 mb-2 block">CVV</label>
                   <input
-                    type="text"
+                    type="password"
+                    inputMode="numeric"
                     value={cvv}
                     onChange={(e) => setCvv(formatCVV(e.target.value))}
-                    placeholder="123"
-                    className="w-full bg-transparent border-none text-sm outline-none placeholder-gray-600"
+                    placeholder="CVV"
+                    maxLength={3}
+                    className="w-full bg-gray-100 dark:bg-[#2c2c2c] border border-[#333] rounded-md px-3 py-3 text-sm placeholder-[#646464] outline-none"
                   />
                 </div>
               </div>
-            </div>
+              </>
+            )}
+          </div>
 
-            {/* Security Note */}
-            <div className="flex items-center gap-1 text-[11px] text-gray-200 mb-5">
-              <span className="text-xs">🔒</span>
-              <span>Your data is encrypted and secure.</span>
-            </div>
-          </>
-        )}
-
-        {/* Country */}
-        <div className="text-white text-sm font-semibold mb-3">Country</div>
-        <select
-          value={country}
-          onChange={(e) => setCountry(e.target.value)}
-          className="w-full bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg p-3 text-sm mb-4 cursor-pointer outline-none"
-        >
-          <option>India</option>
-          <option>United States</option>
-          <option>United Kingdom</option>
-          <option>Canada</option>
-          <option>Australia</option>
-        </select>
-
-        {/* Pricing */}
-        <div className="flex justify-between mb-3 text-sm">
-          <span className="text-gray-300">Due {dueDateStr}</span>
-          <span className="text-white font-semibold">US${plan?.price}.00{" "} {plan?.period && `(${plan.period})`}</span>
-        </div>
-
-        <div className="flex justify-between mb-5 text-sm">
-          <span className="text-gray-300">Due today{" "} <span className="text-green-500 font-semibold">7 days free</span></span>
-          <span className="text-white font-semibold">US$0.00</span>
-        </div>
-
-        <div className="h-px bg-[#3a3a3a] my-5"></div>
-
-        {/* Agreement Checkbox */}
-        <div className="flex items-start gap-2.5 mb-6">
+          {/* Other payment options collapsed style */}
           <div
-            onClick={() => setIsChecked(!isChecked)}
-            className={`w-[20px] h-[23px] border-2 border-[#3a3a3a] rounded cursor-pointer flex-shrink-0 mt-0.5 ${
-              isChecked ? "bg-purple-600 border-purple-600" : ""
+            className={`rounded-md border px-5 py-4 mb-4 transition-all duration-300 ${
+              activePayment === 'upi' ? 'border-[#6b6b6b]' : 'border-[#2b2b2b]'
             }`}
+            onClick={() => setActivePayment('upi')}
+            style={{ cursor: 'pointer' }}
           >
-            {isChecked && (
-              <span className="text-white text-sm ml-0.5 leading-none">✓</span>
+            <div className="flex items-center justify-between py-2">
+              <div className="flex items-center gap-3">
+                <input
+                  type="radio"
+                  name="paymethod"
+                  checked={activePayment === 'upi'}
+                  onChange={() => setActivePayment('upi')}
+                  className="accent-white mt-1"
+                />
+                <span className="text-sm">UPI</span>
+              </div>
+              <div className="flex items-center mr-[-14px]">
+                <img src={bhim} alt='bhim' className="w-9 h-6 object-contain" />
+                <img src={paytm} alt='paytm' className="w-9 h-6 object-contain" />
+                <img src={Gpay} alt='Gpay' className="w-9 h-6 object-contain" />
+                <img src={phonepe} alt='phonepe' className="w-9 h-6 object-contain" />
+              </div>
+            </div>
+            <AnimatePresence>
+              {activePayment === "upi" && (
+                <>
+                <hr className="border-t border-[#2b2b2b] my-2" />
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                >
+                  <div className="p-3 mt-2">
+                    <label className="text-sm block mb-2 text-black dark:text-gray-200">UPI ID</label>
+                    <div className="flex items-center bg-gray-100 dark:bg-[#2c2c2c] border border-[#2b2b2b] rounded-md">
+                      <input
+                        type="text"
+                        placeholder="UPI ID"
+                        value={upiId}
+                        onChange={(e) => setUpiId(e.target.value)}
+                        className="w-full bg-transparent text-black dark:text-white text-sm px-3 py-2 focus:outline-none"
+                      />
+                      <select
+                        value={upiDomain}
+                        onChange={(e) => setUpiDomain(e.target.value)}
+                        className="bg-transparent text-black dark:text-white text-sm px-2 py-2 focus:outline-none border-l border-[#606060]"
+                      >
+                        {upiDomains.map((domain) => (
+                          <option
+                            key={domain}
+                            value={domain}
+                            className="bg-[#1a1a1a] text-[#f2f2f2]"
+                          >
+                            {domain}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div
+            className={`rounded-md border px-5 py-4 mb-6 ${
+              activePayment === 'netbank' ? 'border-[#6b6b6b]' : 'border-[#2b2b2b]'
+            }`}
+            onClick={() => setActivePayment('netbank')}
+            style={{ cursor: 'pointer' }}
+          >
+            <div className="flex items-center justify-between py-2">
+              <div className="flex items-center gap-3">
+                <input
+                  type="radio"
+                  name="paymethod"
+                  checked={activePayment === 'netbank'}
+                  onChange={() => setActivePayment('netbank')}
+                  className="accent-white mt-1"
+                />
+                <span className="text-sm">Net banking</span>
+              </div>
+              <div className="flex items-center mr-[-14px]">
+                <img src={citi} alt='citi' className="w-9 h-6 bg-white object-contain" />
+                <img src={wells} alt='wells' className="w-9 h-6 object-contain" />
+                <img src={capital} alt='capital' className="w-9 h-6 object-contain" />
+                <img src={td} alt='td' className="w-9 h-6 object-contain" />
+              </div>
+            </div>
+            
+            {activePayment === "netbank" && (
+              <>
+              <hr className="border-t border-[#2b2b2b] my-2" />
+              <div className="mt-4 rounded-md p-2">
+                {/* Search Bar */}
+                <div className="bg-gray-100 dark:bg-[#2c2c2c] rounded-md px-3 py-3 mb-4 flex items-center gap-1">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-6 h-6 text-gray-400 mr-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Search your bank"
+                    value={searchBank}
+                    onChange={(e) => setSearchBank(e.target.value)}
+                    className="w-full bg-gray-100 dark:bg-[#2c2c2c] text-black dark:text-white focus:outline-none"
+                  />
+                </div>
+
+                {/* Bank Logos */}
+                <div className="grid grid-cols-8 gap-6">
+                  {filteredBanks.map((bank) => (
+                    <div key={bank.name} className="flex flex-col items-center mt-2">
+                      <img src={bank.logo} alt={bank.name} className="w-10 h-10 object-contain mb-2" />
+                      <span className="text-xs text-center text-gray-300">{bank.name}</span>
+                    </div>
+                  ))}
+                  {filteredBanks.length === 0 && (
+                    <p className="col-span-4 text-gray-500 text-sm text-center">No banks found</p>
+                  )}
+                </div>
+              </div>
+              </>
             )}
           </div>
-          <div className="text-[11px] text-gray-400 leading-relaxed">
-            I agree to be automatically charged the amount displayed above if I don't cancel my trial by {dueDateStr} .
-            After the trial, I will be charged each subsequent year unless I cancel before that date.
-          </div>
-        </div>
 
-        {/* Buttons */}
-        {showSubscribe ? (
-          <button className="w-full bg-gradient-to-br from-purple-600 to-purple-500 text-white rounded-full p-2 text-sm font-semibold flex items-center justify-center gap-2 transition-colors hover:bg-green-600">
-            Subscribe
-          </button>
-        ) : (
-          <>
-            <button className="w-full bg-gradient-to-br from-purple-600 to-purple-500 text-white rounded-full p-2 text-base font-semibold mb-3 transition-transform hover:bg-purple-900">
-              Start your free trial
-            </button>
+          {/* Centered Next button (white) like in image */}
+          <div className="mt-12 mb-14 pri-next-btn text-center">
             <button
-              className="w-full bg-white text-[#1e1e1e] rounded-full p-2 text-sm font-semibold flex items-center justify-center gap-2 transition-colors hover:bg-gray-50"
-              onClick={() => setShowSubscribe(true)}
+              className="bg-white border border-black text-black font-semibold py-3 px-24 md:px-40 rounded-md shadow-lg hover:scale-105 transition-transform"
+              onClick={() => {
+                // handle next
+                console.log('Next clicked');
+              }}
             >
-              Or pay now with 50% off
-              <span className="text-lg">›</span>
+              Next
             </button>
-          </>
-        )}
-      </div>
-
-      {/* ================= Right Side - Plan Details ================= */}
-      <div className="bg-[#2a2a2a] rounded-lg p-8 flex flex-col justify-between ">
-        <div>
-          <h2 className="text-2xl font-bold mb-2 text-center">{plan?.name}</h2>
-          <p className="text-xl font-bold mb-1 text-center">${plan?.price} / {plan?.price>100 ? "year" : "month"}</p>
-          {/* <p className="text-sm text-gray-400 mb-4">
-            {plan?.period === "plan.price" ? "per year" : "per month"}
-          </p> */}
-
-          <ul className="text-sm space-y-2 text-gray-300 mt-4">
-            {plan?.name === "Starter" && (
-              <>
-                <div className="main-price-month mt-4 text-[#FFFFFF99] text-[14px]">
-                  <ul className="list-disc list-inside text-center">
-                    <li>10,000+ loops</li>
-                    <li className="mt-1 ml-5">200 instruments</li>
-                    <li className="mt-1 mr-6">50 effects</li>
-                    <li className="mt-1 ml-12">Advanced vocal tools</li>
-                  </ul>
-                </div>
-
-                <div className="p1-box flex-1 w-full max-w-full flex items-center justify-center flex-col">
-                  <div className="k-loop-icon w-[50px] h-[50px] border-[1px] border-[#FFFFFF4D] rounded-sm flex justify-center items-center mt-4">
-                    <img src={p1} alt="" />
-                  </div>
-                  <div className="p1-contant text-[#FFFFFF] mt-2">
-                    <p className="text-[20px] mt-2 ml-16">41K+</p>
-                    <p className="text-[22px] mt-2 ml-1">loops/one-shots</p>
-                    <p className="text-[14px] ml-12 text-[#FFFFFF99] mt-2">
-                      (everything)
-                    </p>
-                  </div>
-                  <div className="main-price-month mt-4 text-[#FFFFFF99] text-[14px] ml-6">
-                    <ul>
-                      <li>50+ effects</li>
-                      <li>Realtime vocal tuning</li>
-                      <li>Vocal tuning</li>
-                      <li>Vocal cleanup</li>
-                      <li>808 instrument (with glide)</li>
-                    </ul>
-                  </div>
-                </div>
-              </>
-            )}
-            {plan?.name === "Professional" && (
-              <>
-                <div className="main-price-month mt-4 text-[#FFFFFF99] text-[14px]">
-                  <ul className="list-disc list-inside text-center">
-                    <li>7,000+ loops</li>
-                    <li className="mt-1 ml-5">150 instruments</li>
-                    <li className="mt-1 mr-5">30 effects</li>
-                    <li className="mt-1 ml-6">Basic vocal tools</li>
-                  </ul>
-                </div>
-                <div className="p1-box flex-1 w-full max-w-full flex items-center justify-center flex-col">
-                  <div className="k-loop-icon w-[50px] h-[50px] border-[1px] border-[#FFFFFF4D] rounded-sm flex justify-center items-center mt-4">
-                    <img src={p2} alt="" />
-                  </div>
-                  <div className="p1-contant text-[#FFFFFF] mt-2">
-                    <p className="text-[20px] mt-2 ml-16">1250+</p>
-                    <p className="text-[22px] mt-2 ml-2">Music Production</p>
-                    <p className="text-[14px] mt-2 ml-14 text-[#FFFFFF99]">
-                      (everything)
-                    </p>
-                  </div>
-                  <div className="main-price-month mt-4 text-[#FFFFFF99] text-[14px] ml-8">
-                    <ul>
-                      <li>Chords</li>
-                      <li>Realtime vocal tuning</li>
-                      <li>Save presets and loops </li>
-                      <li>150k+ Sound Effects freesound</li>
-                      <li>Automation</li>
-                    </ul>
-                  </div>
-                </div>
-              </>
-            )}
-            {plan?.name === "Enterprise" && (
-              <>
-                <div className="main-price-month mt-4 text-[#FFFFFF99] text-[14px]">
-                  <ul className="list-disc list-inside text-center">
-                    <li>Unlimited users</li>
-                    <li className="mt-1 mr-1">Priority mixing</li>
-                    <li className="mt-1 ml-14">High quality downloads</li>
-                    <li className="mt-1 ml-24">Multi-speaker transcription (8h)</li>
-                  </ul>
-                </div>
-                <div className="p1-box flex-1 w-full max-w-full flex items-center justify-center flex-col">
-                  <div className="k-loop-icon w-[50px] h-[50px] border-[1px] border-[#FFFFFF4D] rounded-sm flex justify-center items-center mt-4">
-                    <img src={p3} alt="" />
-                  </div>
-                  <div className="p1-contant text-[#FFFFFF] mt-2">
-                    <p className="text-[20px] mt-2 ml-16">41K+</p>
-                    <p className="text-[22px] mt-2">loops/one-shots</p>
-                    <p className="text-[14px] mt-2 text-[#FFFFFF99] ml-12">
-                      (everything)
-                    </p>
-                  </div>
-                  <div className="main-price-month mt-4 text-[#FFFFFF99] text-[14px] ml-8">
-                    <ul>
-                      <li>Sampler</li>
-                      <li>Priority mixing</li>
-                      <li>High quality downloads</li>
-                      <li>8 mastering styles</li>
-                      <li>Multi-speaker transcription (8h)</li>
-                    </ul>
-                  </div>
-                </div>
-              </>
-            )}
-          </ul>
+          </div>
         </div>
       </div>
     </div>

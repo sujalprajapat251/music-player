@@ -2006,12 +2006,7 @@ const NewSynth = ({ onClose }) => {
                                             </div>
 
                                             {/* === STATUS AND TEST BUTTONS === */}
-                                            <div className="text-center py-2">
-                                                <div className="text-secondary-light/60 dark:text-secondary-dark/60 text-[10px] mb-2">
-                                                    Status: {loadingStatus} | Active: {chordType} | Pattern: {getPatternDisplayName() || "None"}
-                                                </div>
-                                                <button onClick={testAllSynths} disabled={!isAudioReady} className="bg-secondary-light/10 dark:bg-secondary-dark/10 text-secondary-light dark:text-secondary-dark px-3 py-1 rounded text-[10px] hover:bg-secondary-light/20 dark:hover:bg-secondary-dark/20 transition-colors">Test All Synths</button>
-                                            </div>
+                                            <div className="text-center py-2"></div>
                                         </div>
                                     </>
                                 )}

@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { FaPowerOff } from 'react-icons/fa6';
 import { IoClose } from 'react-icons/io5';
 import { useDispatch, useSelector } from 'react-redux';
-import { removeEffect } from '../Redux/Slice/effects.slice';
+import { removeEffect, removeEffectFromTrack, updateEffectParameter, updateTrackEffectParameter } from '../Redux/Slice/effects.slice';
+import { selectStudioState } from '../Redux/rootReducer';
 
 function polarToCartesian(cx, cy, r, angle) {
     const a = (angle - 90) * Math.PI / 180.0;
@@ -43,7 +44,7 @@ function BadgeTooltip({ value, visible }) {
     );
 }
 
-function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
+function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onValueChange, parameterIndex }) {
     const [angle, setAngle] = useState(defaultAngle ?? min);
     const [showTooltip, setShowTooltip] = useState(false);
     const knobRef = useRef(null);
@@ -92,6 +93,13 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const radius = (size - stroke) / 2;
     const center = size / 2;
 
+    // Update angle when defaultAngle prop changes (persist parameters)
+    useEffect(() => {
+        if (defaultAngle !== undefined) {
+            setAngle(defaultAngle);
+        }
+    }, [defaultAngle]);
+
     const onMouseDown = (e) => {
         dragging.current = true;
         lastY.current = e.clientY;
@@ -107,6 +115,9 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         setAngle((prev) => {
             let next = prev + deltaY * 1.5; // adjust sensitivity as needed
             next = Math.max(min, Math.min(max, next));
+            if (onValueChange) {
+                onValueChange(parameterIndex, next);
+            }
             return next;
         });
     };
@@ -192,7 +203,7 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     );
 }
 
-function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
+function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle, onValueChange, parameterIndex }) {
     const [angle, setAngle] = useState(defaultAngle ?? min);
     const [showTooltip, setShowTooltip] = useState(false);
     const knobRef = useRef(null);
@@ -244,6 +255,13 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
     const radius = (size - stroke) / 2;
     const center = size / 2;
 
+    // Update angle when defaultAngle prop changes (persist parameters)
+    useEffect(() => {
+        if (defaultAngle !== undefined) {
+            setAngle(defaultAngle);
+        }
+    }, [defaultAngle]);
+
 
     const onMouseDown = (e) => {
         dragging.current = true;
@@ -260,6 +278,9 @@ function Knob1({ label = "Bite", min = -135, max = 135, defaultAngle }) {
         setAngle((prev) => {
             let next = prev + deltaY * 1.5; // adjust sensitivity as needed
             next = Math.max(min, Math.min(max, next));
+            if (onValueChange) {
+                onValueChange(parameterIndex, next);
+            }
             return next;
         });
     };
@@ -355,15 +376,70 @@ const Overdrive = () => {
     };
 
     const dispatch = useDispatch();
+    const { trackEffects, selectedTrackId } = useSelector((state) => state.effects);
+    const currentTrackId = useSelector((state) => selectStudioState(state)?.currentTrackId);
     const { activeEffects } = useSelector((state) => state.effects);
 
+    // Use selectedTrackId from effects or fall back to currentTrackId from studio
+    const activeTrackId = selectedTrackId || currentTrackId;
+
+    // Get effects for the currently selected track
+    const trackSpecificEffects = trackEffects[activeTrackId] || [];
+    // Get the current effect's instanceId from track-specific effects or fallback to activeEffects
+    const currentEffect = trackSpecificEffects.find(effect =>
+        effect.name === "Overdrive"
+    ) || activeEffects.find(effect =>
+        effect.name === "Overdrive"
+    );
+    const currentInstanceId = currentEffect?.instanceId;
+
     const handleRemoveEffect = (instanceId) => {
-        dispatch(removeEffect(instanceId));
+        if (!instanceId) return;
+        if (activeTrackId && trackSpecificEffects.some(effect => effect.instanceId === instanceId)) {
+            // Remove from track-specific effects
+            dispatch(removeEffectFromTrack({ trackId: activeTrackId, instanceId }));
+        } else if (activeEffects.some(effect => effect.instanceId === instanceId)) {
+            // Remove from general active effects
+            dispatch(removeEffect(instanceId));
+        }
     };
 
     // Get the current effect's instanceId from activeEffects
-    const currentEffect = activeEffects.find(effect => effect.name === "Overdrive");
-    const currentInstanceId = currentEffect?.instanceId;
+    const handleKnobChange = (parameterIndex, value) => {
+        if (!currentInstanceId) return;
+
+        // First try updating track-specific effects
+        if (activeTrackId && trackSpecificEffects.some(effect => effect.instanceId === currentInstanceId)) {
+            dispatch(updateTrackEffectParameter({
+                trackId: activeTrackId,
+                instanceId: currentInstanceId,
+                parameterIndex: parameterIndex,
+                value: value
+            }));
+        }
+        // Fall back to updating global effects
+        else if (activeEffects.some(effect => effect.instanceId === currentInstanceId)) {
+            dispatch(updateEffectParameter({
+                instanceId: currentInstanceId,
+                parameterIndex: parameterIndex,
+                value: value
+            }));
+        }
+    };
+
+    // Get current parameter values for initialization
+    const getCurrentParameterValue = (parameterIndex) => {
+        if (currentEffect && currentEffect.parameters && currentEffect.parameters[parameterIndex]) {
+            return currentEffect.parameters[parameterIndex].value;
+        }
+        // Default values: Dist, Tone, Low Cut
+        switch (parameterIndex) {
+            case 0: return 0;   // Dist
+            case 1: return 0;   // Tone
+            case 2: return 90;  // Low Cut
+            default: return 0;
+        }
+    };
 
     return (
         <div className='bg-[#141414]'>
@@ -387,17 +463,17 @@ const Overdrive = () => {
                 }`}>
                 {/* Dist Knob - Top Left */}
                 <div className="absolute  top-[20px] left-[30px] sm:top-[30px] sm:left-[40px] md600:top-[25px] md600:left-[40px]  md:top-[25px] md:left-[40px]">
-                    <Knob label="Dist" min={-135} max={135} defaultAngle={-90} />
+                    <Knob label="Dist" min={-135} max={135} defaultAngle={getCurrentParameterValue(0)} onValueChange={handleKnobChange} parameterIndex={0} />
                 </div>
 
                 {/* Tone Knob - Top Right */}
                 <div className="absolute top-[50px] right-[30px] sm:top-[60px] sm:right-[50px] md600:top-[65px] md600:right-[45px] md:top-[80px] md:right-[35px]">
-                    <Knob label="Tone" min={-135} max={135} defaultAngle={0} />
+                    <Knob label="Tone" min={-135} max={135} defaultAngle={getCurrentParameterValue(1)} onValueChange={handleKnobChange} parameterIndex={1} />
                 </div>
 
                 {/* Low cut Knob - Bottom Center */}
                 <div className="absolute bottom-[15px] left-[30px] sm:bottom-[25px] sm:left-[40px] md600:left-[40px] md600:bottom-[45px] md:left-[40px] md:bottom-[73px]">
-                    <Knob1 label="Low Cut" min={-135} max={135} defaultAngle={90} />
+                    <Knob1 label="Low Cut" min={-135} max={135} defaultAngle={getCurrentParameterValue(2)} onValueChange={handleKnobChange} parameterIndex={2} />
                 </div>
             </div>
         </div>

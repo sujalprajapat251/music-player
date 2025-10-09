@@ -56,7 +56,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
         <div className="flex min-h-full items-center justify-center p-4 sm:p-0">
           <DialogPanel
             transition
-            className="relative z-[210] transform overflow-hidden p-6 rounded-[8px] bg-white dark:bg-primary-dark text-secondary-light dark:text-secondary-dark border border-neutral-200 dark:border-neutral-800 text-left shadow-xl w-[1020px] max-w-full transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 max-h-[89vh] mx-4 sm:overflow-y-auto xl:overflow-hidden"
+            className="relative z-[210] transform overflow-hidden p-6 rounded-[8px] bg-white dark:bg-primary-dark text-secondary-light dark:text-secondary-dark border border-neutral-200 dark:border-neutral-800 text-left shadow-xl w-[1020px] max-w-full transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 max-h-[89vh] mx-4 sm:overflow-y-auto 3xl:overflow-hidden"
             // className="relative transform overflow-hidden rounded-2xl bg-[#0F1115] shadow-2xl w-[1000px] max-w-full transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 p-10"
           >
             {/* Close Button */}
@@ -353,7 +353,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
         <DialogBackdrop className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
         <div className="fixed inset-0 z-10 w-screen ">
           <div className="flex min-h-full items-center justify-center p-4 sm:p-0">
-            <DialogPanel className="relative z-[210] transform overflow-hidden p-1 rounded-[8px] bg-primary-light dark:bg-primary-dark text-secondary-light dark:text-secondary-dark border border-neutral-200 dark:border-neutral-800 text-left shadow-xl w-[1000px] max-w-full max-h-[80vh] mx-4">
+            <DialogPanel className="relative z-[210] transform overflow-hidden p-1 rounded-[8px] bg-primary-light dark:bg-[#1f1f1f] text-secondary-light dark:text-secondary-dark border border-neutral-200 dark:border-neutral-800 text-left shadow-xl w-[1000px] max-w-full max-h-[80vh] mx-4">
 
               {openPayment && (
                 <OpenPayment
