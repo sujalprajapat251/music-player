@@ -7,6 +7,7 @@ import { IoClose } from "react-icons/io5";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { GiPianoKeys } from "react-icons/gi";
 import { HiMiniChevronUpDown } from "react-icons/hi2";
+import pianos from "../Images/pianos.png";
 import Am from "../Images/am.svg";
 import Bdmi from "../Images/bdmi.svg";
 import C from "../Images/c.svg";
@@ -1725,7 +1726,8 @@ const Pianodemo = ({ onClose }) => {
 
                           <div className="flex items-center gap-2 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-start 2xl:px-4 2xl:w-[250px]" onClick={() => setOpenInstrumentModal(true)}>
                             <div className="text-black dark:text-white">
-                              <GiPianoKeys className="text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[20px] 2xl:text-[20px]" />
+                              {/* <GiPianoKeys className="text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[20px] 2xl:text-[20px]" /> */}
+                              <img src={pianos} alt='pianos' className="w-6 h-6 object-contain" />
                             </div>
                             <div className="">
                               <div className="text-black dark:text-white font-bold text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[16px] truncate whitespace-nowrap overflow-hidden max-w-[120px] sm:max-w-[150px] md:max-w-[180px] lg:max-w-[200px]">
@@ -1789,8 +1791,8 @@ const Pianodemo = ({ onClose }) => {
                               <FaChevronRight className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]" />
                             </button>
                           </div>
-                          <div className="border rounded-lg border-secondary-light/10 dark:border-secondary-dark/10 ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer" onClick={() => setAutoChords(true)}>
-                            <p className="text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[10px] md:text-[12px] lg:text-[13px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1">Auto Chord</p>
+                          <div className="border rounded-full border-secondary-light/10 dark:border-secondary-dark/10 ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer" onClick={() => setAutoChords(!autoChords)}>
+                            <p className={`rounded-full text-[10px] md600:text-[10px] md:text-[12px] lg:text-[13px] px-2 md600:px-3 md:px-4 lg:px-5 2xl:px-6 py-1 ${autoChords ? "bg-black text-white dark:bg-white dark:text-black" : "bg-white text-black dark:bg-neutral-800 dark:text-white"}`}>Auto Chord</p>
                           </div>
                         </div>
                         <div onClick={() => setPricingModalOpen(true)} className="border rounded-lg border-secondary-light/10 dark:border-secondary-dark/10 ms-auto me-1 md600:me-2 lg:me-3 cursor-pointer">
@@ -1805,19 +1807,19 @@ const Pianodemo = ({ onClose }) => {
                               <div className="flex justify-between items-center mb-2">
                                 <div className="flex gap-1 items-center">
                                   <img src={subscription} alt="subscription" className="w-4 h-4" />
-                                  <p className="text-white text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Auto Chord</p>
+                                  <p className="text-white text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[15px]">Auto Chord</p>
                                 </div>
-                                <IoClose className="text-[8px] sm:text-[10px] md600:text-[12px] md:text-[16px] lg:text-[20px] 2xl:text-[24px] text-secondary-light/60 dark:text-secondary-dark/60 cursor-pointer" onClick={() => setAutoChords(false)} />
+                                <IoClose className="text-[8px] sm:text-[10px] md600:text-[12px] md:text-[16px] lg:text-[20px] 2xl:text-[22px] text-secondary-light/60 dark:text-secondary-dark/60 cursor-pointer" onClick={() => setAutoChords(false)} />
                               </div>
-                              <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[8px] md:text-[10px] lg:text-[12px] 2xl:text-[14px] truncate mb-3">Play full chords with a single key</p>
-                              <div className="flex gap-1 items-center">
+                              <p className="text-secondary-light/60 dark:text-secondary-dark/60 text-[8px] md:text-[10px] lg:text-[12px] 2xl:text-[13px] truncate mb-2">Play full chords with a single key</p>
+                              {/* <div className="flex gap-1 items-center">
                                 <img src={subscription} alt="subscription" className="w-4 h-4" />
                                 <p className="text-white text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[16px]">Shape</p>
-                              </div>
+                              </div> */}
                               <div className="flex justify-between gap-1 lg:gap-2 md600:pt-2 lg:pt-4 2xl:gap-2 2xl:pt-2">
-                                <button onClick={() => setPricingModalOpen(true)} className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">Triad</button>
-                                <button onClick={() => setPricingModalOpen(true)} className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">7th</button>
-                                <button onClick={() => setPricingModalOpen(true)} className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-md hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">Add9</button>
+                                <button onClick={() => setPricingModalOpen(true)} className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-sm hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">Triad</button>
+                                <button onClick={() => setPricingModalOpen(true)} className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-sm hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">7th</button>
+                                <button onClick={() => setPricingModalOpen(true)} className="text-secondary-light dark:text-secondary-dark border border-secondary-light/10 dark:border-secondary-dark/10 text-[8px] md600:text-[10px] lg:text-[12px] py-1 px-1 md600:px-2 lg:px-4 2xl:px-5 rounded-sm hover:bg-secondary-light/10 dark:hover:bg-secondary-dark/10">Add9</button>
                               </div>
                               {/* Range Slider - Added here after the chord buttons */}
                               <div className="pt-1 md600:pt-2 lg:pt-4">
@@ -1856,8 +1858,9 @@ const Pianodemo = ({ onClose }) => {
                         <div className="bg-secondary-light/10 dark:bg-secondary-dark/10 items-center mt-1 px-1 py-1 md:mt-2 md:px-2 md:py-2 lg:px-3 rounded-lg">
 
                           {/* === CHORD TYPE SELECTOR === */}
-                          <div className="relative flex gap-1 px-1 md:gap-2 md:px-2 lg:gap-3 items-center lg:px-3 cursor-pointer" onClick={() => setToggle(!toggle)}>
-                            <GiPianoKeys className="text-[10px] md600:text-[12px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-secondary-light dark:text-secondary-dark" />
+                          <div className="relative flex gap-1 px-1 md:gap-2 md:px-2 lg:gap-2 items-center lg:px-3 cursor-pointer" onClick={() => setToggle(!toggle)}>
+                            {/* <GiPianoKeys className="text-[10px] md600:text-[12px] md:text-[16px] lg:text-[18px] 2xl:text-[20px] text-secondary-light dark:text-secondary-dark" /> */}
+                            <img src={pianos} alt='pianos' className="w-6 h-6 object-contain" />
                             <p className="text-secondary-light dark:text-secondary-dark text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]">{chordType}</p>
                             <HiMiniChevronUpDown className="text-secondary-light/60 dark:text-secondary-dark/60 text-[10px] md600:text-[12px] md:text-[14px] lg:text-[16px]" />
 
@@ -2066,7 +2069,7 @@ const Pianodemo = ({ onClose }) => {
                             }}
                           >
                             <div className="w-14 h-14 bg-black dark:bg-white text-white dark:text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
-                            <p className="text-center text-xs sm:text-sm leading-snug">Drop effects here or<br />select from library</p>
+                            <p className="text-center text-xs sm:text-sm leading-snug">Select From the<br />effects library</p>
                           </div>
                         )}
                         {Array.from({ length: 4 - activeEffects.length - 1 }, (_, index) => (

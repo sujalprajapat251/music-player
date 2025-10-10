@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { IoClose } from "react-icons/io5";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { setRecordingAudio, setPianoNotes, setPianoRecordingClip, setSelectedInstrument } from '../Redux/Slice/studio.slice';
+import OpenInstrumentModal from './OpenInstrumentsModel';
 import PianoRolls from './PianoRolls';
 import * as Tone from "tone";
 import { setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
@@ -1827,8 +1828,13 @@ const BassAnd808 = ({ onClose }) => {
         dispatch(toggleEffectsOffcanvas());
     };
 
+    const [openInstrumentModal, setOpenInstrumentModal] = useState(false);
+
     return (
         <>
+            {openInstrumentModal && (
+                <OpenInstrumentModal onClose={() => setOpenInstrumentModal(false)} initialCategory={"Bass & 808s"} initialSubCategory={"808 (with glide)"} />
+            )}
             {showOffcanvas1 === true && (
                 <>
                     <div className="fixed z-[10] w-full h-full transition-transform left-0 right-0 translate-y-full bottom-[330px] sm:bottom-[351px] md:bottom-[403px] lg:bottom-[437px] xl:bottom-[441px] 2xl:bottom-[467px] shadow-[0_-2px_11px_rgba(0,0,0,0.08)]" tabIndex="-1" aria-labelledby="drawer-swipe-label">
@@ -1867,7 +1873,14 @@ const BassAnd808 = ({ onClose }) => {
                                                         <FaChevronLeft className="text-[10px] md:text-[14px] 2xl:text-[14px]" />
                                                     </button>
 
-                                                    <div className="flex items-center gap-2 flex-1 justify-center">
+                                                        <div className="flex items-center gap-2 flex-1 justify-center"
+                                                        onClick={() => {
+                                                            // Open the instrument modal and pre-select Bass & 808s -> 808 (with glide)
+                                                            setOpenInstrumentModal(true);
+                                                            // Ensure local UI reflects glide-enabled selection
+                                                            setGlide(135); // set glide to max visible position so it appears enabled
+                                                        }}
+                                                    >
                                                         <div className="text-black dark:text-white font-bold text-[8px] sm:text-[10px] md:text-[14px] lg:text-[14px]">808</div>
                                                         <div>
                                                             <div className="text-black dark:text-white text-[8px] sm:text-[9px] md:text-[14px] lg:text-[14px]">
@@ -2038,7 +2051,7 @@ const BassAnd808 = ({ onClose }) => {
                                                         }}
                                                     >
                                                         <div className="w-14 h-14 bg-white text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
-                                                        <p className="text-center text-xs sm:text-sm leading-snug">Drop effects here or<br />select from library</p>
+                                                        <p className="text-center text-xs sm:text-sm leading-snug">Select From the<br />effects library</p>
                                                     </div>
                                                 )}
                                                 {Array.from({ length: 4 - activeEffects.length - 1 }, (_, index) => (

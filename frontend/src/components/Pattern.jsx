@@ -892,7 +892,7 @@ const Pattern = () => {
               {/* Fixed Labels Column */}
               <div className="w-32 flex-shrink-0 z-10">
                 {/* Empty spacer for beat dots alignment */}
-                <div className="h-3 mb-2"></div>
+                <div className="h-3 mb-[-8px]"></div>
 
                 {/* Empty spacer for section numbers alignment */}
                 <div className="h-6 mb-2"></div>
@@ -959,7 +959,7 @@ const Pattern = () => {
               <div ref={scrollContainerRef} className="space-y-3 overflow-y-auto flex-1">
                 <div className="min-w-max">
                   {/* Beat Indicator Dots */}
-                  <div className="flex items-center gap-2 h-3 mb-2">
+                  <div className="flex items-center gap-2 h-3 mb-5">
                     <div className="flex gap-1">
                       {Array.from({ length: Math.ceil(patternLength / 16) }, (_, sectionIndex) => (
                         <div key={sectionIndex} className="flex gap-1 mx-2">
@@ -991,7 +991,7 @@ const Pattern = () => {
                   </div>
 
                   {/* Section Numbers */}
-                  <div className="flex items-center gap-2 h-6 mb-1">
+                  {/* <div className="flex items-center gap-2 h-6 mb-1">
                     <div className="flex gap-1">
                       {Array.from({ length: Math.ceil(patternLength / 16) }, (_, sectionIndex) => (
                         <div key={sectionIndex} className="flex justify-center items-center mx-2" style={{ width: `${16 * 36}px` }}>
@@ -1001,7 +1001,7 @@ const Pattern = () => {
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Beat Grids */}
                   <div className="space-y-3">
