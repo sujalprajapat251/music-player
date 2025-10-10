@@ -537,6 +537,9 @@ const Timeline = () => {
     let autoPanEffect = null;
     let classicDistEffect = null;
     let autoWahEffect = null;
+    let chorusEffect = null;
+    let stereoChorusEffect = null;
+    let flangerEffect = null;
     let effectSource = 'none';
     
     // Priority 1: Use recorded effect parameters if available
@@ -552,6 +555,41 @@ const Timeline = () => {
       };
       effectSource = 'recorded';
       console.log('  - Using recorded Fuzz effect parameters:', fuzzEffect);
+    } else if (recordedEffects && recordedEffects.chorus) {
+      chorusEffect = {
+        name: 'Chorus',
+        parameters: [
+          { value: recordedEffects.chorus.rate },
+          { value: recordedEffects.chorus.depth }
+        ],
+        instanceId: recordedEffects.chorus.instanceId
+      };
+      effectSource = 'recorded';
+      console.log('  - Using recorded Chorus effect parameters:', chorusEffect);
+    } else if (recordedEffects && recordedEffects.stereoChorus) {
+      stereoChorusEffect = {
+        name: 'Stereo Chorus',
+        parameters: [
+          { value: recordedEffects.stereoChorus.rate },
+          { value: recordedEffects.stereoChorus.depth },
+          { value: recordedEffects.stereoChorus.mix }
+        ],
+        instanceId: recordedEffects.stereoChorus.instanceId
+      };
+      effectSource = 'recorded';
+      console.log('  - Using recorded Stereo Chorus effect parameters:', stereoChorusEffect);
+    } else if (recordedEffects && recordedEffects.flanger) {
+      flangerEffect = {
+        name: 'Flanger',
+        parameters: [
+          { value: recordedEffects.flanger.rate },
+          { value: recordedEffects.flanger.depth },
+          { value: recordedEffects.flanger.mix }
+        ],
+        instanceId: recordedEffects.flanger.instanceId
+      };
+      effectSource = 'recorded';
+      console.log('  - Using recorded Flanger effect parameters:', flangerEffect);
     } else {
       // Priority 2: Use current track-specific effects
       const trackEffects = trackEffectsState[trackId] || [];
@@ -560,8 +598,11 @@ const Timeline = () => {
       classicDistEffect = trackEffects.find(effect => effect.name === 'Classic Dist' || effect.name === 'ClassicDist');
       autoPanEffect = trackEffects.find(effect => effect.name === 'Auto Pan');
       autoWahEffect = trackEffects.find(effect => effect.name === 'Auto-Wah' || effect.name === 'AutoWah');
+      chorusEffect = trackEffects.find(effect => effect.name === 'Chorus');
+      stereoChorusEffect = trackEffects.find(effect => effect.name === 'Stereo Chorus');
+      flangerEffect = trackEffects.find(effect => effect.name === 'Flanger');
 
-      if (fuzzEffect || overdriveEffect || classicDistEffect || autoPanEffect || autoWahEffect) {
+      if (fuzzEffect || overdriveEffect || classicDistEffect || autoPanEffect || autoWahEffect || chorusEffect || flangerEffect) {
         effectSource = 'track-specific';
         // if (fuzzEffect) console.log('  - Using current track-specific Fuzz effect:', fuzzEffect);
         // if (overdriveEffect) console.log('  - Using current track-specific Overdrive effect:', overdriveEffect);
@@ -572,8 +613,11 @@ const Timeline = () => {
         classicDistEffect = globalActiveEffects.find(effect => effect.name === 'Classic Dist' || effect.name === 'ClassicDist');
         autoPanEffect = globalActiveEffects.find(effect => effect.name === 'Auto Pan');
         autoWahEffect = globalActiveEffects.find(effect => effect.name === 'Auto-Wah' || effect.name === 'AutoWah');
+        chorusEffect = globalActiveEffects.find(effect => effect.name === 'Chorus');
+        stereoChorusEffect = globalActiveEffects.find(effect => effect.name === 'Stereo Chorus');
+        flangerEffect = globalActiveEffects.find(effect => effect.name === 'Flanger');
 
-        if (fuzzEffect || overdriveEffect || classicDistEffect || autoPanEffect || autoWahEffect) {
+        if (fuzzEffect || overdriveEffect || classicDistEffect || autoPanEffect || autoWahEffect || chorusEffect || flangerEffect) {
           effectSource = 'global';
           // if (fuzzEffect) console.log('  - Using current global Fuzz effect:', fuzzEffect);
           // if (overdriveEffect) console.log('  - Using current global Overdrive effect:', overdriveEffect);
@@ -762,7 +806,123 @@ const Timeline = () => {
         chainTail = autoPanner;
       }
 
-      // Connect to destination at the end of chain
+      // 🎵 Chorus effect if present (-> Chorus)
+      if (chorusEffect && chorusEffect.parameters && Array.isArray(chorusEffect.parameters) && chorusEffect.parameters.length >= 2) {
+        const rateParam = chorusEffect.parameters[0];
+        const depthParam = chorusEffect.parameters[1];
+
+        let rate, depth;
+        if (effectSource === 'recorded') {
+          const effectsProcessor = getEffectsProcessor();
+          rate = effectsProcessor.angleToParameter(rateParam?.value ?? 0);
+          depth = effectsProcessor.angleToParameter(depthParam?.value ?? 0);
+        } else {
+          rate = angleTo01(rateParam?.value ?? 0);
+          depth = angleTo01(depthParam?.value ?? 0);
+        }
+
+        // Rate controls the modulation speed (0.1 Hz to 10 Hz)
+        const chorusRate = 0.1 + (rate * 9.9);
+        
+        // Depth controls the modulation amount (0.1 to 1.0)
+        const chorusDepth = 0.1 + (depth * 0.9);
+
+        // Create Chorus effect using Tone.Chorus
+        const chorus = new Tone.Chorus({
+          frequency: chorusRate,
+          delayTime: 3.5,
+          depth: chorusDepth,
+          type: 'sine',
+          spread: 180,
+          wet: 0.5
+        }).toDestination().start();
+
+        // Chain to chorus
+        chainTail.connect(chorus);
+        chainTail = chorus;
+        console.log('✅ Applied Chorus for timeline playback');
+      }
+
+      // 🎵 Stereo Chorus effect if present (-> Stereo Chorus)
+      if (stereoChorusEffect && stereoChorusEffect.parameters && Array.isArray(stereoChorusEffect.parameters) && stereoChorusEffect.parameters.length >= 3) {
+        const rateParam = stereoChorusEffect.parameters[0];
+        const depthParam = stereoChorusEffect.parameters[1];
+        const mixParam = stereoChorusEffect.parameters[2];
+
+        let rate, depth, mix;
+        if (effectSource === 'recorded') {
+          const effectsProcessor = getEffectsProcessor();
+          rate = effectsProcessor.angleToParameter(rateParam?.value ?? 0);
+          depth = effectsProcessor.angleToParameter(depthParam?.value ?? 0);
+          mix = effectsProcessor.angleToParameter(mixParam?.value ?? 0);
+        } else {
+          rate = angleTo01(rateParam?.value ?? 0);
+          depth = angleTo01(depthParam?.value ?? 0);
+          mix = angleTo01(mixParam?.value ?? 0);
+        }
+
+        // Map parameters
+        const chorusRate = 0.1 + (rate * 9.9);    // 0.1 .. 10 Hz
+        const chorusDepth = 0.1 + (depth * 0.9);  // 0.1 .. 1.0
+        const chorusMix = Math.max(0.0, Math.min(1.0, mix)); // 0 .. 1
+
+        const stereoChorus = new Tone.Chorus({
+          frequency: chorusRate,
+          delayTime: 3.5,
+          depth: chorusDepth,
+          type: 'sine',
+          spread: 180,
+        }).toDestination().start();
+        stereoChorus.wet.value = chorusMix;
+
+        chainTail.connect(stereoChorus);
+        chainTail = stereoChorus;
+        console.log('✅ Applied Stereo Chorus for timeline playback');
+      }
+
+      // 🎵 Flanger effect if present (-> Flanger)
+      if (flangerEffect && flangerEffect.parameters && Array.isArray(flangerEffect.parameters) && flangerEffect.parameters.length >= 3) {
+        const rateParam = flangerEffect.parameters[0];
+        const depthParam = flangerEffect.parameters[1];
+        const mixParam = flangerEffect.parameters[2];
+
+        let rate, depth, mix;
+        if (effectSource === 'recorded') {
+          const effectsProcessor = getEffectsProcessor();
+          rate = effectsProcessor.angleToParameter(rateParam?.value ?? 0);
+          depth = effectsProcessor.angleToParameter(depthParam?.value ?? 0);
+          mix = effectsProcessor.angleToParameter(mixParam?.value ?? 0);
+        } else {
+          rate = angleTo01(rateParam?.value ?? 0);
+          depth = angleTo01(depthParam?.value ?? 0);
+          mix = angleTo01(mixParam?.value ?? 0);
+        }
+
+        // Rate controls the modulation speed (0.1 Hz to 10 Hz)
+        const flangerRate = 0.1 + (rate * 9.9);
+        
+        // Depth controls the modulation amount (0.1 to 1.0)
+        const flangerDepth = 0.1 + (depth * 0.9);
+        
+        // Mix controls wet/dry balance (0.0 to 1.0)
+        const flangerMix = Math.max(0.1, mix); // Minimum 0.1 for audible effect
+
+        // Create Flanger effect using Tone.Chorus with flanger-specific settings
+        const flanger = new Tone.Chorus({
+          frequency: flangerRate,
+          delayTime: 0.01, // 10ms base delay for flanger
+          depth: flangerDepth,
+          type: 'sine',
+          spread: 180,
+          wet: flangerMix
+        }).toDestination().start();
+
+        // Chain to flanger
+        chainTail.connect(flanger);
+        chainTail = flanger;
+        console.log('✅ Applied Flanger for timeline playback');
+      }
+
       chainTail.toDestination();
 
       // if (!(overdriveEffect || fuzzEffect)) {

@@ -432,13 +432,6 @@ const ClassicDist = () => {
         }
     };
 
-    // Show track info in the component
-    const trackName = useSelector((state) => {
-        const tracks = selectStudioState(state)?.tracks || [];
-        const track = tracks.find(t => t.id === activeTrackId);
-        return track?.name || 'No Track Selected';
-    });
-
     return (
         <div className='bg-[#141414]'>
             <div className={`flex justify-between items-center w-[150px] h-[50px] sm:w-[190px] sm:h-[50px] md600:w-[220px] md:w-[230px] md:h-[55px] lg:w-[240px] xl:h-[60px] 2xl:w-[256px] 2xl:h-[64px] rounded-t-lg px-2 md:px-3 lg:px-8 xl:px-3 transition-colors duration-300 ${isPoweredOn ? 'bg-[#8F7CFD]' : 'bg-gray-600'}`}>
