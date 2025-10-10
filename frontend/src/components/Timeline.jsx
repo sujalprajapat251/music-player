@@ -1020,6 +1020,220 @@ const Timeline = () => {
     }
   }, [trackEffectsState, globalActiveEffects]);
 
+  // Apply effects to regular piano (Soundfont) playback using Web Audio API chains
+  const applyPianoEffects = useCallback((audioNode, trackId, recordedEffects = null) => {
+    if (!audioNode) return;
+
+    // Helper to convert angle (-135..135) to 0..1 safely
+    const angleTo01 = (angle) => {
+      const n = (Number(angle) + 135) / 270;
+      if (!Number.isFinite(n)) return 0;
+      return Math.max(0, Math.min(1, n));
+    };
+
+    let fuzzEffect = null;
+    let overdriveEffect = null;
+    let autoPanEffect = null;
+    let classicDistEffect = null;
+    let autoWahEffect = null;
+    let chorusEffect = null;
+    let stereoChorusEffect = null;
+    let flangerEffect = null;
+    let phaserEffect = null;
+    let rotaryEffect = null;
+    let effectSource = 'none';
+
+    // Resolve effects by priority: recorded → track-specific → global
+    if (recordedEffects && recordedEffects.fuzz) {
+      fuzzEffect = {
+        name: 'Fuzz',
+        parameters: [
+          { value: recordedEffects.fuzz.grain },
+          { value: recordedEffects.fuzz.bite },
+          { value: recordedEffects.fuzz.lowCut }
+        ],
+        instanceId: recordedEffects.fuzz.instanceId
+      };
+      effectSource = 'recorded';
+    } else if (recordedEffects && recordedEffects.chorus) {
+      chorusEffect = {
+        name: 'Chorus',
+        parameters: [
+          { value: recordedEffects.chorus.rate },
+          { value: recordedEffects.chorus.depth }
+        ],
+        instanceId: recordedEffects.chorus.instanceId
+      };
+      effectSource = 'recorded';
+    } else if (recordedEffects && recordedEffects.stereoChorus) {
+      stereoChorusEffect = {
+        name: 'Stereo Chorus',
+        parameters: [
+          { value: recordedEffects.stereoChorus.rate },
+          { value: recordedEffects.stereoChorus.depth },
+          { value: recordedEffects.stereoChorus.mix }
+        ],
+        instanceId: recordedEffects.stereoChorus.instanceId
+      };
+      effectSource = 'recorded';
+    } else if (recordedEffects && recordedEffects.flanger) {
+      flangerEffect = {
+        name: 'Flanger',
+        parameters: [
+          { value: recordedEffects.flanger.rate },
+          { value: recordedEffects.flanger.depth },
+          { value: recordedEffects.flanger.mix }
+        ],
+        instanceId: recordedEffects.flanger.instanceId
+      };
+      effectSource = 'recorded';
+    } else {
+      const trackEffects = trackEffectsState[trackId] || [];
+      fuzzEffect = trackEffects.find(effect => effect.name === 'Fuzz');
+      overdriveEffect = trackEffects.find(effect => effect.name === 'Overdrive');
+      classicDistEffect = trackEffects.find(effect => effect.name === 'Classic Dist' || effect.name === 'ClassicDist');
+      autoPanEffect = trackEffects.find(effect => effect.name === 'Auto Pan');
+      autoWahEffect = trackEffects.find(effect => effect.name === 'Auto-Wah' || effect.name === 'AutoWah');
+      chorusEffect = trackEffects.find(effect => effect.name === 'Chorus');
+      stereoChorusEffect = trackEffects.find(effect => effect.name === 'Stereo Chorus');
+      flangerEffect = trackEffects.find(effect => effect.name === 'Flanger');
+      phaserEffect = trackEffects.find(effect => effect.name === 'Phaser');
+      rotaryEffect = trackEffects.find(effect => effect.name === 'Rotary');
+
+      if (!(fuzzEffect || overdriveEffect || classicDistEffect || autoPanEffect || autoWahEffect || chorusEffect || stereoChorusEffect || flangerEffect || phaserEffect || rotaryEffect)) {
+        const globalEffects = globalActiveEffects || [];
+        fuzzEffect = globalEffects.find(effect => effect.name === 'Fuzz');
+        overdriveEffect = globalEffects.find(effect => effect.name === 'Overdrive');
+        classicDistEffect = globalEffects.find(effect => effect.name === 'Classic Dist' || effect.name === 'ClassicDist');
+        autoPanEffect = globalEffects.find(effect => effect.name === 'Auto Pan');
+        autoWahEffect = globalEffects.find(effect => effect.name === 'Auto-Wah' || effect.name === 'AutoWah');
+        chorusEffect = globalEffects.find(effect => effect.name === 'Chorus');
+        stereoChorusEffect = globalEffects.find(effect => effect.name === 'Stereo Chorus');
+        flangerEffect = globalEffects.find(effect => effect.name === 'Flanger');
+        phaserEffect = globalEffects.find(effect => effect.name === 'Phaser');
+        rotaryEffect = globalEffects.find(effect => effect.name === 'Rotary');
+        effectSource = 'global';
+      } else {
+        effectSource = 'track-specific';
+      }
+    }
+
+    try {
+      const audioContext = pianoAudioContextRef.current || (window.AudioContext && new window.AudioContext());
+      if (!effectsProcessorRef.current && audioContext) {
+        effectsProcessorRef.current = getEffectsProcessor(audioContext);
+      }
+      if (!effectsProcessorRef.current || !audioContext) return;
+
+      // Disconnect default routing so we can rebuild the chain
+      try { audioNode.disconnect(); } catch (e) {}
+
+      let chainTail = audioNode; // Start with the instrument's output node
+
+      // Overdrive
+      if (overdriveEffect && Array.isArray(overdriveEffect.parameters)) {
+        const dist = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(overdriveEffect.parameters[0]?.value ?? 0) : angleTo01(overdriveEffect.parameters[0]?.value ?? 0);
+        const tone = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(overdriveEffect.parameters[1]?.value ?? 45) : angleTo01(overdriveEffect.parameters[1]?.value ?? 45);
+        const lowCut = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(overdriveEffect.parameters[2]?.value ?? 90) : angleTo01(overdriveEffect.parameters[2]?.value ?? 90);
+        const chain = effectsProcessorRef.current.createOverdrive({ dist, tone, lowCut });
+        chainTail.connect(chain.input);
+        chainTail = chain.output;
+      }
+
+      // Classic Dist
+      if (classicDistEffect && Array.isArray(classicDistEffect.parameters) && classicDistEffect.parameters.length >= 3) {
+        const dist = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(classicDistEffect.parameters[0]?.value ?? 0) : angleTo01(classicDistEffect.parameters[0]?.value ?? 0);
+        const tone = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(classicDistEffect.parameters[1]?.value ?? 45) : angleTo01(classicDistEffect.parameters[1]?.value ?? 45);
+        const lowCut = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(classicDistEffect.parameters[2]?.value ?? 90) : angleTo01(classicDistEffect.parameters[2]?.value ?? 90);
+        const chain = effectsProcessorRef.current.createClassicDistortion({ dist, tone, lowCut });
+        chainTail.connect(chain.input);
+        chainTail = chain.output;
+      }
+
+      // Fuzz
+      if (fuzzEffect && Array.isArray(fuzzEffect.parameters) && fuzzEffect.parameters.length >= 3) {
+        const grain = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(fuzzEffect.parameters[0]?.value ?? 0) : angleTo01(fuzzEffect.parameters[0]?.value ?? 0);
+        const bite = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(fuzzEffect.parameters[1]?.value ?? 45) : angleTo01(fuzzEffect.parameters[1]?.value ?? 45);
+        const lowCut = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(fuzzEffect.parameters[2]?.value ?? 90) : angleTo01(fuzzEffect.parameters[2]?.value ?? 90);
+        const chain = effectsProcessorRef.current.createFuzz({ grain, bite, lowCut });
+        chainTail.connect(chain.input);
+        chainTail = chain.output;
+      }
+
+      // Auto-Wah
+      if (autoWahEffect && Array.isArray(autoWahEffect.parameters) && autoWahEffect.parameters.length >= 2) {
+        const rate = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(autoWahEffect.parameters[0]?.value ?? 0) : angleTo01(autoWahEffect.parameters[0]?.value ?? 0);
+        const mix = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(autoWahEffect.parameters[1]?.value ?? 0) : angleTo01(autoWahEffect.parameters[1]?.value ?? 0);
+        const chain = effectsProcessorRef.current.createAutoWah({ rate: 0.5 + rate * 9.5, mix: Math.max(0.3, mix) });
+        chainTail.connect(chain.input);
+        chainTail = chain.output;
+      }
+
+      // Auto Pan
+      if (autoPanEffect && Array.isArray(autoPanEffect.parameters) && autoPanEffect.parameters.length >= 2) {
+        const rate = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(autoPanEffect.parameters[0]?.value ?? 0) : angleTo01(autoPanEffect.parameters[0]?.value ?? 0);
+        const depth = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(autoPanEffect.parameters[1]?.value ?? 0) : angleTo01(autoPanEffect.parameters[1]?.value ?? 0);
+        const chain = effectsProcessorRef.current.createAutoPan({ rate: 0.5 + rate * 14.5, depth: 0.5 + depth * 0.5 });
+        chainTail.connect(chain.input);
+        chainTail = chain.output;
+      }
+
+      // Chorus
+      if (chorusEffect && Array.isArray(chorusEffect.parameters) && chorusEffect.parameters.length >= 2) {
+        const rate = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(chorusEffect.parameters[0]?.value ?? 0) : angleTo01(chorusEffect.parameters[0]?.value ?? 0);
+        const depth = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(chorusEffect.parameters[1]?.value ?? 0) : angleTo01(chorusEffect.parameters[1]?.value ?? 0);
+        const chain = effectsProcessorRef.current.createChorus({ rate: 0.1 + rate * 9.9, depth: 0.1 + depth * 0.9, mix: 0.5 });
+        chainTail.connect(chain.input);
+        chainTail = chain.output;
+      }
+
+      // Flanger
+      if (flangerEffect && Array.isArray(flangerEffect.parameters) && flangerEffect.parameters.length >= 3) {
+        const rate = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(flangerEffect.parameters[0]?.value ?? 0) : angleTo01(flangerEffect.parameters[0]?.value ?? 0);
+        const depth = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(flangerEffect.parameters[1]?.value ?? 0) : angleTo01(flangerEffect.parameters[1]?.value ?? 0);
+        const mix = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(flangerEffect.parameters[2]?.value ?? 0) : angleTo01(flangerEffect.parameters[2]?.value ?? 0);
+        const chain = effectsProcessorRef.current.createFlanger({ rate: 0.1 + rate * 9.9, depth: 0.1 + depth * 0.9, mix: Math.max(0.1, mix) });
+        chainTail.connect(chain.input);
+        chainTail = chain.output;
+      }
+
+      // Phaser
+      if (phaserEffect && Array.isArray(phaserEffect.parameters) && phaserEffect.parameters.length >= 3) {
+        const rate = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(phaserEffect.parameters[0]?.value ?? 0) : angleTo01(phaserEffect.parameters[0]?.value ?? 0);
+        const depth = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(phaserEffect.parameters[1]?.value ?? 0) : angleTo01(phaserEffect.parameters[1]?.value ?? 0);
+        const mix = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(phaserEffect.parameters[2]?.value ?? 0) : angleTo01(phaserEffect.parameters[2]?.value ?? 0);
+        const chain = effectsProcessorRef.current.createPhaser({ rate: 0.1 + rate * 7.9, depth: 0.3 + depth * 0.7, mix: Math.max(0.2, mix) });
+        chainTail.connect(chain.input);
+        chainTail = chain.output;
+      }
+
+      // Stereo Chorus
+      if (stereoChorusEffect && Array.isArray(stereoChorusEffect.parameters) && stereoChorusEffect.parameters.length >= 3) {
+        const rate = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(stereoChorusEffect.parameters[0]?.value ?? 0) : angleTo01(stereoChorusEffect.parameters[0]?.value ?? 0);
+        const depth = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(stereoChorusEffect.parameters[1]?.value ?? 0) : angleTo01(stereoChorusEffect.parameters[1]?.value ?? 0);
+        const mix = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(stereoChorusEffect.parameters[2]?.value ?? 0) : angleTo01(stereoChorusEffect.parameters[2]?.value ?? 0);
+        const chain = effectsProcessorRef.current.createStereoChorus({ rate: 0.1 + rate * 9.9, depth: 0.1 + depth * 0.9, mix: Math.max(0, Math.min(1, mix)) });
+        chainTail.connect(chain.input);
+        chainTail = chain.output;
+      }
+
+      // Rotary
+      if (rotaryEffect && Array.isArray(rotaryEffect.parameters) && rotaryEffect.parameters.length >= 1) {
+        const rate = effectSource === 'recorded' ? effectsProcessorRef.current.angleToParameter(rotaryEffect.parameters[0]?.value ?? 0) : angleTo01(rotaryEffect.parameters[0]?.value ?? 0);
+        const chain = effectsProcessorRef.current.createRotary({ rate: 0.5 + rate * 9.5 });
+        chainTail.connect(chain.input);
+        chainTail = chain.output;
+      }
+
+      // Connect final chain to destination
+      try { chainTail.connect(audioContext.destination); } catch (e) {}
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Error applying piano effects:', err);
+      try { audioNode.connect(pianoAudioContextRef.current.destination); } catch (e) {}
+    }
+  }, [trackEffectsState, globalActiveEffects]);
+
   // Play Bass & 808 note with effects for timeline playback
   const playBass808Note = useCallback(async (midiNumber, duration, instrumentId, trackId, recordedEffects = null) => {
     try {
@@ -1149,9 +1363,11 @@ const Timeline = () => {
             pianoAudioContextRef.current.resume();
           }
           
-          const instrument = await getInstrument(instrumentId);
-          if (!instrument) return;
-          const audioNode = instrument.play(midiNumber, undefined, { duration });
+        const instrument = await getInstrument(instrumentId);
+        if (!instrument) return;
+        const audioNode = instrument.play(midiNumber, undefined, { duration });
+        // Apply the same effects chain as Bass/808 using Web Audio API
+        applyPianoEffects(audioNode, trackId, recordedEffects);
           activePianoNotesRef.current.add(audioNode);
 
           // Clean up after note duration

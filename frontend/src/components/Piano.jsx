@@ -512,6 +512,62 @@ const Pianodemo = ({ onClose }) => {
 
     // Only push notes to timeline state when recording is active
     if (getIsRecording) {
+      // piano
+      // Capture currently active effect parameters at recording time
+      let recordedEffectParams = null;
+      try {
+        const effectsArr = Array.isArray(activeEffects) ? activeEffects : [];
+        const byName = (n) => effectsArr.find(e => e && e.name === n);
+
+        const fuzz = byName('Fuzz');
+        const chorus = byName('Chorus');
+        const stereoChorus = byName('Stereo Chorus');
+        const flanger = byName('Flanger');
+
+        const safeVal = (p, i, def) => {
+          if (!p || !Array.isArray(p.parameters)) return def;
+          const v = p.parameters[i]?.value;
+          return (v === undefined || v === null) ? def : v;
+        };
+
+        const rec = {};
+        if (fuzz) {
+          rec.fuzz = {
+            grain: safeVal(fuzz, 0, 0),
+            bite: safeVal(fuzz, 1, 45),
+            lowCut: safeVal(fuzz, 2, 90),
+            instanceId: fuzz.instanceId
+          };
+        }
+        if (chorus) {
+          rec.chorus = {
+            rate: safeVal(chorus, 0, 0),
+            depth: safeVal(chorus, 1, 0.5),
+            instanceId: chorus.instanceId
+          };
+        }
+        if (stereoChorus) {
+          rec.stereoChorus = {
+            rate: safeVal(stereoChorus, 0, 0),
+            depth: safeVal(stereoChorus, 1, 0.5),
+            mix: safeVal(stereoChorus, 2, 0.5),
+            instanceId: stereoChorus.instanceId
+          };
+        }
+        if (flanger) {
+          rec.flanger = {
+            rate: safeVal(flanger, 0, 0),
+            depth: safeVal(flanger, 1, 0.5),
+            mix: safeVal(flanger, 2, 0.5),
+            instanceId: flanger.instanceId
+          };
+        }
+
+        if (Object.keys(rec).length > 0) {
+          recordedEffectParams = rec;
+        }
+      } catch (_) { /* ignore capture errors */ }
+
       const newEvent = {
         note: noteName,
         startTime: currentTime,
@@ -519,7 +575,8 @@ const Pianodemo = ({ onClose }) => {
         midiNumber: effectiveMidi,
         trackId: currentTrackId || null,
         instrumentId: recordingInstrumentRef.current || selectedInstrument,
-        id: `${midiNumber}-${Date.now()}-${Math.random()}`
+        id: `${midiNumber}-${Date.now()}-${Math.random()}`,
+        recordedEffects: recordedEffectParams
       };
       const updated = [...(pianoNotesRef.current || []), newEvent];
       dispatch(setPianoNotes(updated));
