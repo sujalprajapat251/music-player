@@ -1655,6 +1655,12 @@ const Pianodemo = ({ onClose }) => {
       return;
     }
 
+    // If effect is premium/subscription-locked, open pricing and do not add
+    if (effect?.subscription) {
+      setPricingModalOpen(true);
+      return;
+    }
+
     setIsProcessingDrop(true);
     dispatch(addEffect(effect));
     dispatch(setShowEffectsLibrary(false));

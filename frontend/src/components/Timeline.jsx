@@ -93,7 +93,7 @@ const Timeline = () => {
   const [localCurrentTime, setLocalCurrentTime] = useState(0);
   const [showGridSetting, setShowGridSetting] = useState(false);
   const [showOffcanvas, setShowOffcanvas] = useState(false);
-  const [showOffcanvasEffects, setShowOffcanvasEffects] = useState(false);
+  // const [showOffcanvasEffects, setShowOffcanvasEffects] = useState(false);
   const [clipboard, setClipboard] = useState(null);
   const [selectedTrackId, setSelectedTrackId] = useState(null);
   const [selectedClipId, setSelectedClipId] = useState(null);
@@ -2324,6 +2324,7 @@ const Timeline = () => {
 
   const [pricingModalOpen, setPricingModalOpen] = useState(false);
   const showLoopLibrary = useSelector((state) => state.ui?.showLoopLibrary);
+  const showEffectsOffcanvas = useSelector((state) => state.effects?.showEffectsOffcanvas);
 
   useEffect(() => {
     if (showLoopLibrary && !showOffcanvas) {
@@ -2809,7 +2810,7 @@ const Timeline = () => {
           reverseRecordingClip();
           break;
         case 'effects':
-          setShowOffcanvasEffects(prev => !prev);
+          dispatch(toggleEffectsOffcanvas());
           setShowOffcanvas(false);
           break;
         case 'vocalCleanup':
@@ -2916,7 +2917,7 @@ const Timeline = () => {
           })();
           break;
         case 'effects':
-          setShowOffcanvasEffects(prev => !prev);
+          dispatch(toggleEffectsOffcanvas());
           setShowOffcanvas(false);
           break;
 
@@ -3048,7 +3049,7 @@ const Timeline = () => {
         })();
         break;
       case 'effects':
-        setShowOffcanvasEffects(prev => !prev);
+        dispatch(toggleEffectsOffcanvas());
         setShowOffcanvas(false);
         break;
       case 'matchProjectKey':
@@ -3062,7 +3063,7 @@ const Timeline = () => {
       default:
     }
     // ... rest of the existing track-level actions
-  }, [contextMenu, tracks, clipboard, dispatch, currentTime, setPlayers, setShowOffcanvasEffects, setShowOffcanvas, pianoRecordingClip, drumRecordingClip, pianoNotes, drumRecordedData]);
+  }, [contextMenu, tracks, clipboard, dispatch, currentTime, setPlayers, setShowOffcanvas, pianoRecordingClip, drumRecordingClip, pianoNotes, drumRecordedData]);
 
   // Section label context menu action handler
   const handleSectionContextMenuAction = useCallback((action) => {
@@ -4171,7 +4172,7 @@ const Timeline = () => {
   return (
     <>
       <EditTrackNameModal isOpen={edirNameModel} onClose={() => setEdirNameModel(false)} onSave={handleSave} />
-      <div style={{ padding: "0", color: "white", background: "transparent", height: "100%", marginRight: showOffcanvas || showOffcanvasEffects ? "23vw" : 0, }} className="relative overflow-hidden">
+      <div style={{ padding: "0", color: "white", background: "transparent", height: "100%", marginRight: showOffcanvas || showEffectsOffcanvas ? "23vw" : 0, }} className="relative overflow-hidden">
         <div style={{ width: "100%", overflowX: "auto" }} className="hide-scrollbar">
           <div
             ref={timelineContainerRef}
@@ -4447,7 +4448,7 @@ const Timeline = () => {
         <div className="absolute top-[60px] right-[0] -translate-x-1/2 z-30">
           <div
             className={`w-[40px] h-[40px] flex items-center justify-center rounded-full cursor-pointer ${showOffcanvas ? 'bg-[#FFFFFF]' : 'bg-[#3C3A40]'}`}
-            onClick={() => { const next = !showOffcanvas; setShowOffcanvas(next); setShowOffcanvasEffects(false); dispatch(setShowLoopLibrary(next)); }}
+            onClick={() => { const next = !showOffcanvas; setShowOffcanvas(next); if (showEffectsOffcanvas) dispatch(toggleEffectsOffcanvas()); dispatch(setShowLoopLibrary(next)); }}
           >
             {showOffcanvas ? (
               <img src={offceblack} alt="Off canvas" />
@@ -4455,14 +4456,14 @@ const Timeline = () => {
               <img src={offce} alt="Off canvas" />
             )}
           </div>
-          <div className={`w-[40px] h-[40px] flex items-center justify-center rounded-full mt-2 cursor-pointer ${showOffcanvasEffects ? 'bg-[#FFFFFF]' : 'bg-[#3C3A40]'}`}
+          <div className={`w-[40px] h-[40px] flex items-center justify-center rounded-full mt-2 cursor-pointer ${showEffectsOffcanvas ? 'bg-[#FFFFFF]' : 'bg-[#3C3A40]'}`}
             onClick={() => {  
-              setShowOffcanvasEffects((prev) => !prev);
+              dispatch(toggleEffectsOffcanvas());
               setShowOffcanvas(false);
               dispatch(setShowLoopLibrary(false));}}         
           >
             {/* <img src={fxIcon} alt="Effects" onClick={() => { setShowOffcanvasEffects((prev) => !prev); setShowOffcanvas(false); }} /> */}
-            {showOffcanvasEffects ? (
+            {showEffectsOffcanvas ? (
               <img src={fxIconblack} alt="Effects" />
             ) : (
               <img src={fxIcon} alt="Effects" />
@@ -4489,7 +4490,7 @@ const Timeline = () => {
       {/* {showAddTrackModal && (
         <AddNewTrackModel
           onClose={() => setShowAddTrackModal(false)}
-          onOpenLoopLibrary={() => { setShowOffcanvas(true); setShowOffcanvasEffects(false); dispatch(setShowLoopLibrary(true)); }}
+          onOpenLoopLibrary={() => { setShowOffcanvas(true); if (showEffectsOffcanvas) dispatch(toggleEffectsOffcanvas()); dispatch(setShowLoopLibrary(true)); }}
         />
       )} */}
 
@@ -4579,7 +4580,7 @@ const Timeline = () => {
       />
 
       <MusicOff showOffcanvas={showOffcanvas} setShowOffcanvas={(v) => { setShowOffcanvas(v); dispatch(setShowLoopLibrary(Boolean(v))); }} />
-      <Effects showOffcanvas={showOffcanvasEffects} setShowOffcanvas={setShowOffcanvasEffects} />
+      <Effects showOffcanvas={showEffectsOffcanvas} setShowOffcanvas={(value) => dispatch(toggleEffectsOffcanvas())} />
 
       {/* Context Menu */}
       <WaveMenu
