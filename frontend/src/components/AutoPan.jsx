@@ -273,8 +273,8 @@ const AutoPan = () => {
         }
         // Return default values based on parameter index
         switch (parameterIndex) {
-            case 0: return 45;  // Rate (start at moderate speed for noticeable effect)
-            case 1: return 90;  // Depth (start at moderate depth for noticeable effect)
+            case 0: return 0;  // Rate (start at moderate speed for noticeable effect)
+            case 1: return 45;  // Depth (start at moderate depth for noticeable effect)
             default: return 0;
         }
     };

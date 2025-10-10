@@ -526,17 +526,13 @@ const Timeline = () => {
 
   // Apply Fuzz effects to Bass & 808 synth for timeline playback
   const applyBass808Effects = useCallback((synth, trackId, recordedEffects = null) => {
-    // console.log('🎵 applyBass808Effects debug:');
-    // console.log('  - Track ID:', trackId);
-    // console.log('  - Recorded Effects:', recordedEffects);
-    // console.log('  - Track Effects State:', trackEffectsState);
-    // console.log('  - Global Active Effects:', globalActiveEffects);
-    
     let fuzzEffect = null;
     let overdriveEffect = null;
     let autoPanEffect = null;
     let classicDistEffect = null;
     let autoWahEffect = null;
+    let phaserEffect = null;
+    let rotaryEffect = null;
     let effectSource = 'none';
     
     // Priority 1: Use recorded effect parameters if available
@@ -560,8 +556,10 @@ const Timeline = () => {
       classicDistEffect = trackEffects.find(effect => effect.name === 'Classic Dist' || effect.name === 'ClassicDist');
       autoPanEffect = trackEffects.find(effect => effect.name === 'Auto Pan');
       autoWahEffect = trackEffects.find(effect => effect.name === 'Auto-Wah' || effect.name === 'AutoWah');
+      phaserEffect = trackEffects.find(effect => effect.name === 'Phaser');
+      rotaryEffect = trackEffects.find(effect => effect.name === 'Rotary');
 
-      if (fuzzEffect || overdriveEffect || classicDistEffect || autoPanEffect || autoWahEffect) {
+      if (fuzzEffect || overdriveEffect || classicDistEffect || autoPanEffect || autoWahEffect || phaserEffect || rotaryEffect) {
         effectSource = 'track-specific';
         // if (fuzzEffect) console.log('  - Using current track-specific Fuzz effect:', fuzzEffect);
         // if (overdriveEffect) console.log('  - Using current track-specific Overdrive effect:', overdriveEffect);
@@ -572,8 +570,10 @@ const Timeline = () => {
         classicDistEffect = globalActiveEffects.find(effect => effect.name === 'Classic Dist' || effect.name === 'ClassicDist');
         autoPanEffect = globalActiveEffects.find(effect => effect.name === 'Auto Pan');
         autoWahEffect = globalActiveEffects.find(effect => effect.name === 'Auto-Wah' || effect.name === 'AutoWah');
+        phaserEffect = globalActiveEffects.find(effect => effect.name === 'Phaser');
+        rotaryEffect = globalActiveEffects.find(effect => effect.name === 'Rotary');
 
-        if (fuzzEffect || overdriveEffect || classicDistEffect || autoPanEffect || autoWahEffect) {
+        if (fuzzEffect || overdriveEffect || classicDistEffect || autoPanEffect || autoWahEffect || phaserEffect || rotaryEffect) {
           effectSource = 'global';
           // if (fuzzEffect) console.log('  - Using current global Fuzz effect:', fuzzEffect);
           // if (overdriveEffect) console.log('  - Using current global Overdrive effect:', overdriveEffect);
@@ -760,6 +760,92 @@ const Timeline = () => {
         // Chain to auto panner
         chainTail.connect(autoPanner);
         chainTail = autoPanner;
+      }
+
+      // 🎸 Phaser effect if present (-> Phaser)
+      if (phaserEffect && phaserEffect.parameters && Array.isArray(phaserEffect.parameters) && phaserEffect.parameters.length >= 3) {
+        const rateParam = phaserEffect.parameters[0];
+        const depthParam = phaserEffect.parameters[1];
+        const mixParam = phaserEffect.parameters[2];
+
+        let rate, depth, mix;
+        if (effectSource === 'recorded') {
+          const effectsProcessor = getEffectsProcessor();
+          rate = effectsProcessor.angleToParameter(rateParam?.value ?? 0);
+          depth = effectsProcessor.angleToParameter(depthParam?.value ?? 0);
+          mix = effectsProcessor.angleToParameter(mixParam?.value ?? 0);
+        } else {
+          rate = angleTo01(rateParam?.value ?? 0);
+          depth = angleTo01(depthParam?.value ?? 0);
+          mix = angleTo01(mixParam?.value ?? 0);
+        }
+
+        // Rate controls the sweep frequency (0.1 Hz to 8 Hz)
+        const phaserRate = 0.1 + (rate * 7.9);
+        
+        // Depth controls the intensity of phase shift (0.3 to 1.0)
+        const phaserDepth = 0.3 + (depth * 0.7);
+        
+        // Mix controls wet/dry balance (0.0 to 1.0)
+        const phaserMix = Math.max(0.2, mix); // Minimum 0.2 for audible effect
+
+        // Create Phaser effect using Tone.Phaser
+        const phaser = new Tone.Phaser({
+          frequency: phaserRate,
+          octaves: 3,
+          stages: 4,
+          Q: 10,
+          baseFrequency: 350
+        });
+
+        // Set wet amount
+        phaser.wet.value = phaserMix;
+
+        // Chain to phaser
+        chainTail.connect(phaser);
+        chainTail = phaser;
+        
+        console.log('✅ Applied Phaser for timeline playback');
+      }
+
+      // 🔄 Rotary effect if present (-> Rotary)
+      if (rotaryEffect && rotaryEffect.parameters && Array.isArray(rotaryEffect.parameters) && rotaryEffect.parameters.length >= 1) {
+        const rateParam = rotaryEffect.parameters[0];
+        
+        let rate;
+        if (effectSource === 'recorded') {
+          const effectsProcessor = getEffectsProcessor();
+          rate = effectsProcessor.angleToParameter(rateParam?.value ?? 0);
+        } else {
+          rate = angleTo01(rateParam?.value ?? 0);
+        }
+
+        // Rate controls the rotation speed (0.5 Hz to 10 Hz)
+        const rotaryRate = 0.5 + (rate * 9.5);
+        const wahMix = Math.max(0.3, rate);
+
+        // Create Rotary effect using AutoFilter (like Leslie speaker)
+        const rotaryFilter = new Tone.AutoFilter({
+          frequency: rotaryRate,
+          type: 'sine',
+          depth: 1,
+          baseFrequency: 100,
+          octaves: 4.5,
+          filter: {
+            type: 'bandpass',
+            rolloff: -12,
+            Q: 10
+          }
+        }).start();
+
+        // Set wet/dry mix for audible but not overpowering effect
+        rotaryFilter.wet.value = wahMix;
+
+        // Chain to rotary filter
+        chainTail.connect(rotaryFilter);
+        chainTail = rotaryFilter;
+        
+        console.log('✅ Applied Rotary for timeline playback');
       }
 
       // Connect to destination at the end of chain
