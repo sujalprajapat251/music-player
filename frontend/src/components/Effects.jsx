@@ -154,6 +154,11 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
     };
 
     const handleAddEffect = (effect) => {
+        // Block adding premium effects; open pricing instead
+        if (effect?.subscription) {
+            setPricingModalOpen(true);
+            return;
+        }
         if (activeEffects?.length < effectsLibrary?.length) {
             dispatch(addEffect(effect));
         }
@@ -268,39 +273,41 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
                                 <div className="grid grid-cols-1 xs:grid-cols-2 xs:gap-2 sm:grid-cols-3 sm:gap-2 md600:grid-cols-1 md600:gap-3 md:grid-cols-2 md:gap-2 lg:grid-cols-3 lg:gap-2">
                                     {filteredEffects.map((effect) => (
                                         <div key={effect.id} className='cursor-pointer active:cursor-grabbing transition-all duration-200' draggable onDragStart={(e) => handleDragStart(e, effect)} onDragEnd={handleDragEnd}>
-                                            {effect?.subscription === true ?
-                                                <div className="flex py-1 gap-1 xs:gap-2 sm:gap-2 md600:gap-2 md:gap-3 lg:gap-2 justify-center md600:py-2 items-center text-white" style={{ backgroundColor: effect?.color || '#8F7CFD' }}>
-                                                    <img onClick={() => setPricingModalOpen(true)}  src={subscription} alt="" className='w-5 h-5 sm:w-4 sm:h-4 md600:w-4 md600:h-4 md:w-4 md:h-4 3xl:w-5 3xl:h-5' />
-                                                    {effect?.name === "Juicy Distrotion" ? (
-                                                        <p className="text-white text-[16px] xs:text-[14px] sm:text-[13px] md600:text-[12px] md:text-[12px] lg:text-[10px] xl:text-[12px] 2xl:text-[11px] 4xl:text-[11px]">{effect.name}</p>
-                                                    ) : effect?.name === "Instant Sidechain" ? (
-                                                        <p className="text-white text-[16px] xs:text-[14px] sm:text-[12px] md600:text-[12px]  md:text-[12px] lg:text-[10px] xl:text-[11px] 2xl:text-[10px] 3xl:text-[10px]">{effect.name}</p>
-                                                    ) : effect?.name === "Tape Wobble" ? (
-                                                        <p className="text-white text-[16px] xs:text-[14px] sm:text-[13px] md600:text-[12px] md:text-[12px] lg:text-[10px] xl:text-[12px]">{effect.name}</p>
-                                                    ) : (
-                                                        <p className="text-white text-[16px] xs:text-[14px] sm:text-[13px] md600:text-[14px] md:text-[12px] lg:text-[11px] xl:text-[13px] 2xl:text-[12px] 4xl:text-[14px]">{effect.name}</p>
-                                                    )}
-                                                </div>
-                                                :
-                                                <div className=" flex gap-1 xs:gap-2 sm:gap-2 md600:gap-2 md:gap-3 justify-center py-1 md:py-2 items-center text-white" style={{ backgroundColor: effect?.color || '#8F7CFD' }}>
-                                                    <p className="text-white text-[16px] xs:text-[14px] sm:text-[14px] md600:text-[19px] md:text-[12px] lg:text-[11px] xl:text-[13px] 2xl:text-[12px] 3xl:text-[13px] 4xl:text-[14px]">{effect.name}</p>
-                                                </div>
-                                            }
-                                            <img
-                                                onClick={(e) => {
-                                                    if (!isDragging && e.target.style.opacity !== '0.5') {
-                                                        handleAddEffect(effect);
-                                                        e.target.style.transform = 'scale(0.95)';
-                                                        setTimeout(() => {
-                                                            e.target.style.transform = 'scale(1)';
-                                                        }, 150);
-                                                        if (!dispatchedOnce) {
-                                                            dispatch(setActiveTabs("Effects"));
-                                                            setDispatchedOnce(true);
+                                            <div>
+                                                {effect?.subscription === true ?
+                                                    <div className="flex py-1 gap-1 xs:gap-2 sm:gap-2 md600:gap-2 md:gap-3 lg:gap-2 justify-center md600:py-2 items-center text-white" style={{ backgroundColor: effect?.color || '#8F7CFD' }}>
+                                                        <img onClick={() => setPricingModalOpen(true)}  src={subscription} alt="" className='w-5 h-5 sm:w-4 sm:h-4 md600:w-4 md600:h-4 md:w-4 md:h-4 3xl:w-5 3xl:h-5' />
+                                                        {effect?.name === "Juicy Distrotion" ? (
+                                                            <p className="text-white text-[16px] xs:text-[14px] sm:text-[13px] md600:text-[12px] md:text-[12px] lg:text-[10px] xl:text-[12px] 2xl:text-[11px] 4xl:text-[11px]">{effect.name}</p>
+                                                        ) : effect?.name === "Instant Sidechain" ? (
+                                                            <p className="text-white text-[16px] xs:text-[14px] sm:text-[12px] md600:text-[12px]  md:text-[12px] lg:text-[10px] xl:text-[11px] 2xl:text-[10px] 3xl:text-[10px]">{effect.name}</p>
+                                                        ) : effect?.name === "Tape Wobble" ? (
+                                                            <p className="text-white text-[16px] xs:text-[14px] sm:text-[13px] md600:text-[12px] md:text-[12px] lg:text-[10px] xl:text-[12px]">{effect.name}</p>
+                                                        ) : (
+                                                            <p className="text-white text-[16px] xs:text-[14px] sm:text-[13px] md600:text-[14px] md:text-[12px] lg:text-[11px] xl:text-[13px] 2xl:text-[12px] 4xl:text-[14px]">{effect.name}</p>
+                                                        )}
+                                                    </div>
+                                                    :
+                                                    <div className=" flex gap-1 xs:gap-2 sm:gap-2 md600:gap-2 md:gap-3 justify-center py-1 md:py-2 items-center text-white" style={{ backgroundColor: effect?.color || '#8F7CFD' }}>
+                                                        <p className="text-white text-[16px] xs:text-[14px] sm:text-[14px] md600:text-[19px] md:text-[12px] lg:text-[11px] xl:text-[13px] 2xl:text-[12px] 3xl:text-[13px] 4xl:text-[14px]">{effect.name}</p>
+                                                    </div>
+                                                }
+                                                <img
+                                                    onClick={(e) => {
+                                                        if (!isDragging && e.target.style.opacity !== '0.5') {
+                                                            handleAddEffect(effect);
+                                                            e.target.style.transform = 'scale(0.95)';
+                                                            setTimeout(() => {
+                                                                e.target.style.transform = 'scale(1)';
+                                                            }, 150);
+                                                            if (!dispatchedOnce) {
+                                                                dispatch(setActiveTabs("Effects"));
+                                                                setDispatchedOnce(true);
+                                                            }
                                                         }
-                                                    }
-                                                }} src={effect.image} alt={effect.name} className="w-full transition-transform duration-150"
-                                            />
+                                                    }} src={effect.image} alt={effect.name} className="w-full transition-transform duration-150"
+                                                />
+                                            </div>
                                             <div className="flex gap-1 justify-center my-2">
                                                 <button onClick={() => handleEffectPlayPause(effect.id)}
                                                     className={`flex justify-center p-2 bg-[#2c2c2c] rounded-full items-center transition-all duration-200 ${playingEffectId === effect.id && isPlaying ? 'bg-[#2c2c2c] text-white' : 'bg-[#2c2c2c] text-black'
