@@ -14,6 +14,7 @@ import PricingModel from './PricingModel';
 import { LiaWaveSquareSolid } from "react-icons/lia";
 import { FaChevronDown } from "react-icons/fa";
 import { addEffect, setShowEffectsLibrary, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
+import { setSelectedInstrument as setSelectedInstrumentAction } from '../Redux/Slice/studio.slice';
 import OpenInstrumentModal from './OpenInstrumentsModel';
 
 
@@ -133,7 +134,7 @@ function Knob({ label = "Bite", min = -135, max = 135, defaultAngle, onChange })
     );
 }
 
-const VoiceAndMic = ({ onClose, onRecorded }) => {
+const VoiceAndMic = ({ onClose, onRecorded, selectedInstrument, setSelectedInstrument }) => {
 
     const dispatch = useDispatch();
     const [showOffcanvas1, setShowOffcanvas1] = useState(true);
@@ -461,12 +462,52 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
         dispatch(toggleEffectsOffcanvas());
       };
 
+      const INSTRUMENTS = [
+        { id: 'Loud and Clear ', name: 'Loud and Clear ', category: '' },
+        { id: 'Loud and Clear-Head...', name: 'Loud and Clear-Head...', category: '' },
+        { id: 'Mobile Mic Enhancer', name: 'Mobile Mic Enhancer', category: '' },
+        { id: 'Pop', name: 'Pop', category: '' },
+        { id: 'Pop Delay', name: 'Pop Delay', category: '' },
+        { id: 'Blues', name: 'Blues', category: '' },
+        { id: 'Dub', name: 'Dub', category: '' },
+        { id: 'Lo-fi', name: 'Lo-fi', category: '' },
+        { id: 'Psychedelic', name: 'Psychedelic', category: '' },
+        { id: 'Dizzy', name: 'Dizzy', category: '' },
+        { id: 'Space Face', name: 'Space Face', category: '' },
+        { id: 'Podcast', name: 'Podcast', category: '' }
+    ];
+
+    const [currentInstrumentIndex, setCurrentInstrumentIndex] = useState(0);
+        const nextInstrument = () => {
+        setCurrentInstrumentIndex((prev) => {
+            const nextIdx = (prev + 1) % INSTRUMENTS.length;
+                try {
+                    dispatch(setSelectedInstrumentAction(INSTRUMENTS[nextIdx]));
+                } catch (err) {
+                    console.warn('Failed to dispatch setSelectedInstrumentAction:', err);
+                }
+            return nextIdx;
+        });
+    };
+
+    const prevInstrument = () => {
+        setCurrentInstrumentIndex((prev) => {
+            const nextIdx = prev === 0 ? INSTRUMENTS.length - 1 : prev - 1;
+            try {
+                dispatch(setSelectedInstrumentAction(INSTRUMENTS[nextIdx]));
+            } catch (err) {
+                console.warn('Failed to dispatch setSelectedInstrumentAction:', err);
+            }
+            return nextIdx;
+        });
+    };
+
       const [openInstrumentModal, setOpenInstrumentModal] = useState(false);
 
     return (
         <>
             {openInstrumentModal && (
-                <OpenInstrumentModal onClose={() => setOpenInstrumentModal(false)} initialCategory={"Bass & 808s"} initialSubCategory={"808 (with glide)"} />
+                <OpenInstrumentModal onClose={() => setOpenInstrumentModal(false)} initialCategory={"Voice & Mic"} initialSubCategory={"Voice - Clean"} />
             )}
             {showOffcanvas1 === true && (
                 <>
@@ -561,16 +602,21 @@ const VoiceAndMic = ({ onClose, onRecorded }) => {
                                                 <div>
                                                     <div className="flex items-center sm:space-x-2 border border-[#5d5d5d] rounded-lg">
                                                         <div className="flex items-center px-1 md:px-2 lg:px-4 py-2 lg:py-3 sm:gap-2 md:gap-4 border-r border-[#5d5d5d] text-gray-600 dark:text-gray-200">
-                                                            <FaChevronLeft className="w-2 sm:w-3 lg:w-4 h-2 sm:h-3 lg:h-4 cursor-pointer hover:text-purple-300" />
-                                                            <FaChevronRight className="w-2 sm:w-3 lg:w-4 h-2 sm:h-3 lg:h-4 cursor-pointer hover:text-purple-300" />
+                                                            <FaChevronLeft onClick={prevInstrument} className="w-2 sm:w-3 lg:w-4 h-2 sm:h-3 lg:h-4 cursor-pointer hover:text-purple-300" />
+                                                            <FaChevronRight onClick={nextInstrument} className="w-2 sm:w-3 lg:w-4 h-2 sm:h-3 lg:h-4 cursor-pointer hover:text-purple-300" />
                                                         </div>
+                                                
                                                         <div className="flex items-center gap-1 sm:gap-3 md:gap-8 ms-1 sm:px-1 md:px-2 lg:px-4 p-1 sm:py-1 md:py-2 lg:py-3 text-gray-600 dark:text-gray-200"
                                                             onClick={() => {
                                                             setOpenInstrumentModal(true);
                                                             // setGlide(135); // set glide to max visible position so it appears enabled
                                                         }}
                                                         >
-                                                            <span className="text-[7px] sm:text-[9px] md:text-[12px] lg:text-sm text-black dark:text-gray-200">Load and Clear</span>
+                                                            <div className="w-[130px]">
+                                                                <span className="truncate text-[7px] sm:text-[9px] md:text-[12px] lg:text-sm text-black dark:text-gray-200">
+                                                                    {selectedInstrument?.name ?? INSTRUMENTS[currentInstrumentIndex]?.name}
+                                                                </span>
+                                                            </div>
                                                             <FaChevronDown className="w-3 lg:w-4 h-3 lg:h-4 transform cursor-pointer hover:text-purple-300" />
                                                         </div>
                                                     </div>

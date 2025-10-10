@@ -293,7 +293,7 @@ const GuitarEffects = ({onClose}) => {
   return (
     <>
     {openInstrumentModal && (
-        <OpenInstrumentModal onClose={() => setOpenInstrumentModal(false)} initialCategory={"Guitar"} initialSubCategory={"Jazz"} />
+        <OpenInstrumentModal onClose={() => setOpenInstrumentModal(false)} initialCategory={"Guitar and Bass Amps"} initialSubCategory={"Bass"} />
     )}
     {showOffcanvas1 === true && (
       <>
