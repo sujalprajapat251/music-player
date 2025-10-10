@@ -614,19 +614,16 @@ const Timeline = () => {
         chorusEffect = globalActiveEffects.find(effect => effect.name === 'Chorus');
         stereoChorusEffect = globalActiveEffects.find(effect => effect.name === 'Stereo Chorus');
         flangerEffect = globalActiveEffects.find(effect => effect.name === 'Flanger');
-
-        if (fuzzEffect || overdriveEffect || classicDistEffect || autoPanEffect || autoWahEffect || chorusEffect || flangerEffect) {
         phaserEffect = globalActiveEffects.find(effect => effect.name === 'Phaser');
         rotaryEffect = globalActiveEffects.find(effect => effect.name === 'Rotary');
 
-        if (fuzzEffect || overdriveEffect || classicDistEffect || autoPanEffect || autoWahEffect || phaserEffect || rotaryEffect) {
+        if (fuzzEffect || overdriveEffect || classicDistEffect || autoPanEffect || autoWahEffect || chorusEffect || flangerEffect || phaserEffect || rotaryEffect) {
           effectSource = 'global';
           // if (fuzzEffect) console.log('  - Using current global Fuzz effect:', fuzzEffect);
           // if (overdriveEffect) console.log('  - Using current global Overdrive effect:', overdriveEffect);
         }
       }
     }
-  }
     
     // console.log('  - Effect source:', effectSource);
     
@@ -889,8 +886,8 @@ const Timeline = () => {
         console.log('✅ Applied Flanger for timeline playback');
       }
 
-       // 🎸 Phaser effect if present (-> Phaser)
-       if (phaserEffect && phaserEffect.parameters && Array.isArray(phaserEffect.parameters) && phaserEffect.parameters.length >= 3) {
+      // 🎸 Phaser effect if present (-> Phaser)
+      if (phaserEffect && phaserEffect.parameters && Array.isArray(phaserEffect.parameters) && phaserEffect.parameters.length >= 3) {
         const rateParam = phaserEffect.parameters[0];
         const depthParam = phaserEffect.parameters[1];
         const mixParam = phaserEffect.parameters[2];
@@ -907,26 +904,32 @@ const Timeline = () => {
           mix = angleTo01(mixParam?.value ?? 0);
         }
 
-        // Map parameters
-        const chorusRate = 0.1 + (rate * 9.9);    // 0.1 .. 10 Hz
-        const chorusDepth = 0.1 + (depth * 0.9);  // 0.1 .. 1.0
-        const chorusMix = Math.max(0.0, Math.min(1.0, mix)); // 0 .. 1
+        // Rate controls the sweep frequency (0.1 Hz to 8 Hz)
+        const phaserRate = 0.1 + (rate * 7.9);
+        
+        // Depth controls the intensity of phase shift (0.3 to 1.0)
+        const phaserDepth = 0.3 + (depth * 0.7);
+        
+        // Mix controls wet/dry balance (0.0 to 1.0)
+        const phaserMix = Math.max(0.2, mix); // Minimum 0.2 for audible effect
 
-        const stereoChorus = new Tone.Chorus({
-          frequency: chorusRate,
-          delayTime: 3.5,
-          depth: chorusDepth,
-          type: 'sine',
-          spread: 180,
-        }).toDestination().start();
-        stereoChorus.wet.value = chorusMix;
+        // Create Phaser effect using Tone.Phaser
+        const phaser = new Tone.Phaser({
+          frequency: phaserRate,
+          octaves: 3,
+          stages: 4,
+          Q: 10,
+          baseFrequency: 350
+        });
 
-        chainTail.connect(stereoChorus);
-        chainTail = stereoChorus;
-        console.log('✅ Applied Stereo Chorus for timeline playback');
-        }
+        // Set wet amount
+        phaser.wet.value = phaserMix;
 
-      // 🎵 Stereo Chorus effect if present (-> Stereo Chorus)
+        // Chain to phaser
+        chainTail.connect(phaser);
+        chainTail = phaser;
+      }
+
       // 🎵 Stereo Chorus effect if present (-> Stereo Chorus)
       if (stereoChorusEffect && stereoChorusEffect.parameters && Array.isArray(stereoChorusEffect.parameters) && stereoChorusEffect.parameters.length >= 3) {
         const rateParam = stereoChorusEffect.parameters[0];
