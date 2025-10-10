@@ -359,6 +359,8 @@ const Guitar = ({ onClose }) => {
 
 
     const getActiveTabs = useSelector((state) => state.effects.activeTabs);
+    const { trackEffects: trackEffectsState, selectedTrackId } = useSelector((state) => state.effects);
+    const activeEffectsForGuitar = useSelector((state) => state.effects.activeEffects);
 
     useEffect(() => {
         if (getActiveTabs) {
@@ -444,6 +446,7 @@ const Guitar = ({ onClose }) => {
     const recordedChunksRef = useRef([]);
     const destinationRef = useRef(null);
     const gainNodeRef = useRef(null);
+    const fuzzChainRef = useRef(null);
 
     useEffect(() => {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -488,6 +491,98 @@ const Guitar = ({ onClose }) => {
             audioContext && audioContext.close();
         };
     }, [selectedInstrument]);
+
+    // === Effects integration (mirror Bass/808 Fuzz) ===
+    const activeTrackId = selectedTrackId || currentTrackId;
+
+    const getFuzzEffect = () => {
+        const trackEffects = trackEffectsState?.[activeTrackId] || [];
+        const trackFuzz = trackEffects.find(e => e.name === 'Fuzz');
+        if (trackFuzz) return trackFuzz;
+        const globalFuzz = (activeEffectsForGuitar || []).find(e => e.name === 'Fuzz');
+        return globalFuzz || null;
+    };
+
+    const createDistortionCurve = (amount) => {
+        const k = amount * 100;
+        const samples = 44100;
+        const curve = new Float32Array(samples);
+        const deg = Math.PI / 180;
+        for (let i = 0; i < samples; ++i) {
+            const x = (i * 2) / samples - 1;
+            curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+        }
+        return curve;
+    };
+
+    useEffect(() => {
+        if (!audioContextRef.current || !gainNodeRef.current || !reverbGainNodeRef.current || !dryGainNodeRef.current) return;
+        if (!activeTrackId) return;
+
+        const fuzz = getFuzzEffect();
+
+        // Helper to connect standard routing: gain -> dry/reverb
+        const connectStandard = () => {
+            try {
+                gainNodeRef.current.disconnect();
+            } catch {}
+            gainNodeRef.current.connect(dryGainNodeRef.current);
+            gainNodeRef.current.connect(reverbGainNodeRef.current);
+        };
+
+        if (fuzz && fuzz.parameters && fuzz.parameters.length >= 3) {
+            const grain = (Number(fuzz.parameters[0]?.value) + 135) / 270; // 0..1
+            const bite = (Number(fuzz.parameters[1]?.value) + 135) / 270;  // 0..1
+            const lowCut = (Number(fuzz.parameters[2]?.value) + 135) / 270; // 0..1
+
+            const ctx = audioContextRef.current;
+
+            // Create nodes if missing
+            if (!fuzzChainRef.current) {
+                const lowCutFilter = ctx.createBiquadFilter();
+                lowCutFilter.type = 'highpass';
+                const waveShaper = ctx.createWaveShaper();
+                const highShelf = ctx.createBiquadFilter();
+                highShelf.type = 'highshelf';
+
+                fuzzChainRef.current = { lowCutFilter, waveShaper, highShelf };
+            }
+
+            const { lowCutFilter, waveShaper, highShelf } = fuzzChainRef.current;
+
+            // Apply parameters
+            try {
+                lowCutFilter.frequency.setValueAtTime(20 + lowCut * 480, ctx.currentTime);
+                waveShaper.curve = createDistortionCurve(Math.max(0.001, grain));
+                waveShaper.oversample = '2x';
+                highShelf.frequency.setValueAtTime(2000, ctx.currentTime);
+                highShelf.gain.setValueAtTime((bite - 0.5) * 24, ctx.currentTime);
+            } catch {}
+
+            // Rewire: gain -> lowCut -> waveShaper -> highShelf -> dry/reverb
+            try {
+                gainNodeRef.current.disconnect();
+            } catch {}
+            gainNodeRef.current.connect(lowCutFilter);
+            lowCutFilter.connect(waveShaper);
+            waveShaper.connect(highShelf);
+            highShelf.connect(dryGainNodeRef.current);
+            highShelf.connect(reverbGainNodeRef.current);
+        } else {
+            // No fuzz: ensure default wiring and dispose fuzz nodes
+            if (fuzzChainRef.current) {
+                try { fuzzChainRef.current.lowCutFilter.disconnect(); } catch {}
+                try { fuzzChainRef.current.waveShaper.disconnect(); } catch {}
+                try { fuzzChainRef.current.highShelf.disconnect(); } catch {}
+                fuzzChainRef.current = null;
+            }
+            connectStandard();
+        }
+
+        return () => {
+            // On unmount or dependencies change, do not break current routing; cleanup will happen in main cleanup
+        };
+    }, [trackEffectsState, activeEffectsForGuitar, selectedTrackId, currentTrackId]);
 
     useEffect(() => {
         if (reverbGainNodeRef.current && dryGainNodeRef.current && convolverNodeRef.current && audioContextRef.current) {
