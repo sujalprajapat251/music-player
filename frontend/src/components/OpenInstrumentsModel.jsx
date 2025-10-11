@@ -18,6 +18,7 @@ import orchestral from '../Images/orchestral.png';
 import keys from '../Images/keys.png';
 import synths from '../Images/synths.png';
 import DM from '../Images/DM.png';
+import { ReactComponent as Track7 } from '../Images/track7.svg'
 import { IoClose } from "react-icons/io5";
 import { isAction } from '@reduxjs/toolkit';
 
@@ -107,7 +108,9 @@ const InstrumentPresets = ({ onClose, initialCategory, initialSubCategory }) => 
     { name: 'Orchestral', icon: <img src={orchestral} alt="Orchestral" className="w-4 h-4" />, color: 'bg-[#e3e3e3] dark:bg-[#494949] text-gray-900 dark:text-white' },
     { name: 'Keys', icon: <img src={keys} alt="Keys" className="w-5 h-4" />, color: 'bg-[#e3e3e3] dark:bg-[#494949] text-gray-900 dark:text-white' },
     { name: 'Synths', icon: <img src={synths} alt="Synths" className="w-6 h-5" />, color: 'bg-[#e3e3e3] dark:bg-[#494949] text-gray-900 dark:text-white' },
-    { name: 'Drums & Machines', icon: <img src={DM} alt="Drums & Machines" className="w-4 h-4" />, color: 'bg-[#e3e3e3] dark:bg-[#494949] text-gray-900 dark:text-white' }
+    { name: 'Drums & Machines', icon: <img src={DM} alt="Drums & Machines" className="w-4 h-4" />, color: 'bg-[#e3e3e3] dark:bg-[#494949] text-gray-900 dark:text-white' },
+    { name: 'Voice & Mic', icon: <img src={DM} alt="Drums & Machines" className="w-4 h-4" />, color: 'bg-[#e3e3e3] dark:bg-[#494949] text-gray-900 dark:text-white' },
+    { name: 'Guitar and Bass Amps', icon: <Track7 className='text-secondary-light dark:text-secondary-dark w-7 h-7' /> , color: 'bg-[#e3e3e3] dark:bg-[#494949] text-gray-900 dark:text-white' }
   ];
 
 
@@ -118,7 +121,9 @@ const InstrumentPresets = ({ onClose, initialCategory, initialSubCategory }) => 
     'Bass & 808s': ['808', '808 (with glide)', 'Bass - Acoustic', 'Bass - Electric', 'Bass - Kick (808)', 'Bass - Log Drum', 'Bass - Synth', 'Desert 808 (with glide)'],
     'Orchestral': ['Bass', 'Cinematic', 'Harp', 'Processed', 'Solo orchestral', 'String Ensemble', 'String section', 'Woodwinds'],
     'Synths': ['8 Bit', 'Bells', 'Brass', 'Cowbell', 'Drums & Machines', 'Fx', 'Leads', 'Legacy', 'Misc', 'Orchestral', 'Pads', 'Plucked', 'Retro Synth `84', 'Rhythmic' ,'Synths', 'Voice'],
-    'Drums & Machines': ['Collection', 'Kits', 'Machines', 'Percussion', 'Processed']
+    'Drums & Machines': ['Collection', 'Kits', 'Machines', 'Percussion', 'Processed'],
+    'Voice & Mic': ['Guitar', 'Utility', 'Voice - Clean', 'Voice - Distorted', 'Voice - Experimental', 'Voice - Podcast', 'Voice - Rap', 'Voice - Spaces'],
+    'Guitar and Bass Amps': ['Bass', 'Jazz', 'Pop', 'Rock']
   };
 
   const presetMap = {
@@ -480,6 +485,100 @@ const InstrumentPresets = ({ onClose, initialCategory, initialSubCategory }) => 
         { name: 'Mono Kit', trial: true, trialType: 'Music Production trial' },
         { name: 'Muffled', trial: false }
       ],
+    },
+    'Voice & Mic': {
+      'Guitar': [
+        { name: 'Dusty Room Guitar', trial: false},
+        { name: 'Ghostly Whispers Guitar', trial: false },
+        { name: 'Ice Acoustic Guitar', trial: false },
+        { name: 'Trap Acoustic', trial: false }
+      ],
+      'Utility': [
+        { name: 'Clean', trial: false}
+      ],
+      'Voice - Clean': [
+        { name: 'A Little Less', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'A Little Too Much', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Antipasto', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Backup', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Ctrl Clean', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Detuner', trial: false },
+        { name: 'Fan Go Brrr', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Heat', trial: true, trialType: 'Vocals &Songwriting trial' },
+      ],
+      'Voice - Distorted': [
+        { name: '8-Bit Sampler', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Ablaze', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Add Vinyl Noise', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Angry', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Arise', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Armory', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Blues', trial: false },
+      ],
+      'Voice - Experimental': [
+        { name: 'Anxiety', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Backseat', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Broken Robot', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Chopped', trial: true, trialType: 'Sound Starter trial' },
+        { name: 'Circular Space', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Dizzy', trial: false },
+        { name: 'Groove I', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Space Face', trial: false }
+      ],
+      'Voice - Podcast': [
+        { name: 'Podcast', trial: false }
+      ],
+      'Voice - Rap': [
+        { name: '8-Bit Rap', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Bright Rap', trial: false },
+        { name: 'DIY Rap', trial: false },
+        { name: 'Ken', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Lo-fi Rap', trial: false },
+        { name: 'Rap Smoke', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Wide Rap', trial: false }
+      ],
+      'Voice - Spaces': [
+        { name: '2005', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Art me', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Black Ice', trial: true, trialType: 'Vocals &Songwriting trial' },
+        { name: 'Cave', trial: false },
+        { name: 'Church', trial: false },
+        { name: 'Clean & Wider', trial: true, trialType: 'Sound Starter trial' },
+        { name: 'Echo', trial: false },
+        { name: 'Lound Space', trial: true, trialType: 'Vocals &Songwriting trial' },
+      ],
+    },
+    'Guitar and Bass Amps': {
+      'Bass': [
+        { name: 'Bass Harmonics', trial: false },
+        { name: 'Clean', trial: false },
+        { name: 'Fat Soul', trial: false },
+        { name: 'Jazz Cat', trial: false },
+        { name: 'Never Mind', trial: false },
+        { name: 'Rock Pick', trial: false }
+      ],
+      'Jazz': [
+        { name: '80s Pat', trial: false },
+        { name: 'Going wes', trial: false },
+        { name: 'Mellow Jazz', trial: false },
+        { name: 'Sco Ballad', trial: false },
+        { name: 'Sco Modern', trial: false },
+      ],
+      'Pop': [
+        { name: 'Big and Clean', trial: false },
+        { name: 'Clean', trial: false },
+        { name: 'Dirty Riff', trial: false },
+        { name: 'Outlaw', trial: false },
+        { name: 'RnB Guitar', trial: false },
+        { name: 'Swamp Blues', trial: false }
+      ],  
+      'Rock': [
+        { name: '1984', trial: false },
+        { name: '70s Blues Rock', trial: false },
+        { name: 'Fat Riff', trial: false },
+        { name: 'Mountain Top Lead', trial: false },
+        { name: 'Warm Lead', trial: false },
+      ],
     }
   };
 
@@ -601,7 +700,7 @@ const InstrumentPresets = ({ onClose, initialCategory, initialSubCategory }) => 
                 
             {/* Right Panel - Presets List */}
                 <div ref={rightPanelRef} className="flex-1 bg-white dark:bg-[#1f1f1f] overflow-y-auto">
-                  {(['Guitar', 'Bass & 808s','Orchestral', 'Keys', 'Synths','Drums & Machines'].includes(selectedCategory) ? subCategories : [selectedSubCategory]).map((sub, idx) => {
+                  {(['Guitar', 'Bass & 808s','Orchestral', 'Keys', 'Synths','Drums & Machines', 'Voice & Mic', 'Guitar and Bass Amps'].includes(selectedCategory) ? subCategories : [selectedSubCategory]).map((sub, idx) => {
                     // Filter presets by search term
                     const presets = (presetMap[selectedCategory] && presetMap[selectedCategory][sub]) || [];
                     const filtered = presets.filter(preset =>
