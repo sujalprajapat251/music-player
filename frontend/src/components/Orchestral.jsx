@@ -235,58 +235,11 @@ const INSTRUMENTS = [
     { id: 'clarinet', name: 'Clarinet', category: 'Woodwinds' },
     { id: 'piccolo', name: 'Piccolo', category: 'Woodwinds' },
   ];
-  
-
-const BasicData = [
-  { name: "Am", image: Am },
-  { name: "Bdmi", image: Bdmi },
-  { name: "C", image: C },
-  { name: "Dm", image: Dm },
-  { name: "E", image: E },
-  { name: "F", image: F },
-  { name: "G", image: G },
-  { name: "Am7", image: Am7 }
-];
-
-const BasicData1 = [
-  { name: "Full Chord" },
-  { name: "On One" },
-];
-
-const Stabs = [
-  { name: "On Air" },
-  { name: "Eight's" },
-  { name: "Soul Stabs" },
-  { name: "One and Three" },
-  { name: "Simple Stabs" },
-  { name: "Latinesque" },
-  { name: "All Four" },
-  { name: "Moderate Stabs" },
-]
-
-const Arpeggiated = [
-  { name: "Layout" },
-  { name: "Storytime" },
-  { name: "Rising Arp" },
-  { name: "Dreamer" },
-  { name: "Moving Arp" },
-  { name: "Quick Arp" },
-  { name: "Simple Stride" },
-  { name: "Simple Rain" }
-]
-
-const other = [
-  { name: "Simple Slide" },
-  { name: "Simple Player" },
-  { name: "Alternating Stride" }
-];
-
 
 const Pianodemo = ({ onClose }) => {
   const dispatch = useDispatch();
   const [showOffcanvas1, setShowOffcanvas1] = useState(true);
   const [autoChords, setAutoChords] = useState(false);
-  const [selectedButtons, setSelectedButtons] = useState({ basic: null, stabs: null, arpeggiated: null, other: null });
   const [currentInstrumentIndex, setCurrentInstrumentIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('Instruments');
   const [activePianoSection, setActivePianoSection] = useState(0);
@@ -350,16 +303,6 @@ const Pianodemo = ({ onClose }) => {
   const recordAnchorRef = useRef({ systemMs: 0, playheadSec: 0 });
   const selectedInstrument = INSTRUMENTS[currentInstrumentIndex].id;
 
-  // Update Redux when local instrument changes
-  // useEffect(() => {
-  //   if (selectedInstrument !== selectedInstrumentFromRedux) {
-  //     dispatch(setSelectedInstrument(selectedInstrument));
-  //   }
-  // }, [selectedInstrument, selectedInstrumentFromRedux, dispatch]);
-
-  // Avoid continuous local->Redux syncing to prevent render loops.
-  // We dispatch only on explicit next/prev instrument actions.
-
   const getIsRecording = useSelector((state) => selectStudioState(state).isRecording);
   const currentTrackId = useSelector((state) => selectStudioState(state).currentTrackId);
   const studioCurrentTime = useSelector((state) => selectStudioState(state).currentTime || 0);
@@ -415,18 +358,6 @@ const Pianodemo = ({ onClose }) => {
       gainNodeRef.current.gain.value = volumeValue;
     }
   }, [volume]);
-
-  useEffect(() => {
-    if (audioContextRef.current) {
-      const reverbValue = (reverb + 135) / 270;
-    }
-  }, [reverb]);
-
-  useEffect(() => {
-    if (audioContextRef.current) {
-      const panValue = (pan + 135) / 270 * 2 - 1;
-    }
-  }, [pan]);
 
   const firstNote = MidiNumbers.fromNote('C0');
   const lastNote = MidiNumbers.fromNote('C5');
@@ -515,8 +446,6 @@ const Pianodemo = ({ onClose }) => {
         const newImpulse = createImpulseResponse(audioContextRef.current, roomSize, decay);
         convolverNodeRef.current.buffer = newImpulse;
       }
-
-      // console.log(`Reverb: ${reverb} -> Wet: ${wetLevel.toFixed(2)}, Dry: ${dryLevel.toFixed(2)}`);
     }
   }, [reverb]);
 
@@ -525,15 +454,10 @@ const Pianodemo = ({ onClose }) => {
       const panValue = pan / 135;
       const clampedPanValue = Math.max(-1, Math.min(1, panValue));
       panNodeRef.current.pan.value = clampedPanValue;
-      // console.log(`Pan value: ${pan} -> Stereo pan: ${clampedPanValue}`);
     }
   }, [pan]);
 
-
-
   const playNote = (midiNumber) => {
-    // Many soundfonts don't support notes below A0 (MIDI 21).
-    // Clamp to a safe, supported range for playback so low-octave keys still work.
     const effectiveMidi = Math.max(21, midiNumber);
     const noteName = Tone.Frequency(effectiveMidi, "midi").toNote();
     const currentTime = getRecordingTime();
@@ -618,18 +542,6 @@ const Pianodemo = ({ onClose }) => {
     dispatch(setSelectedInstrument(newInstrument));
   };
 
-
-  const toggleButton = (section, index) => {
-    setSelectedButtons(prev => ({
-      ...prev,
-      [section]: prev[section] === index ? null : index
-    }));
-  };
-
-  const isButtonSelected = (section, index) => {
-    return selectedButtons[section] === index;
-  };
-
   const [isRecording, setIsRecording] = useState(false);
 
   const hendleRecord = () => {
@@ -698,8 +610,6 @@ const Pianodemo = ({ onClose }) => {
   const [toggle, setToggle] = useState(false);
 
   const [isProcessingDrop, setIsProcessingDrop] = useState(false);
-  const [effectsSearchTerm, setEffectsSearchTerm] = useState('');
-  const [selectedEffectCategory, setSelectedEffectCategory] = useState(null);
 
 
   const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas, showEffectsTwo } = useSelector((state) => state.effects);
@@ -856,7 +766,6 @@ const Pianodemo = ({ onClose }) => {
     setActiveChords(-1);
     setPressedKeys(new Set());
     setToggle(false);
-    console.log(`🎵 Switched to ${newChordType} chord set`);
   };
 
   // === AUDIO INITIALIZATION ===
@@ -1350,7 +1259,6 @@ const Pianodemo = ({ onClose }) => {
     if (Tone.context.state !== "running") {
       await Tone.start();
       setIsAudioStarted(true);
-      console.log("🔊 Audio context started");
     }
   };
 
@@ -1459,8 +1367,6 @@ const Pianodemo = ({ onClose }) => {
       "acousticPiano";
     const selectedSynth = synths.current?.[synthKey];
 
-    console.log(`🎵 Playing ${synthType} -> ${synthKey} with ${chordType} chord: ${chordName}`);
-
     if (selectedSynth && notes) {
       try {
         if (synthType === "fullChord") {
@@ -1561,12 +1467,6 @@ const Pianodemo = ({ onClose }) => {
     }
   };
 
-  const getPatternDisplayName = () => {
-    if (!activePatternKey) return null;
-    const [category, indexStr] = activePatternKey.split("-");
-    return patternCategories[category]?.[parseInt(indexStr, 10)]?.name || null;
-  };
-
   const handlePatternSelect = (key) => {
     setActivePatternKey((prev) => (prev === key ? null : key));
     setActiveChord(null);
@@ -1634,35 +1534,6 @@ const Pianodemo = ({ onClose }) => {
     };
   }, [isAudioReady, pressedKeys, chordType]);
 
-  const testAllSynths = async () => {
-    if (!isAudioReady) return;
-    await startAudioContext();
-
-    console.log("🧪 Testing all professional synths...");
-    const testNotes = ["C4", "E4", "G4"];
-
-    Object.entries(synths.current).forEach(([name, synth], index) => {
-      setTimeout(() => {
-        try {
-          if (synth && synth.triggerAttackRelease) {
-            if (name === "bassSynth") {
-              synth.triggerAttackRelease("C3", "4n", Tone.now());
-            } else {
-              synth.triggerAttackRelease(testNotes, "4n", Tone.now());
-            }
-            console.log(`✅ ${name} - Professional sound working`);
-          } else {
-            console.log(`❌ ${name} - Not available`);
-          }
-        } catch (e) {
-          console.log(`❌ ${name} - Error:`, e);
-        }
-      }, index * 800);
-    });
-  };
-
-
-
   const handleAddEffectFromLibrary = (effect) => {
     console.log('handleAddEffectFromLibrary called with:', effect);
 
@@ -1674,8 +1545,6 @@ const Pianodemo = ({ onClose }) => {
     setIsProcessingDrop(true);
     dispatch(addEffect(effect));
     dispatch(setShowEffectsLibrary(false));
-    setEffectsSearchTerm('');
-    setSelectedEffectCategory(null);
 
     setTimeout(() => {
       setIsProcessingDrop(false);
@@ -2142,8 +2011,6 @@ const Pianodemo = ({ onClose }) => {
               </div>
             </div>
           </div>
-           {/* Pricing Modal */}
-           <PricingModel pricingModalOpen={pricingModalOpen} setPricingModalOpen={setPricingModalOpen} />
         </>
       )}
 
