@@ -129,6 +129,7 @@ const Timeline = () => {
   const pianoAudioContextRef = useRef(null);
   const activePianoNotesRef = useRef(new Set());
   const bass808SynthRef = useRef(null);
+  const guitarSynthRef = useRef(null);
 
   const { zoomLevel } = useSelector(selectGridSettings);
   const drumRecordedData = useSelector((state) => selectStudioState(state)?.drumRecordedData || []);
@@ -524,7 +525,17 @@ const Timeline = () => {
     return new Tone.MonoSynth(baseConfig);
   }, []);
 
-  // Apply Fuzz effects to Bass & 808 synth for timeline playback
+  // Initialize Guitar synth for timeline playback (Tone.js PolySynth)
+  const initializeGuitarSynth = useCallback(() => {
+    const poly = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'triangle' },
+      envelope: { attack: 0.005, decay: 0.25, sustain: 0.4, release: 1.2 },
+      volume: -6
+    });
+    return poly;
+  }, []);
+
+  // Apply effects to a synth for timeline playback (shared for Bass/808 and Guitar)
   const applyBass808Effects = useCallback((synth, trackId, recordedEffects = null) => {
     let fuzzEffect = null;
     let overdriveEffect = null;
@@ -1020,6 +1031,31 @@ const Timeline = () => {
     }
   }, [trackEffectsState, globalActiveEffects]);
 
+  // Play Guitar note with effects for timeline playback
+  const playGuitarNote = useCallback(async (midiNumber, duration, instrumentId, trackId, recordedEffects = null) => {
+    try {
+      if (Tone.context.state !== 'running') {
+        await Tone.start();
+      }
+
+      const freshSynth = initializeGuitarSynth();
+      applyBass808Effects(freshSynth, trackId, recordedEffects);
+
+      const noteName = Tone.Frequency(midiNumber, 'midi').toNote();
+      freshSynth.triggerAttackRelease(noteName, duration, Tone.now());
+
+      guitarSynthRef.current = freshSynth;
+      setTimeout(() => {
+        try {
+          if (freshSynth && freshSynth.disposed !== true) freshSynth.dispose();
+          if (guitarSynthRef.current === freshSynth) guitarSynthRef.current = null;
+        } catch {}
+      }, (duration + 0.5) * 1000);
+    } catch (e) {
+      console.error('Error playing Guitar note on timeline:', e);
+    }
+  }, [initializeGuitarSynth, applyBass808Effects]);
+
   // Play Bass & 808 note with effects for timeline playback
   const playBass808Note = useCallback(async (midiNumber, duration, instrumentId, trackId, recordedEffects = null) => {
     try {
@@ -1136,10 +1172,29 @@ const Timeline = () => {
       // console.log('  - Track ID:', trackId);
       // console.log('  - Recorded Effects:', recordedEffects);
       
+      // Identify guitar instruments by common ids used in Guitar.jsx
+      const isGuitar = instrumentId && (
+        instrumentId.includes('guitar') ||
+        instrumentId === 'acoustic_guitar_nylon' ||
+        instrumentId === 'acoustic_guitar_steel' ||
+        instrumentId === 'electric_guitar_clean' ||
+        instrumentId === 'electric_guitar_jazz' ||
+        instrumentId === 'electric_guitar_muted' ||
+        instrumentId === 'overdriven_guitar' ||
+        instrumentId === 'distortion_guitar' ||
+        instrumentId === 'guitar_harmonics' ||
+        instrumentId === 'banjo' ||
+        instrumentId === 'shamisen' ||
+        instrumentId === 'sitar'
+      );
+
       if (isBass808) {
         // Use Tone.js for Bass & 808 playback with effects
         // console.log('🎸 Routing to Tone.js Bass & 808 system');
         await playBass808Note(midiNumber, duration, instrumentId, trackId, recordedEffects);
+      } else if (isGuitar) {
+        // Use Tone.js for Guitar playback with the same effects chain
+        await playGuitarNote(midiNumber, duration, instrumentId, trackId, recordedEffects);
       } else {
         // Use Soundfont.js for regular piano instruments
         // console.log('🎹 Routing to Soundfont.js piano system');
@@ -1164,6 +1219,15 @@ const Timeline = () => {
       console.error("Error playing piano note:", error);
     }
   }, [getInstrument, playBass808Note]);
+  
+  // Cleanup refs on unmount
+  useEffect(() => {
+    return () => {
+      if (guitarSynthRef.current) {
+        guitarSynthRef.current.dispose();
+      }
+    };
+  }, []);
 
 
 
