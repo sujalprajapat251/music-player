@@ -48,6 +48,7 @@ import audioEffectsPlayer from '../components/AudioEffectsPlayer'
 import { showEffectsTwo } from '../Redux/Slice/effects.slice';
 import { setTrackType } from '../Redux/Slice/studio.slice';
 import PricingModel from './PricingModel';
+import { selectStudioState } from '../Redux/rootReducer';
 
 const effects = [
     { id: 1, name: "Bitcrushar", subscription: true, image: Bitcrushar, color: "#8F7CFD", category: "Distortion" },
@@ -83,8 +84,15 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
     const category = useSelector((state) => state.category?.category || []);
     const [dispatchedOnce, setDispatchedOnce] = useState(false);
     const [pricingModalOpen, setPricingModalOpen] = useState(false);
+    const [noTrackWarning, setNoTrackWarning] = useState(false);
 
     const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas, showEffectsTwo, showEffectsTwoState } = useSelector((state) => state.effects);
+    // Consider the studio tracks list as the source of truth for whether any track exists/open.
+    // This makes effects enabled when the project has at least one track (covers 8-track model case).
+    // Use selectStudioState to unwrap the undoable studio slice and get the live state
+    const studioState = useSelector((state) => selectStudioState(state) || {});
+    const { tracks = [], currentTrackId, selectedTrackId } = studioState || {};
+    const hasOpenTrack = (Array.isArray(tracks) && tracks.length > 0) || !!(currentTrackId || selectedTrackId);
     // console.log("hhhh", showEffectsTwoState);
 
     // Normalize strings for robust matching
@@ -154,6 +162,12 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
     };
 
     const handleAddEffect = (effect) => {
+        // If no track is open, show a short warning and prevent adding
+        if (!hasOpenTrack) {
+            setNoTrackWarning(true);
+            setTimeout(() => setNoTrackWarning(false), 2000);
+            return;
+        }
         // Block adding premium effects; open pricing instead
         if (effect?.subscription) {
             setPricingModalOpen(true);
@@ -165,6 +179,12 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
     };
 
     const handleDragStart = (e, effect) => {
+        // Prevent dragging if there's no open track
+        if (!hasOpenTrack) {
+            setNoTrackWarning(true);
+            setTimeout(() => setNoTrackWarning(false), 2000);
+            return;
+        }
         setIsDragging(true);
         e.dataTransfer.setData('application/json', JSON.stringify(effect));
         e.dataTransfer.effectAllowed = 'copy';
@@ -272,7 +292,7 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
                             ) : (
                                 <div className="grid grid-cols-1 xs:grid-cols-2 xs:gap-2 sm:grid-cols-3 sm:gap-2 md600:grid-cols-1 md600:gap-3 md:grid-cols-2 md:gap-2 lg:grid-cols-3 lg:gap-2">
                                     {filteredEffects.map((effect) => (
-                                        <div key={effect.id} className='cursor-pointer active:cursor-grabbing transition-all duration-200' draggable onDragStart={(e) => handleDragStart(e, effect)} onDragEnd={handleDragEnd}>
+                                        <div key={effect.id} className={`cursor-pointer active:cursor-grabbing transition-all duration-200 ${!hasOpenTrack ? 'opacity-60 pointer-events-none' : ''}`} draggable={hasOpenTrack} onDragStart={(e) => handleDragStart(e, effect)} onDragEnd={handleDragEnd}>
                                             <div>
                                                 {effect?.subscription === true ?
                                                     <div className="flex py-1 gap-1 xs:gap-2 sm:gap-2 md600:gap-2 md:gap-3 lg:gap-2 justify-center md600:py-2 items-center text-white" style={{ backgroundColor: effect?.color || '#8F7CFD' }}>
@@ -294,6 +314,11 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
                                                 }
                                                 <img
                                                     onClick={(e) => {
+                                                        if (!hasOpenTrack) {
+                                                            setNoTrackWarning(true);
+                                                            setTimeout(() => setNoTrackWarning(false), 2000);
+                                                            return;
+                                                        }
                                                         if (!isDragging && e.target.style.opacity !== '0.5') {
                                                             handleAddEffect(effect);
                                                             e.target.style.transform = 'scale(0.95)';
@@ -326,6 +351,13 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
             </div>
         </div>
         </>
+        )}
+
+        {/* Warning banner when no track is open */}
+        {showOffcanvas && !hasOpenTrack && (
+            <div className="absolute left-0 right-0 mx-auto text-center text-sm text-red-500 bg-yellow-50 dark:bg-[#2b1a1a] py-2">
+                Open a track to apply effects
+            </div>
         )}
 
     </div>
