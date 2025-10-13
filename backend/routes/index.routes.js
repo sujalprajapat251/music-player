@@ -15,7 +15,7 @@ const { createMusic, getAllMusic, deleteMusic, updateMusic, restoreMusic, perman
 const { uploadAudio } = require('../helper/uploadController');
 const { getMusicByIdPublic } = require('../controller/publicController');
 const { createReview, getReviewsByMusicId, getReviewsByUserId, updateReview, deleteReview } = require('../controller/reviewController');
-const { createPremium, getPremiums, getPremiumById } = require('../controller/premiumController'); // Updated import
+const { createPremium, getPremiums, getPremiumById, deletePremium, updatePremium } = require('../controller/premiumController'); // Updated import
 
 
 // auth Routes
@@ -113,6 +113,7 @@ indexRoutes.delete('/reviews/:reviewId', auth, deleteReview);
 indexRoutes.post('/createPremium', createPremium);
 indexRoutes.get('/premiums', getPremiums);
 indexRoutes.get('/premiums/:id', getPremiumById);
-
+indexRoutes.delete('/deletepremiums/:id',  deletePremium);
+indexRoutes.put('/updatepremiums/:id',  updatePremium);
 
 module.exports = indexRoutes

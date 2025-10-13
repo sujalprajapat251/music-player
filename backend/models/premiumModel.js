@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const SubscriptionSchema = new mongoose.Schema({
+const PremiumSchema = new mongoose.Schema({
     amount: {
         type: Number,
         required: true
@@ -29,4 +29,4 @@ const SubscriptionSchema = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model("Subscription", SubscriptionSchema);
+module.exports = mongoose.model("Premium", PremiumSchema);
