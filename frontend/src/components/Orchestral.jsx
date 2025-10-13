@@ -300,6 +300,7 @@ const Pianodemo = ({ onClose }) => {
   const dryGainNodeRef = useRef(null);
   const convolverNodeRef = useRef(null);
   const activeAudioNodes = useRef({});
+  const trackEffectsChainRef = useRef(null); // Add track effects chain reference
   const recordAnchorRef = useRef({ systemMs: 0, playheadSec: 0 });
   const selectedInstrument = INSTRUMENTS[currentInstrumentIndex].id;
 
@@ -309,17 +310,37 @@ const Pianodemo = ({ onClose }) => {
   const existingPianoNotes = useSelector((state) => selectStudioState(state).pianoNotes || []);
   const tracks = useSelector((state) => selectStudioState(state).tracks || []);
 
+  // Effects-related selectors
+  const { trackEffects: trackEffectsState, selectedTrackId } = useSelector((state) => state.effects);
+  const activeEffectsForOrchestral = useSelector((state) => state.effects.activeEffects);
 
-  const getActiveTabs = useSelector((state) => state.effects.activeTabs);
-
-  useEffect(() => {
-    if (getActiveTabs) {
-      setActiveTab(getActiveTabs);
-    }
-  }, [getActiveTabs]);
+  // Use selectedTrackId from effects or fall back to currentTrackId from studio
+  const activeTrackId = selectedTrackId || currentTrackId;
+  
+  // Get track-specific effects
+  const trackSpecificEffects = trackEffectsState[activeTrackId] || [];
 
   const pianoNotesRef = useRef([]);
   useEffect(() => { pianoNotesRef.current = existingPianoNotes || []; }, [existingPianoNotes]);
+
+  // Look for Fuzz effect in both global and track-specific effects
+  const getFuzzEffect = () => {
+    // First check track-specific effects
+    const trackFuzzEffect = trackSpecificEffects.find(effect => effect.name === 'Fuzz');
+    if (trackFuzzEffect) {
+      console.log('🎯 Found Fuzz in track-specific effects:', trackFuzzEffect);
+      return trackFuzzEffect;
+    }
+    
+    // Then check global effects
+    const globalFuzzEffect = activeEffectsForOrchestral.find(effect => effect.name === 'Fuzz');
+    if (globalFuzzEffect) {
+      console.log('🌍 Found Fuzz in global effects:', globalFuzzEffect);
+      return globalFuzzEffect;
+    }
+    
+    return null;
+  };
 
   const createImpulseResponse = (audioContext, duration, decay, reverse = false) => {
     const length = audioContext.sampleRate * duration;
@@ -426,8 +447,17 @@ const Pianodemo = ({ onClose }) => {
 
     return () => {
       audioContext && audioContext.close();
+      // Clean up effect chain references when synth is recreated
+      if (trackEffectsChainRef.current) {
+        Object.values(trackEffectsChainRef.current).forEach(effectChain => {
+          if (effectChain.distortion) effectChain.distortion.dispose();
+          if (effectChain.bite) effectChain.bite.dispose();
+          if (effectChain.lowCut) effectChain.lowCut.dispose();
+        });
+        trackEffectsChainRef.current = {};
+      }
     };
-  }, [selectedInstrument]);
+  }, [selectedInstrument, activeTrackId]); // Use activeTrackId instead of currentTrackId for effects
 
   useEffect(() => {
     if (reverbGainNodeRef.current && dryGainNodeRef.current && convolverNodeRef.current && audioContextRef.current) {
@@ -457,6 +487,143 @@ const Pianodemo = ({ onClose }) => {
     }
   }, [pan]);
 
+  // === Effects integration (optimized to prevent hanging) ===
+  useEffect(() => {
+    if (!audioContextRef.current || !gainNodeRef.current || !reverbGainNodeRef.current || !dryGainNodeRef.current) return;
+    if (!activeTrackId) return;
+
+    // Use requestAnimationFrame to prevent blocking the main thread
+    const processEffects = () => {
+      const fuzzEffect = getFuzzEffect();
+      
+      // If Fuzz effect is active but not yet created, create it
+      if (fuzzEffect && fuzzEffect.parameters && !trackEffectsChainRef.current?.[fuzzEffect.instanceId]) {
+        try {
+          // Convert angle parameters to 0-1 range
+          const grain = (Number(fuzzEffect.parameters[0]?.value) + 135) / 270; // 0..1
+          const bite = (Number(fuzzEffect.parameters[1]?.value) + 135) / 270;  // 0..1
+          const lowCut = (Number(fuzzEffect.parameters[2]?.value) + 135) / 270; // 0..1
+
+          const ctx = audioContextRef.current;
+
+          // Create Fuzz effect chain with optimized curve generation
+          const lowCutFilter = ctx.createBiquadFilter();
+          lowCutFilter.type = 'highpass';
+          lowCutFilter.frequency.setValueAtTime(20 + lowCut * 480, ctx.currentTime);
+
+          const fuzzDistortion = ctx.createWaveShaper();
+          const createDistortionCurve = (amount) => {
+            const k = Math.max(0.001, amount) * 50; // Reduced from 100 to 50 for smoother processing
+            const samples = 22050; // Reduced from 44100 to 22050 for better performance
+            const curve = new Float32Array(samples);
+            const deg = Math.PI / 180;
+            for (let i = 0; i < samples; ++i) {
+              const x = (i * 2) / samples - 1;
+              curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+            }
+            return curve;
+          };
+          fuzzDistortion.curve = createDistortionCurve(grain);
+          fuzzDistortion.oversample = '2x';
+
+          const biteEQ = ctx.createBiquadFilter();
+          biteEQ.type = 'highshelf';
+          biteEQ.frequency.setValueAtTime(2000, ctx.currentTime);
+          biteEQ.gain.setValueAtTime((bite - 0.5) * 24, ctx.currentTime);
+
+          // Store effect references
+          if (!trackEffectsChainRef.current) {
+            trackEffectsChainRef.current = {};
+          }
+          
+          trackEffectsChainRef.current[fuzzEffect.instanceId] = {
+            distortion: fuzzDistortion,
+            bite: biteEQ,
+            lowCut: lowCutFilter,
+            updateParameters: (params) => {
+              // Use requestAnimationFrame for parameter updates to prevent blocking
+              requestAnimationFrame(() => {
+                try {
+                  lowCutFilter.frequency.setValueAtTime(20 + params.lowCut * 480, ctx.currentTime);
+                  fuzzDistortion.curve = createDistortionCurve(params.grain);
+                  biteEQ.gain.setValueAtTime((params.bite - 0.5) * 24, ctx.currentTime);
+                } catch (e) {
+                  console.warn('Error updating effect parameters:', e);
+                }
+              });
+            }
+          };
+
+          // Rewire: gain -> lowCut -> waveShaper -> biteEQ -> dry/reverb
+          try {
+            gainNodeRef.current.disconnect();
+          } catch {}
+          gainNodeRef.current.connect(lowCutFilter);
+          lowCutFilter.connect(fuzzDistortion);
+          fuzzDistortion.connect(biteEQ);
+          biteEQ.connect(dryGainNodeRef.current);
+          biteEQ.connect(reverbGainNodeRef.current);
+        } catch (e) {
+          console.warn('Error creating Fuzz effect:', e);
+        }
+      }
+      
+      // If Fuzz effect is removed, disconnect and clean up
+      if (!fuzzEffect && trackEffectsChainRef.current && Object.keys(trackEffectsChainRef.current).length > 0) {
+        try {
+          // Clean up all effects and reconnect synth directly
+          Object.values(trackEffectsChainRef.current).forEach(effectChain => {
+            if (effectChain.distortion) effectChain.distortion.disconnect();
+            if (effectChain.bite) effectChain.bite.disconnect();
+            if (effectChain.lowCut) effectChain.lowCut.disconnect();
+          });
+          trackEffectsChainRef.current = {};
+          
+          // Reconnect synth directly to output
+          if (gainNodeRef.current) {
+            gainNodeRef.current.connect(dryGainNodeRef.current);
+            gainNodeRef.current.connect(reverbGainNodeRef.current);
+          }
+        } catch (e) {
+          console.warn('Error cleaning up effects:', e);
+        }
+      }
+    };
+
+    // Use requestAnimationFrame to prevent blocking
+    requestAnimationFrame(processEffects);
+  }, [trackEffectsState, activeEffectsForOrchestral, activeTrackId]);
+
+  // Add effect to listen for track effect parameter changes (optimized with debouncing)
+  useEffect(() => {
+    if (!trackEffectsChainRef.current || !activeTrackId) return;
+    
+    // Debounce parameter updates to prevent excessive processing
+    const timeoutId = setTimeout(() => {
+      const fuzzEffect = getFuzzEffect();
+      
+      if (fuzzEffect && fuzzEffect.name === "Fuzz" && fuzzEffect.parameters && trackEffectsChainRef.current[fuzzEffect.instanceId]) {
+        const parameters = {
+          grain: (fuzzEffect.parameters[0]?.value + 135) / 270,  // Convert angle to 0-1
+          bite: (fuzzEffect.parameters[1]?.value + 135) / 270,   // Convert angle to 0-1  
+          lowCut: (fuzzEffect.parameters[2]?.value + 135) / 270  // Convert angle to 0-1
+        };
+        
+        // Update the effect parameters in real-time with error handling
+        const effectChain = trackEffectsChainRef.current[fuzzEffect.instanceId];
+        if (effectChain && effectChain.updateParameters) {
+          try {
+            effectChain.updateParameters(parameters);
+          } catch (e) {
+            console.warn('Error updating effect parameters:', e);
+          }
+        }
+      }
+    }, 16); // 16ms debounce (60fps)
+
+    return () => clearTimeout(timeoutId);
+  }, [trackEffectsState, activeEffectsForOrchestral, activeTrackId]);
+
   const playNote = (midiNumber) => {
     const effectiveMidi = Math.max(21, midiNumber);
     const noteName = Tone.Frequency(effectiveMidi, "midi").toNote();
@@ -469,6 +636,18 @@ const Pianodemo = ({ onClose }) => {
 
     // Only push notes to timeline state when recording is active
     if (getIsRecording) {
+      // Capture current effect parameters for recording
+      const recordedEffectParams = {};
+      const fuzzEffect = getFuzzEffect();
+      if (fuzzEffect && fuzzEffect.parameters) {
+        recordedEffectParams.fuzz = {
+          grain: fuzzEffect.parameters[0]?.value || 0,
+          bite: fuzzEffect.parameters[1]?.value || 0,
+          lowCut: fuzzEffect.parameters[2]?.value || 0,
+          instanceId: fuzzEffect.instanceId
+        };
+      }
+
       const newEvent = {
         note: noteName,
         startTime: currentTime,
@@ -476,7 +655,8 @@ const Pianodemo = ({ onClose }) => {
         midiNumber: effectiveMidi,
         trackId: currentTrackId || null,
         instrumentId: selectedInstrument,
-        id: `${midiNumber}-${Date.now()}-${Math.random()}`
+        id: `${midiNumber}-${Date.now()}-${Math.random()}`,
+        recordedEffects: recordedEffectParams // Store effect parameters with the note
       };
       const updated = [...(pianoNotesRef.current || []), newEvent];
       dispatch(setPianoNotes(updated));
@@ -512,6 +692,7 @@ const Pianodemo = ({ onClose }) => {
     if (pianoRef.current) {
       const audioNode = pianoRef.current.play(effectiveMidi);
       activeAudioNodes.current[midiNumber] = audioNode;
+      console.log('🎹 Playing note:', noteName, 'with effects:', Object.keys(trackEffectsChainRef.current || {}));
     }
   };
 
@@ -610,7 +791,8 @@ const Pianodemo = ({ onClose }) => {
   const [toggle, setToggle] = useState(false);
 
   const [isProcessingDrop, setIsProcessingDrop] = useState(false);
-
+  const [effectsSearchTerm, setEffectsSearchTerm] = useState('');
+  const [selectedEffectCategory, setSelectedEffectCategory] = useState(null);
 
   const { activeEffects, showEffectsLibrary, effectsLibrary, showEffectsOffcanvas, showEffectsTwo } = useSelector((state) => state.effects);
 
@@ -1543,12 +1725,23 @@ const Pianodemo = ({ onClose }) => {
     }
 
     setIsProcessingDrop(true);
-    dispatch(addEffect(effect));
-    dispatch(setShowEffectsLibrary(false));
-
-    setTimeout(() => {
-      setIsProcessingDrop(false);
-    }, 100);
+    
+    // Use requestAnimationFrame to prevent blocking during effect addition
+    requestAnimationFrame(() => {
+      try {
+        dispatch(addEffect(effect));
+        dispatch(setShowEffectsLibrary(false));
+        setEffectsSearchTerm('');
+        setSelectedEffectCategory(null);
+      } catch (e) {
+        console.warn('Error adding effect:', e);
+      } finally {
+        // Use a longer timeout to ensure smooth processing
+        setTimeout(() => {
+          setIsProcessingDrop(false);
+        }, 200);
+      }
+    });
   };
 
   const handlePlusButtonClick = () => {

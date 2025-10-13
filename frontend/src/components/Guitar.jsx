@@ -504,8 +504,8 @@ const Guitar = ({ onClose }) => {
     };
 
     const createDistortionCurve = (amount) => {
-        const k = amount * 100;
-        const samples = 44100;
+        const k = Math.max(0.001, amount) * 50; // Reduced from 100 to 50 for smoother processing
+        const samples = 22050; // Reduced from 44100 to 22050 for better performance
         const curve = new Float32Array(samples);
         const deg = Math.PI / 180;
         for (let i = 0; i < samples; ++i) {
@@ -519,7 +519,9 @@ const Guitar = ({ onClose }) => {
         if (!audioContextRef.current || !gainNodeRef.current || !reverbGainNodeRef.current || !dryGainNodeRef.current) return;
         if (!activeTrackId) return;
 
-        const fuzz = getFuzzEffect();
+        // Use requestAnimationFrame to prevent blocking the main thread
+        const processEffects = () => {
+            const fuzz = getFuzzEffect();
 
         // Helper to connect standard routing: gain -> dry/reverb
         const connectStandard = () => {
@@ -578,6 +580,11 @@ const Guitar = ({ onClose }) => {
             }
             connectStandard();
         }
+
+        };
+
+        // Use requestAnimationFrame to prevent blocking
+        requestAnimationFrame(processEffects);
 
         return () => {
             // On unmount or dependencies change, do not break current routing; cleanup will happen in main cleanup

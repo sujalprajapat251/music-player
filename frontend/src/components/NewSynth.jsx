@@ -22,7 +22,7 @@ import music from "../Images/playingsounds.svg";
 import { setRecordingAudio, setPianoNotes, setPianoRecordingClip, setSelectedInstrument, updateTrack } from '../Redux/Slice/studio.slice';
 import PianoRolls from './PianoRolls';
 import * as Tone from "tone";
-import { setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
+import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsTwo } from '../Redux/Slice/effects.slice';
 import { selectStudioState } from '../Redux/rootReducer';
 import subscription from "../Images/subscriptionIcon.svg";
 import PricingModel from './PricingModel';
@@ -2288,7 +2288,7 @@ const NewSynth = ({ onClose }) => {
                                                                 </div>
                                                             ) : (
                                                                 <div className="flex items-center justify-center h-full">
-                                                                    <p className="text-gray-400 text-sm">No component available</p>
+                                                                    <p className="text-gray-500 dark:text-gray-400 text-sm">No component available</p>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -2320,7 +2320,7 @@ const NewSynth = ({ onClose }) => {
                                                             }
                                                         }}
                                                     >
-                                                        <div className="w-14 h-14 bg-white text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
+                                                        <div className="w-14 h-14 bg-black dark:bg-white text-white dark:text-black rounded-full flex items-center justify-center text-2xl font-bold mb-4">+</div>
                                                         <p className="text-center text-xs sm:text-sm leading-snug">Select From the<br />effects library</p>
                                                     </div>
                                                 )}
@@ -2329,13 +2329,36 @@ const NewSynth = ({ onClose }) => {
                                                         md:w-[230px] md:h-[280px] lg:w-[240px] lg:h-[300px] xl:w-[240px] xl:h-[310px] 2xl:w-[256px] 2xl:h-[330px]
                                                         rounded-xl shrink-0 border-2 border-dashed bg-primary-light dark:bg-primary-dark border-gray-300 
                                                         dark:border-gray-600 transition-colors"
-                                                        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; e.currentTarget.style.borderColor = '#409C9F'; e.currentTarget.style.backgroundColor = '#2a2a2a'; }}
-                                                        onDragLeave={(e) => { e.currentTarget.style.borderColor = '#4B5563'; e.currentTarget.style.backgroundColor = '#1a1a1a'; }}
+                                                        onDragOver={(e) => {
+                                                            e.preventDefault();
+                                                            e.dataTransfer.dropEffect = "copy";
+                                                            e.currentTarget.style.borderColor = "#409C9F";
+                                                            e.currentTarget.style.backgroundColor =
+                                                              document.documentElement.classList.contains("dark")
+                                                                ? "#2a2a2a"
+                                                                : "#f3f4f6"; // light gray for light mode
+                                                        }}
+                                                        onDragLeave={(e) => {
+                                                            e.currentTarget.style.borderColor =
+                                                              document.documentElement.classList.contains("dark")
+                                                                ? "#4B5563"
+                                                                : "#D1D5DB"; // gray-300 for light
+                                                            e.currentTarget.style.backgroundColor =
+                                                              document.documentElement.classList.contains("dark")
+                                                                ? "#1a1a1a"
+                                                                : "#ffffff";
+                                                        }}
                                                         onDrop={(e) => {
                                                             e.preventDefault();
                                                             e.stopPropagation();
-                                                            e.currentTarget.style.borderColor = '#4B5563';
-                                                            e.currentTarget.style.backgroundColor = '#1a1a1a';
+                                                            e.currentTarget.style.borderColor =
+                                                              document.documentElement.classList.contains("dark")
+                                                                ? "#4B5563"
+                                                                : "#D1D5DB";
+                                                            e.currentTarget.style.backgroundColor =
+                                                              document.documentElement.classList.contains("dark")
+                                                                ? "#1a1a1a"
+                                                                : "#ffffff";
                                                             try {
                                                                 const effectData = JSON.parse(e.dataTransfer.getData('application/json'));
                                                                 handleAddEffectFromLibrary(effectData);

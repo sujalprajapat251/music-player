@@ -130,6 +130,9 @@ const Timeline = () => {
   const activePianoNotesRef = useRef(new Set());
   const bass808SynthRef = useRef(null);
   const guitarSynthRef = useRef(null);
+  const newSynthRef = useRef(null);
+  const pianoSynthRef = useRef(null);
+  const orchestralSynthRef = useRef(null);
 
   const { zoomLevel } = useSelector(selectGridSettings);
   const drumRecordedData = useSelector((state) => selectStudioState(state)?.drumRecordedData || []);
@@ -518,6 +521,98 @@ const Timeline = () => {
         baseConfig.envelope.release = 0.5;
         break;
       default:
+        break;
+    }
+
+    // Create and return a fresh synth instance
+    return new Tone.MonoSynth(baseConfig);
+  }, []);
+
+  // Initialize Piano synth for timeline playback (Tone.js PolySynth)
+  const initializePianoSynth = useCallback((instrumentId) => {
+    const baseConfig = {
+      oscillator: { 
+        type: "triangle",
+        detune: 0 // Standard pitch for piano
+      },
+      envelope: {
+        attack: 0.01,
+        decay: 0.3,
+        sustain: 0.7,
+        release: 1.0
+      },
+      filterEnvelope: {
+        attack: 0.01,
+        decay: 0.2,
+        sustain: 0.5,
+        release: 0.8,
+        baseFrequency: 200,
+        octaves: 3
+      },
+      volume: -3
+    };
+
+    // Customize synth based on piano instrument type
+    switch (instrumentId) {
+      case 'acoustic_grand_piano':
+        baseConfig.oscillator.type = "triangle";
+        baseConfig.envelope.attack = 0.005;
+        baseConfig.envelope.decay = 0.4;
+        baseConfig.envelope.sustain = 0.6;
+        baseConfig.envelope.release = 1.2;
+        break;
+      case 'bright_acoustic_piano':
+        baseConfig.oscillator.type = "sawtooth";
+        baseConfig.envelope.attack = 0.01;
+        baseConfig.envelope.decay = 0.2;
+        baseConfig.envelope.sustain = 0.8;
+        baseConfig.envelope.release = 0.8;
+        break;
+      case 'electric_grand_piano':
+        baseConfig.oscillator.type = "square";
+        baseConfig.envelope.attack = 0.001;
+        baseConfig.envelope.decay = 0.3;
+        baseConfig.envelope.sustain = 0.7;
+        baseConfig.envelope.release = 0.9;
+        break;
+      case 'honky_tonk_piano':
+        baseConfig.oscillator.type = "triangle";
+        baseConfig.envelope.attack = 0.02;
+        baseConfig.envelope.decay = 0.5;
+        baseConfig.envelope.sustain = 0.4;
+        baseConfig.envelope.release = 1.5;
+        baseConfig.volume = 0;
+        break;
+      case 'electric_piano_1':
+        baseConfig.oscillator.type = "triangle";
+        baseConfig.envelope.attack = 0.01;
+        baseConfig.envelope.decay = 0.2;
+        baseConfig.envelope.sustain = 0.8;
+        baseConfig.envelope.release = 0.6;
+        break;
+      case 'electric_piano_2':
+        baseConfig.oscillator.type = "sawtooth";
+        baseConfig.envelope.attack = 0.005;
+        baseConfig.envelope.decay = 0.3;
+        baseConfig.envelope.sustain = 0.7;
+        baseConfig.envelope.release = 0.8;
+        break;
+      case 'harpsichord':
+        baseConfig.oscillator.type = "square";
+        baseConfig.envelope.attack = 0.001;
+        baseConfig.envelope.decay = 0.1;
+        baseConfig.envelope.sustain = 0.1;
+        baseConfig.envelope.release = 0.2;
+        break;
+      case 'clavi':
+        baseConfig.oscillator.type = "triangle";
+        baseConfig.envelope.attack = 0.001;
+        baseConfig.envelope.decay = 0.05;
+        baseConfig.envelope.sustain = 0.1;
+        baseConfig.envelope.release = 0.1;
+        break;
+      default:
+        // Default piano sound
         break;
     }
 
@@ -1031,6 +1126,43 @@ const Timeline = () => {
     }
   }, [trackEffectsState, globalActiveEffects]);
 
+  // Play Piano note with effects for timeline playback
+  const playMainPianoNote = useCallback(async (midiNumber, duration, instrumentId, trackId, recordedEffects = null) => {
+    try {
+      if (Tone.context.state !== 'running') {
+        await Tone.start();
+      }
+
+      const freshSynth = initializePianoSynth(instrumentId);
+
+      applyBass808Effects(freshSynth, trackId, recordedEffects);
+      
+      // Convert MIDI to note name and play immediately
+      const noteName = Tone.Frequency(midiNumber, "midi").toNote();
+
+      freshSynth.triggerAttackRelease(noteName, duration, Tone.now());
+
+      pianoSynthRef.current = freshSynth;
+
+      setTimeout(() => {
+        try {
+          if (freshSynth && freshSynth.disposed !== true) {
+            freshSynth.dispose();
+          }
+          if (pianoSynthRef.current === freshSynth) {
+            pianoSynthRef.current = null;
+          }
+          // console.log('🗑️ Cleaned up Piano synth after note completion');
+        } catch (e) {
+          console.warn('Cleanup error for Piano synth:', e);
+        }
+      }, (duration + 0.5) * 1000); // Increased delay to ensure note completes
+      
+    } catch (error) {
+      console.error('Error stack:', error.stack);
+    }
+  }, [initializePianoSynth, applyBass808Effects, trackEffectsState, globalActiveEffects]);
+
   // Play Guitar note with effects for timeline playback
   const playGuitarNote = useCallback(async (midiNumber, duration, instrumentId, trackId, recordedEffects = null) => {
     try {
@@ -1055,6 +1187,77 @@ const Timeline = () => {
       console.error('Error playing Guitar note on timeline:', e);
     }
   }, [initializeGuitarSynth, applyBass808Effects]);
+
+  // Initialize NewSynth synth for timeline playback (Tone.js PolySynth)
+  const initializeNewSynthSynth = useCallback(() => {
+    const poly = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'triangle' },
+      envelope: { attack: 0.01, decay: 0.3, sustain: 0.6, release: 1.0 },
+      volume: -6
+    });
+    return poly;
+  }, []);
+
+  // Play NewSynth note with effects for timeline playback
+  const playNewSynthNote = useCallback(async (midiNumber, duration, instrumentId, trackId, recordedEffects = null) => {
+    try {
+      if (Tone.context.state !== 'running') {
+        await Tone.start();
+      }
+
+      const freshSynth = initializeNewSynthSynth();
+      applyBass808Effects(freshSynth, trackId, recordedEffects);
+
+      const noteName = Tone.Frequency(midiNumber, 'midi').toNote();
+      freshSynth.triggerAttackRelease(noteName, duration, Tone.now());
+
+      newSynthRef.current = freshSynth;
+      setTimeout(() => {
+        try {
+          if (freshSynth && freshSynth.disposed !== true) freshSynth.dispose();
+          if (newSynthRef.current === freshSynth) newSynthRef.current = null;
+        } catch {}
+      }, (duration + 0.5) * 1000);
+    } catch (e) {
+      console.error('Error playing NewSynth note on timeline:', e);
+    }
+  }, [initializeNewSynthSynth, applyBass808Effects]);
+
+  // Initialize Orchestral synth for timeline playback (Tone.js PolySynth)
+  const initializeOrchestralSynth = useCallback(() => {
+    const poly = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'triangle' },
+      envelope: { attack: 0.01, decay: 0.3, sustain: 0.6, release: 1.0 },
+      volume: -6
+    });
+    return poly;
+  }, []);
+
+  // Play Orchestral note with effects for timeline playback
+  const playOrchestralNote = useCallback(async (midiNumber, duration, instrumentId, trackId, recordedEffects = null) => {
+    try {
+      if (Tone.context.state !== 'running') {
+        await Tone.start();
+      }
+
+      const freshSynth = initializeOrchestralSynth();
+      applyBass808Effects(freshSynth, trackId, recordedEffects);
+
+      const noteName = Tone.Frequency(midiNumber, 'midi').toNote();
+      freshSynth.triggerAttackRelease(noteName, duration, Tone.now());
+
+      orchestralSynthRef.current = freshSynth;
+      setTimeout(() => {
+        try {
+          if (freshSynth && freshSynth.disposed !== true) freshSynth.dispose();
+          if (orchestralSynthRef.current === freshSynth) orchestralSynthRef.current = null;
+        } catch {}
+      }, (duration + 0.5) * 1000);
+    } catch (e) {
+      console.error('Error playing Orchestral note on timeline:', e);
+    }
+  }, [initializeOrchestralSynth, applyBass808Effects]);
+
   // Apply effects to regular piano (Soundfont) playback using Web Audio API chains
   const applyPianoEffects = useCallback((audioNode, trackId, recordedEffects = null) => {
     if (!audioNode) return;
@@ -1401,6 +1604,75 @@ const Timeline = () => {
         instrumentId === 'sitar'
       );
 
+      // Identify NewSynth orchestral instruments
+      const isNewSynth = instrumentId && (
+        instrumentId === 'violin' ||
+        instrumentId === 'cello' ||
+        instrumentId === 'viola' ||
+        instrumentId === 'flute' ||
+        instrumentId === 'oboe' ||
+        instrumentId === 'clarinet' ||
+        instrumentId === 'trumpet' ||
+        instrumentId === 'french_horn' ||
+        instrumentId === 'trombone' ||
+        instrumentId === 'tuba' ||
+        instrumentId === 'saxophone' ||
+        instrumentId === 'piano' ||
+        instrumentId === 'harpsichord' ||
+        instrumentId === 'organ' ||
+        instrumentId === 'acoustic_grand_piano' ||
+        instrumentId === 'electric_piano' ||
+        instrumentId === 'synthesizer' ||
+        instrumentId === 'strings' ||
+        instrumentId === 'brass' ||
+        instrumentId === 'woodwinds'
+      );
+
+      // Identify Orchestral instruments
+      const isOrchestral = instrumentId && (
+        instrumentId === 'orchestral_harp' ||
+        instrumentId === 'violin' ||
+        instrumentId === 'viola' ||
+        instrumentId === 'cello' ||
+        instrumentId === 'contrabass' ||
+        instrumentId === 'string_ensemble_1' ||
+        instrumentId === 'string_ensemble_2' ||
+        instrumentId === 'pizzicato_strings' ||
+        instrumentId === 'tremolo_strings' ||
+        instrumentId === 'shamisen' ||
+        instrumentId === 'timpani' ||
+        instrumentId === 'trombone' ||
+        instrumentId === 'trumpet' ||
+        instrumentId === 'tuba' ||
+        instrumentId === 'french_horn' ||
+        instrumentId === 'oboe' ||
+        instrumentId === 'flute' ||
+        instrumentId === 'clarinet' ||
+        instrumentId === 'piccolo'
+      );
+
+      // Identify piano instruments by common ids
+      const isPiano = instrumentId && (
+        instrumentId.includes('piano') ||
+        instrumentId.includes('Piano') ||
+        instrumentId === 'acoustic_grand_piano' ||
+        instrumentId === 'bright_acoustic_piano' ||
+        instrumentId === 'electric_grand_piano' ||
+        instrumentId === 'honky_tonk_piano' ||
+        instrumentId === 'electric_piano_1' ||
+        instrumentId === 'electric_piano_2' ||
+        instrumentId === 'harpsichord' ||
+        instrumentId === 'clavi' ||
+        instrumentId === 'celesta' ||
+        instrumentId === 'glockenspiel' ||
+        instrumentId === 'music_box' ||
+        instrumentId === 'vibraphone' ||
+        instrumentId === 'marimba' ||
+        instrumentId === 'xylophone' ||
+        instrumentId === 'tubular_bells' ||
+        instrumentId === 'dulcimer'
+      );
+
       if (isBass808) {
         // Use Tone.js for Bass & 808 playback with effects
         // console.log('🎸 Routing to Tone.js Bass & 808 system');
@@ -1408,6 +1680,15 @@ const Timeline = () => {
       } else if (isGuitar) {
         // Use Tone.js for Guitar playback with the same effects chain
         await playGuitarNote(midiNumber, duration, instrumentId, trackId, recordedEffects);
+      } else if (isNewSynth) {
+        // Use Tone.js for NewSynth orchestral instruments with effects
+        await playNewSynthNote(midiNumber, duration, instrumentId, trackId, recordedEffects);
+      } else if (isOrchestral) {
+        // Use Tone.js for Orchestral instruments with effects
+        await playOrchestralNote(midiNumber, duration, instrumentId, trackId, recordedEffects);
+      }else if (isPiano) {
+        // Use Tone.js for Piano playback with effects
+        await playMainPianoNote(midiNumber, duration, instrumentId, trackId, recordedEffects);
       } else {
         // Use Soundfont.js for regular piano instruments
         // console.log('🎹 Routing to Soundfont.js piano system');
@@ -1433,13 +1714,22 @@ const Timeline = () => {
     } catch (error) {
       console.error("Error playing piano note:", error);
     }
-  }, [getInstrument, playBass808Note]);
+  }, [getInstrument, playBass808Note, playGuitarNote, playNewSynthNote, playOrchestralNote, playMainPianoNote]);
   
   // Cleanup refs on unmount
   useEffect(() => {
     return () => {
       if (guitarSynthRef.current) {
         guitarSynthRef.current.dispose();
+      }
+      if (newSynthRef.current) {
+        newSynthRef.current.dispose();
+      }
+      if (orchestralSynthRef.current) {
+        orchestralSynthRef.current.dispose();
+      }
+      if (pianoSynthRef.current) {
+        pianoSynthRef.current.dispose();
       }
     };
   }, []);
