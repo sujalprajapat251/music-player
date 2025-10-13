@@ -62,6 +62,7 @@ import { addAudioClipToTrack, createTrackWithDefaults, updateAudioClip, setTrack
 import TunerPopup from '../TunerPopup';
 import { CloudCog } from 'lucide-react';
 import ReviewModal from '../ReviewModal';
+import { toggleEffectsOffcanvas, setActiveTabs, setShowEffectsLibrary, setShowEffectsOffcanvas } from '../../Redux/Slice/effects.slice';
 
 const getTopHeaderColors = (isDark) => ({
   // Background colors
@@ -240,6 +241,10 @@ const TopHeader = () => {
     const allMusic = useSelector((state) => state?.music?.allmusic || []);
     const getTrackType = useSelector((state) => selectStudioState(state).newtrackType);
     // console.log(".... > ", allMusic);
+
+    // Effects visibility/enablement per track type
+    const effectsAllowedTrackTypes = ['Keys', 'Bass & 808', 'Guitar', 'Guitar/Bass Amp', 'Synth', 'Orchestral'];
+    const isEffectsAllowed = effectsAllowedTrackTypes.includes(getTrackType);
     
     const navigate = useNavigate();
     useEffect(() => {
@@ -1454,51 +1459,31 @@ const TopHeader = () => {
                                         </p>
                                     )}
                                 </Menu.Item>
-                                <Menu.Item>
-                                    {({ active }) => (
-                                        <div className="relative" onMouseEnter={() => handleSubmenuToggle('effects', true)} onMouseLeave={() => handleSubmenuToggle('effects', false)}>
-                                            <p 
-                                                className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 border-t cursor-pointer transition-colors"
-                                                style={{ 
-                                                    borderTopColor: colors.menuBorder,
-                                                    color: colors.textSecondary
-                                                }}
-                                                onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
-                                                onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                                            >
-                                                <Effect className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
-                                                <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('effects')}</span>
-                                                <MdOutlineKeyboardArrowRight className="text-[12px] md600:text-[16px] lg:text-[20px] ms-auto" style={{ color: colors.iconSecondary }} />
-                                            </p>
-
-                                            {showSubmenu.effects && (
-                                                <div 
-                                                    className="absolute left-full px-2 py-2 gap-2 md600:px-3 lg:px-4 md:py-2 top-0 z-50 w-40 md600:w-48 lg:w-56 lg:mt-0 shadow-lg outline-none text-nowrap rounded-md"
-                                                    style={{ backgroundColor: colors.menuBackground }}
+                                {isEffectsAllowed && (
+                                    <Menu.Item>
+                                        {({ active }) => (
+                                            <div className="relative" onMouseEnter={() => handleSubmenuToggle('effects', true)} onMouseLeave={() => handleSubmenuToggle('effects', false)}>
+                                                <p 
+                                                    className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 border-t cursor-pointer transition-colors"
+                                                    style={{ 
+                                                        borderTopColor: colors.menuBorder,
+                                                        color: colors.textSecondary
+                                                    }}
+                                                    onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
+                                                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                                                    onClick={() => {
+                                                        dispatch(setShowEffectsOffcanvas(true));
+                                                        dispatch(setActiveTabs('Effects'));
+                                                        dispatch(setShowEffectsLibrary(true));
+                                                    }}
                                                 >
-                                                    <Link 
-                                                        to="/sidebar/voice-transform" 
-                                                        className="block cursor-pointer text-[10px] md600:text-[12px] lg:text-[14px] px-2 py-2 rounded transition-colors"
-                                                        style={{ color: colors.textSecondary }}
-                                                        onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
-                                                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                                                    >
-                                                        Voice Transform
-                                                    </Link>
-                                                    <Link 
-                                                        to="/sidebar/advanced-voice-transform" 
-                                                        className="block cursor-pointer text-[10px] md600:text-[12px] lg:text-[14px] px-2 py-2 rounded transition-colors"
-                                                        style={{ color: colors.textSecondary }}
-                                                        onMouseEnter={(e) => e.target.style.backgroundColor = colors.menuItemHover}
-                                                        onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
-                                                    >
-                                                        Advanced Voice Transform
-                                                    </Link>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </Menu.Item>
+                                                    <Effect className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }} />
+                                                    <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('effects')}</span>
+                                                </p>
+                                            </div>
+                                        )}
+                                    </Menu.Item>
+                                )}
                                 {/* <Menu.Item>
                                     {({ active }) => (
                                         <p 
