@@ -15,6 +15,8 @@ const { createMusic, getAllMusic, deleteMusic, updateMusic, restoreMusic, perman
 const { uploadAudio } = require('../helper/uploadController');
 const { getMusicByIdPublic } = require('../controller/publicController');
 const { createReview, getReviewsByMusicId, getReviewsByUserId, updateReview, deleteReview } = require('../controller/reviewController');
+const { createPremium, getPremiums, getPremiumById } = require('../controller/premiumController'); // Updated import
+
 
 // auth Routes
 
@@ -38,13 +40,13 @@ indexRoutes.put('/resetPassword', resetPassword);
 
 // music Routes
 
-indexRoutes.post('/createMusic',auth, createMusic);
-indexRoutes.get('/allMusic',auth, getAllMusic);
+indexRoutes.post('/createMusic', auth, createMusic);
+indexRoutes.get('/allMusic', auth, getAllMusic);
 indexRoutes.put('/updateMusic/:id', auth, updateMusic);
 indexRoutes.delete('/deleteMusic/:id', auth, deleteMusic);
 indexRoutes.put('/restoreMusic/:id', auth, restoreMusic);
 indexRoutes.delete('/permanentDeleteMusic/:id', auth, permanentDeleteMusic);
-indexRoutes.post('/restoreAllMusic', auth, restoreAllMusic);       
+indexRoutes.post('/restoreAllMusic', auth, restoreAllMusic);
 indexRoutes.delete('/permanentDeleteAll', auth, permanentDeleteAllMusic);
 indexRoutes.put('/renameMusic/:id', auth, renameMusic);
 indexRoutes.put('/moveMusicToFolder/:id', auth, moveMusicToFolder);
@@ -105,5 +107,12 @@ indexRoutes.get('/reviews/music/:musicId', getReviewsByMusicId);
 indexRoutes.get('/reviews/user', auth, getReviewsByUserId);
 indexRoutes.put('/reviews/:reviewId', auth, updateReview);
 indexRoutes.delete('/reviews/:reviewId', auth, deleteReview);
+
+
+// Premium Routes
+indexRoutes.post('/createPremium', createPremium);
+indexRoutes.get('/premiums', getPremiums);
+indexRoutes.get('/premiums/:id', getPremiumById);
+
 
 module.exports = indexRoutes
