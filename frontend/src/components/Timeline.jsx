@@ -133,6 +133,7 @@ const Timeline = () => {
   const newSynthRef = useRef(null);
   const pianoSynthRef = useRef(null);
   const orchestralSynthRef = useRef(null);
+  const drumSynthRef = useRef(null);
 
   const { zoomLevel } = useSelector(selectGridSettings);
   const drumRecordedData = useSelector((state) => selectStudioState(state)?.drumRecordedData || []);
@@ -1126,6 +1127,123 @@ const Timeline = () => {
     }
   }, [trackEffectsState, globalActiveEffects]);
 
+  // Initialize Drum synth for timeline playback
+  const initializeDrumSynth = useCallback((instrumentId) => {
+    const baseConfig = {
+      oscillator: { 
+        type: "sine",
+        detune: 0
+      },
+      envelope: {
+        attack: 0.001,
+        decay: 0.4,
+        sustain: 0,
+        release: 0.2
+      },
+      filterEnvelope: {
+        attack: 0.001,
+        decay: 0.3,
+        sustain: 0,
+        release: 0.1,
+        baseFrequency: 150,
+        octaves: 4
+      },
+      volume: 0
+    };
+
+    // Customize synth based on drum instrument type
+    switch (instrumentId) {
+      case 'kick_drum':
+        baseConfig.oscillator.type = "sine";
+        baseConfig.envelope.attack = 0.001;
+        baseConfig.envelope.decay = 0.5;
+        baseConfig.envelope.sustain = 0;
+        baseConfig.envelope.release = 0.3;
+        baseConfig.filterEnvelope.baseFrequency = 120;
+        baseConfig.filterEnvelope.octaves = 5;
+        break;
+      case 'snare_drum':
+        baseConfig.oscillator.type = "square";
+        baseConfig.envelope.attack = 0.001;
+        baseConfig.envelope.decay = 0.2;
+        baseConfig.envelope.sustain = 0;
+        baseConfig.envelope.release = 0.1;
+        baseConfig.filterEnvelope.baseFrequency = 200;
+        break;
+      case 'hi_hat_closed':
+        baseConfig.oscillator.type = "square";
+        baseConfig.envelope.attack = 0.001;
+        baseConfig.envelope.decay = 0.1;
+        baseConfig.envelope.sustain = 0;
+        baseConfig.envelope.release = 0.05;
+        baseConfig.filterEnvelope.baseFrequency = 250;
+        baseConfig.volume = -3;
+        break;
+      case 'hi_hat_open':
+        baseConfig.oscillator.type = "sawtooth";
+        baseConfig.envelope.attack = 0.001;
+        baseConfig.envelope.decay = 0.3;
+        baseConfig.envelope.sustain = 0.1;
+        baseConfig.envelope.release = 0.15;
+        baseConfig.filterEnvelope.baseFrequency = 280;
+        baseConfig.volume = -2;
+        break;
+      case 'tom_high':
+        baseConfig.oscillator.type = "sine";
+        baseConfig.envelope.attack = 0.001;
+        baseConfig.envelope.decay = 0.25;
+        baseConfig.envelope.sustain = 0;
+        baseConfig.envelope.release = 0.1;
+        baseConfig.filterEnvelope.baseFrequency = 180;
+        break;
+      case 'tom_mid':
+        baseConfig.oscillator.type = "sine";
+        baseConfig.envelope.attack = 0.001;
+        baseConfig.envelope.decay = 0.3;
+        baseConfig.envelope.sustain = 0;
+        baseConfig.envelope.release = 0.15;
+        baseConfig.filterEnvelope.baseFrequency = 150;
+        break;
+      case 'tom_low':
+        baseConfig.oscillator.type = "sine";
+        baseConfig.envelope.attack = 0.001;
+        baseConfig.envelope.decay = 0.35;
+        baseConfig.envelope.sustain = 0;
+        baseConfig.envelope.release = 0.2;
+        baseConfig.filterEnvelope.baseFrequency = 120;
+        break;
+      case 'cymbal_crash':
+        baseConfig.oscillator.type = "sawtooth";
+        baseConfig.envelope.attack = 0.01;
+        baseConfig.envelope.decay = 0.6;
+        baseConfig.envelope.sustain = 0.2;
+        baseConfig.envelope.release = 0.4;
+        baseConfig.filterEnvelope.baseFrequency = 300;
+        baseConfig.volume = -1;
+        break;
+      case 'cowbell':
+        baseConfig.oscillator.type = "triangle";
+        baseConfig.envelope.attack = 0.005;
+        baseConfig.envelope.decay = 0.2;
+        baseConfig.envelope.sustain = 0;
+        baseConfig.envelope.release = 0.1;
+        baseConfig.filterEnvelope.baseFrequency = 220;
+        break;
+      case 'clap':
+        baseConfig.oscillator.type = "square";
+        baseConfig.envelope.attack = 0.002;
+        baseConfig.envelope.decay = 0.15;
+        baseConfig.envelope.sustain = 0;
+        baseConfig.envelope.release = 0.08;
+        baseConfig.filterEnvelope.baseFrequency = 210;
+        break;
+      default:
+        break;
+    }
+
+    return new Tone.MonoSynth(baseConfig);
+  }, []);
+
   // Play Piano note with effects for timeline playback
   const playMainPianoNote = useCallback(async (midiNumber, duration, instrumentId, trackId, recordedEffects = null) => {
     try {
@@ -1222,6 +1340,40 @@ const Timeline = () => {
       console.error('Error playing NewSynth note on timeline:', e);
     }
   }, [initializeNewSynthSynth, applyBass808Effects]);
+  
+  // Play Drum note with effects for timeline playback
+  const playDrumNote = useCallback(async (midiNumber, duration, instrumentId, trackId, recordedEffects = null) => {
+    try {
+      if (Tone.context.state !== 'running') {
+        await Tone.start();
+      }
+
+      const freshSynth = initializeDrumSynth(instrumentId);
+      applyBass808Effects(freshSynth, trackId, recordedEffects);
+
+      const noteName = Tone.Frequency(midiNumber, "midi").toNote();
+      freshSynth.triggerAttackRelease(noteName, duration, Tone.now());
+
+      drumSynthRef.current = freshSynth;
+
+      setTimeout(() => {
+        try {
+          if (freshSynth && freshSynth.disposed !== true) {
+            freshSynth.dispose();
+          }
+          if (drumSynthRef.current === freshSynth) {
+            drumSynthRef.current = null;
+          }
+        } catch (e) {
+          console.warn('Cleanup error for Drum synth:', e);
+        }
+      }, (duration + 0.5) * 1000);
+
+    } catch (error) {
+      console.error('Error playing Drum note on timeline:', error);
+      console.error('Error stack:', error.stack);
+    }
+  }, [initializeDrumSynth, applyBass808Effects, trackEffectsState, globalActiveEffects]);
 
   // Initialize Orchestral synth for timeline playback (Tone.js PolySynth)
   const initializeOrchestralSynth = useCallback(() => {
@@ -1556,6 +1708,15 @@ const Timeline = () => {
     };
   }, []);
 
+  // Cleanup Drum synth on unmount
+  useEffect(() => {
+    return () => {
+      if (drumSynthRef.current) {
+        drumSynthRef.current.dispose();
+      }
+    };
+  }, []);
+
   const playPianoNote = useCallback(async (midiNumber, duration = 0.5, instrumentId, trackId, recordedEffects = null) => {
     try {
       // Check if this is a Bass & 808 instrument that should use Tone.js
@@ -1580,6 +1741,25 @@ const Timeline = () => {
         instrumentId === 'electric_bass' ||
         instrumentId === 'synth_bass' ||
         instrumentId === 'sub_bass'
+      );
+
+      // Add this inside the playPianoNote callback
+      const isDrum = instrumentId && (
+        instrumentId.includes('drum') ||
+        instrumentId.includes('Drum') ||
+        instrumentId === 'kick_drum' ||
+        instrumentId === 'snare_drum' ||
+        instrumentId === 'hi_hat_closed' ||
+        instrumentId === 'hi_hat_open' ||
+        instrumentId === 'tom_high' ||
+        instrumentId === 'tom_mid' ||
+        instrumentId === 'tom_low' ||
+        instrumentId === 'cymbal_crash' ||
+        instrumentId === 'cowbell' ||
+        instrumentId === 'clap' ||
+        instrumentId === 'percussion' ||
+        instrumentId.includes('cymbal') ||
+        instrumentId.includes('tom')
       );
       
       // console.log('🎵 playPianoNote debug:');
@@ -1680,6 +1860,9 @@ const Timeline = () => {
       } else if (isGuitar) {
         // Use Tone.js for Guitar playback with the same effects chain
         await playGuitarNote(midiNumber, duration, instrumentId, trackId, recordedEffects);
+      } else if (isDrum) {
+        // Use Tone.js for Guitar playback with the same effects chain
+        await playDrumNote(midiNumber, duration, instrumentId, trackId, recordedEffects);
       } else if (isNewSynth) {
         // Use Tone.js for NewSynth orchestral instruments with effects
         await playNewSynthNote(midiNumber, duration, instrumentId, trackId, recordedEffects);
@@ -1714,7 +1897,7 @@ const Timeline = () => {
     } catch (error) {
       console.error("Error playing piano note:", error);
     }
-  }, [getInstrument, playBass808Note, playGuitarNote, playNewSynthNote, playOrchestralNote, playMainPianoNote]);
+  }, [getInstrument, playBass808Note, playGuitarNote, playDrumNote, playNewSynthNote, playOrchestralNote, playMainPianoNote]);
   
   // Cleanup refs on unmount
   useEffect(() => {

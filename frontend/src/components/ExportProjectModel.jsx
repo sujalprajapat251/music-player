@@ -19,6 +19,7 @@ export default function ExportPopup({ open, onClose }) {
 
   // Get tracks from Redux store
   const tracks = useSelector((state) => selectStudioState(state)?.tracks || []);
+  console.log("tracks", tracks);
 
   // Audio export formats
   const audioFormats = [
@@ -184,8 +185,9 @@ const handleMusicType = async (type) => {
     
     try {
       // Filter tracks that have audio clips with valid URLs
-      const tracksWithAudio = tracks.filter(track =>
-        track && track.audioClips && track.audioClips.length > 0 && track.audioClips[0].url
+      const tracksWithAudio = tracks.filter(track => {
+        console.log("tracksWithAudio", track)
+        return track && track.audioClips && track.audioClips.length > 0 && track.audioClips[0].url}
       );
       
       if (tracksWithAudio.length === 0) {
