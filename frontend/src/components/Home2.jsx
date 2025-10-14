@@ -167,7 +167,7 @@ const Home2 = () => {
             const id = created?._id || created?.id;
             if (id) {
                 dispatch(setCurrentMusic(created));
-                navigate(`/sidebar/timeline/${id}`);
+                navigate('/sidebar/timeline', { state: { projectId: id } });
             } else {
                 navigate('/sidebar/timeline');
             }

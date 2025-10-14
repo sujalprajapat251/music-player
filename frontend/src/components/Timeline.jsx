@@ -4772,14 +4772,36 @@ const Timeline = () => {
 
   // ************************************************** Get the project data API **************************************************
 
-  const { id: projectId } = useParams();
+  const { id: routeProjectId } = useParams();
   const allMusic = useSelector((state) => state.music?.allmusic || []);
   const musicLoading = useSelector((state) => state.music?.loading || false);
+  // Support id from location.state when URL does not include it
+  const projectId = (location?.state && location.state.projectId) ? String(location.state.projectId) : (routeProjectId ? String(routeProjectId) : null);
 
-  // Open New Project modal when visiting timeline with an id
+  // Ensure browser Back from timeline goes to /project (avoid navigating to another track)
   useEffect(() => {
-    if (projectId) {
-      setShowNewProjectModal(true);
+    const handlePopState = () => {
+      try {
+        navigate('/project', { replace: true });
+      } catch (_) {}
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [navigate]);
+
+  // Open New Project modal only once per project id (avoid reopening on refresh)
+  useEffect(() => {
+    if (!projectId) return;
+    try {
+      const storageKey = `newProjectModalShown:${projectId}`;
+      const hasShown = typeof window !== 'undefined' && window.localStorage.getItem(storageKey);
+      if (!hasShown) {
+        setShowNewProjectModal(true);
+        window.localStorage.setItem(storageKey, '1');
+      }
+    } catch (_) {
+      // If localStorage is unavailable, fallback to showing once per mount
+      setShowNewProjectModal((prev) => prev || true);
     }
   }, [projectId]);
 

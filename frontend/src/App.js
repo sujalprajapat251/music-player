@@ -110,7 +110,7 @@ function App() {
   const { store, persistor } = configureStore();
   return (
   <>
-    {isLoading && (
+    {/* {isLoading && (
       <div className="spinner">
         <div className="r1"></div>
         <div className="r2"></div>
@@ -118,7 +118,7 @@ function App() {
         <div className="r4"></div>
         <div className="r5"></div>
       </div>
-    )}
+    )} */}
     <Provider store={store}>
       <SnackbarProvider
         maxSnack={3}

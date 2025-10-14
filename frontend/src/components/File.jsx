@@ -218,7 +218,8 @@ const File = () => {
             {music.map((mus) => (
                 <div key={mus._id} className='mb-3 bg-white p-3 rounded'>
                     <Link 
-                        to={`/sidebar/timeline/${mus._id}`}
+                        to={`/sidebar/timeline`}
+                        state={{ projectId: mus._id }}
                         className='text-blue-600 hover:underline font-medium'
                     >
                         {mus.name}
