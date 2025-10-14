@@ -8,7 +8,7 @@ import { setRecordingAudio, setPianoNotes, setPianoRecordingClip, setSelectedIns
 import OpenInstrumentModal from './OpenInstrumentsModel';
 import PianoRolls from './PianoRolls';
 import * as Tone from "tone";
-import { setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
+import { setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setActiveTabs, setShowEffectsOffcanvas } from '../Redux/Slice/effects.slice';
 import { selectStudioState } from '../Redux/rootReducer';
 import PricingModel from './PricingModel';
 import svg808 from '../Images/808-icon.svg'
@@ -285,6 +285,14 @@ const BassAnd808 = ({ onClose }) => {
             setActiveTab(getActiveTabs);
         }
     }, [getActiveTabs]);
+
+    // Reset tab to Instruments on mount and clear global override
+    useEffect(() => {
+        setActiveTab('Instruments');
+        dispatch(setActiveTabs(''));
+        dispatch(setShowEffectsOffcanvas(false));
+        dispatch(setShowEffectsLibrary(false));
+    }, []);
 
     const pianoNotesRef = useRef([]);
     useEffect(() => { pianoNotesRef.current = existingPianoNotes || []; }, [existingPianoNotes]);

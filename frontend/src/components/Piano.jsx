@@ -22,7 +22,7 @@ import { setRecordingAudio, setPianoNotes, setPianoRecordingClip, setSelectedIns
 import PianoRolls from './PianoRolls';
 import OpenInstrumentModal from './OpenInstrumentsModel';
 import * as Tone from "tone";
-import { setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas } from '../Redux/Slice/effects.slice';
+import { setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setActiveTabs, setShowEffectsOffcanvas } from '../Redux/Slice/effects.slice';
 import { selectStudioState } from '../Redux/rootReducer';
 import PricingModel from './PricingModel';
 import SimplePianoBar from './SimplePianoBar';
@@ -338,6 +338,15 @@ const Pianodemo = ({ onClose }) => {
       setActiveTab(getActiveTabs);
     }
   }, [getActiveTabs]);
+
+  // Ensure default tab is Instruments when visiting this page
+  useEffect(() => {
+    setActiveTab('Instruments');
+    // Clear global override so reopening page doesn't stick to Effects
+    dispatch(setActiveTabs(''));
+    dispatch(setShowEffectsOffcanvas(false));
+    dispatch(setShowEffectsLibrary(false));
+  }, []);
 
   const pianoNotesRef = useRef([]);
   useEffect(() => { pianoNotesRef.current = existingPianoNotes || []; }, [existingPianoNotes]);

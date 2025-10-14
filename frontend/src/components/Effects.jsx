@@ -109,8 +109,17 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
     useEffect(() => {
         return () => {
             audioEffectsPlayer.stopEffect();
+            // Clear any global tab override when effects UI unmounts
+            try { dispatch(setActiveTabs('')); } catch (e) {}
         };
     }, []);
+
+    // If the effects panel is closed, reset global active tab so instrument pages open on Instruments
+    useEffect(() => {
+        if (!showOffcanvas) {
+            dispatch(setActiveTabs(''));
+        }
+    }, [showOffcanvas, dispatch]);
 
     const handleCategoryClick = (categoryName) => {
         if (selectedCategory === categoryName) {

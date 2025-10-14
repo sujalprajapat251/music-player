@@ -24,7 +24,7 @@ import OpenInstrumentModal from './OpenInstrumentsModel';
 import PianoRolls from './PianoRolls';
 import * as Tone from "tone";
 import Effects2 from './Effects2';
-import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsTwo } from '../Redux/Slice/effects.slice';
+import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsTwo, setActiveTabs, setShowEffectsOffcanvas } from '../Redux/Slice/effects.slice';
 import { selectStudioState } from '../Redux/rootReducer';
 import PricingModel from './PricingModel';
 import subscription from "../Images/subscriptionIcon.svg";
@@ -367,6 +367,14 @@ const Guitar = ({ onClose }) => {
             setActiveTab(getActiveTabs);
         }
     }, [getActiveTabs]);
+
+    // Reset tab to Instruments on mount and clear global override
+    useEffect(() => {
+        setActiveTab('Instruments');
+        dispatch(setActiveTabs(''));
+        dispatch(setShowEffectsOffcanvas(false));
+        dispatch(setShowEffectsLibrary(false));
+    }, []);
 
     const pianoNotesRef = useRef([]);
     useEffect(() => { pianoNotesRef.current = existingPianoNotes || []; }, [existingPianoNotes]);

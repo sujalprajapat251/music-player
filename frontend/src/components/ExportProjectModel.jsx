@@ -774,7 +774,7 @@ const convertAudioBufferToMP3 = async (audioBuffer) => {
               </div>
 
               {/* Export Mode Selection - Only show for WAV and OGG formats */}
-              {audioFormats.some(f => f.name === "WAV" || f.name === "OGG") && (
+              {/* {audioFormats.some(f => f.name === "WAV" || f.name === "OGG") && (
                 <div className="px-5 pb-3">
                   <div className="flex justify-between items-center bg-neutral-200 dark:bg-neutral-800 p-3 rounded-lg">
                     <span className="text-sm font-medium">{t('exportMode')}:</span>
@@ -800,7 +800,7 @@ const convertAudioBufferToMP3 = async (audioBuffer) => {
                     </div>
                   </div>
                 </div>
-              )}
+              )} */}
 
               {/* Audio Formats */}
               <div className="px-5 pb-5 space-y-3">

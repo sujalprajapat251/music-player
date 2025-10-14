@@ -24,7 +24,7 @@ import PianoRolls from './PianoRolls';
 import OpenInstrumentModal from './OpenInstrumentsModel';
 import * as Tone from "tone";
 import Effects2 from './Effects2';
-import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsTwo } from '../Redux/Slice/effects.slice';
+import { removeEffect, updateEffectParameter, setShowEffectsLibrary, addEffect, toggleEffectsOffcanvas, setShowEffectsTwo, setActiveTabs, setShowEffectsOffcanvas } from '../Redux/Slice/effects.slice';
 import { selectStudioState } from '../Redux/rootReducer';
 import PricingModel from './PricingModel';
 import subscription from "../Images/subscriptionIcon.svg";
@@ -250,6 +250,14 @@ const Pianodemo = ({ onClose }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [pricingModalOpen, setPricingModalOpen] = useState(false);
   const pianoSectionsRef = useRef(null);
+
+  // Always default to Instruments when opening this page and ensure Effects UI is closed
+  useEffect(() => {
+    setActiveTab('Instruments');
+    dispatch(setActiveTabs(''));
+    dispatch(setShowEffectsOffcanvas(false));
+    dispatch(setShowEffectsLibrary(false));
+  }, []);
 
   // Responsive piano configuration
   const { getNoteRange, getKeyboardShortcuts } = useResponsivePiano();
