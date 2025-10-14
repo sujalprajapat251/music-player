@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { setMusicTypeExtention } from "../Redux/Slice/sound.slice";
 import { selectStudioState } from "../Redux/rootReducer";
 import { useI18n } from "../Utils/i18n";
+import * as Tone from "tone";
 
 export default function ExportPopup({ open, onClose }) {
   const [activeTab, setActiveTab] = useState("audio");
@@ -17,9 +18,15 @@ export default function ExportPopup({ open, onClose }) {
   const dispatch = useDispatch();
   const { t } = useI18n();
 
-  // Get tracks from Redux store
+  // Get tracks and recorded audio data from Redux store
   const tracks = useSelector((state) => selectStudioState(state)?.tracks || []);
+  const pianoRecord = useSelector((state) => selectStudioState(state)?.pianoRecord);
+  const drumRecordedData = useSelector((state) => selectStudioState(state)?.drumRecordedData || []);
+  const pianoRecordingClip = useSelector((state) => selectStudioState(state)?.pianoRecordingClip);
+  const drumRecordingClip = useSelector((state) => selectStudioState(state)?.drumRecordingClip);
   console.log("tracks", tracks);
+  console.log("pianoRecord", pianoRecord);
+  console.log("drumRecordedData", drumRecordedData);
 
   // Audio export formats
   const audioFormats = [
@@ -184,21 +191,36 @@ const handleMusicType = async (type) => {
     setIsExporting(true);
     
     try {
-      // Filter tracks that have audio clips with valid URLs
+      // Enhanced filtering to include all types of audio content
       const tracksWithAudio = tracks.filter(track => {
-        console.log("tracksWithAudio", track)
-        return track && track.audioClips && track.audioClips.length > 0 && track.audioClips[0].url}
-      );
+        console.log("Analyzing track:", track.name, track);
+        
+        // Check for traditional audio clips with URLs
+        const hasAudioClips = track && track.audioClips && track.audioClips.length > 0 && 
+          track.audioClips.some(clip => clip.url);
+        
+        // Check for piano notes that can be synthesized
+        const hasPianoNotes = track && track.pianoNotes && track.pianoNotes.length > 0;
+        // Check for drum notes that can be synthesized
+        const hasDrumNotes = track && track.drumNotes && track.drumNotes.length > 0;
+        const hasAnyAudio = hasAudioClips || hasPianoNotes || hasDrumNotes;
+        
+        return hasAnyAudio;
+      });
       
-      if (tracksWithAudio.length === 0) {
-        console.error("No tracks with valid audio clips found");
+      // Also check for global recorded audio data
+      const hasGlobalPianoRecord = pianoRecord && pianoRecord instanceof Blob;
+      const hasGlobalDrumRecord = drumRecordedData && drumRecordedData.length > 0;
+      
+      if (tracksWithAudio.length === 0 && !hasGlobalPianoRecord && !hasGlobalDrumRecord) {
+        console.error("No tracks with valid audio content found");
         setIsExporting(false);
         alert("No audio tracks available for export");
         return;
       }
       
       // Always combine all tracks into a single MP3 file
-      await downloadTracksCombinedMP3(tracksWithAudio);
+      await downloadTracksCombinedMP3Enhanced(tracksWithAudio, pianoRecord, drumRecordedData, pianoRecordingClip, drumRecordingClip);
     } catch (error) {
       console.error("Error in MP3 export:", error);
       alert("Error exporting MP3: " + error.message);
@@ -304,6 +326,280 @@ const downloadTracksIndividually = async (tracksWithAudio) => {
     alert(`Successfully exported ${downloadCount} tracks!`);
   } else {
     alert("No tracks were exported. Please check your audio data.");
+  }
+};
+
+// Enhanced function to combine and download tracks as MP3 using Tone.js (includes all recorded audio types)
+const downloadTracksCombinedMP3Enhanced = async (tracksWithAudio, globalPianoRecord, globalDrumRecordedData, pianoRecordingClip, drumRecordingClip) => {
+  try {
+    // Start Tone.js context
+    await Tone.start();
+    
+    // Calculate the total duration needed
+    let maxEndTime = 0;
+    const audioSources = [];
+
+    
+    // Process global piano recording if available
+    if (globalPianoRecord && globalPianoRecord instanceof Blob) {
+      try {
+        const url = URL.createObjectURL(globalPianoRecord);
+        const player = new Tone.Player(url);
+        
+        // Find the piano recording clip to get proper timing
+        let startTime = 0;
+        if (pianoRecordingClip && pianoRecordingClip.start !== undefined) {
+          startTime = pianoRecordingClip.start;
+        }
+        
+        await player.load();
+        const endTime = startTime + player.buffer.duration;
+        maxEndTime = Math.max(maxEndTime, endTime);
+        
+        audioSources.push({
+          player: player,
+          startTime: startTime,
+          endTime: endTime,
+          duration: player.buffer.duration,
+          volume: 0.8,
+          name: 'Piano Recording',
+          trackId: 'global-piano',
+          type: 'globalPianoRecording'
+        });
+      } catch (error) {
+        console.error(`Error loading global piano recording:`, error);
+      }
+    }
+    
+    // Process global drum recording if available
+    if (globalDrumRecordedData && globalDrumRecordedData.length > 0) {
+      try {
+        const synth = new Tone.Synth({
+          oscillator: { type: 'triangle' },
+          envelope: { attack: 0.01, decay: 0.3, sustain: 0.6, release: 1.0 }
+        });
+        
+        // Find the drum recording clip to get proper timing
+        let startTime = 0;
+        if (drumRecordingClip && drumRecordingClip.start !== undefined) {
+          startTime = drumRecordingClip.start;
+        }
+        
+        // Calculate total duration
+        const endTimes = globalDrumRecordedData.map(hit => (hit.currentTime || 0) + (hit.decay || 0.2));
+        const totalDuration = Math.max(1, Math.max(...endTimes) + 0.25);
+        const endTime = startTime + totalDuration;
+        maxEndTime = Math.max(maxEndTime, endTime);
+        
+        audioSources.push({
+          synth: synth,
+          drumData: globalDrumRecordedData,
+          startTime: startTime,
+          endTime: endTime,
+          duration: totalDuration,
+          volume: 0.8,
+          name: 'Drum Recording',
+          trackId: 'global-drum',
+          type: 'globalDrumRecording'
+        });
+      } catch (error) {
+        console.error(`Error preparing global drum recording:`, error);
+      }
+    }
+    
+    // Load all audio clips and calculate timing
+    for (const track of tracksWithAudio) {
+      console.log(`Processing track: ${track.name}`);
+      
+      // Process traditional audio clips
+      if (track.audioClips && track.audioClips.length > 0) {
+        for (const clip of track.audioClips) {
+          if (clip.url) {
+            try {
+              const player = new Tone.Player(clip.url);
+              await player.load();
+              
+              // Get start time from multiple sources
+              let startTime = 0;
+              
+              // Priority: pianoClip.start > clip.startTime > 0
+              if (track.pianoClip && track.pianoClip.start !== undefined) {
+                startTime = track.pianoClip.start;
+              } else if (clip.startTime !== undefined) {
+                startTime = clip.startTime;
+              }
+              
+              // Calculate end time
+              const endTime = startTime + player.buffer.duration;
+              maxEndTime = Math.max(maxEndTime, endTime);
+              
+              audioSources.push({
+                player: player,
+                startTime: startTime,
+                endTime: endTime,
+                duration: player.buffer.duration,
+                volume: track.volume ? track.volume / 100 : 0.8,
+                name: track.name || 'Unknown Track',
+                trackId: track.id,
+                type: 'audioClip'
+              });
+            } catch (error) {
+              console.error(`Error loading audio clip ${clip.name}:`, error);
+            }
+          }
+        }
+      }
+      
+      // Process piano notes (synthesize audio)
+      if (track.pianoNotes && track.pianoNotes.length > 0) {
+        try {
+          const synth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: 'sine' },
+            envelope: { attack: 0.02, decay: 0.3, sustain: 0.6, release: 1.0 }
+          });
+          
+          let startTime = 0;
+          if (track.pianoClip && track.pianoClip.start !== undefined) {
+            startTime = track.pianoClip.start;
+          }
+          
+          // Calculate total duration
+          const endTimes = track.pianoNotes.map(note => (note.startTime || 0) + (note.duration || 0.5));
+          const totalDuration = Math.max(1, Math.max(...endTimes) + 0.25);
+          const endTime = startTime + totalDuration;
+          maxEndTime = Math.max(maxEndTime, endTime);
+          
+          audioSources.push({
+            synth: synth,
+            pianoNotes: track.pianoNotes,
+            startTime: startTime,
+            endTime: endTime,
+            duration: totalDuration,
+            volume: track.volume ? track.volume / 100 : 0.8,
+            name: `${track.name || 'Track'} - Piano Notes`,
+            trackId: track.id,
+            type: 'pianoNotes'
+          });
+        } catch (error) {
+          console.error(`Error preparing piano notes from track ${track.name}:`, error);
+        }
+      }
+      
+      // Process drum notes (synthesize audio)
+      if (track.drumNotes && track.drumNotes.length > 0) {
+        try {
+          const synth = new Tone.Synth({
+            oscillator: { type: 'triangle' },
+            envelope: { attack: 0.01, decay: 0.3, sustain: 0.6, release: 1.0 }
+          });
+          
+          let startTime = 0;
+          if (track.drumClip && track.drumClip.start !== undefined) {
+            startTime = track.drumClip.start;
+          }
+          
+          // Calculate total duration
+          const endTimes = track.drumNotes.map(hit => (hit.currentTime || 0) + (hit.decay || 0.2));
+          const totalDuration = Math.max(1, Math.max(...endTimes) + 0.25);
+          const endTime = startTime + totalDuration;
+          maxEndTime = Math.max(maxEndTime, endTime);
+          
+          audioSources.push({
+            synth: synth,
+            drumNotes: track.drumNotes,
+            startTime: startTime,
+            endTime: endTime,
+            duration: totalDuration,
+            volume: track.volume ? track.volume / 100 : 0.8,
+            name: `${track.name || 'Track'} - Drum Notes`,
+            trackId: track.id,
+            type: 'drumNotes'
+          });
+        } catch (error) {
+          console.error(`Error preparing drum notes from track ${track.name}:`, error);
+        }
+      }
+    }
+    
+    if (audioSources.length === 0) {
+      throw new Error("No valid audio sources could be loaded");
+    }
+    
+    // Create offline rendering context
+    const totalDuration = Math.ceil(maxEndTime) + 1; // Add 1 second buffer
+    const offlineContext = new Tone.OfflineContext(2, totalDuration, Tone.context.sampleRate);
+    
+    // Schedule all audio sources
+    audioSources.forEach((audioSource, index) => {
+      
+      if (audioSource.player) {
+        // Handle Tone.js Player
+        audioSource.player.volume.value = Tone.gainToDb(audioSource.volume);
+        audioSource.player.toDestination();
+        audioSource.player.start(`+${audioSource.startTime}`);
+      } else if (audioSource.synth) {
+        // Handle synthesized audio
+        audioSource.synth.volume.value = Tone.gainToDb(audioSource.volume);
+        audioSource.synth.toDestination();
+        
+        if (audioSource.pianoNotes) {
+          // Schedule piano notes
+          audioSource.pianoNotes.forEach(note => {
+            const noteStartTime = audioSource.startTime + (note.startTime || 0);
+            const noteName = Tone.Frequency(note.midiNumber || 60, 'midi').toNote();
+            const duration = note.duration || 0.5;
+            audioSource.synth.triggerAttackRelease(noteName, duration, `+${noteStartTime}`);
+          });
+        } else if (audioSource.drumNotes) {
+          // Schedule drum hits
+          audioSource.drumNotes.forEach(hit => {
+            const hitStartTime = audioSource.startTime + (hit.currentTime || 0);
+            const frequency = hit.freq || 200;
+            const duration = hit.decay || 0.2;
+            audioSource.synth.triggerAttackRelease(frequency, duration, `+${hitStartTime}`);
+          });
+        } else if (audioSource.drumData) {
+          // Schedule global drum data
+          audioSource.drumData.forEach(hit => {
+            const hitStartTime = audioSource.startTime + (hit.currentTime || 0);
+            const frequency = hit.freq || 200;
+            const duration = hit.decay || 0.2;
+            audioSource.synth.triggerAttackRelease(frequency, duration, `+${hitStartTime}`);
+          });
+        }
+      }
+    });
+    
+    // Render the mixed audio
+    const renderedBuffer = await Tone.Offline(() => {
+      // All scheduling is done above
+    }, totalDuration);
+    
+    
+    // Convert to WAV format
+    const wav = audioBufferToWav(renderedBuffer);
+    const blob = new Blob([wav], { type: 'audio/wav' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create descriptive filename
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const filename = `Mixed_${audioSources.length}_AudioSources_${timestamp}.wav`;
+    
+    // Download the combined track
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    URL.revokeObjectURL(url);
+    setIsExporting(false);
+    
+  } catch (error) {
+    console.error("Error combining tracks:", error);
+    setIsExporting(false);
+    alert("Error combining tracks: " + error.message);
   }
 };
 
