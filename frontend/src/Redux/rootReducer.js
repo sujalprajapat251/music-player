@@ -21,6 +21,7 @@ import uiReducer from './Slice/ui.slice';
 import audioSettingsReducer from './Slice/audioSettings.slice';
 import undoRedoReducer from './Slice/undoRedo.slice';
 import reviewsReducer from './Slice/reviews.slice';
+import premiumReducer from './Slice/PremiumSlice';
 // Remove duplicate import since effectsReducer is already imported above
 
 
@@ -149,4 +150,5 @@ export const rootReducer = combineReducers({
     audioSettings: audioSettingsReducer,
     undoRedo: undoRedoReducer,
     reviews: reviewsReducer,
+    premium : premiumReducer
 });

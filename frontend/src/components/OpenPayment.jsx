@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from "framer-motion";
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 import visa from "../Images/visa.png";
 import mastercard from "../Images/mastercard.png";
@@ -17,8 +19,90 @@ import hdfc from "../Images/hdfc.png";
 import sbi from "../Images/sbi.png";
 import axis from "../Images/axis.png";
 import icici from "../Images/icici.png";
+import axios from 'axios';
 
-export default function OpenPayment({ backToPricing }) {
+// Initialize Stripe with your publishable key
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_KEY || "pk_test_51R8wmeQ0DPGsMRTSHTci2XmwYmaDLRqeSSRS2hNUCU3xU7ikSAvXzSI555Rxpyf9SsTIgI83PXvaaQE3pJAlkMaM00g9BdsrOB");
+
+// Stripe Card Element Component
+const StripeCardForm = ({ amount, selectedPlan, onPaymentSuccess, onPaymentError }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const CARD_OPTIONS = {
+    style: {
+      base: {
+        fontSize: "16px",
+        color: "#000",
+        "::placeholder": {
+          color: "#aab7c4",
+        },
+        padding: "10px 12px",
+      },
+      invalid: {
+        color: "#9e2146",
+      },
+    },
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsProcessing(true);
+
+    if (!stripe || !elements) {
+      onPaymentError("Stripe is not loaded properly");
+      setIsProcessing(false);
+      return;
+    }
+
+    try {
+      // 1. Create payment intent on backend
+      const { data } = await axios.post("/api/payment", {
+        amount: amount * 100, // Convert to smallest currency unit (paise for INR)
+      });
+
+      const clientSecret = data.clientSecret;
+
+      // 2. Confirm card payment
+      const cardElement = elements.getElement(CardElement);
+      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+        },
+      });
+
+      if (error) {
+        onPaymentError(error.message);
+      } else if (paymentIntent.status === "succeeded") {
+        onPaymentSuccess("Payment Successful!");
+      }
+    } catch (err) {
+      onPaymentError(err.message || "Payment failed");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-4">
+      <div className="bg-gray-100 dark:bg-[#2c2c2c] border border-[#333] rounded-md p-3 mb-4">
+        <CardElement options={CARD_OPTIONS} />
+      </div>
+      {/* <button
+        type="submit"
+        disabled={!stripe || isProcessing}
+        className="w-full bg-white border border-black text-black font-semibold py-3 rounded-md shadow-lg hover:scale-105 transition-transform disabled:opacity-50"
+      >
+        {isProcessing ? "Processing..." : `Pay ₹${amount || selectedPlan?.amount || selectedPlan?.price || 0}`}
+      </button> */}
+    </form>
+  );
+};
+
+export default function OpenPayment({ backToPricing, selectedPlan }) {
+
+  console.log('OpenPayment', selectedPlan);
   
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
@@ -29,6 +113,8 @@ export default function OpenPayment({ backToPricing }) {
   const [upiId, setUpiId] = useState("");
   const [upiDomain, setUpiDomain] = useState("@okicici");
   const [searchBank, setSearchBank] = useState("");
+  const [paymentMessage, setPaymentMessage] = useState("");
+  const [paymentError, setPaymentError] = useState("");
 
   const upiDomains = ["@okicici", "@oksbi", "@okaxis", "@okhdfcbank"];
 
@@ -88,6 +174,16 @@ export default function OpenPayment({ backToPricing }) {
     bank.name.toLowerCase().includes(searchBank.toLowerCase())
   );
 
+  const handlePaymentSuccess = (message) => {
+    setPaymentMessage(message);
+    setPaymentError("");
+  };
+
+  const handlePaymentError = (error) => {
+    setPaymentError(error);
+    setPaymentMessage("");
+  };
+
   return (
     <div className="min-h-[80vh] flex items-center justify-center bg-white dark:bg-[#1f1f1f] p-4">
       {/* Modal container like the screenshot */}
@@ -104,7 +200,7 @@ export default function OpenPayment({ backToPricing }) {
               >
                 ‹
               </button>
-              <h3 className="text-lg font-medium">Production &amp; Vocals</h3>
+              <h3 className="text-lg font-medium">Production &amp; Vocals - {selectedPlan?.premiumType || selectedPlan?.name || "Plan"}</h3>
             </div>
 
             <button
@@ -116,6 +212,7 @@ export default function OpenPayment({ backToPricing }) {
             </button>
           </div>
 
+{  console.log('OpenPayment', selectedPlan)}
           {/* First box: Credit Card / Debit Card (expanded) */}
           <div
             className={`rounded-md border px-5 py-4 mb-4 transition-all duration-300 ${
@@ -237,6 +334,28 @@ export default function OpenPayment({ backToPricing }) {
                   />
                 </div>
               </div>
+              
+              {/* Stripe Payment Form */}
+              <Elements stripe={stripePromise}>
+                <StripeCardForm 
+                  amount={selectedPlan?.amount || selectedPlan?.price || 0} 
+                  selectedPlan={selectedPlan}
+                  onPaymentSuccess={handlePaymentSuccess}
+                  onPaymentError={handlePaymentError}
+                />
+              </Elements>
+              
+              {/* Payment Messages */}
+              {paymentMessage && (
+                <div className="mt-4 p-3 bg-green-100 text-green-700 rounded-md">
+                  {paymentMessage}
+                </div>
+              )}
+              {paymentError && (
+                <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-md">
+                  {paymentError}
+                </div>
+              )}
               </>
             )}
           </div>
@@ -379,14 +498,17 @@ export default function OpenPayment({ backToPricing }) {
 
           {/* Centered Next button (white) like in image */}
           <div className="mt-12 mb-14 pri-next-btn text-center">
+            {console.log('OpenPayment', selectedPlan)}
             <button
               className="bg-white border border-black text-black font-semibold py-3 px-24 md:px-40 rounded-md shadow-lg hover:scale-105 transition-transform"
               onClick={() => {
                 // handle next
-                console.log('Next clicked');
+                console.log('Selected Plan:', selectedPlan);
               }}
             >
-              Next
+              {selectedPlan && (selectedPlan.amount || selectedPlan.price) 
+                ? `Pay ₹${selectedPlan.amount || selectedPlan.price || 0}` 
+                : "Next"}
             </button>
           </div>
         </div>

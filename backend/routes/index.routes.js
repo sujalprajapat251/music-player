@@ -16,7 +16,7 @@ const { uploadAudio } = require('../helper/uploadController');
 const { getMusicByIdPublic } = require('../controller/publicController');
 const { createReview, getReviewsByMusicId, getReviewsByUserId, updateReview, deleteReview } = require('../controller/reviewController');
 const { createPremium, getPremiums, getPremiumById, deletePremium, updatePremium } = require('../controller/premiumController'); // Updated import
-
+const { paymentCreate } = require('../controller/PaymentController');
 
 // auth Routes
 
@@ -115,5 +115,9 @@ indexRoutes.get('/premiums', getPremiums);
 indexRoutes.get('/premiums/:id', getPremiumById);
 indexRoutes.delete('/deletepremiums/:id',  deletePremium);
 indexRoutes.put('/updatepremiums/:id',  updatePremium);
+
+
+// USER PAYMENT
+indexRoutes.post('/payment',  paymentCreate);
 
 module.exports = indexRoutes
