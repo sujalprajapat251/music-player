@@ -487,7 +487,7 @@ const TopHeader = () => {
     };
 
     const handleOpenProject = (project) => {
-        if (!project?._id) return; 
+        if (!project?._id) return;
         dispatch(setCurrentMusic(project));
         setIsActiveMenu("");
         setShowSubmenu(prev => ({ ...prev, openrecentfolder: false }));
@@ -621,17 +621,22 @@ const TopHeader = () => {
         }
     };
 
+    const currentEffects = useSelector((state) => state.effects.activeEffects);
+
     const drumRecordedData = useSelector((state) => selectStudioState(state).drumRecordedData);
 
     const handleSaved = async () => {
         setSaveStatus('saving');
         try {
         const user = sessionStorage.getItem("userId");
-    
+        const serializableEffects = currentEffects.map(effect => {
+            const { component, ...rest } = effect;
+            return rest;
+        });
         // Build new tracks with a blob URL clip rendered from each track's pianoNotes/drumData (if present)
         const serializedTracks = await Promise.all((tracks || [])?.map(async (t) => {
             const track = { ...t };
-            
+            track.effects = serializableEffects;
             // Handle piano notes
             const pianoNotes = Array.isArray(t.pianoNotes) ? t.pianoNotes : [];
             if (pianoNotes.length > 0) {
