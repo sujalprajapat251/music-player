@@ -198,7 +198,7 @@ const menu = [
   { id: '1/16 triplet', label: '1/16 triplet' },
 ];
 
-const DrumPadMachine = ({ onClose }) => {
+const DrumPadMachine = ({ onClose, initialView }) => {
   const [isIconDropdownOpen, setIsIconDropdownOpen] = useState(false);
   const [isOpen2, setIsOpen2] = useState(false);
   const menuDropdownRef = useRef(null);
@@ -229,6 +229,18 @@ const DrumPadMachine = ({ onClose }) => {
   const [selectedPad, setSelectedPad] = useState(null);
   const [padEffects, setPadEffects] = useState({});
   const [activeView, setActiveView] = useState('Instruments'); // 'instrument', 'patterns', 'piano', 'effects'
+  // Accept an initialView prop to allow external components to open a specific tab (e.g., 'Patterns')
+  useEffect(() => {
+    if (initialView) {
+      setActiveView(initialView);
+    }
+  }, [initialView]);
+
+  // Expose the current active view on window so other UI (Sidebar) can
+  // make decisions based on the actual active tab (Patterns vs Instruments)
+  useEffect(() => {
+    try { window.__drumActiveView = { view: activeView, ts: Date.now() }; } catch (_) {}
+  }, [activeView]);
   const audioContextRef = useRef(null);
   const reverbBufferRef = useRef(null);
   const lastPlayTime = useRef({});

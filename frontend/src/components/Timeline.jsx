@@ -106,6 +106,7 @@ const Timeline = () => {
   const [micStream, setMicStream] = useState(null);
   const [micAccessDenied, setMicAccessDenied] = useState(false);
   const [showDrum, setShowDrum] = useState(false);
+  const [drumInitialView, setDrumInitialView] = useState(null);
   const [showMicVoice, setShowMicVoice] = useState(false);
   const [showGuitar, setShowGuitar] = useState(false);
   const [showOrchestral, setShowOrchestral] = useState(false);
@@ -321,8 +322,45 @@ const Timeline = () => {
 
       // Clear the trackDeleted flag
       dispatch(clearTrackDeleted());
+      // Hide Drum/Pattern UI when a track is deleted
+      try { setShowDrum(false); setDrumInitialView(null); } catch (_) {}
     }
   }, [trackDeleted, players, dispatch, stopAllPianoNotes]);
+
+  // Clear the initialView once Drum has been opened so it doesn't persist
+  useEffect(() => {
+    if (drumInitialView && showDrum) {
+      // Clear after a short tick to allow Drum to read the prop
+      const t = setTimeout(() => setDrumInitialView(null), 50);
+      return () => clearTimeout(t);
+    }
+  }, [drumInitialView, showDrum]);
+
+  // Listen for toggle events from Sidebar (e.g., clicking the drum icon or R badge)
+  useEffect(() => {
+    const onToggle = (e) => {
+      try {
+        // Record who requested the toggle and which view they requested so other
+        // UI (like Sidebar) can make contextual decisions.
+        try { window.__lastDrumOpen = { source: e?.detail?.source || 'event', view: e?.detail?.initialView || null, ts: Date.now() }; } catch(_) {}
+        const next = e?.detail?.open;
+        const initial = e?.detail?.initialView;
+        if (typeof next === 'boolean') {
+          setShowDrum(next);
+          if (initial) setDrumInitialView(initial);
+        } else {
+          // If not specified, just toggle
+          setShowDrum(prev => {
+            const n = !prev;
+            if (n && e?.detail?.initialView) setDrumInitialView(e.detail.initialView);
+            return n;
+          });
+        }
+      } catch (err) {}
+    };
+    window.addEventListener('timeline:drumToggle', onToggle);
+    return () => window.removeEventListener('timeline:drumToggle', onToggle);
+  }, []);
 
   const tracks = useSelector((state) => selectStudioState(state)?.tracks || []);
 
@@ -4335,9 +4373,31 @@ const Timeline = () => {
       dispatch(addTrack(newTrack));
       dispatch(setCurrentTrackId(newTrackId));
       dispatch(setTrackType('Drums & Machines'));
+      // Open the Drum / Pattern UI when creating a pattern beatmaker track
+      try {
+        setDrumInitialView('Patterns');
+        setShowDrum(true);
+        // Mark that the Drum panel was opened via the Add Track -> Patterns flow
+        try { window.__lastDrumOpen = { source: 'addTrack', view: 'Patterns', ts: Date.now() }; } catch (_) {}
+      } catch (err) {
+        // setShowDrum might not be available in some scopes; swallow silently
+        // (keeps behavior safe in case of rewrites)
+      }
     }
     // Add more actions as needed
   };
+
+  // Hide pattern/drum UI when drum tracks are removed or none exist
+  useEffect(() => {
+    try {
+      const hasDrumTrack = tracks.some(t => (t.type || '').toString().toLowerCase().includes('drum') || (t.name || '').toString().toLowerCase().includes('drums'));
+      if (!hasDrumTrack) {
+        setShowDrum(false);
+      }
+    } catch (err) {
+      // ignore
+    }
+  }, [tracks]);
 
   // eslint-disable-next-line no-unused-vars
   const handleDrumRecordingComplete = async (blob) => {
@@ -5445,7 +5505,21 @@ const Timeline = () => {
         <div className="absolute top-[60px] right-[0] -translate-x-1/2 z-30">
           <div
             className={`w-[40px] h-[40px] flex items-center justify-center rounded-full cursor-pointer ${showOffcanvas ? 'bg-[#FFFFFF]' : 'bg-[#3C3A40]'}`}
-            onClick={() => { const next = !showOffcanvas; setShowOffcanvas(next); if (showEffectsOffcanvas) dispatch(toggleEffectsOffcanvas()); dispatch(setShowLoopLibrary(next)); }}
+            onClick={() => {
+              const next = !showOffcanvas;
+              setShowOffcanvas(next);
+              if (showEffectsOffcanvas) dispatch(toggleEffectsOffcanvas());
+              dispatch(setShowLoopLibrary(next));
+              try {
+                // When opening the offcanvas via this image toggle, also open the Drum instrument panel
+                setShowDrum(next);
+                if (next) {
+                  // Ensure the Drum panel opens into the Instruments tab (so instrument stays visible)
+                  setDrumInitialView('Instruments');
+                  dispatch(setTrackType('Drums & Machines'));
+                }
+              } catch (err) { /* ignore */ }
+            }}
           >
             {showOffcanvas ? (
               <img src={offceblack} alt="Off canvas" />
@@ -5629,7 +5703,7 @@ const Timeline = () => {
             transition={{ duration: 0.5, ease: "easeInOut" }}
             className="fixed bottom-0 left-0 right-0 bg-white shadow-lg rounded-t-lg p-4 z-50"
           >
-            <Drum onClose={() => { setShowDrum(false); dispatch(setTrackType(null)); }} />
+              <Drum initialView={drumInitialView} onClose={() => { setShowDrum(false); dispatch(setTrackType(null)); }} />
           </motion.div>
         )}
       </AnimatePresence>

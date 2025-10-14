@@ -127,7 +127,23 @@ const Sidebar2 = () => {
 
     if (isDrumTrack) {
       const isOpen = openTrackType === 'Drums & Machines' && currentTrackId === track.id;
+      const nextOpen = !isOpen;
       dispatch(setTrackType(isOpen ? null : 'Drums & Machines'));
+      try {
+        // Decide which sub-view to request. If the Drum panel is currently
+        // showing Patterns, preserve Patterns when clicking the sidebar icon.
+        // Otherwise, open Instruments.
+        let desiredInitial = 'Instruments';
+        try {
+          const active = window.__drumActiveView;
+          if (active && active.view === 'Patterns') {
+            desiredInitial = 'Patterns';
+          }
+        } catch (_) {}
+
+        const ev = new CustomEvent('timeline:drumToggle', { detail: { open: nextOpen, initialView: nextOpen ? desiredInitial : null, trackId: track.id, source: 'sidebar' } });
+        window.dispatchEvent(ev);
+      } catch (err) {}
       return;
     }
 
