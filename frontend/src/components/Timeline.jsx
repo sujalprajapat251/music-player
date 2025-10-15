@@ -143,6 +143,7 @@ const Timeline = () => {
   const drumRecordingClip = useSelector((state) => selectStudioState(state).drumRecordingClip || null);
   const patternDrumPlayback = useSelector((state) => selectStudioState(state)?.patternDrumPlayback || {});
   const patternDrumEvents = useSelector((state) => selectStudioState(state)?.patternDrumEvents || {});
+  const selectedDrumInstrument = useSelector((state) => selectStudioState(state)?.selectedDrumInstrument || 'Classic 808');
   // console.log("FFFFFFFFFFFFFFFFFF",drumRecordedData)
 
   const isPlaying = useSelector((state) => selectStudioState(state)?.isPlaying || false);
@@ -169,17 +170,12 @@ const Timeline = () => {
       ? drumRecordingClip
       : null;
 
+  const playDrumSoundRef = useRef(null);
   const playRecordedDrumHit = useCallback((drumHit) => {
     try {
-      if (!drumHit || !Number.isFinite(drumHit.freq) || !Number.isFinite(drumHit.decay) || !drumHit.type) return;
-      const audioContext = getDrumAudioContext(timelineDrumAudioCtxRef);
-      if (audioContext.state === 'suspended') {
-        audioContext.resume().catch(() => { });
-      }
-      const padData = { type: drumHit.type, freq: drumHit.freq, decay: drumHit.decay };
-      const sourceNode = createSynthSound(padData, audioContext);
-      if (!sourceNode) return;
-      sourceNode.connect(audioContext.destination);
+      if (!drumHit) return;
+      const fn = playDrumSoundRef.current;
+      if (typeof fn === 'function') fn(drumHit);
     } catch (_) { }
   }, []);
 
@@ -4506,18 +4502,21 @@ const Timeline = () => {
     try {
       if (!drumData || !drumData.sound) return;
 
-      const audioContext = getAudioContext();
+      // Prefer the same effects chain used for other instruments (Tone.js)
+      const selectedMachine = drumMachineTypes.find(dm => dm.name === selectedDrumInstrument);
+      const recordedMachine = drumMachineTypes.find(dm => dm.name === drumData.drumMachine);
+      const drumMachine = selectedMachine || recordedMachine || drumMachineTypes[0];
 
-      // Ensure audio context is running
-      if (audioContext.state === 'suspended') {
-        audioContext.resume().catch(console.error);
-      }
+      const mappedPad = (drumMachine?.pads || []).find(p => p.id === drumData.padId)
+        || (drumMachine?.pads || []).find(p => p.sound === drumData.sound);
 
-      // Find the drum machine type based on the recorded data
-      const drumMachine = drumMachineTypes.find(dm => dm.name === drumData.drumMachine) || drumMachineTypes[0];
-
-      // Create pad data from drum recording
-      const padData = {
+      const padData = mappedPad ? {
+        id: mappedPad.id,
+        sound: mappedPad.sound,
+        freq: mappedPad.freq,
+        decay: mappedPad.decay,
+        type: mappedPad.type
+      } : {
         id: drumData.padId,
         sound: drumData.sound,
         freq: drumData.freq,
@@ -4525,52 +4524,72 @@ const Timeline = () => {
         type: drumData.type
       };
 
-      // Create synthetic sound using the same logic as Drum.jsx
-      const synthSource = createSynthSound(padData, audioContext);
+      // Map pad to a drum instrument id for initializeDrumSynth
+      const soundName = String(padData.sound || '').toLowerCase();
+      let instrumentId = 'percussion';
+      if (soundName.includes('kick')) instrumentId = 'kick_drum';
+      else if (soundName.includes('snare')) instrumentId = 'snare_drum';
+      else if (soundName.includes('hat') && soundName.includes('open')) instrumentId = 'hi_hat_open';
+      else if (soundName.includes('hat')) instrumentId = 'hi_hat_closed';
+      else if (soundName.includes('tom') && soundName.includes('high')) instrumentId = 'tom_high';
+      else if (soundName.includes('tom') && soundName.includes('mid')) instrumentId = 'tom_mid';
+      else if (soundName.includes('tom') && soundName.includes('low')) instrumentId = 'tom_low';
+      else if (soundName.includes('crash') || soundName.includes('cymbal')) instrumentId = 'cymbal_crash';
+      else if (soundName.includes('clap')) instrumentId = 'clap';
+      else if (soundName.includes('cowbell')) instrumentId = 'cowbell';
 
-      // Create audio nodes for effects
-      const gainNode = audioContext.createGain();
-      const panNode = audioContext.createStereoPanner();
-      const dryGainNode = audioContext.createGain();
-      const wetGainNode = audioContext.createGain();
-      const convolver = audioContext.createConvolver();
+      // Use Tone.js synth with shared effects chain
+      const freshSynth = initializeDrumSynth(instrumentId);
+      applyBass808Effects(freshSynth, drumData.trackId, null);
 
-      // Set up reverb
-      const reverbBuffer = createReverbBuffer();
-      convolver.buffer = reverbBuffer;
+      const hz = Number(padData.freq) || 200;
+      const duration = Math.max(0.05, Number(padData.decay) || 0.2);
+      freshSynth.triggerAttackRelease(hz, duration, Tone.now());
 
-      // Set up gain (volume) - use default values
-      gainNode.gain.setValueAtTime(0.7, audioContext.currentTime);
-
-      // Set up pan (center)
-      panNode.pan.setValueAtTime(0, audioContext.currentTime);
-
-      // Set up reverb mix (default 20%)
-      dryGainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
-      wetGainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-
-      // Apply drum machine type effects
-      const effectsOutput = applyTypeEffects(synthSource, drumMachine.effects);
-
-      // Connect nodes with type effects
-      effectsOutput.connect(gainNode);
-      gainNode.connect(panNode);
-
-      // Dry path
-      panNode.connect(dryGainNode);
-      dryGainNode.connect(audioContext.destination);
-
-      // Wet path (reverb)
-      panNode.connect(convolver);
-      convolver.connect(wetGainNode);
-      wetGainNode.connect(audioContext.destination);
-
-      // console.log('Playing drum sound on timeline:', drumData.sound, 'from', drumData.drumMachine);
+      // Cleanup the synth after note finishes
+      setTimeout(() => {
+        try { if (freshSynth && freshSynth.disposed !== true) freshSynth.dispose(); } catch { }
+      }, (duration + 0.3) * 1000);
     } catch (error) {
       console.error('Error playing drum sound on timeline:', error);
+      // Fallback to Web Audio path if Tone.js fails
+      try {
+        const audioContext = getAudioContext();
+        if (audioContext.state === 'suspended') {
+          audioContext.resume().catch(console.error);
+        }
+        const selectedMachine = drumMachineTypes.find(dm => dm.name === selectedDrumInstrument) || drumMachineTypes[0];
+        const mappedPad = (selectedMachine?.pads || []).find(p => p.id === drumData.padId)
+          || (selectedMachine?.pads || []).find(p => p.sound === drumData.sound);
+        const padData = mappedPad || drumData;
+        const synthSource = createSynthSound(padData, audioContext);
+        const gainNode = audioContext.createGain();
+        const panNode = audioContext.createStereoPanner();
+        const dryGainNode = audioContext.createGain();
+        const wetGainNode = audioContext.createGain();
+        const convolver = audioContext.createConvolver();
+        convolver.buffer = createReverbBuffer();
+        gainNode.gain.setValueAtTime(0.7, audioContext.currentTime);
+        panNode.pan.setValueAtTime(0, audioContext.currentTime);
+        dryGainNode.gain.setValueAtTime(0.8, audioContext.currentTime);
+        wetGainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+        const effectsOutput = applyTypeEffects(synthSource, selectedMachine.effects);
+        effectsOutput.connect(gainNode);
+        gainNode.connect(panNode);
+        panNode.connect(dryGainNode);
+        dryGainNode.connect(audioContext.destination);
+        panNode.connect(convolver);
+        convolver.connect(wetGainNode);
+        wetGainNode.connect(audioContext.destination);
+      } catch (_) { }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [createReverbBuffer, applyTypeEffects]);
+  }, [createReverbBuffer, applyTypeEffects, selectedDrumInstrument, initializeDrumSynth, applyBass808Effects]);
+
+  // Keep ref updated with latest playDrumSound implementation
+  useEffect(() => {
+    playDrumSoundRef.current = playDrumSound;
+  }, [playDrumSound]);
 
   const playedDrumHitsRef = useRef(new Set());
 
