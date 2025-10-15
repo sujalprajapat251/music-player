@@ -325,13 +325,14 @@ const Pianodemo = ({ onClose }) => {
 
   const getActiveTabs = useSelector((state) => state.effects.activeTabs);
 
-    // Sync the track's nametype with the selected instrument's display name unless user renamed (locked)
-    useEffect(() => {
+  // Sync the track's nametype only for Keys tracks, to avoid overwriting other track labels
+  useEffect(() => {
       const instrumentName = INSTRUMENTS.find(inst => inst.id === selectedInstrument)?.name || 'Piano';
-      if (currentTrackId && !currentTrack?.nametypeLocked) {
+      const isKeysTrack = currentTrack?.name === 'Keys' || currentTrack?.type === 'piano' || currentTrack?.type === 'Keys';
+      if (isKeysTrack && currentTrackId && !currentTrack?.nametypeLocked) {
         dispatch(updateTrack({ id: currentTrackId, updates: { nametype: instrumentName } }));
       }
-    }, [selectedInstrument, currentTrack?.nametypeLocked, dispatch]);
+    }, [selectedInstrument, currentTrack?.nametypeLocked, currentTrack?.name, currentTrack?.type, currentTrackId, dispatch]);
 
   useEffect(() => {
     if (getActiveTabs) {

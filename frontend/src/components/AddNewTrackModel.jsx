@@ -15,6 +15,7 @@ import { getNextTrackColor } from "../Utils/colorUtils";
 import { selectStudioState } from "../Redux/rootReducer";
 import PricingModel from './PricingModel'
 import { useI18n } from "../Utils/i18n";
+import { setActiveTabs, setShowEffectsLibrary, setShowEffectsOffcanvas } from "../Redux/Slice/effects.slice";
 
 const instrumentOptions = [
   {
@@ -81,6 +82,7 @@ const AddNewTrackModel = ({ onClose, onOpenLoopLibrary }) => {
     const newTrack = {
       id: Date.now(),
       name: option.label,
+      nametype: option.label,
       iconKey: option.icon,
       height: trackHeight,
       type: option.label,
@@ -92,6 +94,10 @@ const AddNewTrackModel = ({ onClose, onOpenLoopLibrary }) => {
     if (defaultInstrumentByType[option.label]) {
       dispatch(setSelectedInstrument(defaultInstrumentByType[option.label]));
     }
+    // Always reset UI to Instruments and close any Effects panels when adding an instrument track
+    dispatch(setActiveTabs('Instruments'));
+    dispatch(setShowEffectsOffcanvas(false));
+    dispatch(setShowEffectsLibrary(false));
     onClose();
   };
 

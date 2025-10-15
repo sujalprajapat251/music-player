@@ -41,7 +41,7 @@ import { useTheme } from '../../Utils/ThemeContext';
 import { useI18n } from '../../Utils/i18n';
 import { ReactComponent as Close } from '../../Images/closeicon.svg';
 import midi from '../../Images/midi.svg';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { setIsSongSection, setMusicalTypingEnabled } from '../../Redux/Slice/ui.slice';
 import { setSoundQuality } from '../../Redux/Slice/audioSettings.slice';
@@ -494,6 +494,8 @@ const TopHeader = ({onAction, onClose}) => {
         }, 10);
     };
 
+    const location = useLocation();
+
     const handleOpenProject = (project) => {
         if (!project?._id) return;
         dispatch(setCurrentMusic(project));
@@ -504,7 +506,13 @@ const TopHeader = ({onAction, onClose}) => {
                 key: 'Escape', code: 'Escape', keyCode: 27, which: 27, bubbles: true
             }));
         }, 10);
-        navigate(`/sidebar/timeline/${project._id}`);
+        const to = `/sidebar/timeline`;
+        const navOptions = { state: { projectId: project._id } };
+        if (location?.pathname?.includes('/sidebar/timeline')) {
+            navigate(to, { ...navOptions, replace: true });
+        } else {
+            navigate(to, navOptions);
+        }
     }
     
     const handleExportModal = () => {
@@ -536,7 +544,13 @@ const TopHeader = ({onAction, onClose}) => {
                 document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', keyCode: 27, which: 27, bubbles: true }));
             } catch (_) {}
         }, 10);
-        navigate(`/sidebar/timeline/${newId}`);
+        const to = `/sidebar/timeline`;
+        const navOptions = { state: { projectId: newId } };
+        if (location?.pathname?.includes('/sidebar/timeline')) {
+            navigate(to, { ...navOptions, replace: true });
+        } else {
+            navigate(to, navOptions);
+        }
     }
 
     const bpm = useSelector((state) => selectStudioState(state)?.bpm || 120);

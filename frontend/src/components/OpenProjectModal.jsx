@@ -245,13 +245,24 @@ const drawWaveform = useCallback((musicId, idx) => {
 
   const isOpenDisabled = selectedProject === null || filteredProjects.length === 0;
 
+  // Open immediately (used by row click and Open button)
+  const openProjectDirect = (project) => {
+    if (!project?._id) return;
+    try { onSelect?.(project); } catch (_) {}
+    try { onClose?.(); } catch (_) {}
+    const to = `/sidebar/timeline/${project._id}`;
+    if (window?.location?.pathname?.includes('/sidebar/timeline')) {
+      navigate(to, { replace: true });
+    } else {
+      navigate(to);
+    }
+  };
+
   // Handle Open button click
   const handleOpen = () => {
     if (selectedProject !== null && filteredProjects[selectedProject]) {
       const project = filteredProjects[selectedProject];
-      onSelect?.(project);
-      onClose();
-      navigate(`/sidebar/timeline/${project._id}`);
+      openProjectDirect(project);
     }
   };
 
