@@ -4196,6 +4196,18 @@ const Timeline = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedTrackId, selectedClipId, handleContextMenuAction, tracks, dispatch]);
 
+  // Allow external components (e.g., TopHeader Edit menu) to trigger actions
+  useEffect(() => {
+    const handleExternalAction = (e) => {
+      const action = e?.detail?.action;
+      if (!action) return;
+      if (!selectedTrackId) return;
+      handleContextMenuAction(action, selectedTrackId, selectedClipId);
+    };
+    window.addEventListener('timeline:action', handleExternalAction);
+    return () => window.removeEventListener('timeline:action', handleExternalAction);
+  }, [selectedTrackId, selectedClipId, handleContextMenuAction]);
+
   const renderGridLines = useMemo(() => {
     // Early return if required dependencies are not available
     if (!timelineContainerRef.current || !audioDuration || tracks.length === 0) {
@@ -4849,21 +4861,23 @@ const Timeline = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [navigate]);
 
-  // Open New Project modal only once per project id (avoid reopening on refresh)
+  // Always open New Project modal when flagged via navigation state
+  // Clear the flag immediately to avoid reopening on refresh/back
   useEffect(() => {
-    if (!projectId) return;
+    const isNewProject = location?.state?.isNewProject === true;
+    if (!isNewProject) return;
+
+    setShowNewProjectModal(true);
+
+    // Clear navigation state so it doesn't persist on refresh
     try {
-      const storageKey = `newProjectModalShown:${projectId}`;
-      const hasShown = typeof window !== 'undefined' && window.localStorage.getItem(storageKey);
-      if (!hasShown) {
-        setShowNewProjectModal(true);
-        window.localStorage.setItem(storageKey, '1');
-      }
+      navigate('.', { replace: true, state: {} });
     } catch (_) {
-      // If localStorage is unavailable, fallback to showing once per mount
-      setShowNewProjectModal((prev) => prev || true);
+      try {
+        window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+      } catch (_) {}
     }
-  }, [projectId]);
+  }, [location?.state?.isNewProject]);
 
   useEffect(() => {
     // If navigated with a demo sound from Home2, create a track and clip immediately
@@ -5418,7 +5432,7 @@ const Timeline = () => {
                       timelineWidthPerSecond={timelineWidthPerSecond}
                       frozen={track.frozen}
                       onContextMenu={handleContextMenu}
-                      onSelect={(clip) => setSelectedClipId(clip.id)}
+                      onSelect={(clip) => { setSelectedClipId(clip.id); setSelectedTrackId(track.id); dispatch(setCurrentTrackId(track.id)); }}
                       selectedClipId={selectedClipId}
                       color={track.color}
                       bpm={120}              // Set your track's BPM
@@ -5538,15 +5552,15 @@ const Timeline = () => {
               setShowOffcanvas(next);
               if (showEffectsOffcanvas) dispatch(toggleEffectsOffcanvas());
               dispatch(setShowLoopLibrary(next));
-              try {
-                // When opening the offcanvas via this image toggle, also open the Drum instrument panel
-                setShowDrum(next);
-                if (next) {
-                  // Ensure the Drum panel opens into the Instruments tab (so instrument stays visible)
-                  setDrumInitialView('Instruments');
-                  dispatch(setTrackType('Drums & Machines'));
-                }
-              } catch (err) { /* ignore */ }
+              // try {
+              //   // When opening the offcanvas via this image toggle, also open the Drum instrument panel
+              //   setShowDrum(next);
+              //   if (next) {
+              //     // Ensure the Drum panel opens into the Instruments tab (so instrument stays visible)
+              //     setDrumInitialView('Instruments');
+              //     dispatch(setTrackType('Drums & Machines'));
+              //   }
+              // } catch (err) { /* ignore */ }
             }}
           >
             {showOffcanvas ? (
