@@ -166,9 +166,9 @@ const RangeSlider = ({ min = 0, max = 100, step = 1, initialValue = 0, label = "
             <div className="flex justify-between items-center">
                 <div className="flex gap-1 items-center">
                     <img src={subscription} alt="subscription" className="w-4 h-4" />
-                    <label className="text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] text-[#FFFFFF]">{label}</label>
+                    <label className="text-black dark:text-white text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] text-[#FFFFFF]">{label}</label>
                 </div>
-                <span className="text-[10px] md600:text-[12px] md:text-[14px] text-[#FFFFFF99] outline-none focus:outline-none">{value}{unit}</span>
+                <span className="text-black dark:text-white text-[10px] md600:text-[12px] md:text-[14px] text-[#FFFFFF99] outline-none focus:outline-none">{value}{unit}</span>
             </div>
 
             <div className="relative">
@@ -1921,7 +1921,7 @@ const Guitar = ({ onClose }) => {
                                                             <div className="flex justify-between items-center mb-2">
                                                                 <div className="flex gap-1 items-center">
                                                                     <img src={subscription} alt="subscription" className="w-4 h-4" />
-                                                                    <p className="text-white text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[15px]">Auto Chord</p>
+                                                                    <p className="text-black dark:text-white text-[8px] md600:text-[10px] md:text-[12px] lg:text-[14px] 2xl:text-[15px]">Auto Chord</p>
                                                                 </div>
                                                                 <IoClose className="text-[8px] sm:text-[10px] md600:text-[12px] md:text-[16px] lg:text-[20px] 2xl:text-[22px] text-secondary-light/60 dark:text-secondary-dark/60 cursor-pointer" onClick={() => setAutoChords(false)} />
                                                             </div>
