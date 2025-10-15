@@ -63,6 +63,8 @@ import TunerPopup from '../TunerPopup';
 import { CloudCog } from 'lucide-react';
 import ReviewModal from '../ReviewModal';
 import { toggleEffectsOffcanvas, setActiveTabs, setShowEffectsLibrary, setShowEffectsOffcanvas } from '../../Redux/Slice/effects.slice';
+import { Scissors } from "lucide-react";
+
 
 const getTopHeaderColors = (isDark) => ({
   // Background colors
@@ -121,7 +123,8 @@ const getTopHeaderColors = (isDark) => ({
   shareText: isDark ? '#ffffff' : '#141414',
 });
 
-const TopHeader = () => {
+const TopHeader = ({onAction, onClose}) => {
+    
     const dispatch = useDispatch();
     const { t, language, setLanguage } = useI18n();
     const isSongSection = useSelector((state) => state.ui.isSongSection);
@@ -1097,6 +1100,14 @@ const TopHeader = () => {
         }
     };
 
+
+    const handleItemClick = (action) => {
+        if (onAction) {
+            console.log(onAction);
+            onAction(action);
+        }
+        onClose();
+    };
     return (
         <>
             <ExportPopup open={exportProjectModal} onClose={() => setExportProjectModal(false)} />
@@ -1406,15 +1417,42 @@ const TopHeader = () => {
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
+                                        // <p 
+                                        //     onClick={() => handleItemClick('cut')}
+                                        //     className={`mt-1 px-3 pb-2 pt-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 border-t outline-none transition-colors`}
+                                        //     style={{ 
+                                        //         backgroundColor: active ? colors.menuItemHover : 'transparent',
+                                        //         borderTopColor: colors.menuBorder,
+                                        //         color: colors.textSecondary
+                                        //     }}
+                                        // >
+                                        //     <Scissors 
+                                        //         className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' 
+                                        //         style={{ color: colors.iconSecondary }} 
+                                        //     />
+                                        //     <span className='ps-5 md600:ps-7 lg:ps-8 text-[10px] md600:text-[12px] lg:text-[14px]'>{t('cut')}</span>
+                                        //     <p className="text-[10px] md:text-[12px] ms-auto">Ctrl+X</p>
+                                        // </p>
                                         <p 
-                                            className={`mt-1 px-3 pb-2 pt-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 border-t outline-none transition-colors`}
+                                            onClick={() => handleItemClick('cut')}
+                                            className={`mt-1 px-3 pb-2 pt-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 
+                                                        flex items-center md600:gap-3 border-t outline-none transition-colors`}
                                             style={{ 
                                                 backgroundColor: active ? colors.menuItemHover : 'transparent',
                                                 borderTopColor: colors.menuBorder,
                                                 color: colors.textSecondary
                                             }}
-                                        >
-                                            <span className='ps-5 md600:ps-7 lg:ps-8 text-[10px] md600:text-[12px] lg:text-[14px]'>{t('cut')}</span>
+                                            >
+                                            <div className="flex items-center gap-3">
+                                                <Scissors 
+                                                className="w-4 h-4 md600:w-5 md600:h-5 lg:w-5 lg:h-5"
+                                                style={{ color: colors.iconSecondary }}
+                                                />
+                                                <span className="text-[10px] md600:text-[12px] lg:text-[14px]">
+                                                {t('cut')}
+                                                </span>
+                                            </div>
+                                            
                                             <p className="text-[10px] md:text-[12px] ms-auto">Ctrl+X</p>
                                         </p>
                                     )}
