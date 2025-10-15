@@ -102,8 +102,9 @@ const updatePremium = async (req, res) => {
     try {
         const { id } = req.params;
         const { amount, currency, premiumType, period, features } = req.body;
-
+console.log('amount', amount, currency, premiumType, period, features,id);
         // Validate required fields
+        
         if (!amount || !premiumType || !period || !features || features.length === 0) {
             return res.status(400).json({
                 success: false,
