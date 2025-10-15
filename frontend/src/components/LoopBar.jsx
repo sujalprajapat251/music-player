@@ -12,9 +12,11 @@ import { getGridSpacingWithTimeSignature } from "../Utils/gridUtils";
 import rightSize from '../Images/right-size.svg';
 import LeftSize from '../Images/left-size.svg';
 import reverceIcon from '../Images/reverce.svg';
+import { useTheme } from "../Utils/ThemeContext";
 
 const LoopBar = () => {
   const dispatch = useDispatch();
+  const { isDark, setIsDark } = useTheme();
   const { 
     loopStart, 
     loopEnd, 
@@ -133,9 +135,9 @@ const LoopBar = () => {
           top: "8px",
           width: "100%",
           height: "17px",
-          background: "#141414",
+          background: isDark ? "#141414" : "#f5f5f5",
           borderRadius: "2px",
-          border: "1px solid #444",
+          border: `1px solid ${isDark ? "#444" : "#c5c3c3"}`,
           cursor: "pointer"
         }}
         onMouseDown={(e) => handleMouseDown(e, 'loop')}

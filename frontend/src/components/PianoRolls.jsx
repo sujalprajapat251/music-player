@@ -55,7 +55,7 @@ const PianoRolls = () => {
     const { zoomLevel } = useSelector(selectGridSettings);
     
     // Use the exact same calculation as Timeline.jsx
-    const baseTimelineWidthPerSecond = 100; // Base width per second (same as Timeline.jsx)
+    const baseTimelineWidthPerSecond = 40; // Base width per second (same as Timeline.jsx)
     const timelineWidthPerSecond = baseTimelineWidthPerSecond * zoomLevel; // Apply zoom level
     
     // Sync time and play state with Redux studio slice

@@ -61,6 +61,7 @@ import NewSynth from "./NewSynth";
 import BassAnd808 from "./BassAnd808";
 import GuitarEffects from "./GuitarEffects";
 import NewProjectModel from "./NewProjectModel";
+import { useTheme } from "../Utils/ThemeContext";
 
 const Timeline = () => {
   
@@ -124,6 +125,9 @@ const Timeline = () => {
   // eslint-disable-next-line no-unused-vars
   const [hasRecordingStarted, setHasRecordingStarted] = useState(false);
 
+  const { isDark, setIsDark } = useTheme();
+
+
   // Piano playback functionality
   const pianoRef = useRef(null);
   const instrumentCacheRef = useRef({});
@@ -157,7 +161,7 @@ const Timeline = () => {
   const pendingAnchorRef = useRef(null);
   const getScale = () => baseTimelineWidthPerSecond * zoomLevel;
 
-  const baseTimelineWidthPerSecond = 100; // Base width per second
+  const baseTimelineWidthPerSecond = 40; // Base width per second (reduced to show ~13-15s by default)
   const timelineWidthPerSecond = baseTimelineWidthPerSecond * zoomLevel; // Apply zoom level
 
 
@@ -2905,7 +2909,11 @@ const Timeline = () => {
 
     // Use time signature-aware grid spacing
     const gridSpacing = getGridSpacingWithTimeSignature(selectedGrid, selectedTime);
-    const gridColor = "#FFFFFF";
+    // Theme-aware colors based on reactive isDark
+    const bgColor = isDark ? "#141414" : "#f5f5f5";
+    const gridColor = isDark ? "#d8d8d8" : "#202020";
+    const textColor = isDark ? "#ffffff" : "#000000";
+    const lineColor = isDark ? "#d8d8d8" : "#202020";
 
     // Calculate label interval based on ruler type
     let labelInterval;
@@ -2921,6 +2929,15 @@ const Timeline = () => {
 
     // Create a set to track which labels have been added to avoid duplicates
     const addedLabels = new Set();
+
+    // Draw ruler background so it flips with theme
+    svg
+      .append("rect")
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("width", timelineWidth)
+      .attr("height", axisY)
+      .attr("fill", bgColor);
 
     for (let time = 0; time <= duration; time += gridSpacing) {
       const x = xScale(time);
@@ -2996,7 +3013,7 @@ const Timeline = () => {
             .append("text")
             .attr("x", x + 4)
             .attr("y", axisY - tickHeight - 5)
-            .attr("fill", "white")
+            .attr("fill", textColor)
             .attr("font-size", 12)
             .attr("text-anchor", "start")
             .text(label);
@@ -3005,15 +3022,16 @@ const Timeline = () => {
       }
     }
 
+    // FIXED: Use lineColor instead of hardcoded "white"
     svg
       .append("line")
       .attr("x1", 0)
       .attr("y1", axisY)
       .attr("x2", timelineWidth)
       .attr("y2", axisY)
-      .attr("stroke", "white")
+      .attr("stroke", lineColor)
       .attr("stroke-width", 1);
-  }, [audioDuration, selectedGrid, selectedTime, selectedRuler, timelineWidthPerSecond]);
+  }, [audioDuration, selectedGrid, selectedTime, selectedRuler, timelineWidthPerSecond, isDark, zoomLevel]);
 
   // Keep a stable reference to the render function to avoid linter no-undef complaints
   const renderRulerRef = useRef(() => { });
@@ -3025,7 +3043,7 @@ const Timeline = () => {
     if (typeof renderRulerRef.current === 'function') {
       renderRulerRef.current();
     }
-  }, [audioDuration, selectedGrid, selectedTime, selectedRuler, timelineWidthPerSecond, zoomLevel]);
+  }, [audioDuration, selectedGrid, selectedTime, selectedRuler, timelineWidthPerSecond, zoomLevel, isDark]);
 
   // Sync local state with Redux state (but not during drag operations)
   useEffect(() => {
@@ -4262,21 +4280,21 @@ const Timeline = () => {
       let lineStyle;
       if (isBarStart) {
         lineStyle = {
-          background: "#FFFFFF50",
+          background: isDark ? "#d8d8d8" : "#14141433", // darker for light theme
           width: 2,
           opacity: 0.7,
           zIndex: 3
         };
       } else if (isMainBeat) {
         lineStyle = {
-          background: "#FFFFFF40",
+          background: isDark ? "#d8d8d8" : "#14141429",
           width: 1,
           opacity: 0.5,
           zIndex: 2
         };
       } else if (isSubdivision) {
         lineStyle = {
-          background: "#FFFFFF25",
+          background: isDark ? "#d8d8d8" : "#1414141f",
           width: 1,
           opacity: 0.25,
           zIndex: 1
@@ -4318,7 +4336,8 @@ const Timeline = () => {
     tracks.length,
     trackHeight,
     timelineWidthPerSecond, // Add zoom-dependent timeline width
-    zoomLevel // Add zoom level dependency
+    zoomLevel,
+    isDark
   ]);
 
   // Calculate playhead position in pixels for smoother animation
@@ -5273,8 +5292,8 @@ const Timeline = () => {
             onMouseLeave={handleMouseUp}
           >
 
-            <div
-              style={{ height: "100px", borderBottom: "1px solid #1414141A", position: "relative", top: 0, zIndex: 10, background: "#141414" }}
+              <div
+              style={{ height: "100px", borderBottom: isDark ? "1px solid #1414141A" : "1px solid #0000001A", position: "relative", top: 0, zIndex: 10, background: isDark ? "#141414" : "#f5f5f5" }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
@@ -5301,7 +5320,7 @@ const Timeline = () => {
                 </div>
               )}
 
-              <svg ref={svgRef} width={`${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`} height="100%" style={{ color: "white", background: "#141414" }} />
+              <svg ref={svgRef} width={`${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`} height="100%" style={{ color: isDark ? "#ffffff" : "#000000", background: isDark ? "#141414" : "#f5f5f5" }} />
             </div>
 
             <LoopBar />
@@ -5373,7 +5392,7 @@ const Timeline = () => {
 
             <div style={{ overflow: "visible", position: "relative", minHeight: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px", height: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px", marginTop: "40px", }}>
               {tracks.length > 0 && Array.from({ length: tracks.length }).map((_, index) => (
-                <div key={`lane-${index}`} style={{ position: "absolute", top: `${(index * trackHeight) - sidebarScrollOffset}px`, left: 0, width: "100%", height: `${trackHeight}px`, borderTop: "1px solid #FFFFFF1A", borderBottom: "1px solid #FFFFFF1A", zIndex: 0, }} />
+                <div key={`lane-${index}`} style={{ position: "absolute", top: `${(index * trackHeight) - sidebarScrollOffset}px`, left: 0, width: "100%", height: `${trackHeight}px`, borderTop: `1px solid ${isDark ? "#d8d8d8" : "#484848"}`, borderBottom: `1px solid ${isDark ? "#d8d8d8" : "#484848"}`, zIndex: 0, }} />
               ))}
 
               {tracks.map((track, index) => {
@@ -5454,9 +5473,9 @@ const Timeline = () => {
                 left: "-8px",
                 width: "18px",
                 height: "18px",
-                background: "#AD00FF",
+                background: isDark ? "#AD00FF" : "#8B00CC",
                 borderRadius: "3px",
-                border: "1px solid #fff",
+                border: `1px solid ${isDark ? "#ffffff" : "#141414"}`,
                 transition: "background-color 0.2s ease",
                 // boxShadow: isMagnetEnabled ? "0 0 10px #FF6B35, 0 0 20px #FF6B35" : "none"
               }} />
@@ -5466,7 +5485,7 @@ const Timeline = () => {
                 left: 0,
                 bottom: 0,
                 width: "2px",
-                background: "#AD00FF",
+                background: isDark ? "#AD00FF" : "#8B00CC",
                 transition: "background-color 0.2s ease",
                 // boxShadow: isMagnetEnabled ? "0 0 5px #FF6B35" : "none"
               }} />
@@ -5489,7 +5508,7 @@ const Timeline = () => {
         </div>
 
         {/* Top right controls */}
-        <div className="flex gap-2 absolute top-[60px] right-[10px] -translate-x-1/2 bg-[#141414]" style={{ zIndex: 51 }}>
+        <div className="flex gap-2 absolute top-[60px] right-[10px] -translate-x-1/2 bg-[#141414] rounded-md" style={{ zIndex: 51 }}>
           {/* Magnet Button */}
           <div className="relative">
             <div
@@ -5682,13 +5701,13 @@ const Timeline = () => {
       <Effects showOffcanvas={showEffectsOffcanvas} setShowOffcanvas={(value) => dispatch(toggleEffectsOffcanvas())} />
 
       {/* Context Menu */}
-      <WaveMenu
+      {/* <WaveMenu
         isOpen={contextMenu.isOpen}
         position={contextMenu.position}
         onClose={handleContextMenuClose}
         onAction={handleContextMenuAction}
         onOpenMusicOff={() => { setShowOffcanvas(true); dispatch(setShowLoopLibrary(true)); }}
-      />
+      /> */}
 
       {/* Section Context Menu */}
       <SectionContextMenu
