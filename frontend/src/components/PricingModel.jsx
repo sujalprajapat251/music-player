@@ -6,15 +6,14 @@ import p2 from "../Images/p2.svg";
 import p3 from "../Images/p3.svg";
 import Tabs from "./Tabs";
 import OpenPayment from "./OpenPayment";
-import { fetchPremium } from "../Redux/Slice/PremiumSlice";
+import { fetchPremium, setSelectedPlan } from "../Redux/Slice/PremiumSlice";
 
 const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
   const dispatch = useDispatch();
-  const { premiums, loading, error } = useSelector((state) => state.premium);
+  const { premiums, loading, error, selectedPlan } = useSelector((state) => state.premium);
 
   const [plan, setPlan] = useState("yearly");
   const [openPayment, setOpenPayment] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState({ name: "Professional", price: 15 });
 
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
@@ -46,7 +45,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
   };
 
   const handleSelectPlan = (plan) => {
-    setSelectedPlan(plan);
+    dispatch(setSelectedPlan(plan));
     setOpenPayment(true);
     setPricingModalOpen(false);
   };
@@ -100,7 +99,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
 
               {/* Heading */}
               <div className="text-center mb-8">
-                <p className="text-secondary-light dark:text-secondary-dark text-3xl md:text-3xl font-bold tracking-wide">
+                <p className="text-secondary-light dark:text-secondary-dark text-xl md:text-3xl font-bold tracking-wide">
                   Our Pricing Plans
                 </p>
               </div>
@@ -120,11 +119,12 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                                 className="flex-1 max-w-sm p-6 bg-[#1F1F1F] border border-[#FFFFFF4D] rounded-xl min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-110 hover:bg-[#353535] md:p-5 lg:p-6 md:max-w-xs lg:max-w-sm cursor-pointer"
                                 onClick={() => {
                                   console.log("Selected Monthly Premium:", premium);
-                                  setSelectedPlan({
+                                  // Dispatch the selected plan to Redux store
+                                  dispatch(setSelectedPlan({
                                     ...premium,
                                     price: premium.amount,
                                     name: premium.premiumType
-                                  });
+                                  }));
                                 }}
                               >
                                 <div className="main-price-month text-center md:mr-6 lg:mr-8 w-[100%]">
@@ -134,7 +134,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                                   <span className="text-[#FFFFFF] mr-4 md:mr-2 lg:mr-4">/month</span>
                                   <ul className="text-[#FFFFFF] text-start mt-2">
                                     {premium.features && premium.features.map((feature, idx) => (
-                                      <li key={idx} className="md:text-[15px] lg:text-[16px] tracking-wide whitespace-nowrap mr-6 md:mr-4 lg:mr-6">{feature}</li>
+                                      <li key={idx} className="text-[13px] md:text-[15px] lg:text-[16px] tracking-wide whitespace-nowrap mr-6 md:mr-4 lg:mr-6">{feature}</li>
                                     ))}
                                   </ul>
                                 </div>
@@ -224,11 +224,12 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                                   className="flex-1 max-w-sm p-6 bg-[#1F1F1F] border border-[#FFFFFF4D] rounded-xl min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-110 hover:bg-[#353535] cursor-pointer"
                                   onClick={() => {
                                     console.log("Selected Yearly Premium:", premium);
-                                    setSelectedPlan({
+                                    // Dispatch the selected plan to Redux store
+                                    dispatch(setSelectedPlan({
                                       ...premium,
                                       price: premium.amount,
                                       name: premium.premiumType
-                                    });
+                                    }));
                                   }}
                                 >
                                   <div className="main-price-month text-center w-[100%]">
@@ -238,7 +239,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                                     <span className="text-[#FFFFFF] text-[18px]">/year</span>
                                     <ul className="text-[#FFFFFF] text-start mt-2">
                                       {premium.features && premium.features.map((feature, idx) => (
-                                        <li key={idx} className="md:text-[15px] lg:text-[16px] tracking-wide whitespace-nowrap mr-6 md:mr-4 lg:mr-6">{feature}</li>
+                                        <li key={idx} className="text-[13px] md:text-[15px] lg:text-[16px] tracking-wide whitespace-nowrap mr-6 md:mr-4 lg:mr-6">{feature}</li>
                                       ))}
                                     </ul>
                                   </div>
@@ -357,10 +358,11 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                     setOpenPayment(false);
                     setPricingModalOpen(true); // reopen Pricing modal
                   }}
-                  plan={selectedPlan}
+                  selectedPlan={selectedPlan}
                 />
               )}
-              <OpenPayment selectedPlan={selectedPlan} />
+              {/* Remove the duplicate OpenPayment component */}
+              {/* <OpenPayment selectedPlan={selectedPlan} /> */}
             </DialogPanel>
           </div>
         </div>
