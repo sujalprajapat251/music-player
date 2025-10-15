@@ -167,6 +167,38 @@ const effectsSlice = createSlice({
     name: 'effects',
     initialState,
     reducers: {
+        // Replace all track effects state at once (used when loading a saved project)
+        setTrackEffects: (state, action) => {
+
+            // Ensure we handle both array and object formats
+            let effects = [];
+            if (Array.isArray(action.payload)) {
+                effects = action.payload;
+            } else if (action.payload && typeof action.payload === 'object') {
+                effects = action.payload;
+            }
+
+            // Restore component references from component names
+            state.activeEffects = effects.map(effect => {
+                const componentMapping = {
+                    "Classic Dist": "ClassicDist",
+                    "Juicy Distrotion": "JuicyDistrotion",
+                    "Auto Pan": "AutoPan",
+                    "Auto-Wah": "AutoWah",
+                    "Stereo Chorus": "StereoChorus",
+                    "Tape Wobble": "TapeWobble"
+                };
+
+                const componentKey = componentMapping[effect.name] || effect.name;
+                const component = EFFECT_COMPONENTS[componentKey];
+
+                return {
+                    ...effect,
+                    component: component, // Restore component reference
+                    componentName: componentKey // Keep for serialization
+                };
+            });
+        },
         addEffect: (state, action) => {
             const effect = action.payload;
 
@@ -306,6 +338,7 @@ const effectsSlice = createSlice({
 });
 
 export const {
+    setTrackEffects,
     addEffect,
     removeEffect,
     updateEffectParameter,

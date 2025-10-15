@@ -39,7 +39,7 @@ import LoopBar from "./LoopBar";
 import TimelineTrack from "./TimelineTrack";
 import ResizableSectionLabel from "./ResizableSectionLabel";
 import { useSectionLabels } from "../hooks/useSectionLabels";
-import { toggleEffectsOffcanvas } from "../Redux/Slice/effects.slice";
+import { setTrackEffects, toggleEffectsOffcanvas } from "../Redux/Slice/effects.slice";
 import EditTrackNameModal from "./EditTrackNameModal";
 import { audioManager } from '../Utils/audioContext';
 import audioQualityManager from '../Utils/audioQualityManager';
@@ -4862,6 +4862,12 @@ const Timeline = () => {
   dispatch(setCurrentMusic(project));
   
       const incomingTracks = Array.isArray(project.musicdata) ? project.musicdata : [];
+
+      // Restore effects if they exist
+      if (incomingTracks[0]?.effects) {
+        dispatch(setTrackEffects(incomingTracks[0].effects));
+      }
+
       const studioTracks = [];
       const aggregatedPianoNotes = [];
       const aggregatedDrumData = [];
