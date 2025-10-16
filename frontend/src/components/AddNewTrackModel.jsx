@@ -90,6 +90,16 @@ const AddNewTrackModel = ({ onClose, onOpenLoopLibrary }) => {
     
     // Use the grouped action creator for better undo/redo
     dispatch(createTrackWithDefaults(newTrack));
+
+    // If user picked Drums & Machines from Add New Track, force-open Drum panel in Instruments view
+    if (option.label === 'Drums & Machines') {
+      try {
+        dispatch(setTrackType('Drums & Machines'));
+        try { window.__lastDrumOpen = { source: 'addTrack', view: 'Instruments', ts: Date.now() }; } catch (_) {}
+        const ev = new CustomEvent('timeline:drumToggle', { detail: { open: true, initialView: 'Instruments', trackId: newTrack.id, source: 'addTrack' } });
+        window.dispatchEvent(ev);
+      } catch (err) {}
+    }
     // If it's a piano/guitar/orchestral track, set the default instrument to the first option
     if (defaultInstrumentByType[option.label]) {
       dispatch(setSelectedInstrument(defaultInstrumentByType[option.label]));
