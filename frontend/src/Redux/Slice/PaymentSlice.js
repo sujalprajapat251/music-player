@@ -15,6 +15,23 @@ export const createPaymentIntent = createAsyncThunk(
     }
 );
 
+// Add new async thunk for confirming payment and storing data
+export const confirmPaymentSuccess = createAsyncThunk(
+    'payment/confirmPaymentSuccess',
+    async (confirmData , { rejectWithValue }) => {
+        console.log('confirmeeeeeeeeeeeeeeeeeeeeeeeee', confirmData);
+        try {
+            const response = await axios.post(`${BASE_URL}/confirmPayment`, confirmData );
+             console.log("confirmmmmmmm", response.data);
+            return response.data;
+           
+        } catch (error) {
+            return rejectWithValue(error.response.data);
+        }
+        
+    }
+);
+
 const paymentSlice = createSlice({
     name: 'payment',
     initialState: {
@@ -22,6 +39,7 @@ const paymentSlice = createSlice({
         loading: false,
         error: null,
         paymentSuccess: false,
+        confirmedPayment: null // Store confirmed payment data
     },
     reducers: {
         clearPaymentState: (state) => {
@@ -29,6 +47,7 @@ const paymentSlice = createSlice({
             state.loading = false;
             state.error = null;
             state.paymentSuccess = false;
+            state.confirmedPayment = null;
         },
     },
     extraReducers: (builder) => {
@@ -45,6 +64,20 @@ const paymentSlice = createSlice({
             .addCase(createPaymentIntent.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload?.error || 'Failed to create payment intent';
+            })
+            // Handle payment confirmation
+            .addCase(confirmPaymentSuccess.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(confirmPaymentSuccess.fulfilled, (state, action) => {
+                state.loading = false;
+                state.paymentSuccess = true;
+                state.confirmedPayment = action.payload;
+            })
+            .addCase(confirmPaymentSuccess.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload?.error || 'Failed to confirm payment';
             });
     }
 });
