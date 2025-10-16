@@ -10,21 +10,29 @@ export const fetchPremium = createAsyncThunk(
             return response.data.data;
             console.log('Premium data fetched successfully', response.data);
         }
-        catch(error) {
+        catch (error) {
             return rejectWithValue(error.response.data);
 
         }
     }
 )
 
-const premiumSlice = createSlice ({
+const premiumSlice = createSlice({
     name: 'premiums',
     initialState: {
         premiums: [],
-        loading : false,
+        selectedPlan: null,
+        loading: false,
         error: null,
     },
-    reducers : {},
+    reducers: {
+        setSelectedPlan: (state, action) => {
+            state.selectedPlan = action.payload;
+        },
+        clearSelectedPlan: (state) => {
+            state.selectedPlan = null;
+        }
+    },
     extraReducers: (builder) => {
         builder.
             addCase(fetchPremium.pending, (state) => {
@@ -32,14 +40,15 @@ const premiumSlice = createSlice ({
                 state.error = null;
             })
             .addCase(fetchPremium.fulfilled, (state, action) => {
-                state.loading =false;
+                state.loading = false;
                 state.premiums = action.payload;
             })
             .addCase(fetchPremium.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             });
-        }
+    }
 })
 
+export const { setSelectedPlan, clearSelectedPlan } = premiumSlice.actions;
 export default premiumSlice.reducer;
