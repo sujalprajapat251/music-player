@@ -288,7 +288,7 @@ const drawWaveform = useCallback((musicId, idx) => {
             </button>
 
             {/* Header */}
-            <div className="flex items-center justify-between mt-2 mb-4">
+            <div className="flex items-center justify-between mt-3 mb-4">
               <h2 className="font-bold text-2xl mb-1" style={{ color: colors.textPrimary }}>
                 Open project
               </h2>
@@ -297,7 +297,7 @@ const drawWaveform = useCallback((musicId, idx) => {
                 placeholder="Search projects"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="px-4 py-2 w-56 rounded border focus:outline-none"
+                className="px-4 py-2 w-56 mr-8 rounded border focus:outline-none"
                 style={{ backgroundColor: colors.inputBg, color: colors.textPrimary, borderColor: colors.inputBorder }}
               />
             </div>
