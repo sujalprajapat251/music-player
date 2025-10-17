@@ -35,7 +35,7 @@ const ShareModal = ({ isOpen, onClose, projectId }) => {
   const { t } = useI18n();
   const colors = getModalColors(isDark);
   useEffect(() => {
-    const origin = window?.location?.origin || '';
+      const origin = window?.location?.origin || '';
     const dynamic = projectId ? `${origin}/sidebar/timeline/${projectId}` : window?.location?.href || origin;
     setShareLink(dynamic);
     console.log('ShareModal - projectId:', projectId, 'shareLink:', dynamic);
@@ -71,21 +71,21 @@ const ShareModal = ({ isOpen, onClose, projectId }) => {
     }
   };
 
-  const handleInvite = () => {
-    if (emailInput.trim()) {
-      setInvited(true);
-      setTimeout(() => {
-        setInvited(false);
-        setEmailInput('');
-      }, 2000);
-    }
-  };
+  // const handleInvite = () => {
+  //   if (emailInput.trim()) {
+  //     setInvited(true);
+  //     setTimeout(() => {
+  //       setInvited(false);
+  //       setEmailInput('');
+  //     }, 2000);
+  //   }
+  // };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleInvite();
-    }
-  };
+  // const handleKeyPress = (e) => {
+  //   if (e.key === 'Enter') {
+  //     handleInvite();
+  //   }
+  // };
 
   if (!isOpen) return null;
 
@@ -106,6 +106,9 @@ const ShareModal = ({ isOpen, onClose, projectId }) => {
         </button>
       </div>
 
+      {/* Divider */}
+      <div className="border-t border-white/10 mb-6"></div>
+
       {/* Share via link */}
       <div className="mb-6">
         <h3
@@ -115,39 +118,39 @@ const ShareModal = ({ isOpen, onClose, projectId }) => {
           {t('shareViaLink')}
         </h3>
 
-        <div className="flex gap-2 mb-2">
-          <input
-            type="text"
-            value={shareLink}
-            readOnly
-            className="flex-1 px-3 py-2 rounded-[2px] focus:outline-none"
-            style={{
-              background: colors.inputBg,
-              color: colors.inputText,
-              border: `1px solid ${colors.inputBorder}`,
-            }}
-          />
-          <button
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={shareLink}
+                readOnly
+                className="flex-1 px-3 py-2 rounded-[2px] focus:outline-none"
+                style={{
+                  background: colors.inputBg,
+                  color: colors.inputText,
+                  border: `1px solid ${colors.inputBorder}`,
+                }}
+              />
+              <button
             onClick={handleNativeShare}
             className="px-4 py-2 rounded-[25px] flex items-center gap-2 transition-colors border"
-            style={{
-              borderColor: colors.buttonBorder,
-              background: shared ? colors.successBg : colors.buttonBg,
-              color: colors.buttonText,
-            }}
-          >
-            {shared ? <Check size={16} /> : <Share2 size={16} />}
-            {shared ? t('shared') : t('share')}
-          </button>
-        </div>
+                style={{
+                  borderColor: colors.buttonBorder,
+                  background: shared ? colors.successBg : colors.buttonBg,
+                  color: colors.buttonText,
+                }}
+              >
+                {shared ? <Check size={16} /> : <MdOutlineContentCopy size={16} />}
+                {shared ? t('Copied') : t('Copy')}
+              </button>
+            </div>
 
-        <p style={{ color: colors.modalSubText }} className="text-sm">
+            <p style={{ color: colors.modalSubText }} className="text-sm">
           {t('peopleCanJoin')}
-        </p>
-        {!projectId && (
-          <p style={{ color: colors.warningText }} className="text-xs mt-1">
-            ⚠️ {t('noProjectId')}
-          </p>
+                </p>
+            {!projectId && (
+              <p style={{ color: colors.warningText }} className="text-xs mt-1">
+                ⚠️ {t('noProjectId')}
+              </p>
         )}
       </div>
 

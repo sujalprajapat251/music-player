@@ -215,7 +215,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                       label: "Yearly",
                       content: (
                         <>
-                          <div className="w-full flex flex-col items-center text-white">
+                          {/* <div className="w-full flex flex-col items-center text-white"> */}
                             {/* Top 3 Pricing Cards */}
                             <div className="flex flex-col md:flex-row justify-center items-stretch gap-6 md:gap-8 w-full">
                               {premiums && premiums.filter(p => p.period === 'yearly').map((premium, index) => (
@@ -248,7 +248,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                             </div>
 
                             {/* Bottom 3 Feature Boxes */}
-                            <div className="mt-8 w-full">
+                            <div className="mt-7 w-full mb-[-16px]">
                               <div className="flex flex-col md:flex-row items-stretch justify-center gap-6 md:gap-6 w-full">
                                 {/* Box 1 */}
                                 <div className="p1-box flex-1 w-full max-w-full flex justify-center items-center flex-col">
@@ -314,7 +314,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                                 </div>
                               </div>
                             </div>
-                          </div>
+                          {/* </div> */}
                         </>
                       ),
                     },
