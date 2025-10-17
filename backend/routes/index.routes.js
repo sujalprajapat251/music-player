@@ -11,7 +11,7 @@ const { getAllFaqs, createFaq } = require('../controller/faqsController');
 const { addTerms, getTerms } = require('../controller/termsController');
 const { createCategory, getAllCategory, getCategoryById, deleteCategory, updateCategory } = require('../controller/categoryController');
 const { createSubscribe, getAllSubscribe } = require('../controller/subscribeController');
-const { createMusic, getAllMusic, deleteMusic, updateMusic, restoreMusic, permanentDeleteMusic, restoreAllMusic, permanentDeleteAllMusic, renameMusic, moveMusicToFolder, addCoverImage, removeCoverImage, updateEffectParameters } = require('../controller/musicController');
+const { createMusic, getAllMusic, getDeletedMusic, deleteMusic, updateMusic, restoreMusic, permanentDeleteMusic, restoreAllMusic, permanentDeleteAllMusic, renameMusic, moveMusicToFolder, addCoverImage, removeCoverImage, updateEffectParameters } = require('../controller/musicController');
 const { uploadAudio } = require('../helper/uploadController');
 const { getMusicByIdPublic } = require('../controller/publicController');
 const { createReview, getReviewsByMusicId, getReviewsByUserId, updateReview, deleteReview } = require('../controller/reviewController');
@@ -43,6 +43,7 @@ indexRoutes.put('/resetPassword', resetPassword);
 
 indexRoutes.post('/createMusic', auth, createMusic);
 indexRoutes.get('/allMusic', auth, getAllMusic);
+indexRoutes.get('/deletedMusic', auth, getDeletedMusic);
 indexRoutes.put('/updateMusic/:id', auth, updateMusic);
 indexRoutes.delete('/deleteMusic/:id', auth, deleteMusic);
 indexRoutes.put('/restoreMusic/:id', auth, restoreMusic);

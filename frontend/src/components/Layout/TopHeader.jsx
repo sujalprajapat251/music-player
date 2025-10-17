@@ -58,7 +58,7 @@ import ShareModal from '../Sharemodal';
 import PricingModel from '../PricingModel';
 import { setCurrentMusic } from '../../Redux/Slice/music.slice';
 import AccessPopup from '../AccessPopup';
-import { addAudioClipToTrack, createTrackWithDefaults, updateAudioClip, setTrackType } from '../../Redux/Slice/studio.slice';
+import { addAudioClipToTrack, createTrackWithDefaults, updateAudioClip, setTrackType, resetTrack } from '../../Redux/Slice/studio.slice';
 import TunerPopup from '../TunerPopup';
 import { CloudCog } from 'lucide-react';
 import ReviewModal from '../ReviewModal';
@@ -168,6 +168,10 @@ const TopHeader = ({onAction, onClose}) => {
     const [midikeyboardmodal, setMidiKeyboardModel] = useState(false);
     const [exportProjectModal, setExportProjectModal] = useState(false);
     const [openProjectModal, setOpenProjectModal] = useState(false);
+    // When true, the next successful save should NOT open the review modal.
+    // This is set when a project is opened from the OpenProject modal to
+    // avoid showing the 'Add review' prompt immediately after opening.
+    const [suppressReviewOnNextSave, setSuppressReviewOnNextSave] = useState(false);
     const [newProjectOpen, setNewProjectOpen] = useState(false);
     const [showUndoRedoToast, setShowUndoRedoToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
@@ -498,6 +502,10 @@ const TopHeader = ({onAction, onClose}) => {
 
     const handleOpenProject = (project) => {
         if (!project?._id) return;
+        // If a user opens a project (from recent/open UI) we don't want the
+        // review modal to pop up immediately after the first save. Set the
+        // suppress flag so handleSaved can skip showing the review.
+        setSuppressReviewOnNextSave(true);
         dispatch(setCurrentMusic(project));
         setIsActiveMenu("");
         setShowSubmenu(prev => ({ ...prev, openrecentfolder: false }));
@@ -527,6 +535,9 @@ const TopHeader = ({onAction, onClose}) => {
 
     // Navigate to a fresh timeline with a newly generated id
     const handleNewProject = () => {
+        navigate('/sidebar/timeline')
+        dispatch(resetTrack());
+        setNewProjectOpen(true);
         const newId = generateObjectId();
         setIsActiveMenu("");
         setShowSubmenu({
@@ -551,7 +562,7 @@ const TopHeader = ({onAction, onClose}) => {
         } else {
             navigate(to, navOptions);
         }
-    }
+    }   
 
     const bpm = useSelector((state) => selectStudioState(state)?.bpm || 120);
 
@@ -836,8 +847,14 @@ const TopHeader = ({onAction, onClose}) => {
             }
         }
             setSaveStatus('saved');
-            // Show review modal after successful save
-            setShowReviewModal(true);
+            // If the user just opened a project, suppress showing the review
+            // modal for the immediate save that may occur after opening.
+            if (suppressReviewOnNextSave) {
+                setSuppressReviewOnNextSave(false);
+            } else {
+                // Show review modal after successful save
+                setShowReviewModal(true);
+            }
         } catch (e) {
             setSaveStatus('error');
         }
@@ -1117,17 +1134,34 @@ const TopHeader = ({onAction, onClose}) => {
 
     const handleItemClick = (action) => {
         if (onAction) {
-            console.log(onAction);
             onAction(action);
         }
-        onClose();
+        // Always broadcast to Timeline so it can handle recording/clip actions
+        try {
+            window.dispatchEvent(new CustomEvent('timeline:action', { detail: { action } }));
+        } catch (err) {
+            // no-op if CustomEvent fails in some environments
+        }
+        // Close menu if an onClose handler exists (guard for undefined)
+        if (onClose) onClose();
     };
     return (
         <>
             <ExportPopup open={exportProjectModal} onClose={() => setExportProjectModal(false)} />
             <NewProject open={newProjectOpen} setOpen={setNewProjectOpen} />
             {/* OpenProjectModal integration */}
-            <OpenProjectModal open={openProjectModal} onClose={() => setOpenProjectModal(false)} />
+            <OpenProjectModal
+                open={openProjectModal}
+                onClose={() => setOpenProjectModal(false)}
+                onSelect={(project) => {
+                    // OpenProjectModal will handle navigation itself after calling
+                    // onSelect; here just set the current music and suppress review
+                    // for the next save.
+                    if (!project?._id) return;
+                    setSuppressReviewOnNextSave(true);
+                    dispatch(setCurrentMusic(project));
+                }}
+            />
             <div className="flex justify-between items-center border-b px-2 py-2 sm:px-3 sm:py-1 md:px-5 md:py-2 xl:px-7"style={{ backgroundColor: colors.background, borderColor: colors.border}}>
                 {/* Mobile Menu Button - Only visible on screens < 768px */}
                 <button
@@ -1158,7 +1192,7 @@ const TopHeader = ({onAction, onClose}) => {
                                 {/* First item: Print */}
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md600:py-2 flex md600:gap-3 outline-none transition-colors`}style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }}onClick={handleNewProject}>
+                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md600:py-2 flex md600:gap-3 outline-none cursor-pointer transition-colors`}style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }}onClick={handleNewProject}>
                                             <NewFolderIcon className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }}/>  
                                             <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('new')}</span>
                                         </p>
@@ -1166,7 +1200,7 @@ const TopHeader = ({onAction, onClose}) => {
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3 outline-none transition-colors`} style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }} onClick={() => setOpenProjectModal(true)}>
+                                        <p className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3 outline-none cursor-pointer transition-colors`} style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }} onClick={() => setOpenProjectModal(true)}>
                                             <OpenFolderIcon className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }}/>  
                                             <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('open')}</span>
                                         </p>
@@ -1221,7 +1255,7 @@ const TopHeader = ({onAction, onClose}) => {
                                 </div>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 pt-1 pb-2 gap-2 md600:px-4 lg:px-6 md600:pt-2 md600:pb-3 lg:pb-4 flex md600:gap-3 outline-none transition-colors`}style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary,borderBottom: `1px solid ${colors.menuBorder}`}} onClick={() => setPricingModalOpen(true)}>
+                                        <p className={`px-3 pt-1 pb-2 gap-2 md600:px-4 lg:px-6 md600:pt-2 md600:pb-3 lg:pb-4 flex md600:gap-3 outline-none cursor-pointer transition-colors`}style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary,borderBottom: `1px solid ${colors.menuBorder}`}} onClick={() => setPricingModalOpen(true)}>
                                             <Previous className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }}/>  
                                             <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('previousVersions')}</span>
                                         </p>
@@ -1229,14 +1263,14 @@ const TopHeader = ({onAction, onClose}) => {
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 pb-2 pt-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 outline-none transition-colors`} style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }}>
+                                        <p className={`px-3 pb-2 pt-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 outline-none cursor-pointer transition-colors`} style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }}>
                                             <span className='ps-5 md600:ps-7 lg:ps-8 text-[10px] md600:text-[12px] lg:text-[14px]'>Save as...</span>
                                         </p>
                                     )}
                                 </Menu.Item>
                                 <Menu.Item>
                                     {({ active }) => (
-                                        <p className={`px-3 py-1 md600:px-4 lg:px-6 md600:py-2 flex gap-2 md600:gap-3 outline-none transition-colors`} style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }} onClick={handleExportModal} >
+                                        <p className={`px-3 py-1 md600:px-4 lg:px-6 md600:py-2 flex gap-2 md600:gap-3 outline-none cursor-pointer transition-colors`} style={{ backgroundColor: active ? colors.menuItemHover : 'transparent',color: colors.textSecondary }} onClick={handleExportModal} >
                                             <Exports className='w-3 h-3 md600:w-4 md600:h-4 lg:w-5 lg:h-5' style={{ color: colors.iconSecondary }}/> 
                                             <span className='text-[10px] md600:text-[12px] lg:text-[14px]'>{t('export')}</span>
                                         </p>
@@ -1320,7 +1354,7 @@ const TopHeader = ({onAction, onClose}) => {
                                 <Menu.Item>
                                     {({ active }) => (
                                         <p 
-                                            className={`px-3 py-1 md600:px-4 lg:px-6 md:py-2 flex gap-2 md600:gap-3 border-b outline-none transition-colors`}
+                                            className={`px-3 py-1 md600:px-4 lg:px-6 md:py-2 flex gap-2 md600:gap-3 border-b outline-none cursor-pointer transition-colors`}
                                             style={{ 
                                                 backgroundColor: active ? colors.menuItemHover : 'transparent',
                                                 color: colors.textSecondary,
@@ -1450,7 +1484,7 @@ const TopHeader = ({onAction, onClose}) => {
                                         <p 
                                             onClick={() => handleItemClick('cut')}
                                             className={`mt-1 px-3 pb-2 pt-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 
-                                                        flex items-center md600:gap-3 border-t outline-none transition-colors`}
+                                                        flex items-center md600:gap-3 border-t outline-none cursor-pointer transition-colors`}
                                             style={{ 
                                                 backgroundColor: active ? colors.menuItemHover : 'transparent',
                                                 borderTopColor: colors.menuBorder,
@@ -1474,6 +1508,7 @@ const TopHeader = ({onAction, onClose}) => {
                                 <Menu.Item>
                                     {({ active }) => (
                                         <p 
+                                            onClick={() => handleItemClick('copy')}
                                             className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer transition-colors"
                                             style={{ 
                                                 backgroundColor: active ? colors.menuItemHover : 'transparent',
@@ -1489,6 +1524,7 @@ const TopHeader = ({onAction, onClose}) => {
                                 <Menu.Item>
                                     {({ active }) => (
                                         <p 
+                                            onClick={() => handleItemClick('paste')}
                                             className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer transition-colors"
                                             style={{ 
                                                 backgroundColor: active ? colors.menuItemHover : 'transparent',
@@ -1504,6 +1540,7 @@ const TopHeader = ({onAction, onClose}) => {
                                 <Menu.Item>
                                     {({ active }) => (
                                         <p 
+                                            onClick={() => handleItemClick('delete')}
                                             className="flex gap-2 mb-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer transition-colors"
                                             style={{ 
                                                 backgroundColor: active ? colors.menuItemHover : 'transparent',
@@ -1577,7 +1614,7 @@ const TopHeader = ({onAction, onClose}) => {
                                 <Menu.Item>
                                     {({ active }) => (
                                         <p 
-                                            className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md600:py-2 flex md600:gap-3 outline-none transition-colors`} 
+                                            className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md600:py-2 flex md600:gap-3 outline-none cursor-pointer transition-colors`} 
                                             style={{ 
                                                 backgroundColor: active ? colors.menuItemHover : 'transparent',
                                                 color: colors.textSecondary
@@ -1592,7 +1629,7 @@ const TopHeader = ({onAction, onClose}) => {
                                 <Menu.Item>
                                     {({ active }) => (
                                         <p 
-                                        className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3 outline-none transition-colors ${getTrackType !== 'Voice & Mic' ? 'pointer-events-none opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                        className={`px-3 py-1 gap-2 md600:px-4 lg:px-6 md:py-2 flex md600:gap-3 outline-none cursor-pointer transition-colors ${getTrackType !== 'Voice & Mic' ? 'pointer-events-none opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                                         style={{ 
                                             backgroundColor: active ? colors.menuItemHover : 'transparent',
                                             color: colors.textSecondary
@@ -1603,7 +1640,7 @@ const TopHeader = ({onAction, onClose}) => {
                                       </p>
                                     )}
                                 </Menu.Item>
-                                <div className="relative " onMouseEnter={() => handleSubmenuToggle('keyboard', true)} onMouseLeave={() => handleSubmenuToggle('keyboard', false)}>
+                                <div className="relative cursor-pointer" onMouseEnter={() => handleSubmenuToggle('keyboard', true)} onMouseLeave={() => handleSubmenuToggle('keyboard', false)}>
                                     <div 
                                         className="px-3 pt-2 pb-2 gap-2 md600:px-4 lg:px-6 md600:pt-2 md600:pb-3 lg:pb-4 items-center flex md600:gap-3 outline-none border-b transition-colors"
                                         style={{ 
@@ -1645,7 +1682,7 @@ const TopHeader = ({onAction, onClose}) => {
                                 <Menu.Item>
                                     {({ active }) => (
                                         <p 
-                                            className={`px-3 pb-2 pt-2 gap-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 outline-none transition-colors`}
+                                            className={`px-3 pb-2 pt-2 gap-2 md600:px-4 lg:px-6 md600:pb-2 md600:pt-3 lg:pt-4 flex md600:gap-3 outline-none cursor-pointer transition-colors`}
                                             style={{ 
                                                 backgroundColor: active ? colors.menuItemHover : 'transparent',
                                                 color: colors.textSecondary
@@ -1717,7 +1754,7 @@ const TopHeader = ({onAction, onClose}) => {
                                 <Menu.Item>
                                     {({ active }) => (
                                         <p 
-                                            className={`px-3 py-1 mt-2 md600:px-4 lg:px-6 md:py-3 lg:py-4 flex gap-2 md600:gap-3 border-t border-b outline-none transition-colors`}
+                                            className={`px-3 py-1 mt-2 md600:px-4 lg:px-6 md:py-3 lg:py-4 flex gap-2 md600:gap-3 border-t border-b outline-none cursor-pointer transition-colors`}
                                             style={{ 
                                                 backgroundColor: active ? colors.menuItemHover : 'transparent',
                                                 borderTopColor: colors.menuBorder,

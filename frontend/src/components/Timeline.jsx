@@ -793,7 +793,7 @@ const Timeline = () => {
 
         const odDist = new Tone.Distortion({ distortion: dist, oversample: '2x', wet: 1 });
         const odToneLP = new Tone.Filter({ type: 'lowpass', frequency: 800 + tone * 6200, Q: 0.7 });
-        const odLowCutHP = new Tone.Filter({ type: 'highpass', frequency: 20 + lowCutOD * 480, Q: 1.0 });
+        const odLowCutHP = new Tone.Filter({ type: 'highpass', frequency: Math.min(150, 20 + lowCutOD * 480), Q: 1.0 });
 
         chainTail.chain(odLowCutHP, odDist, odToneLP);
         chainTail = odToneLP;
@@ -830,7 +830,7 @@ const Timeline = () => {
         });
         const lowCutFilter = new Tone.Filter({ 
           type: 'highpass', 
-          frequency: 20 + (lowCut * 480),
+          frequency: Math.min(150, 20 + (lowCut * 480)),
           Q: 1.0 
         });
 
@@ -866,7 +866,7 @@ const Timeline = () => {
         });
         const lowCutFilter = new Tone.Filter({ 
           type: 'highpass', 
-          frequency: 20 + (lowCut * 480), 
+          frequency: Math.min(150, 20 + (lowCut * 480)), 
           Q: 1.2 
         });
 
@@ -1186,7 +1186,7 @@ const Timeline = () => {
         baseFrequency: 150,
         octaves: 4
       },
-      volume: 0
+      volume: -6
     };
 
     // Customize synth based on drum instrument type
@@ -4215,12 +4215,31 @@ const Timeline = () => {
     const handleExternalAction = (e) => {
       const action = e?.detail?.action;
       if (!action) return;
-      if (!selectedTrackId) return;
-      handleContextMenuAction(action, selectedTrackId, selectedClipId);
+
+      // Prefer current selection; otherwise fall back to current track, then recording track, then first track
+      let fallbackTrackId = selectedTrackId
+        ?? currentTrackId
+        ?? (pianoRecordingClip?.trackId ?? null)
+        ?? (drumRecordingClip?.trackId ?? null)
+        ?? (tracks && tracks.length ? tracks[0].id : null);
+
+      if (!fallbackTrackId) return; // nothing to operate on
+
+      // Decide clip context: keep current selection if present; otherwise if there's an active recording clip on the track, use it
+      let fallbackClipId = selectedClipId;
+      if (!fallbackClipId) {
+        if (pianoRecordingClip && pianoRecordingClip.trackId === fallbackTrackId) {
+          fallbackClipId = 'piano-recording';
+        } else if (drumRecordingClip && drumRecordingClip.trackId === fallbackTrackId) {
+          fallbackClipId = 'drum-recording';
+        }
+      }
+
+      handleContextMenuAction(action, fallbackTrackId, fallbackClipId);
     };
     window.addEventListener('timeline:action', handleExternalAction);
     return () => window.removeEventListener('timeline:action', handleExternalAction);
-  }, [selectedTrackId, selectedClipId, handleContextMenuAction]);
+  }, [selectedTrackId, selectedClipId, handleContextMenuAction, currentTrackId, pianoRecordingClip, drumRecordingClip, tracks]);
 
   const renderGridLines = useMemo(() => {
     // Early return if required dependencies are not available
@@ -4529,7 +4548,7 @@ const Timeline = () => {
   }, []);
 
   // Enhanced drum sound playback that works with timeline
-  const playDrumSound = useCallback((drumData) => {
+  const playDrumSound = useCallback(async (drumData) => {
     try {
       if (!drumData || !drumData.sound) return;
 
@@ -4569,9 +4588,16 @@ const Timeline = () => {
       else if (soundName.includes('clap')) instrumentId = 'clap';
       else if (soundName.includes('cowbell')) instrumentId = 'cowbell';
 
+      // Ensure Tone.js context is running before creating/using synth
+      if (Tone.context.state !== 'running') {
+        await Tone.start();
+      }
+
       // Use Tone.js synth with shared effects chain
       const freshSynth = initializeDrumSynth(instrumentId);
-      applyBass808Effects(freshSynth, drumData.trackId, null);
+      // Fallback to selected track when drumData.trackId is missing to ensure effects chain resolves
+      const effectsTrackId = drumData.trackId || selectedTrackId;
+      applyBass808Effects(freshSynth, effectsTrackId, null);
 
       const hz = Number(padData.freq) || 200;
       const duration = Math.max(0.05, Number(padData.decay) || 0.2);
@@ -4623,6 +4649,23 @@ const Timeline = () => {
   }, [playDrumSound]);
 
   const playedDrumHitsRef = useRef(new Set());
+  const prevTimeRef = useRef(0);
+
+  useEffect(() => {
+    if (!isPlaying) {
+      playedDrumHitsRef.current.clear();
+      prevTimeRef.current = currentTime || 0;
+      return;
+    }
+
+    const prev = prevTimeRef.current || 0;
+    const now = currentTime || 0;
+    if (now < prev - 0.001) {
+      // Time moved backwards (seek or loop wrap) → allow hits to retrigger
+      playedDrumHitsRef.current.clear();
+    }
+    prevTimeRef.current = now;
+  }, [isPlaying, currentTime]);
 
   // Enhanced drum clip checking for timeline playback
   useEffect(() => {
@@ -5425,7 +5468,7 @@ const Timeline = () => {
 
             <div style={{ overflow: "visible", position: "relative", minHeight: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px", height: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px", marginTop: "40px", }}>
               {tracks.length > 0 && Array.from({ length: tracks.length }).map((_, index) => (
-                <div key={`lane-${index}`} style={{ position: "absolute", top: `${(index * trackHeight) - sidebarScrollOffset}px`, left: 0, width: "100%", height: `${trackHeight}px`, borderTop: `1px solid ${isDark ? "#d8d8d8" : "#484848"}`, borderBottom: `1px solid ${isDark ? "#d8d8d8" : "#484848"}`, zIndex: 0, }} />
+                <div key={`lane-${index}`} style={{ position: "absolute", top: `${(index * trackHeight) - sidebarScrollOffset}px`, left: 0, width: "100%", height: `${trackHeight}px`, borderTop: `1px solid ${isDark ? "#474747" : "#9d9d9d"}`, borderBottom: `1px solid ${isDark ? "#474747" : "#9d9d9d"}`, zIndex: 0, }} />
               ))}
 
               {tracks.map((track, index) => {
@@ -5734,13 +5777,13 @@ const Timeline = () => {
       <Effects showOffcanvas={showEffectsOffcanvas} setShowOffcanvas={(value) => dispatch(toggleEffectsOffcanvas())} />
 
       {/* Context Menu */}
-      {/* <WaveMenu
+      <WaveMenu
         isOpen={contextMenu.isOpen}
         position={contextMenu.position}
         onClose={handleContextMenuClose}
         onAction={handleContextMenuAction}
         onOpenMusicOff={() => { setShowOffcanvas(true); dispatch(setShowLoopLibrary(true)); }}
-      /> */}
+      />
 
       {/* Section Context Menu */}
       <SectionContextMenu

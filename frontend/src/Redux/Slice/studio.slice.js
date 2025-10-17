@@ -614,6 +614,9 @@ const studioSlice = createSlice({
     clearTrackDeleted: (state) => {
       state.trackDeleted = null;
     },
+    resetTrack:(state) => {
+      state.tracks = []
+    }
   },
 });
 
@@ -685,6 +688,7 @@ export const {
   moveTrackDown,
   reorderTracks,
   clearTrackDeleted,
+  resetTrack
 } = studioSlice.actions;
 
 export default studioSlice.reducer;

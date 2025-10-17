@@ -125,11 +125,6 @@ const Home2 = () => {
     const [selectedFolderId, setSelectedFolderId] = useState(null);
 
     const allMusic = useSelector((state) => state.music.allmusic);
-    
-
-    useEffect(() => {
-        dispatch(getAllMusic());
-    }, [])
 
     // Add these to your sortOptions array if needed
     const sortOptions = [
@@ -138,10 +133,6 @@ const Home2 = () => {
         { value: 'Last created', label: 'Last created' },
         { value: 'Title', label: 'Title' }
     ];
-
-    useEffect(() => {
-        dispatch(getAllSound());
-    }, [dispatch])
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -210,6 +201,8 @@ const Home2 = () => {
         if (userId) {
             dispatch(getFolderByUserId(userId));
         }
+        dispatch(getAllSound());
+        dispatch(getAllMusic());
     }, [dispatch]);
 
     const handleRenameClick = (folderId, currentName) => {
@@ -424,7 +417,7 @@ const Home2 = () => {
         const current = audioRef.currentTime;
         const total = audioRef.duration;
 
-        setMusicCurrentTimes(prev => ({
+        setMusicCurrentTimes(prev => ({      
             ...prev,
             [musicId]: formatTime(current)
         }));
@@ -592,17 +585,10 @@ const Home2 = () => {
         if (!deleteId) return;
             try {
                 await dispatch(deleteMusic(deleteId)).unwrap();
-
-                // get deleted item from allMusic
-                const deletedItem = allMusic.find(m => m._id === deleteId);
-                if (deletedItem) {
-                const existing = JSON.parse(localStorage.getItem("deletedAudios") || "[]");
-                const updated = [...existing, { ...deletedItem, deletedAt: Date.now() }];
-                localStorage.setItem("deletedAudios", JSON.stringify(updated));
-                }
-
-            await dispatch(getAllMusic());
-        } finally {
+                await dispatch(getAllMusic()); 
+            }catch (error) {
+                console.log("error",error);
+            } finally {
             setDeleteProModal(false);
             setDeleteId(null);
         }
@@ -916,7 +902,7 @@ const handleSaveCoverImage = async () => {
                                         <h3 className="text-[#fff] font-[500] text-[12px] sm:text-[14px] md:text-[12px] 2xl:text-[14px] 3xl:text-[16px] mb-[2px]">{sound?.soundname}</h3>
                                         <p className="text-[#FFFFFF99] font-[400] text-[10px] sm:text-[12px] md:text-[10px] xl:text-[14px]">{sound?.category[0]?.name}</p>
                                     </div>
-                                    <button onClick={() => handlePlayPause(index)} className="bg-[#141414] text-black rounded-full w-[20px] h-[20px] sm:w-[28px] sm:h-[28px] md:w-[24px] md:h-[24px] lg:w-[28px] lg:h-[28px] flex justify-center items-center border-[0.5px] border-[#FFFFFF1A]">
+                                    <button onClick={(e) => { e.stopPropagation();handlePlayPause(index)}} className="bg-[#141414] text-black rounded-full w-[20px] h-[20px] sm:w-[28px] sm:h-[28px] md:w-[24px] md:h-[24px] lg:w-[28px] lg:h-[28px] flex justify-center items-center border-[0.5px] border-[#FFFFFF1A]">
                                         <img src={playingIndex === index ? pause : play} alt="" className='w-2 h-2 sm:w-3 sm:h-3' />
                                     </button>
                                     <audio
@@ -1007,7 +993,7 @@ const handleSaveCoverImage = async () => {
               </div>
           </div>
 
-          {sortedAndFilteredFolders?.length > 0 ? (
+          {sortedAndFilteredFolders?.length > 0 && (
             sortedAndFilteredFolders.map((ele, index) => (
             <div key={ele._id} className="flex pt-2  md600:pt-3  lg:pt-3 ps-2 md600:ps-3 2xl:pt-4 2xl:ps-4 3xl:pt-5 3xl:ps-5 pe-2 md600:pe-3 md:pe-2 border-b border-[#FFFFFF1A] pb-2 cursor-pointer" onClick={() => navigate(`/project/folder/${ele._id}`)}>
                 <img src={folder} alt="" className='w-[16px] h-[16px] sm:w-[20px] sm:h-[20px] lg:w-[22px] lg:h-[22px] my-auto' />
@@ -1036,7 +1022,10 @@ const handleSaveCoverImage = async () => {
                 </div>
               </div>
             ))
-          ) : (
+          )}
+
+          {/* Show "No results found" message only when there are no folders AND no music files */}
+          {sortedAndFilteredFolders?.length === 0 && sortedAndFilteredMusic?.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 px-4">
               {/* No Results Icon */}
               <div className="relative">
@@ -1055,7 +1044,7 @@ const handleSaveCoverImage = async () => {
                 </p>
               </div>
             </div>
-        )}
+          )}
 
           {sortedAndFilteredMusic.map((ele, index) => {
               const isPlaying = playingMusicId === ele._id;

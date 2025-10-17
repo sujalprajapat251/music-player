@@ -70,7 +70,8 @@ exports.getAllMusic = async (req, res) => {
         const music = await Music.aggregate([
             {
                 $match: {
-                    userId: new mongoose.Types.ObjectId(userId)
+                    userId: new mongoose.Types.ObjectId(userId),
+                    isDeleted: false // Only get non-deleted music
                 }
             },
             {
@@ -97,6 +98,49 @@ exports.getAllMusic = async (req, res) => {
             status: 200,
             message: "All Music File fetched successfully..!",
             music,
+        });
+    } catch (error) {
+        return res.status(500).json({ status: 500, message: error.message });
+    }
+};
+
+// get all deleted music by user id
+exports.getDeletedMusic = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const deletedMusic = await Music.aggregate([
+            {
+                $match: {
+                    userId: new mongoose.Types.ObjectId(userId),
+                    isDeleted: true // Only get deleted music
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'userId',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'newfolders',
+                    localField: 'folderId',
+                    foreignField: '_id',
+                    as: 'folder'
+                }
+            },
+            {
+                $sort: { deletedAt: -1 } // Sort by deletion date, most recent first
+            }
+        ]);
+        
+        return res.status(200).json({
+            status: 200,
+            message: "Deleted Music Files fetched successfully..!",
+            music: deletedMusic,
         });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });

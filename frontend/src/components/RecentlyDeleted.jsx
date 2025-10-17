@@ -1,13 +1,10 @@
-import React, { useState } from "react";
-import axios from 'axios';
-import { useDispatch } from "react-redux";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
-import { Menu, MenuButton, MenuItems, MenuItem, Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
-import { MoreHorizontal } from 'lucide-react';
+import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
 import { FiTrash2 } from 'react-icons/fi';
-import { useLocation, useNavigate } from "react-router-dom";
-import close from '../Images/close.svg';
-import { permanentDeleteAllMusic, permanentDeleteMusic, restoreAllMusic, restoreMusic } from "../Redux/Slice/music.slice";
+import { useNavigate } from "react-router-dom";
+import { permanentDeleteAllMusic, permanentDeleteMusic, restoreAllMusic, restoreMusic, getDeletedMusic } from "../Redux/Slice/music.slice";
 import { FaChevronLeft } from "react-icons/fa6";
 import notFound from '../Images/notFound.png'
 import { HiDotsVertical } from "react-icons/hi";
@@ -35,21 +32,17 @@ const generateRandomColor = (seed) => {
 
 function RecentlyDeleted() {
 	const dispatch = useDispatch();
+	const { deletedmusic, loading } = useSelector(state => state.music);
+	
 	// Modal state for restore all
 	const [showRestoreAllModal, setShowRestoreAllModal] = useState(false);
 	// Modal state for permanently delete all
 	const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
-	const [restorepromodal, setRestoreProModal] = useState(false);
-	// Remove unused permanentlypromodal modal
-	// Remove unused restoreallpromodal
-	// Remove unused permanentlyallpromodal
+	
 	// Show modal for restore all
 	const handleRestoreAll = () => {
 		setShowRestoreAllModal(true);
 	};
-
-	// Confirm restore all
-	// (Removed duplicate handleRestoreAllConfirm function. See below for the async version.)
 
 	// Cancel restore all
 	const handleRestoreAllCancel = () => {
@@ -61,30 +54,18 @@ function RecentlyDeleted() {
 		setShowDeleteAllModal(true);
 	};
 
-	// Confirm permanently delete all
-	// (Removed duplicate handleDeleteAllConfirm function. See below for the async version.)
-
 	// Cancel permanently delete all
 	const handleDeleteAllCancel = () => {
 		setShowDeleteAllModal(false);
 	};
-	const location = useLocation();
+	
 	const navigate = useNavigate();
-	// Load deletedAudios from localStorage for persistence
-	const getValidDeletedAudios = () => {
-		const stored = localStorage.getItem('deletedAudios');
-		const all = stored ? JSON.parse(stored) : (location.state?.deletedAudios || []);
-		const now = Date.now();
-		// Only keep items deleted within last 30 days
-		const valid = all.filter(audio => !audio.deletedAt || (now - audio.deletedAt < 30 * 24 * 60 * 60 * 1000));
-		// Remove expired items from localStorage
-		if (valid.length !== all.length) {
-			localStorage.setItem('deletedAudios', JSON.stringify(valid));
-		}
-		return valid;
-	};
-	const [deletedAudios, setDeletedAudios] = useState(getValidDeletedAudios());
-	const [restoredAudios, setRestoredAudios] = useState([]);
+	
+	// Fetch deleted music from backend on component mount
+	useEffect(() => {
+		dispatch(getDeletedMusic());
+	}, [dispatch]);
+
 	const [showRestoreModal, setShowRestoreModal] = useState(false);
 	const [restoreIdx, setRestoreIdx] = useState(null);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -100,18 +81,12 @@ function RecentlyDeleted() {
 	// Handler for confirming restore in modal
 	const handleRestoreConfirm = async () => {
 		if (restoreIdx !== null) {
-			const restoredAudio = deletedAudios[restoreIdx];
+			const restoredAudio = deletedmusic[restoreIdx];
 			try {
-				// Call backend restore API
-				//await axios.post(`/api/music/restore/${restoredAudio._id}`);  Use the correct endpoint and ID field
-				// Remove from deletedAudios state
 				await dispatch(restoreMusic(restoredAudio._id)).unwrap();
-				setRestoredAudios(prev => [...prev, restoredAudio]);
-				const updatedDeleted = deletedAudios.filter((_, i) => i !== restoreIdx);
-				setDeletedAudios(updatedDeleted);
-				localStorage.setItem('deletedAudios', JSON.stringify(updatedDeleted));
+				await dispatch(getDeletedMusic()).unwrap();
 			} catch (error) {
-				alert('Restore failed: ' + (error.response?.data?.message || error.message));
+				console.log("error",error);
 			}
 		}
 		setShowRestoreModal(false);
@@ -120,16 +95,11 @@ function RecentlyDeleted() {
 
 	const handleDeleteConfirm = async () => {
 		if (deleteIdx !== null) {
-		const musicToDelete = deletedAudios[deleteIdx];
+		const musicToDelete = deletedmusic[deleteIdx];
 		try {
 			await dispatch(permanentDeleteMusic(musicToDelete._id)).unwrap();
-
-			// UI update karo
-			const updatedDeleted = deletedAudios.filter((_, i) => i !== deleteIdx);
-			setDeletedAudios(updatedDeleted);
-			localStorage.setItem('deletedAudios', JSON.stringify(updatedDeleted));
 		} catch (error) {
-			alert('Permanent delete failed: ' + (error.message || "Unknown error"));
+			console.log("error",error);
 		}
 		setShowDeleteModal(false);
 		setDeleteIdx(null);
@@ -138,29 +108,19 @@ function RecentlyDeleted() {
 
 	const handleRestoreAllConfirm = async () => {
 		try {
-			for (const audio of deletedAudios) {
-			await dispatch(restoreMusic(audio._id)).unwrap();
-			}
-
-			setRestoredAudios(prev => [...prev, ...deletedAudios]);
-			setDeletedAudios([]);
-			localStorage.setItem('deletedAudios', JSON.stringify([]));
+			await dispatch(restoreAllMusic()).unwrap();
 			setShowRestoreAllModal(false);
 		} catch (error) {
-			alert('Restore all failed: ' + (error.message || "Unknown error"));
+			console.log("error",error);
 		}
 	};
 
 	const handleDeleteAllConfirm = async () => {
 		try {
 			await dispatch(permanentDeleteAllMusic()).unwrap();
-
-			// UI update karo
-			setDeletedAudios([]);
-			localStorage.setItem('deletedAudios', JSON.stringify([]));
 			setShowDeleteAllModal(false);
 		} catch (error) {
-		alert('Permanent delete all failed: ' + (error.message || "Unknown error"));
+			console.log("error",error);
 		}
 	};
 
@@ -204,27 +164,27 @@ function RecentlyDeleted() {
 							<HiDotsVertical className="text-gray-500 text-xl cursor-pointer" />
 						</div>
 					</MenuButton>
-					<MenuItems className={`absolute left-1/2 transform -translate-x-1/2 mt-2 w-80 origin-top ${deletedAudios.length === 0 ? 'bg-[#232323]' : 'bg-[#181818]'} rounded-md shadow-lg z-50 py-3 ${deletedAudios.length === 0 ? 'pointer-events-none' : ''}`}> 
-						<MenuItem disabled={deletedAudios.length === 0}>
+					<MenuItems className={`absolute left-1/2 transform -translate-x-1/2 mt-2 w-80 origin-top ${deletedmusic.length === 0 ? 'bg-[#232323]' : 'bg-[#181818]'} rounded-md shadow-lg z-50 py-3 ${deletedmusic.length === 0 ? 'pointer-events-none' : ''}`}> 
+						<MenuItem disabled={deletedmusic.length === 0}>
 							{({ active }) => (
 								<button
-									className={`w-full flex items-center gap-2 px-4 py-2 font-medium rounded ${deletedAudios.length === 0 ? 'text-gray-200 cursor-not-allowed bg-[#232323]' : 'text-white'} ${active && deletedAudios.length !== 0 ? 'bg-[#232323]' : ''}`}
-									onClick={deletedAudios.length === 0 ? undefined : handleRestoreAll}
-									disabled={deletedAudios.length === 0}
+									className={`w-full flex items-center gap-2 px-4 py-2 font-medium rounded ${deletedmusic.length === 0 ? 'text-gray-200 cursor-not-allowed bg-[#232323]' : 'text-white'} ${active && deletedmusic.length !== 0 ? 'bg-[#232323]' : ''}`}
+									onClick={deletedmusic.length === 0 ? undefined : handleRestoreAll}
+									disabled={deletedmusic.length === 0}
 								>
 									<span className="text-lg">&#8634;</span>
 									Restore all projects
 								</button>
 							)}
 						</MenuItem>
-						<MenuItem disabled={deletedAudios.length === 0}>
+						<MenuItem disabled={deletedmusic.length === 0}>
 							{({ active }) => (
 								<button
-									className={`w-full flex items-center gap-2 px-4 py-2 font-medium rounded ${deletedAudios.length === 0 ? 'text-gray-200 cursor-not-allowed bg-[#232323]' : 'text-[#ff3b3b]'} ${active && deletedAudios.length !== 0 ? 'bg-[#232323]' : ''}`}
-									onClick={deletedAudios.length === 0 ? undefined : handlePermanentDeleteAll}
-									disabled={deletedAudios.length === 0}
+									className={`w-full flex items-center gap-2 px-4 py-2 font-medium rounded ${deletedmusic.length === 0 ? 'text-gray-200 cursor-not-allowed bg-[#232323]' : 'text-[#ff3b3b]'} ${active && deletedmusic.length !== 0 ? 'bg-[#232323]' : ''}`}
+									onClick={deletedmusic.length === 0 ? undefined : handlePermanentDeleteAll}
+									disabled={deletedmusic.length === 0}
 								>
-									<FiTrash2 className={`${deletedAudios.length === 0 ? 'text-gray-400' : 'text-[#ff3b3b]'} text-lg`} />
+									<FiTrash2 className={`${deletedmusic.length === 0 ? 'text-gray-400' : 'text-[#ff3b3b]'} text-lg`} />
 									Permanently delete all projects
 								</button>
 							)}
@@ -274,7 +234,7 @@ function RecentlyDeleted() {
 						>
 							&times;
 						</button>
-						<h2 className="font-bold text-[18px] text-white mb-2">Restore "{deletedAudios[restoreIdx]?.name}"</h2>
+						<h2 className="font-bold text-[18px] text-white mb-2">Restore "{deletedmusic[restoreIdx]?.name}"</h2>
 						<p className="text-[#FFFFFF99] text-[15px] mt-2 mb-6">Restored projects will be moved back to the default project list. Collaborators and open invites are not restored.</p>
 						<div className="flex justify-end gap-4 mt-6">
 							<button
@@ -337,7 +297,7 @@ function RecentlyDeleted() {
 						>
 							&times;
 						</button>
-						<h2 className="font-bold text-[18px] text-white mb-2">Permanently delete "{deletedAudios[deleteIdx]?.name}"</h2>
+						<h2 className="font-bold text-[18px] text-white mb-2">Permanently delete "{deletedmusic[deleteIdx]?.name}"</h2>
 						<p className="text-[#FFFFFF99] text-[15px] text-center mt-2 mb-6">Are you sure you want to permanently delete this project? This action cannot be undone.</p>
 						<div className="flex justify-end gap-4 mt-6">
 							<button
@@ -360,7 +320,13 @@ function RecentlyDeleted() {
 			</div>
 			<hr className="mt-4 my-1 border-gray-200" />
 			<div>
-				{deletedAudios.length === 0 ? (
+				{loading ? (
+					<div className="flex flex-col items-center justify-center py-16 px-4">
+						<div className="text-center mt-1">
+							<h3 className="text-lg font-medium text-gray-300 mb-1">Loading...</h3>
+						</div>
+					</div>
+				) : deletedmusic.length === 0 ? (
 					<div className="flex flex-col items-center justify-center py-16 px-4">
 						<div className="relative">
 							<img src={notFound} alt="No music" className='object-contain w-24 h-24' />
@@ -371,11 +337,12 @@ function RecentlyDeleted() {
 				  </div>
 				) : (
 					<div>
-						{deletedAudios.map((audio, idx) => {
+						{deletedmusic.map((audio, idx) => {
+							console.log("object",deletedmusic)
 							// Calculate days left
 							let daysLeft = 30;
 							if (audio.deletedAt) {
-								daysLeft = Math.max(0, 30 - Math.floor((Date.now() - audio.deletedAt) / (24 * 60 * 60 * 1000)));
+								daysLeft = Math.max(0, 30 - Math.floor((Date.now() - new Date(audio.deletedAt).getTime()) / (24 * 60 * 60 * 1000)));
 							}
 							return (
 								<div key={idx} className="flex items-center justify-between py-4 border-b border-gray-200">
