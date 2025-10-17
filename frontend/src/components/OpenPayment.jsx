@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements, CardCvcElement, CardExpiryElement, CardNumberElement } from '@stripe/react-stripe-js';
 import { useSelector, useDispatch } from 'react-redux';
-import { createPaymentIntent } from '../Redux/Slice/PaymentSlice';
+import { createPaymentIntent, confirmPaymentSuccess } from '../Redux/Slice/PaymentSlice';
 
 import visa from "../Images/visa.png";
 import mastercard from "../Images/mastercard.png";
@@ -21,7 +21,7 @@ import hdfc from "../Images/hdfc.png";
 import sbi from "../Images/sbi.png";
 import axis from "../Images/axis.png";
 import icici from "../Images/icici.png";
-import axios from 'axios';
+
 const stripePromise = loadStripe("pk_test_51R8wmeQ0DPGsMRTSHTci2XmwYmaDLRqeSSRS2hNUCU3xU7ikSAvXzSI555Rxpyf9SsTIgI83PXvaaQE3pJAlkMaM00g9BdsrOB")
 
 const CARD_OPTIONS = {
@@ -55,12 +55,16 @@ const CARD_STYLE = {
   },
 };
 
-export default function OpenPayment({ backToPricing, amount, selectedPlan, propSelectedPlan, onPaymentSuccess, onPaymentError }) {
+// INNER COMPONENT - Uses Stripe hooks
+function PaymentForm({ backToPricing, amount, selectedPlan, propSelectedPlan, onPaymentSuccess, onPaymentError }) {
 
-  // const stripe = useStripe();
-  // const elements = useElements();
+  const user = sessionStorage.getItem('userId');
+  console.log('user', user);
+
+
+  const stripe = useStripe();
+  const elements = useElements();
   const dispatch = useDispatch();
-
 
   // Fetch the selected plan from Redux store
   const reduxSelectedPlan = useSelector((state) => state.premium?.selectedPlan);
@@ -69,9 +73,8 @@ export default function OpenPayment({ backToPricing, amount, selectedPlan, propS
 
   // Use prop selected plan if available, otherwise use Redux selected plan
   const effectiveSelectedPlan = propSelectedPlan || reduxSelectedPlan;
-  // const dispatch = useDispatch();
-
-  console.log('OpenPayment', effectiveSelectedPlan);
+  const effectiveSelectedPlanPeriod = effectiveSelectedPlan.period ;
+  console.log('OpenPayment plan', effectiveSelectedPlanPeriod);
 
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
@@ -154,80 +157,127 @@ export default function OpenPayment({ backToPricing, amount, selectedPlan, propS
   };
 
   const handlePayment = async () => {
+    try {
+      // Validate Stripe is loaded
+      if (!stripe || !elements) {
+        console.error('Stripe not loaded');
+        alert("Payment system is not ready. Please try again.");
+        return;
+      }
 
-    // if (!stripe || !elements) {
-    //   console.error('Stripe not loaded');
-    //   // alert('Payment system is not ready. Please try again.');
-    //   console.log("Payment system is not ready. Please try again.", { variant: "error" });
-    //   return;
-    // }
-    if (!effectiveSelectedPlan) {
-      console.error("No selected plan found");
-      return;
+      // Validate selected plan
+      if (!effectiveSelectedPlan) {
+        console.error("No selected plan found");
+        alert("Please select a plan first");
+        return;
+      }
+
+      // Validate card holder name for card payments
+      if (activePayment === 'card' && !cardHolderName.trim()) {
+        alert("Please enter the card holder name");
+        return;
+      }
+
+      // Create payment intent
+      const paymentData = {
+        amount: (effectiveSelectedPlan.amount || effectiveSelectedPlan.price || 0) * 100, // Convert to cents/paise
+        currency: effectiveSelectedPlan.currency || 'inr',
+        planId: effectiveSelectedPlan._id || effectiveSelectedPlan.id,
+      };
+
+      console.log('Creating payment intent with data:', paymentData);
+
+      // Dispatch the payment intent creation
+      const intentResult = await dispatch(createPaymentIntent(paymentData)).unwrap();
+      console.log("Payment intent created:", intentResult);
+
+      // Get the client secret from the result
+      const currentClientSecret = intentResult?.clientSecret;
+      console.log('Client Secret received:', currentClientSecret ? 'Yes' : 'No');
+
+      if (!currentClientSecret) {
+        console.error('No client secret available');
+        alert("Payment initialization failed. Please try again.");
+        return;
+      }
+
+      // Get card element
+      const cardNumberElement = elements.getElement(CardNumberElement);
+
+      if (!cardNumberElement) {
+        console.error('Card element not found');
+        alert('Payment form not properly loaded. Please refresh the page.');
+        return;
+      }
+
+      console.log('Confirming card payment...');
+
+      // Confirm the payment with Stripe
+      const { error, paymentIntent } = await stripe.confirmCardPayment(currentClientSecret, {
+        payment_method: {
+          card: cardNumberElement,
+          billing_details: {
+            name: cardHolderName || "Guest",
+          },
+        },
+      });
+
+      // Handle payment result
+      if (error) {
+        console.error('Payment error:', error);
+        alert(error.message || "Payment failed. Please try again.");
+        handlePaymentError(error.message);
+        if (onPaymentError) {
+          onPaymentError(error);
+        }
+      } else if (paymentIntent) {
+        console.log('Payment successful:', paymentIntent);
+
+        if (paymentIntent.status === 'succeeded') {
+          alert("Payment successful!");
+          handlePaymentSuccess("Payment completed successfully");
+          
+          // Send confirmation to backend to store payment data
+          const confirmData = {
+            planId: effectiveSelectedPlan._id || effectiveSelectedPlan.id,
+            cardHolder: cardHolderName,
+            period: effectiveSelectedPlan.period,
+            startDate: new Date(),
+            endDate: new Date(Date.now() + (effectiveSelectedPlan.period === 'year' ? 365 : 30) * 24 * 60 * 60 * 1000),
+            amount: (effectiveSelectedPlan.amount || effectiveSelectedPlan.price || 0) * 100,
+            userId: user // Assuming you have user ID available
+          };
+          console.log('Sending payment confirmation data:', confirmData);
+          // Dispatch the confirmation action
+          dispatch(confirmPaymentSuccess(confirmData));
+          
+          if (onPaymentSuccess) {
+            onPaymentSuccess(paymentIntent);
+          }
+        } else if (paymentIntent.status === 'requires_action') {
+          // 3D Secure or other authentication required
+          console.log('Additional authentication required');
+          alert("Additional authentication required. Please complete the verification.");
+        } else {
+          console.log('Payment status:', paymentIntent.status);
+          alert(`Payment status: ${paymentIntent.status}`);
+        }
+      }
+
+    } catch (error) {
+      console.error('Payment processing error:', error);
+      alert(error.message || "An error occurred during payment. Please try again.");
+      handlePaymentError(error.message);
+      if (onPaymentError) {
+        onPaymentError(error);
+      }
     }
-
-    // Create payment intent
-    const paymentData = {
-      amount: (effectiveSelectedPlan.amount || effectiveSelectedPlan.price || 0) * 100, // Convert to smallest currency unit
-      currency: effectiveSelectedPlan.currency || 'inr',
-      planId: effectiveSelectedPlan._id || effectiveSelectedPlan.id,
-    };
-
-    console.log('PaymentData', paymentData);
-
-    const intentResult = await dispatch(createPaymentIntent(paymentData)).unwrap();
-    console.log("Payment intent created:", intentResult);
-
-    // console.log('create payment intent', createPaymentIntent.fulfilled);
-
-    // if (!createPaymentIntent.fulfilled.match(intentResult)) {
-    //   console.error('Failed to create/update payment intent', intentResult.payload);
-    //   // alert('Failed to initialize payment. Please try again.');
-    //   console.log("Failed to initialize payment. Please try again.", { variant: "error" });
-    //   return;
-    // }
-
-    // // Get the client secret from the intent result
-    // const currentClientSecret = intentResult?.clientSecret || clientSecret;
-    // console.log('currentClientSecret', currentClientSecret);
-
-
-    // if (!currentClientSecret) {
-    //   console.log('currentClientSecret', currentClientSecret);
-    //   console.error('No client secret available');
-    //   // alert('Payment initialization failed. Please try again.');
-    //   console.log("Payment initialization failed. Please try again.", { variant: "error" });
-    //   return;
-    // }
-
-    // const cardNumberElement = elements.getElement(CardNumberElement);
-
-    // if (!cardNumberElement) {
-    //   console.error('Card element not found');
-    //   alert('Payment form not properly loaded. Please refresh the page.');
-    //   return;
-    // }
-
-    // // console.log('Processing payment with client secret:', currentClientSecret);
-
-    // // Confirm the payment with Stripe (for non-zero amounts)
-    // const { error, paymentIntent } = await stripe.confirmCardPayment(currentClientSecret, {
-    //   payment_method: {
-    //     card: cardNumberElement,
-    //     billing_details: {
-    //       name: cardHolderName || "Guest",
-    //       // email: email || "guest@example.com",
-    //     },
-    //   },
-    // });
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center bg-white dark:bg-[#1f1f1f] p-4">
-      {/* Modal container like the screenshot */}
+    <div className="max-h-[80vh] flex items-center justify-center bg-white dark:bg-[#1f1f1f] p-2 md:p-4">
       <div className="w-[920px] max-w-full bg-transparent relative">
-        {/* Card-like panel */}
-        <div className="p-4 text-black dark:text-white">
+        <div className="p-1 md:p-4 text-black dark:text-white">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
@@ -238,7 +288,7 @@ export default function OpenPayment({ backToPricing, amount, selectedPlan, propS
               >
                 ‹
               </button>
-              <h3 className="text-lg font-medium">Production &amp; Vocals - {selectedPlan?.premiumType || selectedPlan?.name || "Plan"}</h3>
+              <h3 className="text-sm md600:text-lg text-wrap">Production &amp; Vocals - {selectedPlan?.premiumType || selectedPlan?.name || "Plan"}</h3>
             </div>
 
             <button
@@ -253,25 +303,25 @@ export default function OpenPayment({ backToPricing, amount, selectedPlan, propS
           {console.log('OpenPayment', selectedPlan)}
           {/* First box: Credit Card / Debit Card (expanded) */}
           <div
-            className={`rounded-md border px-5 py-4 mb-4 transition-all duration-300 ${activePayment === 'card' ? 'border-[#6b6b6b] bg-white dark:bg-[#1f1f1f]' : 'border-[#2b2b2b] bg-transparent'
+            className={`rounded-md border p-3 lg:p-4 mb-4 transition-all duration-300 ${activePayment === 'card' ? 'border-[#6b6b6b] bg-white dark:bg-[#1f1f1f]' : 'border-[#2b2b2b] bg-transparent'
               }`}
             onClick={() => setActivePayment('card')}
             style={{ cursor: "pointer" }}
           >
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-start sm:justify-between py-2">
+              <div className="flex items-center gap-2 md:gap-3">
                 <input
                   type="radio"
                   name="paymethod"
                   checked={activePayment === 'card'}
                   onChange={() => setActivePayment('card')}
-                  className="accent-white mt-1"
+                  className="accent-white "
                 />
-                <div className="text-md font-medium">Credit Card / Debit Card</div>
+                <div className="text-[12px] md600:text-[20px] font-medium text-nowrap my-auto">Credit Card / Debit Card</div>
               </div>
 
               {/* small card logos on right */}
-              <div className="flex items-center gap-0.3">
+              <div className="flex items-center gap-0.3 justify-end mt-2 sm:mt-0">
                 <img src={visa} alt='visa' className="w-9 h-6 object-contain" />
                 <img src={mastercard} alt='mastercard' className="w-9 h-6 object-contain" />
                 <img src={amex} alt='amex' className="w-9 h-6 object-contain" />
@@ -281,75 +331,69 @@ export default function OpenPayment({ backToPricing, amount, selectedPlan, propS
 
             {activePayment === "card" && (
               <>
-                <Elements stripe={stripePromise} >
-                  <hr className="border-t border-[#2b2b2b] my-2" />
-                  <div className="grid grid-cols-2 mt-4 gap-5">
-                    <div>
-                      <label className="text-xs text-black dark:text-gray-200 mb-2 block">Card Number</label>
-                      <CardNumberElement options={CARD_OPTIONS} className='w-full bg-gray-100 dark:bg-[#2c2c2c] border border-[#333] rounded-md px-3 py-3 text-sm placeholder-[#646464] outline-none' />
-
-                    </div>
-
-                    <div>
-                      <label className="text-xs text-black dark:text-gray-200 mb-2 block">Card Holder Name</label>
-                      <input
-                        type="text"
-                        value={cardHolderName}
-                        onChange={(e) => {
-                          // Allow only alphabets and spaces
-                          let value = e.target.value.replace(/[^A-Za-z\s]/g, "");
-                          // Prevent multiple spaces
-                          value = value.replace(/\s{2,}/g, " ");
-                          setCardHolderName(value);
-                        }}
-                        onKeyPress={(e) => {
-                          // Block numbers and special characters completely
-                          const char = String.fromCharCode(e.which);
-                          if (!/^[A-Za-z\s]$/.test(char)) {
-                            e.preventDefault();
-                          }
-                        }}
-                        placeholder="Card Holder Name"
-                        className="w-full bg-gray-100 dark:bg-[#2c2c2c] border border-[#333] rounded-md px-3 py-3 text-sm placeholder-[#646464] outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-xs text-black dark:text-gray-200 mb-2 block">Expiry Date</label>
-                      <CardExpiryElement options={CARD_OPTIONS} className='w-full bg-gray-100  dark:bg-[#2c2c2c] border border-[#333] rounded-md px-3 py-3 text-sm placeholder-[#646464] outline-none' />
-                    </div>
-
-                    <div>
-                      <label className="text-xs text-black dark:text-gray-200 mb-2 block">CVV</label>
-                      <CardCvcElement
-                        options={{
-                          ...CARD_STYLE,
-                          placeholder: 'CVV'
-                        }}
-                        className='w-full bg-gray-100 dark:bg-[#2c2c2c] border border-[#333] rounded-md px-3 py-3 text-sm placeholder-[#646464] outline-none'
-                      />
-                    </div>
+                <hr className="border-t border-[#2b2b2b] my-2" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 mt-2 sm:mt-4 gap-4 sm:gap-3 md:gap-5">
+                  <div>
+                    <label className="text-xs text-black dark:text-gray-200 mb-2 block">Card Number</label>
+                    <CardNumberElement options={CARD_OPTIONS} className='w-full bg-gray-100 dark:bg-[#2c2c2c] border border-[#333] rounded-md px-2 sm:px-3 py-2 sm:py-3 text-sm placeholder-[#646464] outline-none' />
                   </div>
-                </Elements>
+
+                  <div>
+                    <label className="text-xs text-black dark:text-gray-200 mb-2 block">Card Holder Name</label>
+                    <input
+                      type="text"
+                      value={cardHolderName}
+                      onChange={(e) => {
+                        let value = e.target.value.replace(/[^A-Za-z\s]/g, "");
+                        value = value.replace(/\s{2,}/g, " ");
+                        setCardHolderName(value);
+                      }}
+                      onKeyPress={(e) => {
+                        const char = String.fromCharCode(e.which);
+                        if (!/^[A-Za-z\s]$/.test(char)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      placeholder="Card Holder Name"
+                      className="w-full bg-gray-100 dark:bg-[#2c2c2c] border border-[#333] rounded-md px-2 sm:px-3 py-2 sm:py-3 text-sm placeholder-[#646464] outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-black dark:text-gray-200 mb-2 block">Expiry Date</label>
+                    <CardExpiryElement options={CARD_OPTIONS} className='w-full bg-gray-100 dark:bg-[#2c2c2c] border border-[#333] rounded-md px-2 sm:px-3 py-2 sm:py-3 text-sm placeholder-[#646464] outline-none' />
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-black dark:text-gray-200 mb-2 block">CVV</label>
+                    <CardCvcElement
+                      options={{
+                        ...CARD_STYLE,
+                        placeholder: 'CVV'
+                      }}
+                      className='w-full bg-gray-100 dark:bg-[#2c2c2c] border border-[#333] rounded-md px-2 sm:px-3 py-2 sm:py-3 text-sm placeholder-[#646464] outline-none'
+                    />
+                  </div>
+                </div>
               </>
             )}
           </div>
 
           {/* Other payment options collapsed style */}
           <div
-            className={`rounded-md border px-5 py-4 mb-4 transition-all duration-300 ${activePayment === 'upi' ? 'border-[#6b6b6b]' : 'border-[#2b2b2b]'
+            className={`rounded-md border p-3 lg:p-4 mb-4 transition-all duration-300 ${activePayment === 'upi' ? 'border-[#6b6b6b]' : 'border-[#2b2b2b]'
               }`}
             onClick={() => setActivePayment('upi')}
             style={{ cursor: 'pointer' }}
           >
             <div className="flex items-center justify-between py-2">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3">
                 <input
                   type="radio"
                   name="paymethod"
                   checked={activePayment === 'upi'}
                   onChange={() => setActivePayment('upi')}
-                  className="accent-white mt-1"
+                  className="accent-white"
                 />
                 <span className="text-sm">UPI</span>
               </div>
@@ -370,7 +414,7 @@ export default function OpenPayment({ backToPricing, amount, selectedPlan, propS
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.3, ease: "easeInOut" }}
                   >
-                    <div className="p-3 mt-2">
+                    <div className="p-2 sm:p-3">
                       <label className="text-sm block mb-2 text-black dark:text-gray-200">UPI ID</label>
                       <div className="flex items-center bg-gray-100 dark:bg-[#2c2c2c] border border-[#2b2b2b] rounded-md">
                         <input
@@ -378,12 +422,12 @@ export default function OpenPayment({ backToPricing, amount, selectedPlan, propS
                           placeholder="UPI ID"
                           value={upiId}
                           onChange={(e) => setUpiId(e.target.value)}
-                          className="w-full bg-transparent text-black dark:text-white text-sm px-3 py-2 focus:outline-none"
+                          className="w-full bg-transparent text-black dark:text-white text-sm p-2 sm:p-3 focus:outline-none"
                         />
                         <select
                           value={upiDomain}
                           onChange={(e) => setUpiDomain(e.target.value)}
-                          className="bg-transparent text-black dark:text-white text-sm px-2 py-2 focus:outline-none border-l border-[#606060]"
+                          className="bg-transparent text-black dark:text-white text-sm p-2 sm:p-3 focus:outline-none border-l border-[#606060] w-24 sm:w-36"
                         >
                           {upiDomains.map((domain) => (
                             <option
@@ -404,23 +448,23 @@ export default function OpenPayment({ backToPricing, amount, selectedPlan, propS
           </div>
 
           <div
-            className={`rounded-md border px-5 py-4 mb-6 ${activePayment === 'netbank' ? 'border-[#6b6b6b]' : 'border-[#2b2b2b]'
+            className={`rounded-md border p-3 lg:p-4 mb-6 ${activePayment === 'netbank' ? 'border-[#6b6b6b]' : 'border-[#2b2b2b]'
               }`}
             onClick={() => setActivePayment('netbank')}
             style={{ cursor: 'pointer' }}
           >
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row justify-start sm:items-center sm:justify-between py-2">
+              <div className="flex items-center gap-2 md:gap-3">
                 <input
                   type="radio"
                   name="paymethod"
                   checked={activePayment === 'netbank'}
                   onChange={() => setActivePayment('netbank')}
-                  className="accent-white mt-1"
+                  className="accent-white"
                 />
-                <span className="text-sm">Net banking</span>
+                <span className="text-sm text-nowrap">Net banking</span>
               </div>
-              <div className="flex items-center mr-[-14px]">
+              <div className="flex justify-end items-center  mt-2 sm:mt-0 ">
                 <img src={citi} alt='citi' className="w-9 h-6 bg-white object-contain" />
                 <img src={wells} alt='wells' className="w-9 h-6 object-contain" />
                 <img src={capital} alt='capital' className="w-9 h-6 object-contain" />
@@ -431,9 +475,9 @@ export default function OpenPayment({ backToPricing, amount, selectedPlan, propS
             {activePayment === "netbank" && (
               <>
                 <hr className="border-t border-[#2b2b2b] my-2" />
-                <div className="mt-4 rounded-md p-2">
+                <div className="mt-4 rounded-md p-2 sm:p-3">
                   {/* Search Bar */}
-                  <div className="bg-gray-100 dark:bg-[#2c2c2c] rounded-md px-3 py-3 mb-4 flex items-center gap-1">
+                  <div className="bg-gray-100 dark:bg-[#2c2c2c] rounded-md p-2 sm:p-3 mb-4 flex items-center gap-1">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       className="w-6 h-6 text-gray-400 mr-2"
@@ -453,10 +497,10 @@ export default function OpenPayment({ backToPricing, amount, selectedPlan, propS
                   </div>
 
                   {/* Bank Logos */}
-                  <div className="grid grid-cols-8 gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3 lg:gap-6">
                     {filteredBanks.map((bank) => (
                       <div key={bank.name} className="flex flex-col items-center mt-2">
-                        <img src={bank.logo} alt={bank.name} className="w-10 h-10 object-contain mb-2" />
+                        <img src={bank.logo} alt={bank.name} className="w-6 h-6 object-contain mb-2" />
                         <span className="text-xs text-center text-gray-300">{bank.name}</span>
                       </div>
                     ))}
@@ -469,7 +513,7 @@ export default function OpenPayment({ backToPricing, amount, selectedPlan, propS
             )}
           </div>
 
-          {/* Centered Next button (white) like in image */}
+          {/* Centered Next button */}
           <div className="mt-12 mb-14 pri-next-btn text-center">
             {console.log('OpenPayment', effectiveSelectedPlan)}
             <button
@@ -487,5 +531,14 @@ export default function OpenPayment({ backToPricing, amount, selectedPlan, propS
         </div>
       </div>
     </div>
+  );
+}
+
+// OUTER COMPONENT - Wraps with Elements provider
+export default function OpenPayment(props) {
+  return (
+    <Elements stripe={stripePromise}>
+      <PaymentForm {...props} />
+    </Elements>
   );
 }
