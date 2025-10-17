@@ -793,7 +793,7 @@ const Timeline = () => {
 
         const odDist = new Tone.Distortion({ distortion: dist, oversample: '2x', wet: 1 });
         const odToneLP = new Tone.Filter({ type: 'lowpass', frequency: 800 + tone * 6200, Q: 0.7 });
-        const odLowCutHP = new Tone.Filter({ type: 'highpass', frequency: 20 + lowCutOD * 480, Q: 1.0 });
+        const odLowCutHP = new Tone.Filter({ type: 'highpass', frequency: Math.min(150, 20 + lowCutOD * 480), Q: 1.0 });
 
         chainTail.chain(odLowCutHP, odDist, odToneLP);
         chainTail = odToneLP;
@@ -830,7 +830,7 @@ const Timeline = () => {
         });
         const lowCutFilter = new Tone.Filter({ 
           type: 'highpass', 
-          frequency: 20 + (lowCut * 480),
+          frequency: Math.min(150, 20 + (lowCut * 480)),
           Q: 1.0 
         });
 
@@ -866,7 +866,7 @@ const Timeline = () => {
         });
         const lowCutFilter = new Tone.Filter({ 
           type: 'highpass', 
-          frequency: 20 + (lowCut * 480), 
+          frequency: Math.min(150, 20 + (lowCut * 480)), 
           Q: 1.2 
         });
 
@@ -1186,7 +1186,7 @@ const Timeline = () => {
         baseFrequency: 150,
         octaves: 4
       },
-      volume: 0
+      volume: -6
     };
 
     // Customize synth based on drum instrument type
@@ -4548,7 +4548,7 @@ const Timeline = () => {
   }, []);
 
   // Enhanced drum sound playback that works with timeline
-  const playDrumSound = useCallback((drumData) => {
+  const playDrumSound = useCallback(async (drumData) => {
     try {
       if (!drumData || !drumData.sound) return;
 
@@ -4588,9 +4588,16 @@ const Timeline = () => {
       else if (soundName.includes('clap')) instrumentId = 'clap';
       else if (soundName.includes('cowbell')) instrumentId = 'cowbell';
 
+      // Ensure Tone.js context is running before creating/using synth
+      if (Tone.context.state !== 'running') {
+        await Tone.start();
+      }
+
       // Use Tone.js synth with shared effects chain
       const freshSynth = initializeDrumSynth(instrumentId);
-      applyBass808Effects(freshSynth, drumData.trackId, null);
+      // Fallback to selected track when drumData.trackId is missing to ensure effects chain resolves
+      const effectsTrackId = drumData.trackId || selectedTrackId;
+      applyBass808Effects(freshSynth, effectsTrackId, null);
 
       const hz = Number(padData.freq) || 200;
       const duration = Math.max(0.05, Number(padData.decay) || 0.2);
@@ -4642,6 +4649,23 @@ const Timeline = () => {
   }, [playDrumSound]);
 
   const playedDrumHitsRef = useRef(new Set());
+  const prevTimeRef = useRef(0);
+
+  useEffect(() => {
+    if (!isPlaying) {
+      playedDrumHitsRef.current.clear();
+      prevTimeRef.current = currentTime || 0;
+      return;
+    }
+
+    const prev = prevTimeRef.current || 0;
+    const now = currentTime || 0;
+    if (now < prev - 0.001) {
+      // Time moved backwards (seek or loop wrap) → allow hits to retrigger
+      playedDrumHitsRef.current.clear();
+    }
+    prevTimeRef.current = now;
+  }, [isPlaying, currentTime]);
 
   // Enhanced drum clip checking for timeline playback
   useEffect(() => {
