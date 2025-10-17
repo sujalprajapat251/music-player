@@ -6,7 +6,7 @@ import { useFloating, offset, flip, shift, autoUpdate } from "@floating-ui/react
 import { BsThreeDotsVertical } from 'react-icons/bs';
 import { Play, Pause, X } from 'lucide-react';
 import { IMAGE_URL } from '../Utils/baseUrl';
-import { getAllMusic, renameMusic, moveToFolderMusic, deleteMusic, addCoverImage, removeCoverImage } from '../Redux/Slice/music.slice';
+import { getAllMusic, getDeletedMusic, renameMusic, moveToFolderMusic, deleteMusic, addCoverImage, removeCoverImage } from '../Redux/Slice/music.slice';
 import { getFolderByUserId } from '../Redux/Slice/folder.slice';
 import close from '../Images/close.svg';
 import { IoIosArrowDown } from "react-icons/io";
@@ -128,6 +128,7 @@ const FolderView = () => {
 
   useEffect(() => {
     dispatch(getAllMusic());
+    dispatch(getDeletedMusic());
     if (userId) dispatch(getFolderByUserId(userId));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, userId, id]);
@@ -146,11 +147,19 @@ const FolderView = () => {
   const getItemFolderId = (m) =>
     m?.folderId || (typeof m?.folder === 'string' ? m.folder : m?.folder?._id) || null;
 
+  const deletedMusic = useSelector((state) => state.music.deletedmusic);
+  
   const items = useMemo(() => {
-    return (allMusic || [])
-      .filter(m => !m.isDeleted)
-      .filter(m => getItemFolderId(m) === id);
-  }, [allMusic, id]);
+    const allMusicData = [...(deletedMusic || []), ...(allMusic || [])];
+    return allMusicData
+      .filter(m => getItemFolderId(m) === id)
+      .sort((a, b) => {
+        // If one is deleted and other is not, deleted item comes first
+        if (a.isDeleted && !b.isDeleted) return -1;
+        if (!a.isDeleted && b.isDeleted) return 1;
+        return 0;
+      });
+  }, [allMusic, deletedMusic, id]);
 
   // Sorted items according to sortBy
   const sortedItems = useMemo(() => {

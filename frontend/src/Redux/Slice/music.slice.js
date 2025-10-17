@@ -6,6 +6,7 @@ import axios from "axios";
 
 const initialStateUsers = {
     allmusic: [],
+    deletedmusic: [],
     success: false,
     message: '',
     loading: false,
@@ -71,6 +72,25 @@ export const getAllMusic = createAsyncThunk(
                 }
             );
             console.log("HIHIHIHII", response);
+            return response.data.music;
+        } catch (error) {
+            return handleErrors(error, dispatch, rejectWithValue);
+        }
+    }
+);
+
+export const getDeletedMusic = createAsyncThunk(
+    "music/getDeletedMusic",
+    async (_, { dispatch, rejectWithValue }) => {
+        try {
+            const token = await sessionStorage.getItem("token");
+            const response = await axiosInstance.get(`${BASE_URL}/deletedMusic`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
             return response.data.music;
         } catch (error) {
             return handleErrors(error, dispatch, rejectWithValue);
@@ -183,8 +203,7 @@ export const deleteMusic = createAsyncThunk(
                     }
                 }
             );
-            
-            console.log("HIHIHIHII", response);
+            dispatch(setAlert({ text: response.data.message || 'Music moved to recyle bin successfully', color: 'success' }));
             return response.data.music;
         } catch (error) {
             return handleErrors(error, dispatch, rejectWithValue);
@@ -238,15 +257,24 @@ export const permanentDeleteMusic = createAsyncThunk(
 );
 
 export const restoreAllMusic = createAsyncThunk(
-  "music/restoreAll",
-  async (_, { rejectWithValue }) => {
-    try {
-      const res = await axios.post("/api/music/restore-all");
-      return res.data;
-    } catch (err) {
-      return rejectWithValue(err.response.data);
+    "music/restoreAll",
+    async (_, { dispatch, rejectWithValue }) => {
+        try {
+            const token = sessionStorage.getItem("token");
+            const response = await axiosInstance.post(
+                `${BASE_URL}/restoreAllMusic`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+            dispatch(setAlert({ text: response.data.message , color: 'success' }));
+            return response.data;
+        } catch (error) {
+            return handleErrors(error, dispatch, rejectWithValue);
+        }
     }
-  }
 );
 
 export const permanentDeleteAllMusic = createAsyncThunk(
@@ -326,6 +354,44 @@ const musicSlice = createSlice({
                 state.loading = false;
                 state.success = false;
                 state.message = action.payload?.message || 'Failed to load Music';
+            })
+            .addCase(getDeletedMusic.pending, (state) => {
+                state.loading = true;
+                state.message = 'Loading deleted music...';
+            })
+            .addCase(getDeletedMusic.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = true;
+                state.message = 'Deleted music loaded successfully';
+                state.deletedmusic = Array.isArray(action.payload) ? action.payload : [];
+            })
+            .addCase(getDeletedMusic.rejected, (state, action) => {
+                state.loading = false;
+                state.success = false;
+                state.message = action.payload?.message || 'Failed to load deleted music';
+            })
+            .addCase(deleteMusic.pending, (state) => {
+                state.loading = true;
+                state.message = 'Deleting music...';
+            })
+            .addCase(deleteMusic.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = true;
+                state.message = 'Music deleted successfully';
+                const deletedMusic = action.payload;
+                if (deletedMusic && deletedMusic._id) {
+                    // Remove from all music and add to deleted music
+                    const musicToMove = state.allmusic.find(m => m._id === deletedMusic._id);
+                    state.allmusic = state.allmusic.filter(m => m._id !== deletedMusic._id);
+                    if (musicToMove) {
+                        state.deletedmusic = [deletedMusic, ...state.deletedmusic];
+                    }
+                }
+            })
+            .addCase(deleteMusic.rejected, (state, action) => {
+                state.loading = false;
+                state.success = false;
+                state.message = action.payload?.message || 'Failed to delete music';
             })  
             .addCase(renameMusic.pending, (state) => {
                 state.loading = true;
@@ -396,7 +462,8 @@ const musicSlice = createSlice({
                 state.message = 'Music restored successfully';
                 const restored = action.payload;
                 if (restored && restored._id) {
-                    // Deleted list mathi hataavi ne allmusic ma add karo
+                    // Remove from deleted music list and add to all music list
+                    state.deletedmusic = state.deletedmusic.filter(m => m._id !== restored._id);
                     state.allmusic = [...state.allmusic.filter(m => m._id !== restored._id), restored];
                 }
             })
@@ -412,6 +479,7 @@ const musicSlice = createSlice({
                 state.message = 'Music permanently deleted';
                 const deletedId = action.payload.id;
                 state.allmusic = state.allmusic.filter(m => m._id !== deletedId);
+                state.deletedmusic = state.deletedmusic.filter(m => m._id !== deletedId);
             })
             .addCase(permanentDeleteMusic.rejected, (state, action) => {
                 state.loading = false;
@@ -423,6 +491,9 @@ const musicSlice = createSlice({
                 state.loading = false;
                 state.success = true;
                 state.message = 'All music restored successfully';
+                // Move all deleted music back to all music list
+                state.allmusic = [...state.allmusic, ...state.deletedmusic];
+                state.deletedmusic = [];
             })
             .addCase(restoreAllMusic.rejected, (state, action) => {
                 state.loading = false;
@@ -434,6 +505,7 @@ const musicSlice = createSlice({
                 state.loading = false;
                 state.success = true;
                 state.message = 'All music permanently deleted';
+                state.deletedmusic = [];
             })
             .addCase(permanentDeleteAllMusic.rejected, (state, action) => {
                 state.loading = false;
