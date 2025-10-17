@@ -469,15 +469,15 @@ function RecentlyDeleted() {
 			{/* Permanently Delete All Projects Modal */}
 			{showDeleteAllModal && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-					<div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md relative">
+					<div className="bg-[#1f1f1f] rounded-xl shadow-lg p-8 w-full max-w-md relative">
 						<button
 							className="absolute top-4 right-4 text-gray-400 text-2xl font-bold hover:text-gray-600"
 							onClick={handleDeleteAllCancel}
 						>
 							&times;
 						</button>
-						<h2 className="font-bold text-2xl text-gray-900 mb-4">Permanently delete all projects</h2>
-						<p className="text-gray-800 mb-6">Are you sure you want to permanently delete all projects? This action cannot be undone.</p>
+						<h2 className="font-bold text-2xl text-white mb-2">Permanently delete all projects</h2>
+						<p className="text-[#FFFFFF99] mt-4 mb-6">Are you sure you want to permanently delete all projects? This action cannot be undone.</p>
 						<div className="flex justify-end gap-4 mt-6">
 							<button
 								className="px-6 py-2 rounded-full bg-white border border-gray-300 text-gray-700 font-medium hover:bg-gray-100 text-base"

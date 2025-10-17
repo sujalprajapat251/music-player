@@ -63,7 +63,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
       <Dialog
         open={pricingModalOpen}
         onClose={setPricingModalOpen}
-        className="relative z-[200]"
+        className="relative z-[999]"
       >
         <DialogBackdrop
           transition
@@ -345,7 +345,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
       <Dialog
         open={openPayment}
         onClose={() => setOpenPayment(false)}
-        className="relative z-[200]"
+        className="relative z-[999]"
       >
         <DialogBackdrop className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
         <div className="fixed inset-0 z-10 w-screen ">
