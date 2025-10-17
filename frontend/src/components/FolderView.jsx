@@ -744,7 +744,7 @@ const FolderView = () => {
                             <button
                               type="button"
                               onClick={() => { setSelectedProjectName(ele?.name || ''); setDeleteId(ele._id); setDeleteModalOpen(true); }}
-                              className={`flex items-center gap-2 px-4 py-2 w-full text-sm ${active ? "bg-red-100 text-red-600" : "text-red-600"}`}
+                              className={`flex items-center gap-2 px-4 py-2 w-full text-sm ${active ? "bg-gray-600 text-red-600" : "text-red-600"}`}
                             >
                               <MdDeleteOutline size={20} /> Delete
                             </button>

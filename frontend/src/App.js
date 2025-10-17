@@ -49,17 +49,18 @@ import SDemo from './components/SDemo';
 // import JuicyDistrotion from './components/JuicyDistrotion';
 // import TapeWobble from './components/TapeWobble';
 import VoiceTransformer from './components/VoiceTransfrom';
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import * as soundtouch from 'soundtouchjs';
 import Guitar from './components/Guitar';
 import File from './components/File';
-import OpenProjectModal from './components/OpenProjectModal';
+// import OpenProjectModal from './components/OpenProjectModal';
 import Sound from './components/Sound';
 import FolderView from './components/FolderView';
 window.soundtouch = soundtouch;
 
+// const { store } = configureStore();
+
 function App() {
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Prevent zoom with Ctrl + wheel
@@ -98,27 +99,11 @@ function App() {
     };
   }, []);
 
-  useEffect(() => {
-    // Simulate loading time and hide spinner
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 4000); // 2 seconds loading time
-
-    return () => clearTimeout(timer);
-  }, []);
-
   const { store, persistor } = configureStore();
+
   return (
   <>
-    {/* {isLoading && (
-      <div className="spinner">
-        <div className="r1"></div>
-        <div className="r2"></div>
-        <div className="r3"></div>
-        <div className="r4"></div>
-        <div className="r5"></div>
-      </div>
-    )} */}
+    
     <Provider store={store}>
       <SnackbarProvider
         maxSnack={3}
@@ -140,7 +125,7 @@ function App() {
               <Route path='/login' element={<Login />} />
             </Route>
 
-            {/* <Route element={<RequireAuth />}> */}
+            <Route element={<RequireAuth />}>
               <Route path="/" element={<Layout />} >
                 <Route path='project' element={<Home2 />} />
                 <Route path='project/folder/:id' element={<FolderView />} />
@@ -154,7 +139,7 @@ function App() {
               <Route path='piano' element={<Piano />} />  
               <Route path='effcts2' element={<Effects2 />} />
               <Route path='file' element={<File />} />
-              <Route path='sound' element={<Sound />} />
+              <Route path='sound' element={<Sound />} />                                                   
 
               {/* Sidebar namespace (protected) */}
               <Route path='/sidebar' element={<Sidebar2 />} >
@@ -168,7 +153,7 @@ function App() {
                 <Route path="guitar" element={<Guitar />} />
                 <Route path="voice" element={<VoiceTransformer />} />
               </Route>
-            {/* </Route> */}
+            </Route>
           </Routes>
           </I18nProvider>
         </ThemeProvider>
