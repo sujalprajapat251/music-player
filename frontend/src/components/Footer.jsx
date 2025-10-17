@@ -49,12 +49,12 @@ const Footer = () => {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     placeholder="Email"
-                    className="flex-1 px-4 py-3 bg-[#232323] text-white rounded-l-md focus:outline-none w-full"
+                    className="flex-1 p-2 sm:p-3 bg-[#232323] text-white rounded-l-md focus:outline-none w-full"
                   />
                   
                   <button
                     type="submit"
-                    className="w-28 px-0 py-3 bg-[#E5E5E5] text-black font-medium rounded-r-md"
+                    className="w-28 p-2 sm:p-3 bg-[#E5E5E5] text-black font-medium rounded-r-md"
                   >
                     Subscribe
                   </button>
