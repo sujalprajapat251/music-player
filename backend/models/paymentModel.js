@@ -12,7 +12,7 @@ const paymentSchema = new mongoose.Schema({
   },
   period: {
     type: String,
-    // enum: ['monthly', 'yearly'],
+    enum: ['monthly', 'yearly'],
     required: true
   },
   startDate: {

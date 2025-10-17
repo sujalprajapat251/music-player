@@ -116,7 +116,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                             {premiums && premiums?.filter(p => p.period === 'monthly').map((premium, index) => (
                               <div 
                                 key={index} 
-                                className="flex-1 max-w-sm p-6 bg-[#1F1F1F] border border-[#FFFFFF4D] rounded-xl min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-110 hover:bg-[#353535] md:p-5 lg:p-6 md:max-w-xs lg:max-w-sm cursor-pointer"
+                                className={`flex-1 max-w-sm p-6 bg-[#1F1F1F] border border-[#FFFFFF4D] rounded-xl min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-110 hover:bg-[#353535] md:p-5 lg:p-6 md:max-w-xs lg:max-w-sm cursor-pointer ${selectedPlan?._id === premium._id ? 'border-2 border-white ring-2 ring-white' : ''}`}
                                 onClick={() => {
                                   console.log("Selected Monthly Premium:", premium);
                                   // Dispatch the selected plan to Redux store
@@ -221,7 +221,7 @@ const PricingModel = ({ pricingModalOpen, setPricingModalOpen }) => {
                               {premiums && premiums.filter(p => p.period === 'yearly').map((premium, index) => (
                                 <div
                                   key={index}
-                                  className="flex-1 max-w-sm p-6 bg-[#1F1F1F] border border-[#FFFFFF4D] rounded-xl min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-110 hover:bg-[#353535] cursor-pointer"
+                                  className={`flex-1 max-w-sm p-6 bg-[#1F1F1F] border border-[#FFFFFF4D] rounded-xl min-w-0 flex flex-col transform transition-transform duration-300 hover:scale-110 hover:bg-[#353535] cursor-pointer ${selectedPlan?._id === premium._id ? 'border-2 border-white ring-2 ring-white' : ''}`}
                                   onClick={() => {
                                     console.log("Selected Yearly Premium:", premium);
                                     // Dispatch the selected plan to Redux store
