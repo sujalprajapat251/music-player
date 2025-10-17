@@ -1134,10 +1134,16 @@ const TopHeader = ({onAction, onClose}) => {
 
     const handleItemClick = (action) => {
         if (onAction) {
-            console.log(onAction);
             onAction(action);
         }
-        onClose();
+        // Always broadcast to Timeline so it can handle recording/clip actions
+        try {
+            window.dispatchEvent(new CustomEvent('timeline:action', { detail: { action } }));
+        } catch (err) {
+            // no-op if CustomEvent fails in some environments
+        }
+        // Close menu if an onClose handler exists (guard for undefined)
+        if (onClose) onClose();
     };
     return (
         <>
@@ -1502,6 +1508,7 @@ const TopHeader = ({onAction, onClose}) => {
                                 <Menu.Item>
                                     {({ active }) => (
                                         <p 
+                                            onClick={() => handleItemClick('copy')}
                                             className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer transition-colors"
                                             style={{ 
                                                 backgroundColor: active ? colors.menuItemHover : 'transparent',
@@ -1517,6 +1524,7 @@ const TopHeader = ({onAction, onClose}) => {
                                 <Menu.Item>
                                     {({ active }) => (
                                         <p 
+                                            onClick={() => handleItemClick('paste')}
                                             className="flex gap-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer transition-colors"
                                             style={{ 
                                                 backgroundColor: active ? colors.menuItemHover : 'transparent',
@@ -1532,6 +1540,7 @@ const TopHeader = ({onAction, onClose}) => {
                                 <Menu.Item>
                                     {({ active }) => (
                                         <p 
+                                            onClick={() => handleItemClick('delete')}
                                             className="flex gap-2 mb-2 md600:gap-3 w-full items-center px-3 py-1 md600:px-4 lg:px-6 md:py-2 cursor-pointer transition-colors"
                                             style={{ 
                                                 backgroundColor: active ? colors.menuItemHover : 'transparent',

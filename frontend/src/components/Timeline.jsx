@@ -4215,12 +4215,31 @@ const Timeline = () => {
     const handleExternalAction = (e) => {
       const action = e?.detail?.action;
       if (!action) return;
-      if (!selectedTrackId) return;
-      handleContextMenuAction(action, selectedTrackId, selectedClipId);
+
+      // Prefer current selection; otherwise fall back to current track, then recording track, then first track
+      let fallbackTrackId = selectedTrackId
+        ?? currentTrackId
+        ?? (pianoRecordingClip?.trackId ?? null)
+        ?? (drumRecordingClip?.trackId ?? null)
+        ?? (tracks && tracks.length ? tracks[0].id : null);
+
+      if (!fallbackTrackId) return; // nothing to operate on
+
+      // Decide clip context: keep current selection if present; otherwise if there's an active recording clip on the track, use it
+      let fallbackClipId = selectedClipId;
+      if (!fallbackClipId) {
+        if (pianoRecordingClip && pianoRecordingClip.trackId === fallbackTrackId) {
+          fallbackClipId = 'piano-recording';
+        } else if (drumRecordingClip && drumRecordingClip.trackId === fallbackTrackId) {
+          fallbackClipId = 'drum-recording';
+        }
+      }
+
+      handleContextMenuAction(action, fallbackTrackId, fallbackClipId);
     };
     window.addEventListener('timeline:action', handleExternalAction);
     return () => window.removeEventListener('timeline:action', handleExternalAction);
-  }, [selectedTrackId, selectedClipId, handleContextMenuAction]);
+  }, [selectedTrackId, selectedClipId, handleContextMenuAction, currentTrackId, pianoRecordingClip, drumRecordingClip, tracks]);
 
   const renderGridLines = useMemo(() => {
     // Early return if required dependencies are not available
@@ -5425,7 +5444,7 @@ const Timeline = () => {
 
             <div style={{ overflow: "visible", position: "relative", minHeight: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px", height: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px", marginTop: "40px", }}>
               {tracks.length > 0 && Array.from({ length: tracks.length }).map((_, index) => (
-                <div key={`lane-${index}`} style={{ position: "absolute", top: `${(index * trackHeight) - sidebarScrollOffset}px`, left: 0, width: "100%", height: `${trackHeight}px`, borderTop: `1px solid ${isDark ? "#d8d8d8" : "#484848"}`, borderBottom: `1px solid ${isDark ? "#d8d8d8" : "#484848"}`, zIndex: 0, }} />
+                <div key={`lane-${index}`} style={{ position: "absolute", top: `${(index * trackHeight) - sidebarScrollOffset}px`, left: 0, width: "100%", height: `${trackHeight}px`, borderTop: `1px solid ${isDark ? "#474747" : "#9d9d9d"}`, borderBottom: `1px solid ${isDark ? "#474747" : "#9d9d9d"}`, zIndex: 0, }} />
               ))}
 
               {tracks.map((track, index) => {
@@ -5734,13 +5753,13 @@ const Timeline = () => {
       <Effects showOffcanvas={showEffectsOffcanvas} setShowOffcanvas={(value) => dispatch(toggleEffectsOffcanvas())} />
 
       {/* Context Menu */}
-      {/* <WaveMenu
+      <WaveMenu
         isOpen={contextMenu.isOpen}
         position={contextMenu.position}
         onClose={handleContextMenuClose}
         onAction={handleContextMenuAction}
         onOpenMusicOff={() => { setShowOffcanvas(true); dispatch(setShowLoopLibrary(true)); }}
-      /> */}
+      />
 
       {/* Section Context Menu */}
       <SectionContextMenu
