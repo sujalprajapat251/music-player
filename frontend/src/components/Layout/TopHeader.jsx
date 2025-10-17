@@ -58,7 +58,7 @@ import ShareModal from '../Sharemodal';
 import PricingModel from '../PricingModel';
 import { setCurrentMusic } from '../../Redux/Slice/music.slice';
 import AccessPopup from '../AccessPopup';
-import { addAudioClipToTrack, createTrackWithDefaults, updateAudioClip, setTrackType } from '../../Redux/Slice/studio.slice';
+import { addAudioClipToTrack, createTrackWithDefaults, updateAudioClip, setTrackType, resetTrack } from '../../Redux/Slice/studio.slice';
 import TunerPopup from '../TunerPopup';
 import { CloudCog } from 'lucide-react';
 import ReviewModal from '../ReviewModal';
@@ -535,6 +535,9 @@ const TopHeader = ({onAction, onClose}) => {
 
     // Navigate to a fresh timeline with a newly generated id
     const handleNewProject = () => {
+        navigate('/sidebar/timeline')
+        dispatch(resetTrack());
+        setNewProjectOpen(true);
         const newId = generateObjectId();
         setIsActiveMenu("");
         setShowSubmenu({
@@ -559,7 +562,7 @@ const TopHeader = ({onAction, onClose}) => {
         } else {
             navigate(to, navOptions);
         }
-    }
+    }   
 
     const bpm = useSelector((state) => selectStudioState(state)?.bpm || 120);
 
