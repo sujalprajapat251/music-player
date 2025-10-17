@@ -183,6 +183,14 @@ const TopHeader = ({onAction, onClose}) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [showReviewModal, setShowReviewModal] = useState(false);
 
+    // Broadcast settings visibility changes to the rest of the app
+    useEffect(() => {
+        const settingsAreOpen = Boolean(midikeyboardmodal || lowlatencyomodal);
+        try {
+            window.dispatchEvent(new CustomEvent('topheader:settingsOpen', { detail: { open: settingsAreOpen } }));
+        } catch (_) {}
+    }, [midikeyboardmodal, lowlatencyomodal]);
+
     // Function to check for live instruments connected to the setup
     const checkForLiveInstruments = async () => {
         try {
