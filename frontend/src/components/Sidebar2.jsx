@@ -338,14 +338,14 @@ const Sidebar2 = () => {
                       }}
                       onClick={(e) => handleIconToggle(e, track)}
                     >
-                      {track.name === 'Voice & Mic' && <Track1 className="w-6 h-6" />}
-                      {track.name === 'Keys' && <Track2 className="w-6 h-6" />}
-                      {track.name === 'Bass & 808' && <Track3 className="w-6 h-6" />}
-                      {track.name === 'Guitar' && <Track4 className="w-6 h-6" />}
-                      {track.name === 'Drums & Machines' && <Track5 className="w-6 h-6" />}
-                      {track.name === 'Guitar/Bass Amp' && <Track6 className="w-6 h-6" />}
-                      {track.name === 'Synth' && <Track7 className="w-6 h-6" />}
-                      {track.name === 'Orchestral' && <Track8 className="w-6 h-6" />}
+                      {track.name === 'Voice & Mic' && <Track1 className="w-6 h-6 text-primary-dark dark:text-white" />}
+                      {track.name === 'Keys' && <Track2 className="w-6 h-6 text-primary-dark dark:text-white" />}
+                      {track.name === 'Bass & 808' && <Track3 className="w-6 h-6 text-primary-dark dark:text-white" />}
+                      {track.name === 'Guitar' && <Track4 className="w-6 h-6 text-primary-dark dark:text-white" />}
+                      {track.name === 'Drums & Machines' && <Track5 className="w-6 h-6 text-primary-dark dark:text-white" />}
+                      {track.name === 'Guitar/Bass Amp' && <Track6 className="w-6 h-6 text-primary-dark dark:text-white" />}
+                      {track.name === 'Synth' && <Track7 className="w-6 h-6 text-primary-dark dark:text-white" />}
+                      {track.name === 'Orchestral' && <Track8 className="w-6 h-6 text-primary-dark dark:text-white" />}
                       {track.url && <Wav className="w-6 h-6" />}
                     </div>
                   </div>
