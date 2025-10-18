@@ -73,7 +73,7 @@ function PaymentForm({ backToPricing, amount, selectedPlan, propSelectedPlan, on
 
   // Use prop selected plan if available, otherwise use Redux selected plan
   const effectiveSelectedPlan = propSelectedPlan || reduxSelectedPlan;
-  const effectiveSelectedPlanPeriod = effectiveSelectedPlan.period ;
+  const effectiveSelectedPlanPeriod = effectiveSelectedPlan?.period ;
   console.log('OpenPayment plan', effectiveSelectedPlanPeriod);
 
   const [cardNumber, setCardNumber] = useState('');
@@ -234,7 +234,7 @@ function PaymentForm({ backToPricing, amount, selectedPlan, propSelectedPlan, on
         console.log('Payment successful:', paymentIntent);
 
         if (paymentIntent.status === 'succeeded') {
-          alert("Payment successful!");
+          // alert("Payment successful!");
           handlePaymentSuccess("Payment completed successfully");
           
           // Send confirmation to backend to store payment data
@@ -243,7 +243,9 @@ function PaymentForm({ backToPricing, amount, selectedPlan, propSelectedPlan, on
             cardHolder: cardHolderName,
             period: effectiveSelectedPlan.period,
             startDate: new Date(),
-            endDate: new Date(Date.now() + (effectiveSelectedPlan.period === 'year' ? 365 : 30) * 24 * 60 * 60 * 1000),
+            endDate: effectiveSelectedPlan.period === 'yearly' 
+              ? new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+              : new Date(new Date().setMonth(new Date().getMonth() + 1)),
             amount: (effectiveSelectedPlan.amount || effectiveSelectedPlan.price || 0) * 100,
             userId: user // Assuming you have user ID available
           };
@@ -373,140 +375,6 @@ function PaymentForm({ backToPricing, amount, selectedPlan, propSelectedPlan, on
                       }}
                       className='w-full bg-gray-100 dark:bg-[#2c2c2c] border border-[#333] rounded-md px-2 sm:px-3 py-2 sm:py-3 text-sm placeholder-[#646464] outline-none'
                     />
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Other payment options collapsed style */}
-          <div
-            className={`rounded-md border p-3 lg:p-4 mb-4 transition-all duration-300 ${activePayment === 'upi' ? 'border-[#6b6b6b]' : 'border-[#2b2b2b]'
-              }`}
-            onClick={() => setActivePayment('upi')}
-            style={{ cursor: 'pointer' }}
-          >
-            <div className="flex items-center justify-between py-2">
-              <div className="flex items-center gap-2 md:gap-3">
-                <input
-                  type="radio"
-                  name="paymethod"
-                  checked={activePayment === 'upi'}
-                  onChange={() => setActivePayment('upi')}
-                  className="accent-white"
-                />
-                <span className="text-sm">UPI</span>
-              </div>
-              <div className="flex items-center mr-[-14px]">
-                <img src={bhim} alt='bhim' className="w-9 h-6 object-contain" />
-                <img src={paytm} alt='paytm' className="w-9 h-6 object-contain" />
-                <img src={Gpay} alt='Gpay' className="w-9 h-6 object-contain" />
-                <img src={phonepe} alt='phonepe' className="w-9 h-6 object-contain" />
-              </div>
-            </div>
-            <AnimatePresence>
-              {activePayment === "upi" && (
-                <>
-                  <hr className="border-t border-[#2b2b2b] my-2" />
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                  >
-                    <div className="p-2 sm:p-3">
-                      <label className="text-sm block mb-2 text-black dark:text-gray-200">UPI ID</label>
-                      <div className="flex items-center bg-gray-100 dark:bg-[#2c2c2c] border border-[#2b2b2b] rounded-md">
-                        <input
-                          type="text"
-                          placeholder="UPI ID"
-                          value={upiId}
-                          onChange={(e) => setUpiId(e.target.value)}
-                          className="w-full bg-transparent text-black dark:text-white text-sm p-2 sm:p-3 focus:outline-none"
-                        />
-                        <select
-                          value={upiDomain}
-                          onChange={(e) => setUpiDomain(e.target.value)}
-                          className="bg-transparent text-black dark:text-white text-sm p-2 sm:p-3 focus:outline-none border-l border-[#606060] w-24 sm:w-36"
-                        >
-                          {upiDomains.map((domain) => (
-                            <option
-                              key={domain}
-                              value={domain}
-                              className="bg-[#1a1a1a] text-[#f2f2f2]"
-                            >
-                              {domain}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <div
-            className={`rounded-md border p-3 lg:p-4 mb-6 ${activePayment === 'netbank' ? 'border-[#6b6b6b]' : 'border-[#2b2b2b]'
-              }`}
-            onClick={() => setActivePayment('netbank')}
-            style={{ cursor: 'pointer' }}
-          >
-            <div className="flex flex-col sm:flex-row justify-start sm:items-center sm:justify-between py-2">
-              <div className="flex items-center gap-2 md:gap-3">
-                <input
-                  type="radio"
-                  name="paymethod"
-                  checked={activePayment === 'netbank'}
-                  onChange={() => setActivePayment('netbank')}
-                  className="accent-white"
-                />
-                <span className="text-sm text-nowrap">Net banking</span>
-              </div>
-              <div className="flex justify-end items-center  mt-2 sm:mt-0 ">
-                <img src={citi} alt='citi' className="w-9 h-6 bg-white object-contain" />
-                <img src={wells} alt='wells' className="w-9 h-6 object-contain" />
-                <img src={capital} alt='capital' className="w-9 h-6 object-contain" />
-                <img src={td} alt='td' className="w-9 h-6 object-contain" />
-              </div>
-            </div>
-
-            {activePayment === "netbank" && (
-              <>
-                <hr className="border-t border-[#2b2b2b] my-2" />
-                <div className="mt-4 rounded-md p-2 sm:p-3">
-                  {/* Search Bar */}
-                  <div className="bg-gray-100 dark:bg-[#2c2c2c] rounded-md p-2 sm:p-3 mb-4 flex items-center gap-1">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-6 h-6 text-gray-400 mr-2"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
-                    </svg>
-                    <input
-                      type="text"
-                      placeholder="Search your bank"
-                      value={searchBank}
-                      onChange={(e) => setSearchBank(e.target.value)}
-                      className="w-full bg-gray-100 dark:bg-[#2c2c2c] text-black dark:text-white focus:outline-none"
-                    />
-                  </div>
-
-                  {/* Bank Logos */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3 lg:gap-6">
-                    {filteredBanks.map((bank) => (
-                      <div key={bank.name} className="flex flex-col items-center mt-2">
-                        <img src={bank.logo} alt={bank.name} className="w-6 h-6 object-contain mb-2" />
-                        <span className="text-xs text-center text-gray-300">{bank.name}</span>
-                      </div>
-                    ))}
-                    {filteredBanks.length === 0 && (
-                      <p className="col-span-4 text-gray-500 text-sm text-center">No banks found</p>
-                    )}
                   </div>
                 </div>
               </>

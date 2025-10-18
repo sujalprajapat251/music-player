@@ -16,10 +16,10 @@ const confirmPayment = async (req, res) => {
     }
 
     // Validate period
-    if (!['month', 'year'].includes(period)) {
+    if (!['monthly', 'yearly'].includes(period)) {
       return res.status(400).json({
         success: false,
-        message: 'Period must be either "month" or "year"'
+        message: 'Period must be either "monthly" or "yearly"'
       });
     }
 

@@ -250,7 +250,7 @@ const Login = () => {
                       </div>
                       <div className="flex items-center justify-between mb-4">
                         <label className="flex items-center cursor-pointer">
-                          <input type="checkbox" name="rememberMe" checked={values.rememberMe} onChange={handleChange} className="w-4 h-4 text-red-500 bg-transparent border-white/20 rounded-[2px] j_checkBox"/>
+                          <input type="checkbox" name="rememberMe" checked={values.rememberMe} onChange={handleChange} className="w-4 h-4 text-red-500 bg-transparent border-white rounded-[2px] z-10"/>
                           <span className="ml-2 text-xs md:text-sm text-gray-300">Remember Me</span>
                         </label>
                         <button onClick={() => { setForgotPasswordStep(1); }} type="button" className="text-xs md:text-sm text-red-500 font-medium hover:text-red-600 transition-colors">Forgot Password?</button>
@@ -267,7 +267,7 @@ const Login = () => {
                   <div className="flex-1 h-px m-0-10 bg-gradient-to-r from-black to-white/50"></div>
                 </div>
 
-                <div className="mt-6 flex justify-between items-center gap-6">
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 justify-between items-center gap-6">
                   <GoogleLogin
                     onSuccess={(response) => {
                       const { 
@@ -296,7 +296,7 @@ const Login = () => {
                       </button>
                     )}
                   />
-                  <div className="w-1/2">
+                  <div className="w-full">
                     <FacebookLogin
                       appId="2295150360940038"
                       autoLoad={false}
@@ -372,7 +372,7 @@ const Login = () => {
                     setFieldValue,
                   }) => (
                     <form onSubmit={handleSubmit}>
-                      <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                         {/* First Name field */}
                         <div>
                           <label className="text-sm text-gray-300 mb-2">First Name</label>
@@ -429,7 +429,7 @@ const Login = () => {
                   <div className="flex-1 h-px m-0-10 bg-gradient-to-r from-black to-white/50"></div>
                 </div>
                 
-                <div className="mt-6 flex justify-between items-center gap-6">
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 justify-between items-center gap-3 sm:gap-6 w-full">
                   <GoogleLogin
                     onSuccess={(response) => {
                       const { 
@@ -459,7 +459,7 @@ const Login = () => {
                     )}
                   />
 
-                  <div className="w-1/2">
+                  <div className="w-full">
                     <FacebookLogin appId="2295150360940038" autoLoad={false}
                       fields="name, email, picture" scope="" callback={handleResponse} cssClass="flex items-center justify-center gap-3 w-full border border-[#7a7a7a] rounded-md py-3 text-white text-sm font-medium hover:bg-[#1a1a1a] transition-colors"
                       icon={<img src={require('../Images/facebook-login-icon.png')} alt="Facebook" className="w-5 h-5" />}

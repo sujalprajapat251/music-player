@@ -1,13 +1,29 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { BASE_URL } from '../../Utils/baseUrl';
+import { setAlert } from "./alert.slice";
+
+
+const handleErrors = (error, dispatch, rejectWithValue) => {
+    const errorMessage = error.response?.data?.message || 'An error occurred';
+    dispatch(setAlert({ text: errorMessage, color: 'error' }));
+    return rejectWithValue(error.response?.data || { message: errorMessage });
+};
+
+const token = await sessionStorage.getItem("token");
 
 // Async thunk for creating payment intent
 export const createPaymentIntent = createAsyncThunk(
     'payment/createPaymentIntent',
     async (paymentData, { rejectWithValue }) => {
         try {
-            const response = await axios.post(`${BASE_URL}/payment`, paymentData);
+            const response = await axios.post(`${BASE_URL}/payment`, paymentData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response.data);
@@ -18,17 +34,22 @@ export const createPaymentIntent = createAsyncThunk(
 // Add new async thunk for confirming payment and storing data
 export const confirmPaymentSuccess = createAsyncThunk(
     'payment/confirmPaymentSuccess',
-    async (confirmData , { rejectWithValue }) => {
+    async (confirmData, { dispatch, rejectWithValue }) => {
         console.log('confirmeeeeeeeeeeeeeeeeeeeeeeeee', confirmData);
         try {
-            const response = await axios.post(`${BASE_URL}/confirmPayment`, confirmData );
-             console.log("confirmmmmmmm", response.data);
+            const response = await axios.post(`${BASE_URL}/confirmPayment`, confirmData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+            dispatch(setAlert({ text: response.data.message, color: 'success' }));
             return response.data;
-           
         } catch (error) {
-            return rejectWithValue(error.response.data);
+            return handleErrors(error, dispatch, rejectWithValue);
         }
-        
+
     }
 );
 
@@ -38,6 +59,7 @@ const paymentSlice = createSlice({
         clientSecret: null,
         loading: false,
         error: null,
+        message: '',
         paymentSuccess: false,
         confirmedPayment: null // Store confirmed payment data
     },
