@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { setGlobalReverb, setGlobalPan, setGlobalVolume, setGlobalDrumTypeIndex } from '../Redux/Slice/audioSettings.slice';
 import { setDrumRecordedData, addAudioClipToTrack, setDrumRecordingClip, removeAudioClip, togglePlayPause, setCurrentTime } from '../Redux/Slice/studio.slice';
 import { selectStudioState } from '../Redux/rootReducer';
+import OpenInstrumentModal from './OpenInstrumentsModel';
 import {
   drumMachineTypes,
   createSynthSound,
@@ -785,8 +786,13 @@ const Pattern = () => {
     return getInstrumentOptions().some(option => !usedNames.includes(option.name));
   };
 
+  const [openInstrumentModal, setOpenInstrumentModal] = useState(false);
+
   return (
     <>
+    {openInstrumentModal && (
+        <OpenInstrumentModal onClose={() => setOpenInstrumentModal(false)} initialCategory={"Drums & Machines"} initialSubCategory={"Machines"} />
+    )}
     <div className="bg-white dark:bg-[#1F1F1F] flex items-center justify-center pt-1 pb-1 md600:px-2 gap-2 sm:gap-2 md600:gap-12 md:gap-16 lg:px-3 lg:gap-20 2xl:px-3 2xl:gap-24">
         {/* Instrument Selector */}
         <div className="bg-secondary-light/10 dark:bg-secondary-dark/10 p-1 md600:p-2 lg:p-2 rounded-lg">
@@ -802,7 +808,11 @@ const Pattern = () => {
               <FaChevronLeft className='text-[8px] md600:text-[10px] md:text-[12px]  lg:text-[14px] 2xl:text-[16px]' />
             </button>
 
-            <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-start 2xl:px-4 2xl:w-[250px]">
+            <div className="flex items-center gap-1 md600:gap-2 px-1 md600:px-2 md:gap-3 w-[100px] sm:w-[150px] md600:w-[170px] md:w-[172px] lg:gap-4 lg:px-3 lg:w-[230px] 2xl:gap-5 flex-1 justify-start 2xl:px-4 2xl:w-[250px]"
+              onClick={() => {
+                  setOpenInstrumentModal(true);
+              }}
+            >
               <Track5 className="text-secondary-light dark:text-secondary-dark text-[10px] sm:text-[12px] md600:text-[14px] lg:text-[18px] 2xl:text-[20px]" />
               <div>
                 <div className="text-secondary-light dark:text-secondary-dark font-semibold text-[8px] sm:text-[10px] md600:text-[12px] lg:text-[14px] 2xl:text-[15px]">

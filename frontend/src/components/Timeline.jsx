@@ -4417,7 +4417,8 @@ const Timeline = () => {
     } else if (action === "Import to Voice & Mic track") {
       voiceMicFileInputRef.current && voiceMicFileInputRef.current.click();
     } else if (action === "Open in sampler") {
-      console.log("Open in sampler - not implemented yet");
+      // Open pricing modal (same behavior as other premium actions)
+      setPricingModalOpen(true);
     } else if (action === "Play the synth") {
       const newTrackId = Date.now() + Math.random();
       const newTrack = {
