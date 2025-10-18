@@ -99,6 +99,7 @@ const Timeline = () => {
   const [selectedTrackId, setSelectedTrackId] = useState(null);
   const [selectedClipId, setSelectedClipId] = useState(null);
   const [showAddTrackModal, setShowAddTrackModal] = useState(false);
+  const [topHeaderSettingsOpen, setTopHeaderSettingsOpen] = useState(false);
   const [showPiano, setShowPiano] = useState(false);
   const [showSynth, setShowSynth] = useState(false);
   const [showBass808, setShowBass808] = useState(false);
@@ -117,6 +118,16 @@ const Timeline = () => {
   const [renameModal, setRenameModal] = useState(false);
   const [resizeSectionId, setResizeSectionId] = useState(null);
   const [resizeValue, setResizeValue] = useState("");
+
+  // Listen for settings open/close from TopHeader to adjust z-index
+  useEffect(() => {
+    const handleSettings = (e) => {
+      const open = !!(e?.detail?.open);
+      setTopHeaderSettingsOpen(open);
+    };
+    window.addEventListener('topheader:settingsOpen', handleSettings);
+    return () => window.removeEventListener('topheader:settingsOpen', handleSettings);
+  }, []);
   const [resizeModal, setResizeModal] = useState(false);
   const [volumeIndicator, setVolumeIndicator] = useState({ show: false, volume: 0, trackName: '' });
   const [edirNameModel, setEdirNameModel] = useState(false);
@@ -3150,12 +3161,24 @@ const Timeline = () => {
   }, []);
 
   const handleMouseDown = (e) => {
-    // Only handle playhead movement if not clicking on a track
-    const isTrackElement = e.target.closest('[data-rnd]');
-    if (!isTrackElement) {
-      isDragging.current = true;
-      movePlayhead(e);
+    // Only allow initiating playhead drag from the top ruler area
+    const container = timelineContainerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const yWithinContainer = e.clientY - rect.top;
+    const RULER_HEIGHT = 100; // matches the header/ruler height
+
+    // Disallow starting drag from the lower area
+    if (yWithinContainer > RULER_HEIGHT) {
+      return;
     }
+
+    // Additionally avoid if interacting with a track element just in case
+    const isTrackElement = e.target.closest('[data-rnd]');
+    if (isTrackElement) return;
+
+    isDragging.current = true;
+    movePlayhead(e);
   };
 
   const handleMouseMove = useCallback((e) => {
@@ -5352,12 +5375,12 @@ const Timeline = () => {
   return (
     <>
       <EditTrackNameModal isOpen={edirNameModel} onClose={() => setEdirNameModel(false)} onSave={handleSave} />
-      <div style={{ padding: "0", color: "white", background: "transparent", height: "100%", marginRight: showOffcanvas || showEffectsOffcanvas ? "23vw" : 0, }} className="relative overflow-hidden">
+      <div style={{ padding: "0", color: "white", background: isDark ? "#141414" : "#f5f5f5", height: "100%", marginRight: showOffcanvas || showEffectsOffcanvas ? "23vw" : 0, }} className="relative overflow-hidden">
         <div style={{ width: "100%", overflowX: "auto" }} className="hide-scrollbar">
           <div
             ref={timelineContainerRef}
             className="timeline-container"
-            style={{ minWidth: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`, position: "relative", height: "100vh", transition: "min-width 0.2s ease-in-out", }}
+            style={{ minWidth: `${Math.max(audioDuration, 12) * timelineWidthPerSecond}px`, position: "relative", height: "100vh", transition: "min-width 0.2s ease-in-out", background: isDark ? "#141414" : "#f5f5f5" }}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -5369,7 +5392,7 @@ const Timeline = () => {
           >
 
               <div
-              style={{ height: "100px", borderBottom: isDark ? "1px solid #1414141A" : "1px solid #0000001A", position: "relative", top: 0, zIndex: 10, background: isDark ? "#141414" : "#f5f5f5" }}
+              style={{ height: "100px", borderBottom: isDark ? "1px solid #1414141A" : "1px solid #0000001A", position: "relative", top: 0, zIndex: 0, background: isDark ? "#141414" : "#f5f5f5" }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
@@ -5468,7 +5491,7 @@ const Timeline = () => {
 
             <div style={{ overflow: "visible", position: "relative", minHeight: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px", height: tracks.length > 0 ? `${trackHeight * tracks.length}px` : "0px", marginTop: "40px", }}>
               {tracks.length > 0 && Array.from({ length: tracks.length }).map((_, index) => (
-                <div key={`lane-${index}`} style={{ position: "absolute", top: `${(index * trackHeight) - sidebarScrollOffset}px`, left: 0, width: "100%", height: `${trackHeight}px`, borderTop: `1px solid ${isDark ? "#474747" : "#9d9d9d"}`, borderBottom: `1px solid ${isDark ? "#474747" : "#9d9d9d"}`, zIndex: 0, }} />
+                <div key={`lane-${index}`} style={{ position: "absolute", top: `${(index * trackHeight) - sidebarScrollOffset}px`, left: 0, width: "100%", height: `${trackHeight}px`, borderTop: `1px solid ${isDark ? "#474747" : "#9d9d9d"}`, borderBottom: `1px solid ${isDark ? "#474747" : "#9d9d9d"}`, zIndex: 2, }} />
               ))}
 
               {tracks.map((track, index) => {
@@ -5482,7 +5505,7 @@ const Timeline = () => {
                       left: 0,
                       width: "100%",
                       height: `${trackHeight}px`,
-                      zIndex: 0,
+                      zIndex: 3,
                       opacity: (soloTrackId ? soloTrackId !== track.id : (track?.muted || false)) ? 0.5 : 1,
                       pointerEvents: "auto",
                     }}
@@ -5578,13 +5601,13 @@ const Timeline = () => {
             </div>
             {/* Grid lines - only show when there are tracks */}
             {tracks.length > 0 && (
-              <div style={{ position: "absolute", top: `${140 - sidebarScrollOffset}px`, left: 0, width: "100%", height: `${trackHeight * tracks.length}px`, pointerEvents: "none", }}>{renderGridLines}</div>
+              <div style={{ position: "absolute", top: `${140 - sidebarScrollOffset}px`, left: 0, width: "100%", height: `${trackHeight * tracks.length}px`, pointerEvents: "none", zIndex: 1 }}>{renderGridLines}</div>
             )}
           </div>
         </div>
 
         {/* Top right controls */}
-        <div className="flex gap-2 absolute top-[60px] right-[10px] -translate-x-1/2 bg-[#141414] rounded-md" style={{ zIndex: 51 }}>
+        <div className="flex gap-2 absolute top-[60px] right-[10px] -translate-x-1/2 bg-[#141414] rounded-md" style={{ zIndex: showAddTrackModal ? 0 : 51 }}>
           {/* Magnet Button */}
           <div className="relative">
             <div
@@ -5602,7 +5625,7 @@ const Timeline = () => {
             </div>
           </div>
 
-          <div ref={gridSettingRef} className="hover:bg-[#1F1F1F] w-[30px] h-[30px] z-[60] flex items-center justify-center rounded-full cursor-pointer" onClick={() => setShowGridSetting((prev) => !prev)}>
+          <div ref={gridSettingRef} className="hover:bg-[#1F1F1F] w-[30px] h-[30px] z-[60] flex items-center justify-center rounded-full cursor-pointer" onClick={() => { setShowAddTrackModal(false); setShowGridSetting((prev) => !prev); }}>
             <img src={settingIcon} alt="Settings" />
             {showGridSetting && (
               <div className="absolute top-full right-0 z-[150]">
@@ -5625,7 +5648,7 @@ const Timeline = () => {
         </div>
 
         {/* Right side controls */}
-        <div className="absolute top-[60px] right-[0] -translate-x-1/2 z-30">
+        <div className="absolute top-[60px] right-[0] -translate-x-1/2">
           <div
             className={`w-[40px] h-[40px] flex items-center justify-center rounded-full cursor-pointer ${showOffcanvas ? 'bg-[#FFFFFF]' : 'bg-[#3C3A40]'}`}
             onClick={() => {

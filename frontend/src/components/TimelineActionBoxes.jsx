@@ -25,6 +25,16 @@ const TimelineActionBoxes = ({ onAction }) => {
   const colors = getActionCardColors(isDark);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  
+  // Prevent timeline/playhead interactions when clicking inside action boxes
+  const stopTimelineInteraction = (e) => {
+    if (!e) return;
+    e.stopPropagation();
+    if (e.preventDefault) e.preventDefault();
+    if (e.nativeEvent && typeof e.nativeEvent.stopImmediatePropagation === 'function') {
+      e.nativeEvent.stopImmediatePropagation();
+    }
+  };
 
   // Create actions array with translated labels
   const actions = [
@@ -50,6 +60,8 @@ const TimelineActionBoxes = ({ onAction }) => {
   }, []);
 
   const handleActionClick = (action, e) => {
+    // Ensure timeline does not capture this click
+    stopTimelineInteraction(e);
     // Use original English labels for functionality, but display translated labels
     const originalLabels = {
       [t('browseLoops')]: "Browse loops",
@@ -145,6 +157,11 @@ const TimelineActionBoxes = ({ onAction }) => {
           gap: "15px",
           padding: "10px",
         }}
+        onMouseDown={stopTimelineInteraction}
+        onClick={stopTimelineInteraction}
+        onDoubleClick={stopTimelineInteraction}
+        onTouchStart={stopTimelineInteraction}
+        onTouchMove={stopTimelineInteraction}
       >
       {/* Row 1 */}
       <div className="timeline-row" style={{ display: "flex", gap: "15px" }}>
@@ -170,6 +187,8 @@ const TimelineActionBoxes = ({ onAction }) => {
               // boxShadow: colors.shadow,
               transition: "background 0.2s",
             }}
+            onMouseDown={stopTimelineInteraction}
+            onTouchStart={stopTimelineInteraction}
             onMouseOver={(e) =>
               (e.currentTarget.style.background = colors.cardHover)
             }
@@ -218,6 +237,8 @@ const TimelineActionBoxes = ({ onAction }) => {
               boxShadow: colors.shadow,
               transition: "background 0.2s",
             }}
+            onMouseDown={stopTimelineInteraction}
+            onTouchStart={stopTimelineInteraction}
             onMouseOver={(e) =>
               (e.currentTarget.style.background = colors.cardHover)
             }
@@ -257,6 +278,9 @@ const TimelineActionBoxes = ({ onAction }) => {
               minWidth: "260px", 
               zIndex: 1000, 
             }}
+            onMouseDown={stopTimelineInteraction}
+            onClick={stopTimelineInteraction}
+            onTouchStart={stopTimelineInteraction}
           >
             <div
               className="dropdown-item"
