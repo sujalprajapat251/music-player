@@ -25,7 +25,7 @@ const NewProject = ({ open, setOpen, showClose = true }) => {
   const handleCreateNew = () => {
     try {
       dispatch(resetStudio());
-      // navigate('/sidebar/timeline');
+      // navigate('/sidebar/timeline', { state: { isNewProject: true } });
     } finally {
       setOpen(false);
     }

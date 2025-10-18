@@ -2738,7 +2738,7 @@ const Timeline = () => {
                 // Always use the instrument from the note data, with track context for effects
                 const noteInstrumentId = note.instrumentId || selectedInstrument;
                 // console.log('  - Final Instrument ID:', noteInstrumentId);
-                // console.log('  - Will use Bass & 808 system:', noteInstrumentId && (
+                // coqwnsole.log('  - Will use Bass & 808 system:', noteInstrumentId && (
                 //   noteInstrumentId.includes('808') || 
                 //   noteInstrumentId.includes('bass') ||
                 //   noteInstrumentId.includes('Bass')
