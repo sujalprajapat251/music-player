@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Copy, Check, Share2 } from 'lucide-react';
 import { useTheme } from '../Utils/ThemeContext';
 import { useI18n } from '../Utils/i18n';
+import { MdOutlineContentCopy } from 'react-icons/md';
 const getModalColors = (isDark) => ({
   overlayBg: 'bg-black bg-opacity-50',
 
