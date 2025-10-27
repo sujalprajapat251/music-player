@@ -5,8 +5,9 @@ import copyIcon from '../Images/copy.svg';
 import Loop from '../Images/loopsec.svg';
 import Resizesec from '../Images/resizesec.svg';
 import Plus from '../Images/split.svg';
+import pasteIcon from '../Images/pasteIcon.svg';
 
-const SectionContextMenu = ({ isOpen, position, onClose, onAction }) => {
+const SectionContextMenu = ({ isOpen, position, onClose, onAction, clipboard }) => {
   if (!isOpen) return null;
 
   const handleItemClick = (action) => {
@@ -71,6 +72,17 @@ const SectionContextMenu = ({ isOpen, position, onClose, onAction }) => {
           <img src={copyIcon} className="w-4 h-4 flex items-center justify-center text-white" />
           <span className="flex-1">Copy</span>
         </div>
+
+        {/* Paste */}
+        {/* {clipboard && clipboard.type === 'section' && (
+          <div
+            className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
+            onClick={() => handleItemClick('paste')}
+          >
+            <img src={pasteIcon} className="w-4 h-4 flex items-center justify-center text-white" />
+            <span className="flex-1">Paste</span>
+          </div>
+        )} */}
 
         {/* Loop */}
         <div

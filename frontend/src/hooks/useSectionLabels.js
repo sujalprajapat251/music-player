@@ -70,7 +70,7 @@ export const useSectionLabels = () => {
     if (section) {
       const duplicatedSection = {
         ...section,
-        name: `${section.name} (Copy)`,
+        name: `${section.name}`,
         startTime: section.startTime + (section.endTime - section.startTime),
         endTime: section.endTime + (section.endTime - section.startTime)
       };
