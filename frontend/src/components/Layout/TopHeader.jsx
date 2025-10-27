@@ -1237,7 +1237,10 @@ const TopHeader = ({onAction, onClose}) => {
                                             className="absolute left-full top-0 z-50 w-36 md600:w-40 lg:mt-0 shadow-lg outline-none text-nowrap rounded-md"
                                             style={{ backgroundColor: colors.menuBackground }}
                                         >
-                                            {(allMusic || []).slice(0, 8).map((m) => (
+                                            {[...(allMusic || [])]
+                                                .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+                                                .slice(0, 5)
+                                                .map((m) => (
                                                 <p
                                                     key={m?._id}
                                                     className="block px-2 py-1 md600:px-3 lg:px-4 md:py-2 cursor-pointer transition-colors text-[10px] md600:text-[12px] lg:text-[14px]"

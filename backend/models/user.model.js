@@ -36,6 +36,10 @@ const userSchema = mongoose.Schema({
     }],
     refreshToken:{
         type:String
+    },
+    premiumId:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Payment',
     }
 }, {
     timestamps: true,

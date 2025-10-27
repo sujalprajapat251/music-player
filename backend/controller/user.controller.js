@@ -83,21 +83,36 @@ exports.getAllUsers = async (req, res) => {
 
 exports.getUserById = async (req, res) => {
     try {
-        const users = await user.findById(req.params.id);
+        const users = await user.findById(req.params.id).populate({ path: 'premiumId', populate: { path: 'planId' } });
+
         if (!users) {
             return res.status(404).json({
                 status: 404,
-                message: "User not found",
+                message: "User not found..!",
             });
         } else {
+            if (users.premiumId && users.premiumId.endDate) {
+                const today = new Date();
+                const endDate = new Date(users.premiumId.endDate);
+
+                if (endDate < today) {
+                    users.premiumId = null;
+                    // await users.save();
+
+                    return res.status(200).json({
+                        status: 200,
+                        message: "Premium expired..!",
+                        users,
+                    });
+                }
+            }
             return res.status(200).json({
                 status: 200,
-                message: "User found successfully",
+                message: "User found successfully..!",
                 users,
             });
         }
     } catch (error) {
-        console.error(error);
         return res.status(500).json({
             status: 500,
             message: error.message,
@@ -264,7 +279,7 @@ exports.getUserWishlist = async (req, res) => {
                     as: 'categoryDetails'
                 }
             },
-            
+
         ]);
 
         if (userWithWishlist.length === 0) {
