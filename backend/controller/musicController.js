@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 const Music = require('../models/musicModel');
 const fs = require('fs');
+const { notifyMusicUpdated } = require('../socketManager/socketManager');
 
 // create music
 exports.createMusic = async (req, res) => {
@@ -26,6 +27,9 @@ exports.createMusic = async (req, res) => {
 
             const updatedMusic = await existingMusic.save();
 
+            // Emit socket update to music-specific room
+            notifyMusicUpdated(updatedMusic);
+
             return res.status(200).json({
                 status: 200,
                 message: "Music updated successfully..!",
@@ -49,6 +53,9 @@ exports.createMusic = async (req, res) => {
             }
             
             const newMusic = await Music.create(newMusicData);
+
+            // Emit socket update to music-specific room
+            notifyMusicUpdated(newMusic);
 
             return res.status(200).json({
                 status: 200,
@@ -104,6 +111,7 @@ exports.getAllMusic = async (req, res) => {
     }
 };
 
+
 // get all deleted music by user id
 exports.getDeletedMusic = async (req, res) => {
     try {
@@ -146,6 +154,15 @@ exports.getDeletedMusic = async (req, res) => {
         return res.status(500).json({ status: 500, message: error.message });
     }
 };
+exports.getSingleMusic = async (req,res)=>{
+    try{
+        const musicId = useParam;
+        let musicdata = await Music.findById(musicId)
+    }
+    catch(error){
+        return res.status(500).json({ status: 500, message: error.message });
+    }
+}
 
 // update music
 exports.updateMusic = async (req, res) => {
@@ -177,6 +194,9 @@ exports.updateMusic = async (req, res) => {
 
         const updatedMusic = await existingMusic.save();
 
+        // Emit socket update to music-specific room
+        notifyMusicUpdated(updatedMusic);
+
         return res.status(200).json({
             status: 200,
             message: "Music updated successfully..!",
@@ -205,7 +225,7 @@ exports.deleteMusic = async (req, res) => {
         music.isDeleted = true;
         music.deletedAt = new Date();
         await music.save();
-
+        
         return res.status(200).json({ status: 200, message: "Music moved to recycle bin." });
     } catch (error) {
         return res.status(500).json({ status: 500, message: error.message });

@@ -79,6 +79,19 @@ export const getAllMusic = createAsyncThunk(
     }
 );
 
+// Fetch a single music by id (public endpoint)
+export const getSingleMusic = createAsyncThunk(
+    "music/getSingleMusic",
+    async (musicId, { dispatch, rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.get(`${BASE_URL}/public/music/${musicId}`);
+            return response.data?.data;
+        } catch (error) {
+            return handleErrors(error, dispatch, rejectWithValue);
+        }
+    }
+);
+
 export const getDeletedMusic = createAsyncThunk(
     "music/getDeletedMusic",
     async (_, { dispatch, rejectWithValue }) => {
@@ -354,6 +367,22 @@ const musicSlice = createSlice({
                 state.loading = false;
                 state.success = false;
                 state.message = action.payload?.message || 'Failed to load Music';
+            })
+            // Single music fetch handlers
+            .addCase(getSingleMusic.pending, (state) => {
+                state.loading = true;
+                state.message = 'Loading music...';
+            })
+            .addCase(getSingleMusic.fulfilled, (state, action) => {
+                state.loading = false;
+                state.success = true;
+                state.message = 'Music loaded successfully';
+                state.currentMusic = action.payload || null;
+            })
+            .addCase(getSingleMusic.rejected, (state, action) => {
+                state.loading = false;
+                state.success = false;
+                state.message = action.payload?.message || 'Failed to load music';
             })
             .addCase(getDeletedMusic.pending, (state) => {
                 state.loading = true;

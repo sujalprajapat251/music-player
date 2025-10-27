@@ -64,6 +64,7 @@ import { CloudCog } from 'lucide-react';
 import ReviewModal from '../ReviewModal';
 import { toggleEffectsOffcanvas, setActiveTabs, setShowEffectsLibrary, setShowEffectsOffcanvas } from '../../Redux/Slice/effects.slice';
 import { Scissors } from "lucide-react";
+import { useSocket } from '../../context/SocketContext';
 
 
 const getTopHeaderColors = (isDark) => ({
@@ -183,6 +184,9 @@ const TopHeader = ({onAction, onClose}) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [showReviewModal, setShowReviewModal] = useState(false);
 
+    // Socket: join current music room and react to updates without page refresh
+    const { socket, isConnected, joinMusicRoom, leaveMusicRoom } = useSocket?.() || {};
+
     // Broadcast settings visibility changes to the rest of the app
     useEffect(() => {
         const settingsAreOpen = Boolean(midikeyboardmodal || lowlatencyomodal);
@@ -272,6 +276,32 @@ const TopHeader = ({onAction, onClose}) => {
     useEffect(() => {
         setSongName(currentMusic?.name || 'Untitled_song');
     }, [currentMusic]);
+
+    // Join the music room once currentMusic is available; update without refresh
+    useEffect(() => {
+        const musicId = (typeof currentMusic === 'object' && currentMusic && currentMusic._id) ? currentMusic._id : null;
+        if (!musicId || !socket || !isConnected) return;
+
+        try { joinMusicRoom && joinMusicRoom(musicId); } catch (_) {}
+
+        const handleMusicUpdated = (payload) => {
+            try {
+                const { musicId: updatedId, music } = payload || {};
+                if (updatedId && music && updatedId === musicId) {
+                    dispatch(setCurrentMusic(music));
+                }
+            } catch (err) {
+                console.error('musicUpdated handler error:', err);
+            }
+        };
+
+        try { socket.on && socket.on('musicUpdated', handleMusicUpdated); } catch (_) {}
+
+        return () => {
+            try { socket.off && socket.off('musicUpdated', handleMusicUpdated); } catch (_) {}
+            try { leaveMusicRoom && leaveMusicRoom(musicId); } catch (_) {}
+        };
+    }, [socket, isConnected, currentMusic && currentMusic._id]);
 
     // Initialize low latency mode from localStorage
     useEffect(() => {
@@ -851,13 +881,16 @@ const TopHeader = ({onAction, onClose}) => {
                 drumRecordedData: Array.isArray(drumRecordedData) ? drumRecordedData : []
             }));
             if (result.payload) {
+                console.log(result.payload)
+                navigate('/sidebar/timeline/'+result?.payload?._id)
                 dispatch(setCurrentMusic(result.payload));
             }
         }
             setSaveStatus('saved');
             // If the user just opened a project, suppress showing the review
             // modal for the immediate save that may occur after opening.
-            if (suppressReviewOnNextSave) {
+
+            if (currentMusic && currentMusic._id) {
                 setSuppressReviewOnNextSave(false);
             } else {
                 // Show review modal after successful save
