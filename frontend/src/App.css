@@ -266,6 +266,30 @@ body.light-theme .d_btn.d_createbtn:hover {
   animation-delay: -.6s;
 }
 
+/* html:not(.dark) img.effect-icon {
+  filter: brightness(0.85) invert(0.95) contrast(1.05) saturate(1);
+  mix-blend-mode: screen;
+  transition: filter 0.3s ease, mix-blend-mode 0.3s ease;
+}
+
+html:not(.dark) img.effect-icon {
+  filter: brightness(0.8) invert(0.9) contrast(1.1);
+  mix-blend-mode: multiply;
+} */
+ 
+html:not(.dark) img.effect-icon {
+  background-color: #ffffff;
+  filter: brightness(0.9) invert(0.9) contrast(1.1);
+  mix-blend-mode: multiply;
+  transition: all 0.3s ease;
+}
+
+html.dark img.effect-icon {
+  background-color: transparent;
+  filter: none;
+  mix-blend-mode: normal;
+}
+
 @keyframes stretch {
   0%, 20%, 49% { 
     transform: scaleY(0.4);

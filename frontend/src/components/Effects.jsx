@@ -339,7 +339,7 @@ const Effects = ({ showOffcanvas, setShowOffcanvas }) => {
                                                                 setDispatchedOnce(true);
                                                             }
                                                         }
-                                                    }} src={effect.image} alt={effect.name} className="w-full transition-transform duration-150"
+                                                    }} src={effect.image} alt={effect.name} className="w-full transition-transform duration-150 effect-icon"
                                                 />
                                             </div>
                                             <div className="flex gap-1 justify-center my-2">
