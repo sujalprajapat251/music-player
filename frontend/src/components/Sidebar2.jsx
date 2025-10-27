@@ -32,6 +32,7 @@ import { useTheme } from "../Utils/ThemeContext";
 import { useI18n } from "../Utils/i18n";
 import { FaVolumeMute } from "react-icons/fa";
 import { MdHeadset } from "react-icons/md";
+import { IMAGE_URL } from "../Utils/baseUrl";
 
 const getSidebarColors = (isDark) => ({
   background: isDark ? '#141414' : '#ffffff',
@@ -264,6 +265,25 @@ const Sidebar2 = () => {
     const instrument = instruments.find(inst => inst.id === instrumentId);
     return instrument ? instrument.category : '';
   };
+
+  // Helper function to get track's image URL
+  const getTrackImageUrl = (track) => {
+    // Check if track has an image property (from project cover)
+    if (track.image) {
+      return track.image.startsWith('http') ? track.image : `${IMAGE_URL}${track.image}`;
+    }
+    
+    // Check first audio clip for soundData with image
+    if (track.audioClips && track.audioClips.length > 0) {
+      const firstClip = track.audioClips[0];
+      if (firstClip.soundData && firstClip.soundData.image) {
+        return `${IMAGE_URL}uploads/image/${firstClip.soundData.image}`;
+      }
+    }
+    
+    return null;
+  };
+
   return (
     <>
       <div style={{ pointerEvents: showNewProject ? 'none' : 'auto' }}>
@@ -303,6 +323,9 @@ const Sidebar2 = () => {
 
               const isComponentOpen = (track.id === currentTrackId) && ((openTrackType === 'Drums & Machines' && isDrumTrack) || (openTrackType === 'Keys' && isPianoTrack) || (openTrackType === 'Guitar' && isGuitarTrack) || (openTrackType === 'Guitar/Bass Amp' && isGuitarBassAmpTrack) || (openTrackType === 'Orchestral' && isOrchestralTrack) || (openTrackType === 'Voice & Mic' && isVoiceMicTrack) || (openTrackType === 'Synth' && isSynthTrack) || (openTrackType === 'Bass & 808' && isBass808));
 
+              const trackImageUrl = getTrackImageUrl(track);
+              const hasImage = !!trackImageUrl;
+
               return (
                 <div
                 key={track.id}
@@ -338,15 +361,29 @@ const Sidebar2 = () => {
                       }}
                       onClick={(e) => handleIconToggle(e, track)}
                     >
-                      {track.name === 'Voice & Mic' && <Track1 className="w-6 h-6 text-primary-dark dark:text-white" />}
-                      {track.name === 'Keys' && <Track2 className="w-6 h-6 text-primary-dark dark:text-white" />}
-                      {track.name === 'Bass & 808' && <Track3 className="w-6 h-6 text-primary-dark dark:text-white" />}
-                      {track.name === 'Guitar' && <Track4 className="w-6 h-6 text-primary-dark dark:text-white" />}
-                      {track.name === 'Drums & Machines' && <Track5 className="w-6 h-6 text-primary-dark dark:text-white" />}
-                      {track.name === 'Guitar/Bass Amp' && <Track6 className="w-6 h-6 text-primary-dark dark:text-white" />}
-                      {track.name === 'Synth' && <Track7 className="w-6 h-6 text-primary-dark dark:text-white" />}
-                      {track.name === 'Orchestral' && <Track8 className="w-6 h-6 text-primary-dark dark:text-white" />}
-                      {track.url && <Wav className="w-6 h-6" />}
+                      {hasImage ? (
+                        <img 
+                          src={trackImageUrl} 
+                          alt={track.name || 'Track'} 
+                          className="w-full h-full rounded-full object-cover"
+                          onError={(e) => {
+                            // If image fails to load, hide the image element
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <>
+                          {track.name === 'Voice & Mic' && <Track1 className="w-6 h-6 text-primary-dark dark:text-white" />}
+                          {track.name === 'Keys' && <Track2 className="w-6 h-6 text-primary-dark dark:text-white" />}
+                          {track.name === 'Bass & 808' && <Track3 className="w-6 h-6 text-primary-dark dark:text-white" />}
+                          {track.name === 'Guitar' && <Track4 className="w-6 h-6 text-primary-dark dark:text-white" />}
+                          {track.name === 'Drums & Machines' && <Track5 className="w-6 h-6 text-primary-dark dark:text-white" />}
+                          {track.name === 'Guitar/Bass Amp' && <Track6 className="w-6 h-6 text-primary-dark dark:text-white" />}
+                          {track.name === 'Synth' && <Track7 className="w-6 h-6 text-primary-dark dark:text-white" />}
+                          {track.name === 'Orchestral' && <Track8 className="w-6 h-6 text-primary-dark dark:text-white" />}
+                          {track.url && <Wav className="w-6 h-6" />}
+                        </>
+                      )}
                     </div>
                   </div>
 

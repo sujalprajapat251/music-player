@@ -5113,6 +5113,7 @@ const Timeline = () => {
                 duration: duration || visible || 0,
                 trimStart,
                 trimEnd,
+                soundData: c.soundData || null, // Preserve soundData with image info
               };
             })
           : [];

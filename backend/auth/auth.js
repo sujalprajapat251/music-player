@@ -2,8 +2,9 @@ const user = require("../models/user.model");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
+const dotenv = require("dotenv");
 
-
+dotenv.config();
 exports.userLogin = async (req, res) => {
   try {
     let { email, password, rememberMe } = req.body;
