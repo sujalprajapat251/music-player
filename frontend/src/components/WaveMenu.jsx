@@ -133,14 +133,14 @@ const WaveMenu = ({ isOpen, position, onClose, onAction, onOpenMusicOff }) => {
           <span className="text-gray-400 text-xs">80%</span>
         </div>
 
-        <div
+        {/* <div
           className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"
           onClick={() => handleItemClick('splitRegion')}
         >
           <img src={Split} className="w-4 h-4 flex items-center justify-center text-white"></img>
           <span className="flex-1">Split Region</span>
           <span className="text-gray-400 text-xs">Ctrl+E</span>
-        </div>
+        </div> */}
 
         <div
           className="flex items-center px-4 py-2 cursor-pointer transition-colors duration-200 gap-3 hover:bg-gray-600"

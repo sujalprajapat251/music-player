@@ -48,7 +48,7 @@ import Guitar from "./Guitar";
 import Orchestral from "./Orchestral";
 import PricingModel from './PricingModel';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { setShowLoopLibrary } from "../Redux/Slice/ui.slice";
+import { setShowLoopLibrary, setShowAddTrackModal } from "../Redux/Slice/ui.slice";
 import { getAllMusic, setCurrentMusic } from "../Redux/Slice/music.slice";
 import { setSelectedTrackId } from '../Redux/Slice/effects.slice';
 import { motion, AnimatePresence } from "framer-motion";
@@ -98,7 +98,7 @@ const Timeline = () => {
   const [clipboard, setClipboard] = useState(null);
   const [selectedTrackId, setSelectedTrackId] = useState(null);
   const [selectedClipId, setSelectedClipId] = useState(null);
-  const [showAddTrackModal, setShowAddTrackModal] = useState(false);
+  const showAddTrackModal = useSelector((state) => state.ui.showAddTrackModal);
   const [topHeaderSettingsOpen, setTopHeaderSettingsOpen] = useState(false);
   const [showPiano, setShowPiano] = useState(false);
   const [showSynth, setShowSynth] = useState(false);
@@ -3913,8 +3913,10 @@ const Timeline = () => {
         case 'matchProjectKey':
           break;
         case 'addToLoopLibrary':
+          setPricingModalOpen(true);
           break;
         case 'openInSampler':
+          setPricingModalOpen(true);
           break;
         default:
           break;
@@ -4162,6 +4164,21 @@ const Timeline = () => {
       case 'copy':
         setClipboard({ type: 'section', section: { ...section } });
         break;
+      case 'paste':
+        // Paste section after the current section
+        if (clipboard && clipboard.type === 'section' && clipboard.section) {
+          const copiedSection = clipboard.section;
+          const newSection = {
+            id: Date.now() + Math.random(),
+            name: copiedSection.name ? `${copiedSection.name}` : 'New Section',
+            startTime: section.endTime,
+            endTime: Math.min(audioDuration, section.endTime + (copiedSection.endTime - copiedSection.startTime)),
+            position: (section.endTime / audioDuration) * 100,
+            width: copiedSection.width || section.width
+          };
+          dispatch(addSectionLabel(newSection));
+        }
+        break;
       case 'loop':
         dispatch(setLoopRange({ start: section.startTime, end: section.endTime }));
         break;
@@ -4178,7 +4195,7 @@ const Timeline = () => {
         break;
       default:
     }
-  }, [sectionContextMenu, sectionLabels, dispatch, audioDuration]);
+  }, [sectionContextMenu, sectionLabels, dispatch, audioDuration, clipboard]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -4187,6 +4204,52 @@ const Timeline = () => {
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
         return;
       }
+
+      // Handle Ctrl+V for pasting sections (check before selectedTrackId requirement)
+      if (e.ctrlKey && e.key === 'v') {
+        e.preventDefault();
+        
+        // Check if we have a section in clipboard
+        if (clipboard && clipboard.type === 'section' && clipboard.section) {
+          const copiedSection = clipboard.section;
+          let pasteAfterSection = null;
+          
+          // Find section to paste after (use sectionContextMenu.sectionId if exists)
+          if (sectionContextMenu.sectionId) {
+            pasteAfterSection = sectionLabels.find(s => s.id === sectionContextMenu.sectionId);
+          }
+          
+          // Always find the last section (highest endTime) to paste after
+          // This ensures sections are always placed side-by-side horizontally
+          if (!pasteAfterSection && sectionLabels.length > 0) {
+            // Sort sections by endTime and get the last one
+            const sortedSections = [...sectionLabels].sort((a, b) => 
+              (a.endTime || 0) - (b.endTime || 0)
+            );
+            pasteAfterSection = sortedSections[sortedSections.length - 1];
+          }
+          
+          // If we found a section to paste after, paste it
+          if (pasteAfterSection) {
+            const newSection = {
+              id: Date.now() + Math.random(),
+              name: copiedSection.name ? `${copiedSection.name}` : 'New Section',
+              startTime: pasteAfterSection.endTime,
+              endTime: Math.min(audioDuration, pasteAfterSection.endTime + (copiedSection.endTime - copiedSection.startTime)),
+              position: (pasteAfterSection.endTime / audioDuration) * 100,
+              width: copiedSection.width || pasteAfterSection.width
+            };
+            dispatch(addSectionLabel(newSection));
+            return;
+          }
+        }
+        
+        // If no section paste, handle track/clip paste
+        if (!selectedTrackId) return;
+        handleContextMenuAction('paste', selectedTrackId, selectedClipId);
+        return;
+      }
+
       if (!selectedTrackId) return;
 
       if (e.ctrlKey && e.key === 'x') {
@@ -4195,9 +4258,6 @@ const Timeline = () => {
       } else if (e.ctrlKey && e.key === 'c') {
         e.preventDefault();
         handleContextMenuAction('copy', selectedTrackId, selectedClipId);
-      } else if (e.ctrlKey && e.key === 'v') {
-        e.preventDefault();
-        handleContextMenuAction('paste', selectedTrackId, selectedClipId);
       } else if (e.key === 'Backspace') {
         e.preventDefault();
         handleContextMenuAction('delete', selectedTrackId, selectedClipId);
@@ -4231,7 +4291,7 @@ const Timeline = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedTrackId, selectedClipId, handleContextMenuAction, tracks, dispatch]);
+  }, [selectedTrackId, selectedClipId, handleContextMenuAction, tracks, dispatch, clipboard, sectionLabels, sectionContextMenu, audioDuration, currentTime]);
 
   // Allow external components (e.g., TopHeader Edit menu) to trigger actions
   useEffect(() => {
@@ -4409,7 +4469,7 @@ const Timeline = () => {
     if (action === "Browse loops") {
       setShowOffcanvas((prev) => !prev);
     } else if (action === "Add new track") {
-      setShowAddTrackModal(true);
+      dispatch(setShowAddTrackModal(true));
     } else if (action === "Import file") {
       fileInputRef.current && fileInputRef.current.click();
     } else if (action === "Import to Audio track") {
@@ -5627,7 +5687,7 @@ const Timeline = () => {
             </div>
           </div>
 
-          <div ref={gridSettingRef} className="hover:bg-[#1F1F1F] w-[30px] h-[30px] z-[60] flex items-center justify-center rounded-full cursor-pointer" onClick={() => { setShowAddTrackModal(false); setShowGridSetting((prev) => !prev); }}>
+          <div ref={gridSettingRef} className="hover:bg-[#1F1F1F] w-[30px] h-[30px] z-[60] flex items-center justify-center rounded-full cursor-pointer" onClick={() => { dispatch(setShowAddTrackModal(false)); setShowGridSetting((prev) => !prev); }}>
             <img src={settingIcon} alt="Settings" />
             {showGridSetting && (
               <div className="absolute top-full right-0 z-[150]">
@@ -5718,7 +5778,7 @@ const Timeline = () => {
           <motion.div
             className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            // animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
           >
@@ -5729,9 +5789,9 @@ const Timeline = () => {
               exit={{ y: 50, opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <AddNewTrackModel onClose={() => setShowAddTrackModal(false)} onOpenLoopLibrary={() => {
+              <AddNewTrackModel onClose={() => dispatch(setShowAddTrackModal(false))} onOpenLoopLibrary={() => {
                 dispatch(setShowLoopLibrary(true));
-                setShowAddTrackModal(false);
+                dispatch(setShowAddTrackModal(false));
               }} />
             </motion.div>
           </motion.div>
@@ -5816,6 +5876,7 @@ const Timeline = () => {
         position={sectionContextMenu.position}
         onClose={handleSectionContextMenuClose}
         onAction={handleSectionContextMenuAction}
+        clipboard={clipboard}
       />
 
       {/* Piano Component */}

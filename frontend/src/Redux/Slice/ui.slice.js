@@ -4,6 +4,7 @@ const initialState = {
   isSongSection: false, 
   showLoopLibrary: false,
   musicalTypingEnabled: true,
+  showAddTrackModal: false,
 };
 
 const uiSlice = createSlice({
@@ -19,8 +20,11 @@ const uiSlice = createSlice({
     setMusicalTypingEnabled: (state, action) => {
       state.musicalTypingEnabled = Boolean(action.payload);
     },
+    setShowAddTrackModal: (state, action) => {
+      state.showAddTrackModal = Boolean(action.payload);
+    },
   },
 });
 
-export const { setIsSongSection, setShowLoopLibrary, setMusicalTypingEnabled } = uiSlice.actions;
+export const { setIsSongSection, setShowLoopLibrary, setMusicalTypingEnabled, setShowAddTrackModal } = uiSlice.actions;
 export default uiSlice.reducer;

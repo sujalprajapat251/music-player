@@ -26,7 +26,7 @@ import { ReactComponent as Track8 } from '../Images/track8.svg'
 import { ReactComponent as Wav } from '../Images/wav.svg'
 import Drum from "./Drum";
 import NewProject from "./NewProjectModel";
-import { setShowLoopLibrary } from "../Redux/Slice/ui.slice";
+import { setShowLoopLibrary, setShowAddTrackModal } from "../Redux/Slice/ui.slice";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../Utils/ThemeContext";
 import { useI18n } from "../Utils/i18n";
@@ -59,12 +59,12 @@ const getSidebarColors = (isDark) => ({
 });
 
 const Sidebar2 = () => {
-  const [showAddTrackModal, setShowAddTrackModal] = useState(false);
   const [showNewProject, setShowNewProject] = useState(false);
   const [editingTrackId, setEditingTrackId] = useState(null);
   const [editingName, setEditingName] = useState("");
   // Use Redux for open instrument; avoid local UI duplication
   const tracks = useSelector((state) => selectStudioState(state).tracks);
+  const showAddTrackModal = useSelector((state) => state.ui.showAddTrackModal);
   // console.log("tracks ::::: > ", tracks)
   const { isDark } = useTheme();
   const { t } = useI18n();
@@ -488,7 +488,7 @@ const Sidebar2 = () => {
             {/* Add New Track Button */}
             <div
               className="flex items-center justify-center gap-2 py-3 px-4 text-secondary-light dark:text-secondary-dark cursor-pointer border-t-[1px] border-b-[1px] sm:px-1 md:px-2 lg:px-4"
-              onClick={() => setShowAddTrackModal(true)}
+              onClick={() => dispatch(setShowAddTrackModal(true))}
               style={{ height: `${trackHeight + 8}px`, borderTopColor: colors.addRowBorder, borderBottomColor: colors.addRowBorder, color: colors.addRowText }}
             >
               <span className="text-xl font-bold">+</span>
@@ -531,10 +531,10 @@ const Sidebar2 = () => {
               transition={{ duration: 0.3 }}
             >
               <AddNewTrackModel
-                onClose={() => setShowAddTrackModal(false)}
+                onClose={() => dispatch(setShowAddTrackModal(false))}
                 onOpenLoopLibrary={() => {
                   dispatch(setShowLoopLibrary(true));
-                  setShowAddTrackModal(false);
+                  dispatch(setShowAddTrackModal(false));
                 }}
               />
             </motion.div>
