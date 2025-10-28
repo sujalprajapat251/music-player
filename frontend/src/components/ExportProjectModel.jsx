@@ -17,7 +17,8 @@ export default function ExportPopup({ open, onClose }) {
 
   const dispatch = useDispatch();
   const { t } = useI18n();
-
+  const userplan = useSelector((state) => state.user.currUser);
+  const premiumType = userplan?.premiumId?.planId?.premiumType;
   // Get tracks and recorded audio data from Redux store
   const tracks = useSelector((state) => selectStudioState(state)?.tracks || []);
   const pianoRecord = useSelector((state) => selectStudioState(state)?.pianoRecord);

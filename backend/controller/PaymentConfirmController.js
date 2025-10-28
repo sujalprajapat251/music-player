@@ -65,6 +65,8 @@ const confirmPayment = async (req, res) => {
 
     // Save to database
     const savedPayment = await payment.save();
+    user.premiumId = savedPayment._id;
+    await user.save();
 
     // Return success response
     res.status(201).json({

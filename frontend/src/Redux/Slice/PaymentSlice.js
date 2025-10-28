@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { BASE_URL } from '../../Utils/baseUrl';
 import { setAlert } from "./alert.slice";
+import { getUserById } from './user.slice';
 
 
 const handleErrors = (error, dispatch, rejectWithValue) => {
@@ -45,6 +46,7 @@ export const confirmPaymentSuccess = createAsyncThunk(
                 }
             );
             dispatch(setAlert({ text: response.data.message, color: 'success' }));
+            dispatch(getUserById());
             return response.data;
         } catch (error) {
             return handleErrors(error, dispatch, rejectWithValue);
