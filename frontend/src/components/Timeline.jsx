@@ -49,7 +49,7 @@ import Orchestral from "./Orchestral";
 import PricingModel from './PricingModel';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { setShowLoopLibrary, setShowAddTrackModal } from "../Redux/Slice/ui.slice";
-import { getAllMusic, setCurrentMusic } from "../Redux/Slice/music.slice";
+import { getSingleMusic, setCurrentMusic } from "../Redux/Slice/music.slice";
 import { setSelectedTrackId } from '../Redux/Slice/effects.slice';
 import { motion, AnimatePresence } from "framer-motion";
 import { io } from 'socket.io-client';
@@ -5012,6 +5012,7 @@ const Timeline = () => {
   const { id: routeProjectId } = useParams();
   const allMusic = useSelector((state) => state.music?.allmusic || []);
   const musicLoading = useSelector((state) => state.music?.loading || false);
+  const currentMusic = useSelector((state) => state.music?.currentMusic);
   // Support id from location.state when URL does not include it
   const projectId = (location?.state && location.state.projectId) ? String(location.state.projectId) : (routeProjectId ? String(routeProjectId) : null);
 
@@ -5117,8 +5118,8 @@ const Timeline = () => {
     if (!projectId) return;
 
     try {
-  const project = (allMusic || []).find(m => String(m?._id) === String(projectId));
-  if (!project) return;
+  const project = currentMusic;
+  if (!project || String(project?._id) !== String(projectId)) return;
 
   dispatch(setCurrentMusic(project));
   
@@ -5265,7 +5266,7 @@ const Timeline = () => {
     } catch (error) {
       console.error('Error loading project data:', error);
     }
-  }, [projectId, allMusic, dispatch]);
+  }, [projectId, currentMusic, dispatch]);
 
   // Add a protective effect to prevent audioDuration from being reduced unexpectedly
   const savedDurationRef = useRef(0);
@@ -5293,10 +5294,10 @@ const Timeline = () => {
 
   useEffect(() => {
     if (!projectId) return;
-    if (!musicLoading && (!allMusic || allMusic.length === 0)) {
-      dispatch(getAllMusic());
+    if (!musicLoading && (!currentMusic || String(currentMusic?._id) !== String(projectId))) {
+      dispatch(getSingleMusic(projectId));
     }
-  }, [projectId, allMusic, musicLoading, dispatch]);
+  }, [projectId, currentMusic, musicLoading, dispatch]);
 
   // File import handlers
   const handleAudioTrackFileImport = async (e) => {

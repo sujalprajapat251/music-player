@@ -56,6 +56,7 @@ import File from './components/File';
 // import OpenProjectModal from './components/OpenProjectModal';
 import Sound from './components/Sound';
 import FolderView from './components/FolderView';
+import { SocketContext, SocketProvider } from './context/SocketContext';
 window.soundtouch = soundtouch;
 
 // const { store } = configureStore();
@@ -102,64 +103,67 @@ function App() {
   const { store, persistor } = configureStore();
 
   return (
-  <>
-    
-    <Provider store={store}>
-      <SnackbarProvider
-        maxSnack={3}
-        autoHideDuration={3000}
-      >
-        <Alert />
-        <ThemeProvider>
-          <I18nProvider>
-          <Routes>
-            <Route path='/' element={<Home />} />
-            <Route path='contact' element={<ContactUs />} />
-            <Route path='faqs' element={<Faqs />} />
-            <Route path='pricing' element={<Pricing />} />
-            <Route path='tearms' element={<TearmsOfUse />} />
-            <Route path='privacy' element={<PrivacyPolicy />} />
-            <Route path='ani' element={<Animation />} />
+    <>
 
-            <Route element={<GuestOnly />}>
-              <Route path='/login' element={<Login />} />
-            </Route>
+      <Provider store={store}>
+        <SnackbarProvider
+          maxSnack={3}
+          autoHideDuration={3000}
+        >
+          <Alert />
+          <ThemeProvider>
+            <I18nProvider>
+              <SocketProvider>
+                <Routes>
+                  <Route path='/' element={<Home />} />
+                  <Route path='contact' element={<ContactUs />} />
+                  <Route path='faqs' element={<Faqs />} />
+                  <Route path='pricing' element={<Pricing />} />
+                  <Route path='tearms' element={<TearmsOfUse />} />
+                  <Route path='privacy' element={<PrivacyPolicy />} />
+                  <Route path='ani' element={<Animation />} />
 
-            <Route element={<RequireAuth />}>
-              <Route path="/" element={<Layout />} >
-                <Route path='project' element={<Home2 />} />
-                <Route path='project/folder/:id' element={<FolderView />} />
-                <Route path='recently-deleted' element={<RecentlyDeleted />} />
-                <Route path='recentlydeleted' element={<RecentlyDeleted />} />
-                <Route path='demo-project' element={<Demoproject />} />
-                <Route path='profile' element={<Profile />} />
-              </Route>
+                  <Route element={<GuestOnly />}>
+                    <Route path='/login' element={<Login />} />
+                  </Route>
 
-              {/* Standalone feature routes (protected) */}
-              <Route path='piano' element={<Piano />} />  
-              <Route path='effcts2' element={<Effects2 />} />
-              <Route path='file' element={<File />} />
-              <Route path='sound' element={<Sound />} />                                                   
+                  <Route element={<RequireAuth />}>
+                    <Route path="/" element={<Layout />} >
+                      <Route path='project' element={<Home2 />} />
+                      <Route path='project/folder/:id' element={<FolderView />} />
+                      <Route path='recently-deleted' element={<RecentlyDeleted />} />
+                      <Route path='recentlydeleted' element={<RecentlyDeleted />} />
+                      <Route path='demo-project' element={<Demoproject />} />
+                      <Route path='profile' element={<Profile />} />
+                    </Route>
 
-              {/* Sidebar namespace (protected) */}
-              <Route path='/sidebar' element={<Sidebar2 />} >
-                <Route path='timeline' element={<Timeline />} />
-                <Route path='timeline/:id' element={<Timeline />} />
-                {/* <Route path='knob' element={<Knob />} />
+                    {/* Standalone feature routes (protected) */}
+                    <Route path='piano' element={<Piano />} />
+                    <Route path='effcts2' element={<Effects2 />} />
+                    <Route path='file' element={<File />} />
+                    <Route path='sound' element={<Sound />} />
+
+                    {/* Sidebar namespace (protected) */}
+                    <Route path='/sidebar' element={<Sidebar2 />} >
+                      <Route path='timeline' element={<Timeline />} />
+                      <Route path='timeline/:id' element={<Timeline />} />
+                      {/* <Route path='knob' element={<Knob />} />
               <Route path='loop' element={<Loops />} /> */}
-                <Route path="effects" element={<Effects />} />
-                <Route path="savani" element={<SDemo />} />
-                <Route path="piano" element={<Piano />} />
-                <Route path="guitar" element={<Guitar />} />
-                <Route path="voice" element={<VoiceTransformer />} />
-              </Route>
-            </Route>
-          </Routes>
-          </I18nProvider>
-        </ThemeProvider>
-      </SnackbarProvider>
-    </Provider >
-  </>
+                      <Route path="effects" element={<Effects />} />
+                      <Route path="savani" element={<SDemo />} />
+                      <Route path="piano" element={<Piano />} />
+                      <Route path="guitar" element={<Guitar />} />
+                      <Route path="voice" element={<VoiceTransformer />} />
+                    </Route>
+                  </Route>
+                </Routes>
+              </SocketProvider>
+            </I18nProvider>
+          </ThemeProvider>
+        </SnackbarProvider>
+
+      </Provider >
+    </>
   );
 }
 
